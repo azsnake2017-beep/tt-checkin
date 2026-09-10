@@ -407,16 +407,14 @@
 </div>
 
 <script>
-  // ================= КОНФИГУРАЦИЯ =================
-  const BOT_TOKEN = "8886837839:AAHm50-bdSUwWVHnmlbicB1-t8u6aJ23shM";
-  const CHAT_ID = "@ttchmz";
+  // ================= ШЛЮЗ ОПОВЕЩЕНИЙ GOOGLE APPS SCRIPT =================
+  const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbyA76I5iuX_xqQSisGkHwjjHLyTKgbfCvfE_QOL0nVCIsXfC-7hsfdzAHzF8KDfU17-3g/exec";
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
     vostok: "в ДК «Восток» 🏛"
   };
 
-  // Получение / создание уникального ID пользователя для защиты от коллизий
   function getUserId() {
     let uid = localStorage.getItem('tt_uid');
     if (!uid) {
@@ -426,21 +424,18 @@
     return uid;
   }
 
-  // Универсальная отправка уведомлений
+  // Отправка через шлюз Google — обходит CORS и ограничения провайдеров
   function sendTelegramAlert(text) {
-    if (!BOT_TOKEN || BOT_TOKEN.startsWith("ВАШ_ТОКЕН")) return;
+    if (!GOOGLE_GATEWAY_URL) return;
 
-    const encodedText = encodeURIComponent(text);
-    const tgUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CHAT_ID)}&text=${encodedText}&parse_mode=HTML`;
+    const targetUrl = GOOGLE_GATEWAY_URL + "?text=" + encodeURIComponent(text);
 
-    // 1. Попытка через стандартный Fetch
-    fetch(tgUrl, { mode: 'no-cors' }).catch(() => {});
+    fetch(targetUrl, { mode: 'no-cors' }).catch(() => {});
 
-    // 2. Метод Image beacon для обхода CORS
     try {
       const img = new Image();
-      img.src = tgUrl;
-    } catch(e) {}
+      img.src = targetUrl;
+    } catch (e) {}
   }
 
   // ================= FIREBASE =================
@@ -467,7 +462,6 @@
   };
 
   function resolvePlayerName() {
-    // Если Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const u = window.Telegram.WebApp.initDataUnsafe.user;
       const tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
@@ -480,7 +474,6 @@
     const saved = localStorage.getItem('tt_name');
     if (saved && saved.trim() !== '') return saved.trim();
 
-    // Дефолтное имя при первом заходе
     const guestName = "Гость #" + Math.floor(100 + Math.random() * 900);
     localStorage.setItem('tt_name', guestName);
     return guestName;
@@ -502,7 +495,6 @@
     document.getElementById('name-modal').style.display = 'none';
   }
 
-  // Проверка: занято ли имя кем-то ДРУГИМ за столом прямо сейчас
   function isNameTakenByOthers(newName) {
     const myUid = getUserId();
     const cleanNew = newName.trim().toLowerCase();
@@ -510,7 +502,7 @@
     for (const loc of ['park', 'vostok']) {
       for (const p of locationsData[loc]) {
         const pName = (p.name || '').trim().toLowerCase();
-        const pUid = p.uid || p.name; // обратная совместимость
+        const pUid = p.uid || p.name;
         if (pName === cleanNew && pUid !== myUid) {
           return true;
         }
@@ -519,7 +511,6 @@
     return false;
   }
 
-  // Сохранение имени + автоматическое обновление за столом, если уже играл
   async function saveCustomName() {
     const input = document.getElementById('name-input');
     const err = document.getElementById('name-error');
@@ -529,7 +520,6 @@
       val = "Гость #" + Math.floor(100 + Math.random() * 900);
     }
 
-    // Защита от дублей чужих имён
     if (isNameTakenByOthers(val)) {
       err.innerText = "Это имя уже занято другим игроком у стола!";
       err.style.display = 'block';
@@ -542,7 +532,6 @@
     hideNameModal();
     document.getElementById('user-display').innerText = val;
 
-    // Если игрок в этот момент уже сидел за столом со старым именем — обновляем имя в базе
     if (oldName && oldName !== val) {
       try {
         for (const loc of ['park', 'vostok']) {
@@ -572,7 +561,7 @@
           });
         }
       } catch (e) {
-        console.error("Ошибка синхронизации имени за столом:", e);
+        console.error("Ошибка синхронизации имени:", e);
       }
     }
 
@@ -593,12 +582,10 @@
     return `${hours} ч ${remMinutes} мин`;
   }
 
-  // Чекин за стол
   async function checkIn(loc) {
     const name = resolvePlayerName();
     const myUid = getUserId();
 
-    // Проверяем, не пытается ли сесть под уже занятым именем
     if (isNameTakenByOthers(name)) {
       alert("Имя «" + name + "» уже занято за столом. Смените имя.");
       showNameModal();
@@ -619,7 +606,6 @@
         let targetList = (targetDoc.exists && targetDoc.data().players) || [];
         let otherList = (otherDoc.exists && otherDoc.data().players) || [];
 
-        // Удаляем пользователя по uid или старому имени из обеих локаций
         const filterFn = p => {
           if (typeof p === 'string') return p !== name;
           return p.uid !== myUid && p.name !== name;
@@ -628,7 +614,6 @@
         targetList = targetList.filter(filterFn);
         otherList = otherList.filter(filterFn);
 
-        // Сажаем за стол
         targetList.unshift({
           name: name,
           time: now,
@@ -639,7 +624,6 @@
         transaction.set(otherRef, { players: otherList });
       });
 
-      // Отправляем уведомление в Telegram
       const locText = LOCATION_NAMES[loc];
       const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
       sendTelegramAlert(alertMsg);
@@ -649,7 +633,6 @@
     }
   }
 
-  // Выход со стола
   async function leave(loc) {
     const name = resolvePlayerName();
     const myUid = getUserId();
@@ -672,7 +655,6 @@
           spentTimeStr = formatDuration(currentPlayer.time);
         }
 
-        // Удаляем строго свою запись по UID или имени
         list = list.filter(p => {
           if (typeof p === 'string') return p !== name;
           return p.uid !== myUid && p.name !== name;
@@ -681,7 +663,6 @@
         transaction.set(locRef, { players: list });
       });
 
-      // Отправляем оповещение об уходе
       const locText = LOCATION_NAMES[loc];
       const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : '';
       const alertMsg = `👋 <b>${escapeHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
@@ -742,7 +723,6 @@
         `).join('');
       }
 
-      // Проверяем, сидит ли текущий пользователь за этим столом (по UID или имени)
       const isUserHere = list.some(p => (p.uid && p.uid === myUid) || p.name === currentName);
 
       if (isUserHere) {
