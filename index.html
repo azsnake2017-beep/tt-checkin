@@ -2,315 +2,364 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-  <title>Чекин у стола 🏓</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Кто у стола? | Клуб настольного тенниса ЧМЗ</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
   <style>
     :root {
-      --bg: var(--tg-theme-bg-color, #f4f4f5);
-      --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
-      --text: var(--tg-theme-text-color, #18181b);
-      --hint: var(--tg-theme-hint-color, #71717a);
-      --btn: var(--tg-theme-button-color, #2563eb);
-      --btn-text: var(--tg-theme-button-text-color, #ffffff);
+      --primary: #0284c7;
+      --primary-hover: #0369a1;
+      --bg: #f8fafc;
+      --card-bg: #ffffff;
+      --text-main: #0f172a;
+      --text-muted: #64748b;
+      --border: #e2e8f0;
+      --accent-green: #10b981;
+      --accent-orange: #f59e0b;
     }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background-color: var(--bg);
-      color: var(--text);
+
+    * {
+      box-sizing: border-box;
       margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-main);
       padding: 16px;
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      box-sizing: border-box;
+      justify-content: center;
     }
-    .header {
-      text-align: center;
-      margin-bottom: 18px;
-    }
-    .header h2 {
-      margin: 0 0 4px 0;
-      font-size: 22px;
-      font-weight: 800;
-    }
-    .header p {
-      margin: 0;
-      font-size: 14px;
-      color: var(--hint);
-    }
-    .card {
-      background: var(--card-bg);
-      border-radius: 16px;
-      padding: 16px;
+
+    .app-container {
       width: 100%;
-      max-width: 400px;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
-      box-sizing: border-box;
-      margin-bottom: 14px;
-      border: 1px solid rgba(0,0,0,0.06);
-      transition: all 0.2s ease;
+      max-width: 480px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
-    .card.active-loc {
-      border: 2px solid #16a34a;
-    }
-    .card-header {
+
+    /* Шапка профиля */
+    .user-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 12px 16px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
     }
-    .loc-title {
+
+    .user-info {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .user-name {
       font-weight: 700;
-      font-size: 18px;
+      color: var(--text-main);
+      display: block;
+      font-size: 15px;
+    }
+
+    .btn-edit {
+      border: none;
+      background: #f1f5f9;
+      color: var(--primary);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    /* Карточки локаций */
+    .location-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
       display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .location-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .location-title {
+      font-size: 17px;
+      font-weight: 700;
+    }
+
+    .location-subtitle {
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
+    .badge {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 4px 8px;
+      border-radius: 20px;
+      background: #f1f5f9;
+      color: var(--text-muted);
+    }
+
+    .badge.active {
+      background: #ecfdf5;
+      color: var(--accent-green);
+    }
+
+    /* Список игроков */
+    .players-box {
+      background: #f8fafc;
+      border: 1px dashed var(--border);
+      border-radius: 10px;
+      padding: 10px 12px;
+      min-height: 48px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      align-items: center;
+    }
+
+    .empty-text {
+      font-size: 13px;
+      color: var(--text-muted);
+      font-style: italic;
+    }
+
+    .player-tag {
+      background: #ffffff;
+      border: 1px solid var(--border);
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
       align-items: center;
       gap: 6px;
     }
-    .counter {
-      background: #e0f2fe;
-      color: #0369a1;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-weight: 700;
-      font-size: 13px;
-    }
-    .counter.has-players {
-      background: #dcfce7;
-      color: #15803d;
-    }
-    .btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 12px;
-      border: none;
-      font-size: 15px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+
+    /* Кнопки действий */
+    .actions-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
-      transition: opacity 0.15s;
     }
-    .btn:active {
-      opacity: 0.8;
-    }
-    .btn-checkin {
-      background: var(--btn);
-      color: var(--btn-text);
-    }
-    .btn-leave {
-      background: #fee2e2;
-      color: #dc2626;
-      margin-top: 8px;
-    }
-    .status-badge {
-      display: inline-block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #16a34a;
-      margin-bottom: 8px;
-    }
-    details {
-      margin-top: 12px;
-      border-top: 1px solid rgba(0,0,0,0.06);
-      padding-top: 10px;
-    }
-    summary {
-      cursor: pointer;
-      font-size: 13px;
-      color: var(--hint);
-      font-weight: 600;
-      outline: none;
-      user-select: none;
-    }
-    .player-list {
-      margin: 8px 0 0 0;
-      padding: 0;
-      list-style: none;
+
+    .btn {
+      border: none;
+      padding: 11px;
+      border-radius: 10px;
       font-size: 14px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.15s ease;
+      text-align: center;
     }
-    .player-list li {
-      padding: 6px 0;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px dashed rgba(0,0,0,0.05);
+
+    .btn-checkin {
+      background: var(--primary);
+      color: #ffffff;
     }
-    .player-list li:last-child {
-      border-bottom: none;
+
+    .btn-checkin:active {
+      background: var(--primary-hover);
     }
-    .time-badge {
-      color: var(--hint);
-      font-size: 12px;
-      background: rgba(0,0,0,0.04);
-      padding: 2px 6px;
-      border-radius: 6px;
+
+    .btn-leave {
+      background: #f1f5f9;
+      color: var(--text-muted);
+    }
+
+    .btn-leave:active {
+      background: #e2e8f0;
     }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <h2>Кто у стола? 🏓</h2>
-    <p id="user-greeting">Загрузка профиля...</p>
+<div class="app-container">
+
+  <!-- Профиль игрока -->
+  <div class="user-card">
+    <div class="user-info">
+      Игрок клуба:
+      <span class="user-name" id="display-player-name">Загрузка...</span>
+    </div>
+    <button class="btn-edit" onclick="promptChangeName()">Изменить</button>
   </div>
 
   <!-- Локация 1: Парк им. Тищенко -->
-  <div class="card" id="card-tish">
-    <div class="card-header">
-      <span class="loc-title">🌳 Парк им. Тищенко</span>
-      <span class="counter" id="count-tish">0 чел.</span>
-    </div>
-    
-    <div id="action-tish">
-      <button class="btn btn-checkin" onclick="checkin('tish')">
-        🏓 Я в Парке Тищенко
-      </button>
+  <div class="location-card">
+    <div class="location-header">
+      <div>
+        <div class="location-title">🌳 Парк им. Тищенко</div>
+        <div class="location-subtitle">Открытые столы на свежем воздухе</div>
+      </div>
+      <span class="badge" id="badge-park">0 игроков</span>
     </div>
 
-    <details id="details-tish">
-      <summary>Список игроков (<span id="expand-count-tish">0</span>)</summary>
-      <ul class="player-list" id="list-tish">
-        <li style="color: var(--hint); justify-content: center;">Пока никого нет</li>
-      </ul>
-    </details>
+    <div class="players-box" id="list-park">
+      <span class="empty-text">Сейчас у столов никого нет</span>
+    </div>
+
+    <div class="actions-grid">
+      <button class="btn btn-checkin" onclick="handleCheckIn('park')">Я здесь</button>
+      <button class="btn btn-leave" onclick="handleLeave('park')">Ушёл</button>
+    </div>
   </div>
 
-  <!-- Локация 2: ДК Восток -->
-  <div class="card" id="card-vostok">
-    <div class="card-header">
-      <span class="loc-title">🏛 ДК «Восток»</span>
-      <span class="counter" id="count-vostok">0 чел.</span>
+  <!-- Локация 2: ДК «Восток» -->
+  <div class="location-card">
+    <div class="location-header">
+      <div>
+        <div class="location-title">🏛 ДК «Восток»</div>
+        <div class="location-subtitle">ул. Сталеваров, 5а</div>
+      </div>
+      <span class="badge" id="badge-vostok">0 игроков</span>
     </div>
 
-    <div id="action-vostok">
-      <button class="btn btn-checkin" onclick="checkin('vostok')">
-        🏓 Я в ДК Восток
-      </button>
+    <div class="players-box" id="list-vostok">
+      <span class="empty-text">Сейчас у столов никого нет</span>
     </div>
 
-    <details id="details-vostok">
-      <summary>Список игроков (<span id="expand-count-vostok">0</span>)</summary>
-      <ul class="player-list" id="list-vostok">
-        <li style="color: var(--hint); justify-content: center;">Пока никого нет</li>
-      </ul>
-    </details>
+    <div class="actions-grid">
+      <button class="btn btn-checkin" onclick="handleCheckIn('vostok')">Я здесь</button>
+      <button class="btn btn-leave" onclick="handleLeave('vostok')">Ушёл</button>
+    </div>
   </div>
 
-  <script>
-    const tg = window.Telegram.WebApp;
-    tg.ready();
-    tg.expand();
+</div>
 
-    const user = tg.initDataUnsafe?.user;
-    const userName = user ? (user.first_name + (user.last_name ? " " + user.last_name : "")) : "Участник клуба";
-    const userId = user?.id || "local_user";
+<script>
+  // Инициализация Telegram WebApp если доступен
+  if (window.Telegram?.WebApp) {
+    window.Telegram.WebApp.ready();
+    window.Telegram.WebApp.expand();
+  }
 
-    document.getElementById("user-greeting").innerText = "Привет, " + userName + "!";
-
-    // Хранение данных с автоматическим сбросом в полночь
-    const todayKey = "tt_checkin_store_" + new Date().toISOString().slice(0, 10);
-    let state = JSON.parse(localStorage.getItem(todayKey) || '{"tish": [], "vostok": []}');
-
-    function saveState() {
-      localStorage.setItem(todayKey, JSON.stringify(state));
-      render();
-    }
-
-    function checkin(loc) {
-      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
-      // Снимаем отметку со всех локаций перед новой отметкой
-      state.tish = state.tish.filter(p => p.id !== userId);
-      state.vostok = state.vostok.filter(p => p.id !== userId);
-
-      // Добавляем игрока в выбранную точку
-      state[loc].push({ id: userId, name: userName, time: timeStr });
-      
-      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
-      saveState();
-    }
-
-    function leave(loc) {
-      state[loc] = state[loc].filter(p => p.id !== userId);
-      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
-      saveState();
-    }
-
-    function render() {
-      // Счётчики
-      const tishCount = state.tish.length;
-      const vostokCount = state.vostok.length;
-
-      const countTishEl = document.getElementById("count-tish");
-      const countVostokEl = document.getElementById("count-vostok");
-
-      countTishEl.innerText = tishCount + " чел.";
-      countTishEl.className = "counter" + (tishCount > 0 ? " has-players" : "");
-      document.getElementById("expand-count-tish").innerText = tishCount;
-
-      countVostokEl.innerText = vostokCount + " чел.";
-      countVostokEl.className = "counter" + (vostokCount > 0 ? " has-players" : "");
-      document.getElementById("expand-count-vostok").innerText = vostokCount;
-
-      // Отрисовка списков
-      renderList("tish", state.tish);
-      renderList("vostok", state.vostok);
-
-      // Проверка статуса текущего игрока
-      const inTish = state.tish.some(p => p.id === userId);
-      const inVostok = state.vostok.some(p => p.id === userId);
-
-      const cardTish = document.getElementById("card-tish");
-      const cardVostok = document.getElementById("card-vostok");
-
-      cardTish.className = "card" + (inTish ? " active-loc" : "");
-      cardVostok.className = "card" + (inVostok ? " active-loc" : "");
-
-      // Кнопки для Тищенко
-      const actionTish = document.getElementById("action-tish");
-      if (inTish) {
-        actionTish.innerHTML = `
-          <div class="status-badge">✅ Вы отмечены здесь</div>
-          <button class="btn btn-leave" onclick="leave('tish')">🏃 Я ушёл из парка</button>
-        `;
-      } else {
-        actionTish.innerHTML = `
-          <button class="btn btn-checkin" onclick="checkin('tish')">🏓 Я в Парке Тищенко</button>
-        `;
-      }
-
-      // Кнопки для ДК Восток
-      const actionVostok = document.getElementById("action-vostok");
-      if (inVostok) {
-        actionVostok.innerHTML = `
-          <div class="status-badge">✅ Вы отмечены здесь</div>
-          <button class="btn btn-leave" onclick="leave('vostok')">🏃 Я ушёл из ДК Восток</button>
-        `;
-      } else {
-        actionVostok.innerHTML = `
-          <button class="btn btn-checkin" onclick="checkin('vostok')">🏓 Я в ДК Восток</button>
-        `;
+  // Определение имени (Telegram -> Память устройства -> Запрос имени)
+  function getOrAskPlayerName() {
+    // 1. Telegram
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
+      const u = window.Telegram.WebApp.initDataUnsafe.user;
+      const fullName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
+      if (fullName) {
+        localStorage.setItem('tt_player_name', fullName);
+        return fullName;
       }
     }
 
-    function renderList(loc, players) {
-      const container = document.getElementById("list-" + loc);
+    // 2. MAX / Браузер
+    let localName = localStorage.getItem('tt_player_name');
+    if (!localName || localName.trim() === '' || localName === 'Игрок') {
+      localName = prompt("Добро пожаловать! Введите ваше имя и фамилию для чекина:");
+      if (!localName || localName.trim() === '') {
+        localName = "Игрок " + Math.floor(100 + Math.random() * 900);
+      }
+      localName = localName.trim();
+      localStorage.setItem('tt_player_name', localName);
+    }
+    return localName;
+  }
+
+  function promptChangeName() {
+    const current = localStorage.getItem('tt_player_name') || '';
+    const updated = prompt("Введите новое имя для чекина:", current);
+    if (updated && updated.trim() !== '') {
+      localStorage.setItem('tt_player_name', updated.trim());
+      updatePlayerUI();
+    }
+  }
+
+  function updatePlayerUI() {
+    const name = getOrAskPlayerName();
+    document.getElementById('display-player-name').innerText = name;
+    return name;
+  }
+
+  // Управление состоянием игроков (Хранилище)
+  function getPlayers(loc) {
+    try {
+      return JSON.parse(localStorage.getItem('tt_loc_' + loc)) || [];
+    } catch {
+      return [];
+    }
+  }
+
+  function savePlayers(loc, arr) {
+    localStorage.setItem('tt_loc_' + loc, JSON.stringify(arr));
+    renderLists();
+  }
+
+  function handleCheckIn(locationId) {
+    const name = updatePlayerUI();
+    let players = getPlayers(locationId);
+
+    // Удаляем дубликат, если игрок уже есть
+    players = players.filter(p => p !== name);
+    // Добавляем в начало
+    players.unshift(name);
+
+    // Убираем из второй локации (нельзя быть в двух местах одновременно)
+    const otherLocation = locationId === 'park' ? 'vostok' : 'park';
+    let otherPlayers = getPlayers(otherLocation).filter(p => p !== name);
+    localStorage.setItem('tt_loc_' + otherLocation, JSON.stringify(otherPlayers));
+
+    savePlayers(locationId, players);
+  }
+
+  function handleLeave(locationId) {
+    const name = updatePlayerUI();
+    let players = getPlayers(locationId).filter(p => p !== name);
+    savePlayers(locationId, players);
+  }
+
+  function renderLists() {
+    ['park', 'vostok'].forEach(loc => {
+      const players = getPlayers(loc);
+      const container = document.getElementById('list-' + loc);
+      const badge = document.getElementById('badge-' + loc);
+
+      badge.innerText = `${players.length} ${players.length === 1 ? 'игрок' : 'игроков'}`;
+      badge.className = players.length > 0 ? 'badge active' : 'badge';
+
       if (players.length === 0) {
-        container.innerHTML = '<li style="color: var(--hint); justify-content: center;">Пока никого нет</li>';
-        return;
+        container.innerHTML = '<span class="empty-text">Сейчас у столов никого нет</span>';
+      } else {
+        container.innerHTML = players.map(p => `
+          <div class="player-tag">
+            <span>🏓</span>
+            <span>${escapeHtml(p)}</span>
+          </div>
+        `).join('');
       }
-      container.innerHTML = players.map((p, index) => 
-        `<li>
-           <span><b>${index + 1}.</b> ${p.name} ${p.id === userId ? '<i>(Вы)</i>' : ''}</span>
-           <span class="time-badge">${p.time}</span>
-         </li>`
-      ).join("");
-    }
+    });
+  }
 
-    render();
-  </script>
+  function escapeHtml(text) {
+    return text.replace(/[&<>"']/g, function(m) {
+      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
+    });
+  }
+
+  // Запуск при загрузке страницы
+  document.addEventListener('DOMContentLoaded', () => {
+    updatePlayerUI();
+    renderLists();
+  });
+</script>
+
 </body>
 </html>
