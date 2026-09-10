@@ -22,6 +22,7 @@
       --accent-green: #10b981;
       --accent-amber: #f59e0b;
       --accent-sky: #38bdf8;
+      --accent-gold: #fbbf24;
     }
 
     * {
@@ -144,7 +145,6 @@
       margin-top: 2px;
     }
 
-    /* Погодный бейдж */
     .weather-badge {
       display: inline-flex;
       align-items: center;
@@ -174,7 +174,6 @@
       color: var(--accent-green);
     }
 
-    /* Списки игроков */
     .section-label {
       font-size: 11px;
       text-transform: uppercase;
@@ -240,7 +239,6 @@
       font-weight: 600;
     }
 
-    /* Кнопки действий */
     .action-group {
       display: flex;
       flex-direction: column;
@@ -271,16 +269,64 @@
       color: #93c5fd;
     }
 
-    .btn-plan:hover {
-      background: rgba(59, 130, 246, 0.15);
-    }
-
     .btn-leave {
       background: #334155;
       color: #cbd5e1;
     }
 
-    /* Модалки */
+    /* Зал славы */
+    .leaderboard-card {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid rgba(251, 191, 36, 0.3);
+      border-radius: 16px;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+    }
+
+    .leaderboard-title {
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--accent-gold);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .leader-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 10px;
+      border-radius: 8px;
+      background: rgba(15, 23, 42, 0.6);
+      font-size: 13px;
+    }
+
+    .leader-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .leader-rank {
+      font-weight: 700;
+      width: 20px;
+      color: var(--text-muted);
+    }
+
+    .leader-rank-1 { color: #f59e0b; }
+    .leader-rank-2 { color: #94a3b8; }
+    .leader-rank-3 { color: #b45309; }
+
+    .leader-score {
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    /* Модальные окна */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -307,26 +353,28 @@
       text-align: center;
     }
 
-    .quick-plan-grid {
+    .modal-options-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
     }
 
-    .btn-quick-time {
+    .btn-opt {
       background: #0f172a;
       border: 1px solid var(--card-border);
       color: #cbd5e1;
-      padding: 10px 4px;
+      padding: 12px 4px;
       border-radius: 10px;
       font-size: 13px;
       cursor: pointer;
       font-weight: 600;
+      transition: all 0.2s;
     }
 
-    .btn-quick-time:hover {
-      border-color: var(--accent-sky);
+    .btn-opt:hover {
+      border-color: var(--accent-amber);
       color: #ffffff;
+      background: rgba(245, 158, 11, 0.1);
     }
 
     .custom-time-row {
@@ -379,11 +427,11 @@
     <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
     <div class="club-header-text">
       <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
-      <p>Чекин игроков и планирование тренировок</p>
+      <p>Чекин игроков, умные продления и Push-напоминания</p>
     </div>
   </div>
 
-  <!-- Плашка профиля -->
+  <!-- Профиль -->
   <div class="profile-bar">
     <span class="profile-info">Вы: <b id="user-display">Загрузка...</b></span>
     <button class="btn-edit" onclick="showNameModal()">Сменить имя</button>
@@ -402,13 +450,11 @@
       <span class="counter" id="badge-park">0 игроков</span>
     </div>
 
-    <!-- За столом -->
     <div class="section-label">Сейчас играют:</div>
     <div class="player-list" id="list-park">
       <span class="empty-note">У столов пока свободно</span>
     </div>
 
-    <!-- Планируют подойти -->
     <div class="section-label">Собираются прийти:</div>
     <div class="player-list" id="plan-list-park">
       <span class="empty-note">Никто не планировал</span>
@@ -430,13 +476,11 @@
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
 
-    <!-- За столом -->
     <div class="section-label">Сейчас играют:</div>
     <div class="player-list" id="list-vostok">
       <span class="empty-note">У столов пока свободно</span>
     </div>
 
-    <!-- Планируют подойти -->
     <div class="section-label">Собираются прийти:</div>
     <div class="player-list" id="plan-list-vostok">
       <span class="empty-note">Никто не планировал</span>
@@ -448,18 +492,49 @@
     </div>
   </div>
 
+  <!-- Зал славы -->
+  <div class="leaderboard-card">
+    <div class="leaderboard-title">
+      <span>🏆</span>
+      <span>Зал славы (Топ тренировок)</span>
+    </div>
+    <div id="leaderboard-list" style="display: flex; flex-direction: column; gap: 6px;">
+      <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
+    </div>
+  </div>
+
 </div>
 
-<!-- Модальное окно планирования визита -->
+<!-- Модальное окно напоминания и продления (только в приложении) -->
+<div class="modal-overlay" id="extend-modal">
+  <div class="modal-box" style="border-color: var(--accent-amber);">
+    <h3 style="font-size: 18px; color: #fde68a;">⏰ Вы уже 1 ч 45 мин у стола!</h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+      Продлить время пребывания? Если не выбрать, через 15 минут стол автоматически освободится.
+    </p>
+
+    <div class="modal-options-grid">
+      <button class="btn-opt" onclick="extendSession(30)">+30 мин</button>
+      <button class="btn-opt" onclick="extendSession(60)">+1 час</button>
+      <button class="btn-opt" onclick="extendSession(120)">+2 часа</button>
+    </div>
+
+    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c;" onclick="confirmLeaveFromModal()">
+      👋 Уйти со стола сейчас
+    </button>
+  </div>
+</div>
+
+<!-- Модальное окно планов -->
 <div class="modal-overlay" id="plan-modal">
   <div class="modal-box">
     <h3 style="font-size: 17px;">Когда планируете прийти?</h3>
     <p style="font-size: 13px; color: var(--text-muted);">Бот предупредит одноклубников в Telegram-чате</p>
 
-    <div class="quick-plan-grid">
-      <button class="btn-quick-time" onclick="submitQuickPlan(15)">+15 мин</button>
-      <button class="btn-quick-time" onclick="submitQuickPlan(30)">+30 мин</button>
-      <button class="btn-quick-time" onclick="submitQuickPlan(45)">+45 мин</button>
+    <div class="modal-options-grid">
+      <button class="btn-opt" onclick="submitQuickPlan(15)">+15 мин</button>
+      <button class="btn-opt" onclick="submitQuickPlan(30)">+30 мин</button>
+      <button class="btn-opt" onclick="submitQuickPlan(45)">+45 мин</button>
     </div>
 
     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">или укажите точное время:</div>
@@ -478,7 +553,6 @@
     <h3>Ваше имя в клубе</h3>
     <p style="font-size: 13px; color: var(--text-muted);">Введите имя или никнейм для чекинов и чата</p>
     <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="28" />
-    <span style="color: #f87171; font-size: 12px; display: none;" id="name-error">Это имя уже занято за столом!</span>
     <button class="btn btn-join" onclick="saveCustomName()">Сохранить</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
   </div>
@@ -493,7 +567,13 @@
     vostok: "в ДК «Восток» 🏛"
   };
 
+  const DEFAULT_LIMIT_MS = 120 * 60 * 1000; // 2 часа
+  const REMIND_BEFORE_MS = 15 * 60 * 1000;  // за 15 мин (на 105 мин = 1 ч 45 мин)
+
   let activePlanningLoc = null;
+  let currentUserActiveLoc = null;
+  let currentUserActivePlayer = null;
+  let hasTriggeredPush = false;
 
   function getUserId() {
     let uid = localStorage.getItem('tt_uid');
@@ -559,12 +639,37 @@
     }
   }
 
+  // ================= PUSH & ВИБРАЦИЯ =================
+  function requestPushPermission() {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission();
+    }
+  }
+
+  function sendDevicePushNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try {
+        new Notification(title, {
+          body: body,
+          icon: 'logo.png',
+          badge: 'logo.png',
+          vibrate: [200, 100, 200]
+        });
+      } catch (e) {
+        console.log("Push failed:", e);
+      }
+    }
+
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+    }
+  }
+
   // ================= ПОГОДА ДЛЯ ПАРКА ТИЩЕНКО =================
   async function loadParkWeather() {
     const badge = document.getElementById('weather-park');
     try {
-      // Координаты Челябинска (ЧМЗ): 55.25°N, 61.40°E
-      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m');
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m');
       const data = await res.json();
       const temp = Math.round(data.current.temperature_2m);
       const code = data.current.weather_code;
@@ -625,7 +730,6 @@
   function showNameModal() {
     const modal = document.getElementById('name-modal');
     const input = document.getElementById('name-input');
-    document.getElementById('name-error').style.display = 'none';
     const current = localStorage.getItem('tt_name') || '';
     input.value = current.startsWith("Гость #") ? "" : current;
     modal.style.display = 'flex';
@@ -668,8 +772,65 @@
     return `через ${hours} ч ${mins % 60} мин`;
   }
 
-  // ================= ЧЕКИНЫ И ПЛАНЫ =================
+  // ================= ЛИДЕРБОРД =================
+  async function recordTrainingTime(name, durationMinutes) {
+    if (!name || durationMinutes <= 0) return;
+    try {
+      const userRef = db.collection('leaderboard').doc(name);
+      await db.runTransaction(async (t) => {
+        const doc = await t.get(userRef);
+        const data = doc.data() || { name: name, totalMinutes: 0, sessions: 0 };
+        t.set(userRef, {
+          name: name,
+          totalMinutes: (data.totalMinutes || 0) + durationMinutes,
+          sessions: (data.sessions || 0) + 1,
+          lastPlayed: Date.now()
+        }, { merge: true });
+      });
+    } catch (e) {
+      console.error("Ошибка лидерборда:", e);
+    }
+  }
+
+  function listenLeaderboard() {
+    db.collection('leaderboard')
+      .orderBy('totalMinutes', 'desc')
+      .limit(5)
+      .onSnapshot(snap => {
+        const listEl = document.getElementById('leaderboard-list');
+        if (snap.empty) {
+          listEl.innerHTML = '<span class="empty-note">Сыграйте первую партию!</span>';
+          return;
+        }
+
+        let html = '';
+        let rank = 1;
+        snap.forEach(doc => {
+          const d = doc.data();
+          const hours = (d.totalMinutes / 60).toFixed(1);
+          const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
+          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+
+          html += `
+            <div class="leader-row">
+              <div class="leader-left">
+                <span class="leader-rank ${rankClass}">${medal}</span>
+                <b>${cleanHtml(d.name)}</b>
+              </div>
+              <span class="leader-score">${hours} ч (${d.sessions} игр)</span>
+            </div>
+          `;
+          rank++;
+        });
+        listEl.innerHTML = html;
+      });
+  }
+
+  // ================= ЧЕКИН, УХОД И ПРОДЛЕНИЕ =================
   async function checkIn(loc) {
+    requestPushPermission();
+    hasTriggeredPush = false;
+
     const name = resolvePlayerName();
     const myUid = getUserId();
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
@@ -692,9 +853,14 @@
 
         tPlayers = tPlayers.filter(filterFn);
         oPlayers = oPlayers.filter(filterFn);
-        tPlans = tPlans.filter(filterFn); // убираем из планов при чекине
+        tPlans = tPlans.filter(filterFn);
 
-        tPlayers.unshift({ name, time: now, uid: myUid });
+        tPlayers.unshift({
+          name: name,
+          time: now,
+          uid: myUid,
+          maxLimitMs: DEFAULT_LIMIT_MS
+        });
         finalList = tPlayers;
 
         transaction.set(targetRef, { players: tPlayers, plans: tPlans }, { merge: true });
@@ -714,6 +880,7 @@
   async function leave(loc) {
     const name = resolvePlayerName();
     const myUid = getUserId();
+    let spentMinutes = 0;
     let spentTimeStr = "";
     let finalList = [];
     const locRef = db.collection('locations').doc(loc);
@@ -726,6 +893,7 @@
         
         const currentPlayer = list.find(p => (p.uid || p) === myUid || (p.name || p) === name);
         if (currentPlayer && currentPlayer.time) {
+          spentMinutes = Math.floor((Date.now() - currentPlayer.time) / 60000);
           spentTimeStr = formatDuration(currentPlayer.time);
         }
 
@@ -734,6 +902,13 @@
 
         transaction.set(locRef, { players: list }, { merge: true });
       });
+
+      if (spentMinutes > 0) {
+        recordTrainingTime(name, spentMinutes);
+      }
+
+      hasTriggeredPush = false;
+      document.getElementById('extend-modal').style.display = 'none';
 
       const locText = LOCATION_NAMES[loc];
       const timeInfo = spentTimeStr ? ` (время тренировки: <code>${spentTimeStr}</code>)` : "";
@@ -749,7 +924,153 @@
     }
   }
 
-  // Модалка планов
+  function confirmLeaveFromModal() {
+    if (currentUserActiveLoc) {
+      leave(currentUserActiveLoc);
+    }
+  }
+
+  async function extendSession(addMinutes) {
+    if (!currentUserActiveLoc) return;
+    const loc = currentUserActiveLoc;
+    const myUid = getUserId();
+    const name = resolvePlayerName();
+    const addMs = addMinutes * 60 * 1000;
+
+    try {
+      const locRef = db.collection('locations').doc(loc);
+      await db.runTransaction(async (t) => {
+        const doc = await t.get(locRef);
+        if (!doc.exists) return;
+        let list = doc.data().players || [];
+
+        list = list.map(p => {
+          if ((p.uid || p) === myUid || (p.name || p) === name) {
+            const currentLimit = p.maxLimitMs || DEFAULT_LIMIT_MS;
+            return {
+              ...p,
+              maxLimitMs: currentLimit + addMs
+            };
+          }
+          return p;
+        });
+
+        t.set(locRef, { players: list }, { merge: true });
+      });
+
+      hasTriggeredPush = false;
+      document.getElementById('extend-modal').style.display = 'none';
+
+      if (window.Telegram?.WebApp?.HapticFeedback) {
+        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+      }
+    } catch (e) {
+      console.error("Ошибка продления:", e);
+    }
+  }
+
+  // ================= МОНИТОРИНГ ТАЙМАУТОВ =================
+  async function monitorSessions() {
+    const now = Date.now();
+
+    for (const loc of ['park', 'vostok']) {
+      try {
+        const locRef = db.collection('locations').doc(loc);
+        let leftPlayers = [];
+        let remainingList = [];
+
+        await db.runTransaction(async (t) => {
+          const doc = await t.get(locRef);
+          if (!doc.exists) return;
+          let players = doc.data().players || [];
+          let plans = doc.data().plans || [];
+          let changed = false;
+
+          const activePlayers = [];
+          for (const p of players) {
+            const pTime = p.time || now;
+            const elapsed = now - pTime;
+            const limit = p.maxLimitMs || DEFAULT_LIMIT_MS;
+
+            // Если лимит исчерпан — автовыход
+            if (elapsed >= limit) {
+              changed = true;
+              const durationMins = Math.floor(elapsed / 60000);
+              recordTrainingTime(p.name || 'Игрок', durationMins);
+              leftPlayers.push({
+                name: p.name || 'Игрок',
+                durationStr: formatDuration(pTime)
+              });
+            } else {
+              activePlayers.push(p);
+            }
+          }
+
+          // Очистка планов старше 2 часов
+          const activePlans = plans.filter(pl => {
+            if (!pl.planTime || now - pl.planTime > 7200000) {
+              changed = true;
+              return false;
+            }
+            return true;
+          });
+
+          if (changed) {
+            t.set(locRef, { players: activePlayers, plans: activePlans }, { merge: true });
+            remainingList = activePlayers;
+          }
+        });
+
+        // Отправка стандартного уведомления об уходе в Telegram-чат
+        if (leftPlayers.length > 0) {
+          const locText = LOCATION_NAMES[loc];
+          const quoteBlock = remainingList.length > 0 
+            ? buildBlockquoteList(remainingList, "Остались у столов") 
+            : "\n\n<i>(столы освободились)</i>";
+
+          for (const lp of leftPlayers) {
+            const alertMsg = `👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${locText} (время тренировки: <code>${lp.durationStr}</code>).${quoteBlock}`;
+            sendTelegramAlert(alertMsg);
+          }
+        }
+
+      } catch (e) {
+        console.error("Ошибка мониторинга сессий:", e);
+      }
+    }
+  }
+
+  // Персональное напоминание игроку (Push + вибро + модалка)
+  function checkLocalUserPrompt() {
+    const modal = document.getElementById('extend-modal');
+    if (!currentUserActiveLoc || !currentUserActivePlayer) {
+      modal.style.display = 'none';
+      hasTriggeredPush = false;
+      return;
+    }
+
+    const now = Date.now();
+    const pTime = currentUserActivePlayer.time || now;
+    const elapsed = now - pTime;
+    const limit = currentUserActivePlayer.maxLimitMs || DEFAULT_LIMIT_MS;
+    const remindThreshold = limit - REMIND_BEFORE_MS; // на 1 ч 45 мин
+
+    if (elapsed >= remindThreshold && elapsed < limit) {
+      modal.style.display = 'flex';
+
+      if (!hasTriggeredPush) {
+        hasTriggeredPush = true;
+        sendDevicePushNotification(
+          "🏓 Настольный теннис ЧМЗ",
+          "Вы уже 1 ч 45 мин у стола! Продлите визит в приложении или освободите стол."
+        );
+      }
+    } else {
+      modal.style.display = 'none';
+    }
+  }
+
+  // Планы
   function openPlanModal(loc) {
     activePlanningLoc = loc;
     document.getElementById('plan-modal').style.display = 'flex';
@@ -773,7 +1094,7 @@
     target.setHours(h, m, 0, 0);
 
     if (target.getTime() <= Date.now()) {
-      target.setDate(target.getDate() + 1); // на завтра, если время уже прошло
+      target.setDate(target.getDate() + 1);
     }
 
     await applyPlan(target.getTime(), `к ${timeVal}`);
@@ -828,12 +1149,9 @@
         const rawPlayers = data.players || [];
         const rawPlans = data.plans || [];
 
-        // Авто-очистка просроченных планов (старше 2 часов)
-        const now = Date.now();
-        locationsData[loc].plans = rawPlans.filter(p => p.planTime && (now - p.planTime < 7200000));
-
+        locationsData[loc].plans = rawPlans;
         locationsData[loc].players = rawPlayers.map(p => {
-          if (typeof p === 'string') return { name: p, time: Date.now(), uid: p };
+          if (typeof p === 'string') return { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS };
           return p;
         });
 
@@ -845,6 +1163,8 @@
   function renderAll() {
     const currentName = resolvePlayerName();
     const myUid = getUserId();
+    currentUserActiveLoc = null;
+    currentUserActivePlayer = null;
 
     ['park', 'vostok'].forEach(loc => {
       const { players, plans } = locationsData[loc];
@@ -856,7 +1176,7 @@
       badge.innerText = `${players.length} ${players.length === 1 ? 'игрок' : 'игроков'}`;
       badge.className = players.length > 0 ? 'counter has-players' : 'counter';
 
-      // Список тех, кто за столом
+      // Играющие
       if (players.length === 0) {
         listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>';
       } else {
@@ -874,7 +1194,7 @@
         `).join('');
       }
 
-      // Список тех, кто планирует
+      // Планы
       if (plans.length === 0) {
         planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>';
       } else {
@@ -892,11 +1212,12 @@
         `).join('');
       }
 
-      // Кнопки
-      const isUserPlaying = players.some(p => (p.uid || p) === myUid || (p.name || p) === currentName);
+      const activePlayerObj = players.find(p => (p.uid || p) === myUid || (p.name || p) === currentName);
       const isUserPlanned = plans.some(p => (p.uid || p) === myUid || (p.name || p) === currentName);
 
-      if (isUserPlaying) {
+      if (activePlayerObj) {
+        currentUserActiveLoc = loc;
+        currentUserActivePlayer = activePlayerObj;
         btnBox.innerHTML = `<button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`;
       } else if (isUserPlanned) {
         btnBox.innerHTML = `
@@ -910,14 +1231,20 @@
         `;
       }
     });
+
+    checkLocalUserPrompt();
   }
 
   document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('user-display').innerText = resolvePlayerName();
     loadParkWeather();
     setupRealtimeListeners();
-    setInterval(renderAll, 30000); // таймеры обратного отсчета каждые 30 сек
-    setInterval(loadParkWeather, 600000); // погода раз в 10 минут
+    listenLeaderboard();
+    monitorSessions();
+
+    setInterval(renderAll, 30000); 
+    setInterval(monitorSessions, 60000); 
+    setInterval(loadParkWeather, 600000); 
   });
 </script>
 
