@@ -46,7 +46,7 @@
       gap: 16px;
     }
 
-    /* Блок заголовка с логотипом */
+    /* Шапка клуба */
     .club-header {
       display: flex;
       align-items: center;
@@ -63,8 +63,9 @@
       height: 58px;
       border-radius: 50%;
       object-fit: cover;
+      background: #0b1120;
       border: 2px solid #38bdf8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
       flex-shrink: 0;
     }
 
@@ -273,6 +274,7 @@
       height: 84px;
       border-radius: 50%;
       object-fit: cover;
+      background: #0b1120;
       border: 2px solid #38bdf8;
       box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
     }
@@ -322,9 +324,9 @@
 
 <div class="container">
 
-  <!-- Шапка с логотипом клуба на тёмном фоне -->
+  <!-- Шапка клуба -->
   <div class="club-header">
-    <img src="logo.png" alt="Клуб настольного тенниса ЧМЗ" class="club-logo" onerror="this.style.display='none'">
+    <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
     <div class="club-header-text">
       <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
       <p>Чекин игроков у столов в реальном времени</p>
@@ -377,7 +379,7 @@
 
 </div>
 
-<!-- Модальное окно с логотипом -->
+<!-- Модальное окно приветствия -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <img src="logo.png" alt="ЧМЗ" class="modal-logo" onerror="this.style.display='none'">
@@ -389,6 +391,34 @@
 </div>
 
 <script>
+  // ================= КОНФИГУРАЦИЯ БОТА И ОПОВЕЩЕНИЙ =================
+  // ВСТАВЬТЕ СЮДА ТОКЕН БОТА ИЗ BOTFATHER:
+  const BOT_TOKEN = "ВАШ_ТОКЕН_БОТА_ИЗ_BOTFATHER";
+  const CHAT_ID = "@ttchmz";
+
+  const LOCATION_NAMES = {
+    park: "в Парке им. Тищенко 🌳",
+    vostok: "в ДК «Восток» 🏛"
+  };
+
+  async function sendTelegramAlert(text) {
+    if (!BOT_TOKEN || BOT_TOKEN.startsWith("ВАШ_ТОКЕН")) return;
+    try {
+      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          chat_id: CHAT_ID,
+          text: text,
+          parse_mode: 'HTML'
+        })
+      });
+    } catch (err) {
+      console.warn("Не удалось отправить оповещение в чат:", err);
+    }
+  }
+
+  // ================= FIREBASE =================
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbCOxhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
@@ -471,6 +501,7 @@
     return `${hours} ч ${remMinutes} мин`;
   }
 
+  // Чекин у стола
   async function checkIn(loc) {
     const name = resolvePlayerName();
     if (!name) {
@@ -503,24 +534,46 @@
         transaction.set(targetRef, { players: targetList });
         transaction.set(otherRef, { players: otherList });
       });
+
+      // Отправляем уведомление в чат
+      const locText = LOCATION_NAMES[loc];
+      const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
+      sendTelegramAlert(alertMsg);
+
     } catch (e) {
       console.error("Ошибка чекина:", e);
     }
   }
 
+  // Выход со стола
   async function leave(loc) {
     const name = resolvePlayerName();
     if (!name) return;
 
     try {
+      let spentTimeStr = "";
       const locRef = db.collection('locations').doc(loc);
+
       await db.runTransaction(async (transaction) => {
         const doc = await transaction.get(locRef);
         if (!doc.exists) return;
         let list = doc.data().players || [];
+        
+        const currentPlayer = list.find(p => (typeof p === 'string' ? p === name : p.name === name));
+        if (currentPlayer && currentPlayer.time) {
+          spentTimeStr = formatDuration(currentPlayer.time);
+        }
+
         list = list.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
         transaction.set(locRef, { players: list });
       });
+
+      // Отправляем уведомление об уходе
+      const locText = LOCATION_NAMES[loc];
+      const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : '';
+      const alertMsg = `👋 <b>${escapeHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
+      sendTelegramAlert(alertMsg);
+
     } catch (e) {
       console.error("Ошибка выхода:", e);
     }
