@@ -14,7 +14,7 @@
     :root {
       --primary: #e11d48;
       --primary-hover: #be123c;
-      --bg: #0f172a;
+      --bg: #0b1120;
       --card-bg: #1e293b;
       --card-border: #334155;
       --text: #f8fafc;
@@ -46,12 +46,47 @@
       gap: 16px;
     }
 
+    /* Блок заголовка с логотипом */
+    .club-header {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      padding: 12px 16px;
+      border-radius: 16px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .club-logo {
+      width: 58px;
+      height: 58px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+      flex-shrink: 0;
+    }
+
+    .club-header-text h1 {
+      font-size: 15px;
+      font-weight: 700;
+      line-height: 1.25;
+      color: #f8fafc;
+    }
+
+    .club-header-text p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
     /* Верхняя панель профиля */
     .profile-bar {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: var(--card-bg);
+      background: rgba(30, 41, 59, 0.7);
       border: 1px solid var(--card-border);
       padding: 10px 14px;
       border-radius: 12px;
@@ -122,7 +157,7 @@
 
     /* Вертикальный список игроков */
     .player-list {
-      background: rgba(15, 23, 42, 0.6);
+      background: rgba(11, 17, 32, 0.6);
       border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 8px 12px;
@@ -209,8 +244,8 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(15, 23, 42, 0.88);
-      backdrop-filter: blur(4px);
+      background: rgba(11, 17, 32, 0.92);
+      backdrop-filter: blur(6px);
       display: none;
       align-items: center;
       justify-content: center;
@@ -225,20 +260,25 @@
       max-width: 380px;
       border-radius: 20px;
       padding: 24px 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
       text-align: center;
       display: flex;
       flex-direction: column;
+      align-items: center;
       gap: 14px;
     }
 
-    .club-badge {
-      font-size: 34px;
-      line-height: 1;
+    .modal-logo {
+      width: 84px;
+      height: 84px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 2px solid #38bdf8;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
     }
 
     .modal-box h2 {
-      font-size: 19px;
+      font-size: 18px;
       font-weight: 700;
       color: #ffffff;
     }
@@ -251,7 +291,7 @@
 
     .input-name {
       width: 100%;
-      background: #0f172a;
+      background: #0b1120;
       border: 1px solid var(--card-border);
       border-radius: 10px;
       padding: 12px 14px;
@@ -281,6 +321,15 @@
 <body>
 
 <div class="container">
+
+  <!-- Шапка с логотипом клуба на тёмном фоне -->
+  <div class="club-header">
+    <img src="logo.png" alt="Клуб настольного тенниса ЧМЗ" class="club-logo" onerror="this.style.display='none'">
+    <div class="club-header-text">
+      <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
+      <p>Чекин игроков у столов в реальном времени</p>
+    </div>
+  </div>
 
   <!-- Плашка профиля -->
   <div class="profile-bar">
@@ -328,19 +377,18 @@
 
 </div>
 
-<!-- Модальное окно приветствия клуба -->
+<!-- Модальное окно с логотипом -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
-    <div class="club-badge">🏓</div>
-    <h2>Клуб любителей настольного тенниса ЧМЗ</h2>
-    <p>Добро пожаловать в сообщество! Введите ваше имя или никнейм, чтобы одноклубники видели, кто сейчас на тренировке у столов.</p>
+    <img src="logo.png" alt="ЧМЗ" class="modal-logo" onerror="this.style.display='none'">
+    <h2>Добро пожаловать в клуб!</h2>
+    <p>Введите ваше имя или никнейм, чтобы одноклубники видели, кто сейчас тренируется у столов.</p>
     <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="28" />
     <button class="btn-save-name" onclick="saveCustomName()">Готово, к столам!</button>
   </div>
 </div>
 
 <script>
-  // Инициализация Firebase
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbCOxhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
@@ -353,13 +401,11 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  // Telegram WebApp
   if (window.Telegram?.WebApp) {
     window.Telegram.WebApp.ready();
     window.Telegram.WebApp.expand();
   }
 
-  // Локальный кэш данных игроков для перерисовки таймера
   const locationsData = {
     park: [],
     vostok: []
@@ -411,7 +457,6 @@
     renderAll();
   }
 
-  // Форматирование времени
   function formatCheckinTime(ts) {
     const date = new Date(ts);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
@@ -426,7 +471,6 @@
     return `${hours} ч ${remMinutes} мин`;
   }
 
-  // Облачные действия с базой Firestore
   async function checkIn(loc) {
     const name = resolvePlayerName();
     if (!name) {
@@ -448,11 +492,9 @@
         let targetList = (targetDoc.exists && targetDoc.data().players) || [];
         let otherList = (otherDoc.exists && otherDoc.data().players) || [];
 
-        // Удаляем игрока из обеих локаций
         targetList = targetList.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
         otherList = otherList.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
 
-        // Добавляем в целевую локацию объект с временем
         targetList.unshift({
           name: name,
           time: now
@@ -462,7 +504,7 @@
         transaction.set(otherRef, { players: otherList });
       });
     } catch (e) {
-      console.error("Ошибка при чекине:", e);
+      console.error("Ошибка чекина:", e);
     }
   }
 
@@ -480,18 +522,16 @@
         transaction.set(locRef, { players: list });
       });
     } catch (e) {
-      console.error("Ошибка при выходе:", e);
+      console.error("Ошибка выхода:", e);
     }
   }
 
-  // Подписка на обновления в реальном времени
   function setupRealtimeListeners() {
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
         const rawPlayers = data.players || [];
 
-        // Совместимость со старым форматом строк
         locationsData[loc] = rawPlayers.map(p => {
           if (typeof p === 'string') {
             return { name: p, time: Date.now() };
@@ -501,7 +541,7 @@
 
         renderAll();
       }, err => {
-        console.error("Ошибка синхронизации:", err);
+        console.error("Ошибка подписки:", err);
       });
     });
   }
@@ -515,11 +555,9 @@
       const badge = document.getElementById('badge-' + loc);
       const btnBox = document.getElementById('btn-container-' + loc);
 
-      // Бейдж
       badge.innerText = `${list.length} ${list.length === 1 ? 'игрок' : 'игроков'}`;
       badge.className = list.length > 0 ? 'counter has-players' : 'counter';
 
-      // Список
       if (list.length === 0) {
         container.innerHTML = '<span class="empty-note">Сейчас у столов свободно</span>';
       } else {
@@ -537,7 +575,6 @@
         `).join('');
       }
 
-      // Динамическая кнопка
       const isUserHere = currentName && list.some(p => p.name === currentName);
       if (isUserHere) {
         btnBox.innerHTML = `<button class="btn btn-leave" onclick="leave('${loc}')">Покинуть стол</button>`;
@@ -556,8 +593,6 @@
   document.addEventListener('DOMContentLoaded', () => {
     refreshUI();
     setupRealtimeListeners();
-
-    // Автообновление счетчика минут на экране раз в минуту
     setInterval(renderAll, 60000);
   });
 </script>
