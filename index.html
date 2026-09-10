@@ -424,7 +424,7 @@
     return uid;
   }
 
-  // Экранирование для Telegram HTML (только &, <, >)
+  // Безопасное экранирование для Telegram HTML
   function cleanHtml(str) {
     if (!str) return '';
     return String(str)
@@ -433,7 +433,30 @@
       .replace(/>/g, '&gt;');
   }
 
-  // Отправка через нативную HTML-форму в скрытый iframe
+  // Склонение слова "игрок"
+  function getPlayersCountSuffix(count) {
+    const mod10 = count % 10;
+    const mod100 = count % 100;
+    if (mod100 >= 11 && mod100 <= 19) {
+      return `${count} игроков`;
+    }
+    if (mod10 === 1) {
+      return `${count} игрок`;
+    }
+    if (mod10 >= 2 && mod10 <= 4) {
+      return `${count} игрока`;
+    }
+    return `${count} игроков`;
+  }
+
+  // Оформление состава в виде цветной плашки-цитаты <blockquote>
+  function buildBlockquoteList(list, title) {
+    if (!list || list.length === 0) return "";
+    const lines = list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n");
+    return `\n\n<blockquote>👥 <b>${title} (${getPlayersCountSuffix(list.length)}):</b>\n${lines}</blockquote>`;
+  }
+
+  // Отправка через нативную форму в невидимый iframe
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
 
@@ -625,13 +648,9 @@
       return;
     }
 
-    // Сообщение с выделением: обычным "игрок" и жирным <b>Имя</b>
-    const locText = LOCATION_NAMES[loc];
-    const alertMsg = `🏓 игрок <b>${cleanHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
-    sendTelegramAlert(alertMsg);
-
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
+    let finalList = [];
 
     try {
       const targetRef = db.collection('locations').doc(loc);
@@ -658,9 +677,19 @@
           uid: myUid
         });
 
+        finalList = targetList;
+
         transaction.set(targetRef, { players: targetList });
         transaction.set(otherRef, { players: otherList });
       });
+
+      // Сообщение: чекин + цветной блок участников
+      const locText = LOCATION_NAMES[loc];
+      const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
+
+      const alertMsg = `🏓 игрок <b>${cleanHtml(name)}</b> уже у стола ${locText}!${quoteBlock}\n\nКто составит компанию?`;
+      sendTelegramAlert(alertMsg);
+
     } catch (e) {
       console.error("Ошибка чекина:", e);
     }
@@ -671,6 +700,7 @@
     const myUid = getUserId();
 
     let spentTimeStr = "";
+    let finalList = [];
     const locRef = db.collection('locations').doc(loc);
 
     try {
@@ -693,16 +723,28 @@
           return p.uid !== myUid && p.name !== name;
         });
 
+        finalList = list;
+
         transaction.set(locRef, { players: list });
       });
+
+      // Сообщение: добавлена фраза "время тренировки: ..."
+      const locText = LOCATION_NAMES[loc];
+      const timeInfo = spentTimeStr ? ` (время тренировки: <code>${spentTimeStr}</code>)` : "";
+      
+      let quoteBlock = "";
+      if (finalList.length > 0) {
+        quoteBlock = buildBlockquoteList(finalList, "Остались у столов");
+      } else {
+        quoteBlock = "\n\n<i>(столы освободились)</i>";
+      }
+
+      const alertMsg = `👋 игрок <b>${cleanHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.${quoteBlock}`;
+      sendTelegramAlert(alertMsg);
+
     } catch (e) {
       console.error("Ошибка выхода:", e);
     }
-
-    const locText = LOCATION_NAMES[loc];
-    const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : "";
-    const alertMsg = `👋 игрок <b>${cleanHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
-    sendTelegramAlert(alertMsg);
   }
 
   function setupRealtimeListeners() {
