@@ -424,7 +424,7 @@
     return uid;
   }
 
-  // Отправка через нативную HTML-форму в скрытый iframe — гарантирует выполнение запроса без блокировок CORS/CSP
+  // Отправка через нативную HTML-форму в скрытый iframe — гарантирует выполнение запроса без ограничений CORS/CSP
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
 
@@ -616,9 +616,9 @@
       return;
     }
 
-    // Отправляем оповещение
+    // Чистый текст без ломающих Telegram тегов
     const locText = LOCATION_NAMES[loc];
-    const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
+    const alertMsg = "🏓 " + name + " уже у стола " + locText + "! Кто составит компанию?";
     sendTelegramAlert(alertMsg);
 
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
@@ -691,8 +691,8 @@
     }
 
     const locText = LOCATION_NAMES[loc];
-    const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : '';
-    const alertMsg = `👋 <b>${escapeHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
+    const timeInfo = spentTimeStr ? " (играл " + spentTimeStr + ")" : "";
+    const alertMsg = "👋 " + name + " закончил тренировку и покинул стол " + locText + timeInfo + ".";
     sendTelegramAlert(alertMsg);
   }
 
@@ -736,7 +736,7 @@
           <div class="player-row">
             <div class="player-name">
               <span>🏓</span>
-              <span>${escapeHtml(item.name || 'Игрок')}</span>
+              <span>${item.name || 'Игрок'}</span>
             </div>
             <div class="player-time-box">
               <span>с ${formatCheckinTime(item.time || Date.now())}</span>
@@ -753,13 +753,6 @@
       } else {
         btnBox.innerHTML = `<button class="btn btn-join" onclick="checkIn('${loc}')">Я у стола</button>`;
       }
-    });
-  }
-
-  function escapeHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/[&<>"']/g, function(m) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
     });
   }
 
