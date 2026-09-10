@@ -400,21 +400,20 @@
     vostok: "в ДК «Восток» 🏛"
   };
 
-  async function sendTelegramAlert(text) {
+  function sendTelegramAlert(text) {
     if (!BOT_TOKEN || BOT_TOKEN.startsWith("ВАШ_ТОКЕН")) return;
+
+    const encodedText = encodeURIComponent(text);
+    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CHAT_ID)}&text=${encodedText}&parse_mode=HTML`;
+
+    // 1. Метод Image Beacon — пробивает блокировки CORS во внешних браузерах (MAX, Chrome, Safari)
+    const img = new Image();
+    img.src = url;
+
+    // 2. Фоновый запрос fetch в режиме no-cors
     try {
-      await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: CHAT_ID,
-          text: text,
-          parse_mode: 'HTML'
-        })
-      });
-    } catch (err) {
-      console.warn("Не удалось отправить оповещение в чат:", err);
-    }
+      fetch(url, { mode: 'no-cors' }).catch(() => {});
+    } catch (e) {}
   }
 
   // ================= FIREBASE =================
@@ -455,7 +454,7 @@
     const saved = localStorage.getItem('tt_name');
     if (saved && saved.trim() !== '') return saved.trim();
 
-    // 3. Если зашли из внешнего браузера / MAX и имя ещё не введено — создаем аккуратный гостевой ник
+    // 3. Если зашли из внешнего браузера / MAX и имя ещё не введено — создаем гостевой ник
     const guestName = "Гость #" + Math.floor(100 + Math.random() * 900);
     localStorage.setItem('tt_name', guestName);
     return guestName;
@@ -485,7 +484,6 @@
     const saved = localStorage.getItem('tt_name');
     const isTg = Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user);
 
-    // Если гость пришел из браузера/MAX впервые — ненавязчиво предлагаем представиться
     if (!saved && !isTg) {
       showNameModal();
     }
@@ -538,7 +536,7 @@
         transaction.set(otherRef, { players: otherList });
       });
 
-      // Отправляем уведомление в Telegram чат клуба
+      // Отправляем уведомление в Telegram чат
       const locText = LOCATION_NAMES[loc];
       const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
       sendTelegramAlert(alertMsg);
