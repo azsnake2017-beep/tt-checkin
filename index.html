@@ -241,7 +241,7 @@
       background: #475569;
     }
 
-    /* Модальное окно приветствия */
+    /* Модальное окно смены имени */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -307,6 +307,12 @@
       border-color: var(--primary);
     }
 
+    .error-hint {
+      color: #f87171;
+      font-size: 12px;
+      display: none;
+    }
+
     .btn-save-name {
       width: 100%;
       background: var(--primary);
@@ -316,6 +322,14 @@
       border-radius: 10px;
       font-size: 15px;
       font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn-cancel-modal {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
       cursor: pointer;
     }
   </style>
@@ -335,7 +349,7 @@
 
   <!-- Плашка профиля -->
   <div class="profile-bar">
-    <span class="profile-info">Вы: <b id="user-display">Игрок</b></span>
+    <span class="profile-info">Вы: <b id="user-display">Загрузка...</b></span>
     <button class="btn-edit" onclick="showNameModal()">Сменить имя</button>
   </div>
 
@@ -379,19 +393,21 @@
 
 </div>
 
-<!-- Модальное окно приветствия -->
+<!-- Модальное окно приветствия / смены имени -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <img src="logo.png" alt="ЧМЗ" class="modal-logo" onerror="this.style.display='none'">
-    <h2>Добро пожаловать в клуб!</h2>
-    <p>Введите ваше имя или никнейм, чтобы одноклубники видели, кто сейчас тренируется у столов.</p>
+    <h2 id="modal-title">Ваше имя в клубе</h2>
+    <p>Введите имя или никнейм. Под этим именем вас увидят одноклубники в списке столов и чате.</p>
     <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="28" />
-    <button class="btn-save-name" onclick="saveCustomName()">Готово, к столам!</button>
+    <span class="error-hint" id="name-error">Это имя уже занято игроком у стола</span>
+    <button class="btn-save-name" onclick="saveCustomName()">Сохранить</button>
+    <button class="btn-cancel-modal" id="modal-cancel-btn" onclick="hideNameModal()">Отмена</button>
   </div>
 </div>
 
 <script>
-  // ================= КОНФИГУРАЦИЯ БОТА И ОПОВЕЩЕНИЙ =================
+  // ================= КОНФИГУРАЦИЯ =================
   const BOT_TOKEN = "8886837839:AAHm50-bdSUwWVHnmlbicB1-t8u6aJ23shM";
   const CHAT_ID = "@ttchmz";
 
@@ -400,20 +416,31 @@
     vostok: "в ДК «Восток» 🏛"
   };
 
+  // Получение / создание уникального ID пользователя для защиты от коллизий
+  function getUserId() {
+    let uid = localStorage.getItem('tt_uid');
+    if (!uid) {
+      uid = 'u_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
+      localStorage.setItem('tt_uid', uid);
+    }
+    return uid;
+  }
+
+  // Универсальная отправка уведомлений
   function sendTelegramAlert(text) {
     if (!BOT_TOKEN || BOT_TOKEN.startsWith("ВАШ_ТОКЕН")) return;
 
     const encodedText = encodeURIComponent(text);
-    const url = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CHAT_ID)}&text=${encodedText}&parse_mode=HTML`;
+    const tgUrl = `https://api.telegram.org/bot${BOT_TOKEN}/sendMessage?chat_id=${encodeURIComponent(CHAT_ID)}&text=${encodedText}&parse_mode=HTML`;
 
-    // 1. Метод Image Beacon — пробивает блокировки CORS во внешних браузерах (MAX, Chrome, Safari)
-    const img = new Image();
-    img.src = url;
+    // 1. Попытка через стандартный Fetch
+    fetch(tgUrl, { mode: 'no-cors' }).catch(() => {});
 
-    // 2. Фоновый запрос fetch в режиме no-cors
+    // 2. Метод Image beacon для обхода CORS
     try {
-      fetch(url, { mode: 'no-cors' }).catch(() => {});
-    } catch (e) {}
+      const img = new Image();
+      img.src = tgUrl;
+    } catch(e) {}
   }
 
   // ================= FIREBASE =================
@@ -434,27 +461,26 @@
     window.Telegram.WebApp.expand();
   }
 
-  const locationsData = {
+  let locationsData = {
     park: [],
     vostok: []
   };
 
   function resolvePlayerName() {
-    // 1. Проверяем Telegram WebApp
+    // Если Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const u = window.Telegram.WebApp.initDataUnsafe.user;
       const tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
-      if (tgName) {
+      if (tgName && !localStorage.getItem('tt_name')) {
         localStorage.setItem('tt_name', tgName);
         return tgName;
       }
     }
 
-    // 2. Проверяем сохраненное имя в памяти браузера
     const saved = localStorage.getItem('tt_name');
     if (saved && saved.trim() !== '') return saved.trim();
 
-    // 3. Если зашли из внешнего браузера / MAX и имя ещё не введено — создаем гостевой ник
+    // Дефолтное имя при первом заходе
     const guestName = "Гость #" + Math.floor(100 + Math.random() * 900);
     localStorage.setItem('tt_name', guestName);
     return guestName;
@@ -463,33 +489,93 @@
   function showNameModal() {
     const modal = document.getElementById('name-modal');
     const input = document.getElementById('name-input');
+    const err = document.getElementById('name-error');
+    err.style.display = 'none';
+
     const current = localStorage.getItem('tt_name') || '';
     input.value = current.startsWith("Гость #") ? "" : current;
     modal.style.display = 'flex';
     input.focus();
   }
 
-  function saveCustomName() {
+  function hideNameModal() {
+    document.getElementById('name-modal').style.display = 'none';
+  }
+
+  // Проверка: занято ли имя кем-то ДРУГИМ за столом прямо сейчас
+  function isNameTakenByOthers(newName) {
+    const myUid = getUserId();
+    const cleanNew = newName.trim().toLowerCase();
+
+    for (const loc of ['park', 'vostok']) {
+      for (const p of locationsData[loc]) {
+        const pName = (p.name || '').trim().toLowerCase();
+        const pUid = p.uid || p.name; // обратная совместимость
+        if (pName === cleanNew && pUid !== myUid) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Сохранение имени + автоматическое обновление за столом, если уже играл
+  async function saveCustomName() {
     const input = document.getElementById('name-input');
+    const err = document.getElementById('name-error');
     let val = input.value.trim();
+
     if (!val) {
       val = "Гость #" + Math.floor(100 + Math.random() * 900);
     }
-    localStorage.setItem('tt_name', val);
-    document.getElementById('name-modal').style.display = 'none';
-    refreshUI();
-  }
 
-  function refreshUI() {
-    const saved = localStorage.getItem('tt_name');
-    const isTg = Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user);
-
-    if (!saved && !isTg) {
-      showNameModal();
+    // Защита от дублей чужих имён
+    if (isNameTakenByOthers(val)) {
+      err.innerText = "Это имя уже занято другим игроком у стола!";
+      err.style.display = 'block';
+      return;
     }
 
-    const name = resolvePlayerName();
-    document.getElementById('user-display').innerText = name;
+    const oldName = localStorage.getItem('tt_name');
+    const myUid = getUserId();
+    localStorage.setItem('tt_name', val);
+    hideNameModal();
+    document.getElementById('user-display').innerText = val;
+
+    // Если игрок в этот момент уже сидел за столом со старым именем — обновляем имя в базе
+    if (oldName && oldName !== val) {
+      try {
+        for (const loc of ['park', 'vostok']) {
+          const locRef = db.collection('locations').doc(loc);
+          await db.runTransaction(async (t) => {
+            const doc = await t.get(locRef);
+            if (!doc.exists) return;
+            let list = doc.data().players || [];
+            let updated = false;
+
+            list = list.map(p => {
+              const pIdentifier = (typeof p === 'object' && p.uid) ? p.uid : (p.name || p);
+              if (pIdentifier === myUid || (typeof p === 'object' && p.name === oldName) || p === oldName) {
+                updated = true;
+                return {
+                  name: val,
+                  time: p.time || Date.now(),
+                  uid: myUid
+                };
+              }
+              return p;
+            });
+
+            if (updated) {
+              t.set(locRef, { players: list });
+            }
+          });
+        }
+      } catch (e) {
+        console.error("Ошибка синхронизации имени за столом:", e);
+      }
+    }
+
     renderAll();
   }
 
@@ -507,9 +593,18 @@
     return `${hours} ч ${remMinutes} мин`;
   }
 
-  // Чекин у стола
+  // Чекин за стол
   async function checkIn(loc) {
     const name = resolvePlayerName();
+    const myUid = getUserId();
+
+    // Проверяем, не пытается ли сесть под уже занятым именем
+    if (isNameTakenByOthers(name)) {
+      alert("Имя «" + name + "» уже занято за столом. Смените имя.");
+      showNameModal();
+      return;
+    }
+
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
 
@@ -524,19 +619,27 @@
         let targetList = (targetDoc.exists && targetDoc.data().players) || [];
         let otherList = (otherDoc.exists && otherDoc.data().players) || [];
 
-        targetList = targetList.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
-        otherList = otherList.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
+        // Удаляем пользователя по uid или старому имени из обеих локаций
+        const filterFn = p => {
+          if (typeof p === 'string') return p !== name;
+          return p.uid !== myUid && p.name !== name;
+        };
 
+        targetList = targetList.filter(filterFn);
+        otherList = otherList.filter(filterFn);
+
+        // Сажаем за стол
         targetList.unshift({
           name: name,
-          time: now
+          time: now,
+          uid: myUid
         });
 
         transaction.set(targetRef, { players: targetList });
         transaction.set(otherRef, { players: otherList });
       });
 
-      // Отправляем уведомление в Telegram чат
+      // Отправляем уведомление в Telegram
       const locText = LOCATION_NAMES[loc];
       const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
       sendTelegramAlert(alertMsg);
@@ -549,6 +652,8 @@
   // Выход со стола
   async function leave(loc) {
     const name = resolvePlayerName();
+    const myUid = getUserId();
+
     try {
       let spentTimeStr = "";
       const locRef = db.collection('locations').doc(loc);
@@ -558,12 +663,21 @@
         if (!doc.exists) return;
         let list = doc.data().players || [];
         
-        const currentPlayer = list.find(p => (typeof p === 'string' ? p === name : p.name === name));
+        const currentPlayer = list.find(p => {
+          if (typeof p === 'string') return p === name;
+          return p.uid === myUid || p.name === name;
+        });
+
         if (currentPlayer && currentPlayer.time) {
           spentTimeStr = formatDuration(currentPlayer.time);
         }
 
-        list = list.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
+        // Удаляем строго свою запись по UID или имени
+        list = list.filter(p => {
+          if (typeof p === 'string') return p !== name;
+          return p.uid !== myUid && p.name !== name;
+        });
+
         transaction.set(locRef, { players: list });
       });
 
@@ -586,20 +700,21 @@
 
         locationsData[loc] = rawPlayers.map(p => {
           if (typeof p === 'string') {
-            return { name: p, time: Date.now() };
+            return { name: p, time: Date.now(), uid: p };
           }
           return p;
         });
 
         renderAll();
       }, err => {
-        console.error("Ошибка подписки:", err);
+        console.error("Ошибка подписки Firestore:", err);
       });
     });
   }
 
   function renderAll() {
     const currentName = resolvePlayerName();
+    const myUid = getUserId();
 
     ['park', 'vostok'].forEach(loc => {
       const list = locationsData[loc];
@@ -617,17 +732,19 @@
           <div class="player-row">
             <div class="player-name">
               <span>🏓</span>
-              <span>${escapeHtml(item.name)}</span>
+              <span>${escapeHtml(item.name || 'Игрок')}</span>
             </div>
             <div class="player-time-box">
-              <span>с ${formatCheckinTime(item.time)}</span>
-              <span class="time-badge">${formatDuration(item.time)}</span>
+              <span>с ${formatCheckinTime(item.time || Date.now())}</span>
+              <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
             </div>
           </div>
         `).join('');
       }
 
-      const isUserHere = currentName && list.some(p => p.name === currentName);
+      // Проверяем, сидит ли текущий пользователь за этим столом (по UID или имени)
+      const isUserHere = list.some(p => (p.uid && p.uid === myUid) || p.name === currentName);
+
       if (isUserHere) {
         btnBox.innerHTML = `<button class="btn btn-leave" onclick="leave('${loc}')">Покинуть стол</button>`;
       } else {
@@ -637,13 +754,15 @@
   }
 
   function escapeHtml(str) {
-    return str.replace(/[&<>"']/g, function(m) {
+    if (!str) return '';
+    return String(str).replace(/[&<>"']/g, function(m) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' }[m];
     });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    refreshUI();
+    const name = resolvePlayerName();
+    document.getElementById('user-display').innerText = name;
     setupRealtimeListeners();
     setInterval(renderAll, 60000);
   });
