@@ -408,7 +408,7 @@
 
 <script>
   // ================= ШЛЮЗ ОПОВЕЩЕНИЙ GOOGLE APPS SCRIPT =================
-  const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbxpVtbg6_kEywZxaaUWuyh-z-vWMX3BqOpz2PzpHkJ_mG9U7F8cV-XrmilP5rygdtbyYA/exec";
+  const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
@@ -424,13 +424,12 @@
     return uid;
   }
 
-  // Отправка через шлюз Google — обходит CORS и ограничения провайдеров
+  // Надежная отправка через Google Apps Script
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
 
     const targetUrl = GOOGLE_GATEWAY_URL + "?text=" + encodeURIComponent(text);
 
-    // Image Beacon устойчив к редиректам Google Apps Script
     try {
       const img = new Image();
       img.src = targetUrl;
