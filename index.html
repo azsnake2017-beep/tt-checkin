@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <style>
     :root {
       --primary: #e11d48;
@@ -41,7 +46,6 @@
       gap: 16px;
     }
 
-    /* Верхняя панель профиля */
     .profile-bar {
       display: flex;
       align-items: center;
@@ -71,7 +75,6 @@
       cursor: pointer;
     }
 
-    /* Карточки локаций */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -119,29 +122,64 @@
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 12px;
+      padding: 10px 12px;
       min-height: 48px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
+      flex-direction: column;
+      gap: 8px;
     }
 
     .empty-note {
       font-size: 13px;
       color: var(--text-muted);
+      padding: 4px 0;
     }
 
-    .tag {
+    /* Карточка игрока с таймингом */
+    .player-row {
       background: #334155;
       border: 1px solid #475569;
-      color: #f8fafc;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 13px;
-      display: inline-flex;
+      padding: 8px 12px;
+      border-radius: 10px;
+      display: flex;
+      justify-content: space-between;
       align-items: center;
-      gap: 6px;
+      gap: 8px;
+      animation: fadeIn 0.2s ease-in-out;
+    }
+
+    .player-name-wrap {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .player-time-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .time-duration {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent-green);
+      background: rgba(16, 185, 129, 0.12);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+
+    .time-start {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .btn-row {
@@ -174,7 +212,6 @@
       color: #cbd5e1;
     }
 
-    /* Модальное окно приветствия клуба */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -251,7 +288,6 @@
 
 <div class="container">
 
-  <!-- Плашка профиля -->
   <div class="profile-bar">
     <span class="profile-info">Вы: <b id="user-display">Игрок</b></span>
     <button class="btn-edit" onclick="showNameModal()">Сменить имя</button>
@@ -299,7 +335,7 @@
 
 </div>
 
-<!-- Красивое модальное окно приветствия клуба -->
+<!-- Модальное окно ввода имени -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <div class="club-badge">🏓</div>
@@ -316,8 +352,23 @@
     window.Telegram.WebApp.expand();
   }
 
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
+    authDomain: "tt-chmz.firebaseapp.com",
+    databaseURL: "https://tt-chmz-default-rtdb.firebaseio.com",
+    projectId: "tt-chmz",
+    storageBucket: "tt-chmz.firebasestorage.app",
+    messagingSenderId: "763705864834",
+    appId: "1:763705864834:web:d9035408eaf3e31d0efa9b"
+  };
+
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+  const playersRef = db.ref('active_players');
+
+  let currentServerData = {};
+
   function resolvePlayerName() {
-    // Проверка Telegram
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const u = window.Telegram.WebApp.initDataUnsafe.user;
       const tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
@@ -326,19 +377,14 @@
         return tgName;
       }
     }
-
-    // Сохранённое имя
     const saved = localStorage.getItem('tt_name');
-    if (saved && saved.trim() !== '') return saved.trim();
-
-    return null;
+    return (saved && saved.trim() !== '') ? saved.trim() : null;
   }
 
   function showNameModal() {
     const modal = document.getElementById('name-modal');
     const input = document.getElementById('name-input');
-    const current = localStorage.getItem('tt_name') || '';
-    input.value = current;
+    input.value = localStorage.getItem('tt_name') || '';
     modal.style.display = 'flex';
     input.focus();
   }
@@ -346,82 +392,102 @@
   function saveCustomName() {
     const input = document.getElementById('name-input');
     let val = input.value.trim();
-    if (!val) {
-      val = "Игрок " + Math.floor(100 + Math.random() * 900);
-    }
+    if (!val) val = "Игрок " + Math.floor(100 + Math.random() * 900);
     localStorage.setItem('tt_name', val);
     document.getElementById('name-modal').style.display = 'none';
-    refreshUI();
+    document.getElementById('user-display').innerText = val;
   }
 
-  function refreshUI() {
-    const name = resolvePlayerName();
-    if (!name) {
-      showNameModal();
-    } else {
-      document.getElementById('user-display').innerText = name;
-    }
-    renderLists();
-  }
-
-  function getPlayers(loc) {
-    try {
-      return JSON.parse(localStorage.getItem('tt_loc_' + loc)) || [];
-    } catch {
-      return [];
-    }
-  }
-
-  function savePlayers(loc, arr) {
-    localStorage.setItem('tt_loc_' + loc, JSON.stringify(arr));
-    renderLists();
-  }
-
-  function checkIn(loc) {
+  function checkIn(locationId) {
     const name = resolvePlayerName();
     if (!name) {
       showNameModal();
       return;
     }
 
-    let current = getPlayers(loc).filter(p => p !== name);
-    current.unshift(name);
-
-    // Удаляем из другой площадки
-    const other = loc === 'park' ? 'vostok' : 'park';
-    let otherList = getPlayers(other).filter(p => p !== name);
-    localStorage.setItem('tt_loc_' + other, JSON.stringify(otherList));
-
-    savePlayers(loc, current);
+    const safeKey = encodeKey(name);
+    playersRef.child(safeKey).set({
+      name: name,
+      location: locationId,
+      timestamp: Date.now()
+    });
   }
 
-  function leave(loc) {
+  function leave(locationId) {
     const name = resolvePlayerName();
     if (!name) return;
-    let current = getPlayers(loc).filter(p => p !== name);
-    savePlayers(loc, current);
+    const safeKey = encodeKey(name);
+    playersRef.child(safeKey).remove();
   }
 
-  function renderLists() {
-    ['park', 'vostok'].forEach(loc => {
-      const list = getPlayers(loc);
-      const container = document.getElementById('list-' + loc);
-      const badge = document.getElementById('badge-' + loc);
+  // Обновление из Firebase
+  playersRef.on('value', (snapshot) => {
+    currentServerData = snapshot.val() || {};
+    renderAll();
+  });
 
-      badge.innerText = `${list.length} ${list.length === 1 ? 'игрок' : 'игроков'}`;
-      badge.className = list.length > 0 ? 'counter has-players' : 'counter';
+  // Автоматический пересчёт времени нахождения у стола каждую минуту
+  setInterval(renderAll, 60000);
 
-      if (list.length === 0) {
-        container.innerHTML = '<span class="empty-note">Сейчас у столов свободно</span>';
-      } else {
-        container.innerHTML = list.map(p => `
-          <div class="tag">
-            <span>🏓</span>
-            <span>${escapeHtml(p)}</span>
-          </div>
-        `).join('');
-      }
+  function formatDuration(startTime) {
+    if (!startTime) return 'только что';
+    const diffMs = Date.now() - startTime;
+    const minutes = Math.floor(diffMs / 60000);
+
+    if (minutes < 1) return 'только что';
+    if (minutes < 60) return `${minutes} мин у стола`;
+
+    const hours = Math.floor(minutes / 60);
+    const restMins = minutes % 60;
+    return restMins > 0 ? `${hours} ч ${restMins} мин` : `${hours} ч у стола`;
+  }
+
+  function formatTime(startTime) {
+    if (!startTime) return '';
+    const date = new Date(startTime);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function renderAll() {
+    const parkPlayers = [];
+    const vostokPlayers = [];
+
+    Object.values(currentServerData).forEach(item => {
+      if (item.location === 'park') parkPlayers.push(item);
+      if (item.location === 'vostok') vostokPlayers.push(item);
     });
+
+    renderLocation('park', parkPlayers);
+    renderLocation('vostok', vostokPlayers);
+  }
+
+  function renderLocation(loc, list) {
+    const container = document.getElementById('list-' + loc);
+    const badge = document.getElementById('badge-' + loc);
+
+    badge.innerText = `${list.length} ${list.length === 1 ? 'игрок' : 'игроков'}`;
+    badge.className = list.length > 0 ? 'counter has-players' : 'counter';
+
+    if (list.length === 0) {
+      container.innerHTML = '<span class="empty-note">Сейчас у столов свободно</span>';
+    } else {
+      container.innerHTML = list.map(item => `
+        <div class="player-row">
+          <div class="player-name-wrap">
+            <span>🏓</span>
+            <span>${escapeHtml(item.name)}</span>
+          </div>
+          <div class="player-time-wrap">
+            <span class="time-duration">${formatDuration(item.timestamp)}</span>
+            <span class="time-start">с ${formatTime(item.timestamp)}</span>
+          </div>
+        </div>
+      `).join('');
+    }
+  }
+
+  function encodeKey(str) {
+    return encodeURIComponent(str).replace(/\./g, '%2E');
   }
 
   function escapeHtml(str) {
@@ -430,7 +496,14 @@
     });
   }
 
-  document.addEventListener('DOMContentLoaded', refreshUI);
+  document.addEventListener('DOMContentLoaded', () => {
+    const name = resolvePlayerName();
+    if (!name) {
+      showNameModal();
+    } else {
+      document.getElementById('user-display').innerText = name;
+    }
+  });
 </script>
 
 </body>
