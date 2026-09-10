@@ -393,7 +393,7 @@
 
 </div>
 
-<!-- Модальное окно смены имени -->
+<!-- Модальное окно приветствия / смены имени -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <img src="logo.png" alt="ЧМЗ" class="modal-logo" onerror="this.style.display='none'">
@@ -424,18 +424,28 @@
     return uid;
   }
 
-  // Надежная отправка через Google Apps Script
+  // Отправка через невидимый iframe — браузер выполняет GET-запрос до конца даже при редиректе 302
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
 
     const targetUrl = GOOGLE_GATEWAY_URL + "?text=" + encodeURIComponent(text);
 
     try {
+      const frame = document.createElement('iframe');
+      frame.style.display = 'none';
+      frame.src = targetUrl;
+      document.body.appendChild(frame);
+      setTimeout(() => {
+        if (frame.parentNode) frame.parentNode.removeChild(frame);
+      }, 5000);
+    } catch (e) {
       const img = new Image();
       img.src = targetUrl;
-    } catch (e) {}
+    }
 
-    fetch(targetUrl, { mode: 'no-cors' }).catch(() => {});
+    try {
+      fetch(targetUrl, { mode: 'no-cors' }).catch(() => {});
+    } catch (e) {}
   }
 
   // ================= FIREBASE =================
@@ -592,6 +602,11 @@
       return;
     }
 
+    // Оповещение вызывается сразу
+    const locText = LOCATION_NAMES[loc];
+    const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
+    sendTelegramAlert(alertMsg);
+
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
 
@@ -623,11 +638,6 @@
         transaction.set(targetRef, { players: targetList });
         transaction.set(otherRef, { players: otherList });
       });
-
-      const locText = LOCATION_NAMES[loc];
-      const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
-      sendTelegramAlert(alertMsg);
-
     } catch (e) {
       console.error("Ошибка чекина:", e);
     }
@@ -637,10 +647,10 @@
     const name = resolvePlayerName();
     const myUid = getUserId();
 
-    try {
-      let spentTimeStr = "";
-      const locRef = db.collection('locations').doc(loc);
+    let spentTimeStr = "";
+    const locRef = db.collection('locations').doc(loc);
 
+    try {
       await db.runTransaction(async (transaction) => {
         const doc = await transaction.get(locRef);
         if (!doc.exists) return;
@@ -662,15 +672,14 @@
 
         transaction.set(locRef, { players: list });
       });
-
-      const locText = LOCATION_NAMES[loc];
-      const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : '';
-      const alertMsg = `👋 <b>${escapeHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
-      sendTelegramAlert(alertMsg);
-
     } catch (e) {
       console.error("Ошибка выхода:", e);
     }
+
+    const locText = LOCATION_NAMES[loc];
+    const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : '';
+    const alertMsg = `👋 <b>${escapeHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
+    sendTelegramAlert(alertMsg);
   }
 
   function setupRealtimeListeners() {
