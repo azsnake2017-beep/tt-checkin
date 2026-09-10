@@ -424,7 +424,16 @@
     return uid;
   }
 
-  // Отправка через нативную HTML-форму в скрытый iframe — гарантирует выполнение запроса без ограничений CORS/CSP
+  // Экранирование для Telegram HTML (только &, <, >)
+  function cleanHtml(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;');
+  }
+
+  // Отправка через нативную HTML-форму в скрытый iframe
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
 
@@ -616,9 +625,9 @@
       return;
     }
 
-    // Чистый текст без ломающих Telegram тегов
+    // Сообщение с выделением: обычным "игрок" и жирным <b>Имя</b>
     const locText = LOCATION_NAMES[loc];
-    const alertMsg = "🏓 " + name + " уже у стола " + locText + "! Кто составит компанию?";
+    const alertMsg = `🏓 игрок <b>${cleanHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
     sendTelegramAlert(alertMsg);
 
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
@@ -691,8 +700,8 @@
     }
 
     const locText = LOCATION_NAMES[loc];
-    const timeInfo = spentTimeStr ? " (играл " + spentTimeStr + ")" : "";
-    const alertMsg = "👋 " + name + " закончил тренировку и покинул стол " + locText + timeInfo + ".";
+    const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : "";
+    const alertMsg = `👋 игрок <b>${cleanHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
     sendTelegramAlert(alertMsg);
   }
 
@@ -736,7 +745,7 @@
           <div class="player-row">
             <div class="player-name">
               <span>🏓</span>
-              <span>${item.name || 'Игрок'}</span>
+              <span>${cleanHtml(item.name || 'Игрок')}</span>
             </div>
             <div class="player-time-box">
               <span>с ${formatCheckinTime(item.time || Date.now())}</span>
