@@ -324,7 +324,7 @@
 
 <div class="container">
 
-  <!-- Шапка клуба -->
+  <!-- Шапка с логотипом клуба -->
   <div class="club-header">
     <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
     <div class="club-header-text">
@@ -392,8 +392,7 @@
 
 <script>
   // ================= КОНФИГУРАЦИЯ БОТА И ОПОВЕЩЕНИЙ =================
-  // ВСТАВЬТЕ СЮДА ТОКЕН БОТА ИЗ BOTFATHER:
-  const BOT_TOKEN = "8886837839:AAHm5O-bdSUWWVHnmlbicB1-t8u6aJ23shM";
+  const BOT_TOKEN = "8886837839:AAHm50-bdSUwWVHnmlbicB1-t8u6aJ23shM";
   const CHAT_ID = "@ttchmz";
 
   const LOCATION_NAMES = {
@@ -442,6 +441,7 @@
   };
 
   function resolvePlayerName() {
+    // 1. Проверяем Telegram WebApp
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
       const u = window.Telegram.WebApp.initDataUnsafe.user;
       const tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
@@ -451,17 +451,21 @@
       }
     }
 
+    // 2. Проверяем сохраненное имя в памяти браузера
     const saved = localStorage.getItem('tt_name');
     if (saved && saved.trim() !== '') return saved.trim();
 
-    return null;
+    // 3. Если зашли из внешнего браузера / MAX и имя ещё не введено — создаем аккуратный гостевой ник
+    const guestName = "Гость #" + Math.floor(100 + Math.random() * 900);
+    localStorage.setItem('tt_name', guestName);
+    return guestName;
   }
 
   function showNameModal() {
     const modal = document.getElementById('name-modal');
     const input = document.getElementById('name-input');
     const current = localStorage.getItem('tt_name') || '';
-    input.value = current;
+    input.value = current.startsWith("Гость #") ? "" : current;
     modal.style.display = 'flex';
     input.focus();
   }
@@ -470,7 +474,7 @@
     const input = document.getElementById('name-input');
     let val = input.value.trim();
     if (!val) {
-      val = "Игрок " + Math.floor(100 + Math.random() * 900);
+      val = "Гость #" + Math.floor(100 + Math.random() * 900);
     }
     localStorage.setItem('tt_name', val);
     document.getElementById('name-modal').style.display = 'none';
@@ -478,12 +482,16 @@
   }
 
   function refreshUI() {
-    const name = resolvePlayerName();
-    if (!name) {
+    const saved = localStorage.getItem('tt_name');
+    const isTg = Boolean(window.Telegram?.WebApp?.initDataUnsafe?.user);
+
+    // Если гость пришел из браузера/MAX впервые — ненавязчиво предлагаем представиться
+    if (!saved && !isTg) {
       showNameModal();
-    } else {
-      document.getElementById('user-display').innerText = name;
     }
+
+    const name = resolvePlayerName();
+    document.getElementById('user-display').innerText = name;
     renderAll();
   }
 
@@ -504,11 +512,6 @@
   // Чекин у стола
   async function checkIn(loc) {
     const name = resolvePlayerName();
-    if (!name) {
-      showNameModal();
-      return;
-    }
-
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
 
@@ -535,7 +538,7 @@
         transaction.set(otherRef, { players: otherList });
       });
 
-      // Отправляем уведомление в чат
+      // Отправляем уведомление в Telegram чат клуба
       const locText = LOCATION_NAMES[loc];
       const alertMsg = `🏓 <b>${escapeHtml(name)}</b> уже у стола ${locText}! Кто составит компанию?`;
       sendTelegramAlert(alertMsg);
@@ -548,8 +551,6 @@
   // Выход со стола
   async function leave(loc) {
     const name = resolvePlayerName();
-    if (!name) return;
-
     try {
       let spentTimeStr = "";
       const locRef = db.collection('locations').doc(loc);
@@ -568,7 +569,7 @@
         transaction.set(locRef, { players: list });
       });
 
-      // Отправляем уведомление об уходе
+      // Отправляем оповещение об уходе
       const locText = LOCATION_NAMES[loc];
       const timeInfo = spentTimeStr ? ` (играл ${spentTimeStr})` : '';
       const alertMsg = `👋 <b>${escapeHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.`;
