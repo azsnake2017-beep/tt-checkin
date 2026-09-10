@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Чекин у стола 🏓</title>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <style>
+    :root {
+      --bg: var(--tg-theme-bg-color, #f4f4f5);
+      --card-bg: var(--tg-theme-secondary-bg-color, #ffffff);
+      --text: var(--tg-theme-text-color, #18181b);
+      --hint: var(--tg-theme-hint-color, #71717a);
+      --btn: var(--tg-theme-button-color, #2563eb);
+      --btn-text: var(--tg-theme-button-text-color, #ffffff);
+    }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      margin: 0;
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      box-sizing: border-box;
+    }
+    .header {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .header h2 {
+      margin: 0 0 4px 0;
+      font-size: 22px;
+      font-weight: 800;
+    }
+    .header p {
+      margin: 0;
+      font-size: 14px;
+      color: var(--hint);
+    }
+    .card {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 16px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.04);
+      box-sizing: border-box;
+      margin-bottom: 14px;
+      border: 1px solid rgba(0,0,0,0.06);
+      transition: all 0.2s ease;
+    }
+    .card.active-loc {
+      border: 2px solid #16a34a;
+    }
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+    }
+    .loc-title {
+      font-weight: 700;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .counter {
+      background: #e0f2fe;
+      color: #0369a1;
+      padding: 4px 10px;
+      border-radius: 20px;
+      font-weight: 700;
+      font-size: 13px;
+    }
+    .counter.has-players {
+      background: #dcfce7;
+      color: #15803d;
+    }
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 12px;
+      border: none;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.15s;
+    }
+    .btn:active {
+      opacity: 0.8;
+    }
+    .btn-checkin {
+      background: var(--btn);
+      color: var(--btn-text);
+    }
+    .btn-leave {
+      background: #fee2e2;
+      color: #dc2626;
+      margin-top: 8px;
+    }
+    .status-badge {
+      display: inline-block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #16a34a;
+      margin-bottom: 8px;
+    }
+    details {
+      margin-top: 12px;
+      border-top: 1px solid rgba(0,0,0,0.06);
+      padding-top: 10px;
+    }
+    summary {
+      cursor: pointer;
+      font-size: 13px;
+      color: var(--hint);
+      font-weight: 600;
+      outline: none;
+      user-select: none;
+    }
+    .player-list {
+      margin: 8px 0 0 0;
+      padding: 0;
+      list-style: none;
+      font-size: 14px;
+    }
+    .player-list li {
+      padding: 6px 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 1px dashed rgba(0,0,0,0.05);
+    }
+    .player-list li:last-child {
+      border-bottom: none;
+    }
+    .time-badge {
+      color: var(--hint);
+      font-size: 12px;
+      background: rgba(0,0,0,0.04);
+      padding: 2px 6px;
+      border-radius: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>Кто у стола? 🏓</h2>
+    <p id="user-greeting">Загрузка профиля...</p>
+  </div>
+
+  <!-- Локация 1: Парк им. Тищенко -->
+  <div class="card" id="card-tish">
+    <div class="card-header">
+      <span class="loc-title">🌳 Парк им. Тищенко</span>
+      <span class="counter" id="count-tish">0 чел.</span>
+    </div>
+    
+    <div id="action-tish">
+      <button class="btn btn-checkin" onclick="checkin('tish')">
+        🏓 Я в Парке Тищенко
+      </button>
+    </div>
+
+    <details id="details-tish">
+      <summary>Список игроков (<span id="expand-count-tish">0</span>)</summary>
+      <ul class="player-list" id="list-tish">
+        <li style="color: var(--hint); justify-content: center;">Пока никого нет</li>
+      </ul>
+    </details>
+  </div>
+
+  <!-- Локация 2: ДК Восток -->
+  <div class="card" id="card-vostok">
+    <div class="card-header">
+      <span class="loc-title">🏛 ДК «Восток»</span>
+      <span class="counter" id="count-vostok">0 чел.</span>
+    </div>
+
+    <div id="action-vostok">
+      <button class="btn btn-checkin" onclick="checkin('vostok')">
+        🏓 Я в ДК Восток
+      </button>
+    </div>
+
+    <details id="details-vostok">
+      <summary>Список игроков (<span id="expand-count-vostok">0</span>)</summary>
+      <ul class="player-list" id="list-vostok">
+        <li style="color: var(--hint); justify-content: center;">Пока никого нет</li>
+      </ul>
+    </details>
+  </div>
+
+  <script>
+    const tg = window.Telegram.WebApp;
+    tg.ready();
+    tg.expand();
+
+    const user = tg.initDataUnsafe?.user;
+    const userName = user ? (user.first_name + (user.last_name ? " " + user.last_name : "")) : "Участник клуба";
+    const userId = user?.id || "local_user";
+
+    document.getElementById("user-greeting").innerText = "Привет, " + userName + "!";
+
+    // Хранение данных с автоматическим сбросом в полночь
+    const todayKey = "tt_checkin_store_" + new Date().toISOString().slice(0, 10);
+    let state = JSON.parse(localStorage.getItem(todayKey) || '{"tish": [], "vostok": []}');
+
+    function saveState() {
+      localStorage.setItem(todayKey, JSON.stringify(state));
+      render();
+    }
+
+    function checkin(loc) {
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      // Снимаем отметку со всех локаций перед новой отметкой
+      state.tish = state.tish.filter(p => p.id !== userId);
+      state.vostok = state.vostok.filter(p => p.id !== userId);
+
+      // Добавляем игрока в выбранную точку
+      state[loc].push({ id: userId, name: userName, time: timeStr });
+      
+      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('success');
+      saveState();
+    }
+
+    function leave(loc) {
+      state[loc] = state[loc].filter(p => p.id !== userId);
+      if (tg.HapticFeedback) tg.HapticFeedback.notificationOccurred('warning');
+      saveState();
+    }
+
+    function render() {
+      // Счётчики
+      const tishCount = state.tish.length;
+      const vostokCount = state.vostok.length;
+
+      const countTishEl = document.getElementById("count-tish");
+      const countVostokEl = document.getElementById("count-vostok");
+
+      countTishEl.innerText = tishCount + " чел.";
+      countTishEl.className = "counter" + (tishCount > 0 ? " has-players" : "");
+      document.getElementById("expand-count-tish").innerText = tishCount;
+
+      countVostokEl.innerText = vostokCount + " чел.";
+      countVostokEl.className = "counter" + (vostokCount > 0 ? " has-players" : "");
+      document.getElementById("expand-count-vostok").innerText = vostokCount;
+
+      // Отрисовка списков
+      renderList("tish", state.tish);
+      renderList("vostok", state.vostok);
+
+      // Проверка статуса текущего игрока
+      const inTish = state.tish.some(p => p.id === userId);
+      const inVostok = state.vostok.some(p => p.id === userId);
+
+      const cardTish = document.getElementById("card-tish");
+      const cardVostok = document.getElementById("card-vostok");
+
+      cardTish.className = "card" + (inTish ? " active-loc" : "");
+      cardVostok.className = "card" + (inVostok ? " active-loc" : "");
+
+      // Кнопки для Тищенко
+      const actionTish = document.getElementById("action-tish");
+      if (inTish) {
+        actionTish.innerHTML = `
+          <div class="status-badge">✅ Вы отмечены здесь</div>
+          <button class="btn btn-leave" onclick="leave('tish')">🏃 Я ушёл из парка</button>
+        `;
+      } else {
+        actionTish.innerHTML = `
+          <button class="btn btn-checkin" onclick="checkin('tish')">🏓 Я в Парке Тищенко</button>
+        `;
+      }
+
+      // Кнопки для ДК Восток
+      const actionVostok = document.getElementById("action-vostok");
+      if (inVostok) {
+        actionVostok.innerHTML = `
+          <div class="status-badge">✅ Вы отмечены здесь</div>
+          <button class="btn btn-leave" onclick="leave('vostok')">🏃 Я ушёл из ДК Восток</button>
+        `;
+      } else {
+        actionVostok.innerHTML = `
+          <button class="btn btn-checkin" onclick="checkin('vostok')">🏓 Я в ДК Восток</button>
+        `;
+      }
+    }
+
+    function renderList(loc, players) {
+      const container = document.getElementById("list-" + loc);
+      if (players.length === 0) {
+        container.innerHTML = '<li style="color: var(--hint); justify-content: center;">Пока никого нет</li>';
+        return;
+      }
+      container.innerHTML = players.map((p, index) => 
+        `<li>
+           <span><b>${index + 1}.</b> ${p.name} ${p.id === userId ? '<i>(Вы)</i>' : ''}</span>
+           <span class="time-badge">${p.time}</span>
+         </li>`
+      ).join("");
+    }
+
+    render();
+  </script>
+</body>
+</html>
