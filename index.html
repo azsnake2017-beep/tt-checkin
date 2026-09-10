@@ -20,6 +20,8 @@
       --text: #f8fafc;
       --text-muted: #94a3b8;
       --accent-green: #10b981;
+      --accent-amber: #f59e0b;
+      --accent-sky: #38bdf8;
     }
 
     * {
@@ -44,6 +46,7 @@
       display: flex;
       flex-direction: column;
       gap: 16px;
+      padding-bottom: 40px;
     }
 
     /* Шапка клуба */
@@ -59,13 +62,12 @@
     }
 
     .club-logo {
-      width: 58px;
-      height: 58px;
+      width: 54px;
+      height: 54px;
       border-radius: 50%;
       object-fit: cover;
       background: #0b1120;
-      border: 2px solid #38bdf8;
-      box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
+      border: 2px solid var(--accent-sky);
       flex-shrink: 0;
     }
 
@@ -82,7 +84,7 @@
       margin-top: 2px;
     }
 
-    /* Верхняя панель профиля */
+    /* Профиль */
     .profile-bar {
       display: flex;
       align-items: center;
@@ -112,7 +114,7 @@
       cursor: pointer;
     }
 
-    /* Карточки локаций */
+    /* Карточка локации */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -120,7 +122,7 @@
       padding: 16px;
       display: flex;
       flex-direction: column;
-      gap: 14px;
+      gap: 12px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     }
 
@@ -139,7 +141,22 @@
     .card-desc {
       font-size: 13px;
       color: var(--text-muted);
-      margin-top: 3px;
+      margin-top: 2px;
+    }
+
+    /* Погодный бейдж */
+    .weather-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2);
+      padding: 4px 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      color: var(--accent-sky);
+      margin-top: 6px;
+      width: fit-content;
     }
 
     .counter {
@@ -149,6 +166,7 @@
       border-radius: 20px;
       font-size: 12px;
       font-weight: 600;
+      white-space: nowrap;
     }
 
     .counter.has-players {
@@ -156,17 +174,24 @@
       color: var(--accent-green);
     }
 
-    /* Вертикальный список игроков */
+    /* Списки игроков */
+    .section-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      font-weight: 700;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
     .player-list {
       background: rgba(11, 17, 32, 0.6);
       border: 1px solid var(--card-border);
       border-radius: 12px;
       padding: 8px 12px;
-      min-height: 48px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
-      justify-content: center;
+      gap: 6px;
     }
 
     .empty-note {
@@ -181,7 +206,7 @@
       align-items: center;
       justify-content: space-between;
       padding: 6px 0;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
+      border-bottom: 1px solid rgba(51, 65, 85, 0.3);
     }
 
     .player-row:last-child {
@@ -210,17 +235,29 @@
       font-weight: 600;
     }
 
-    /* Кнопки */
+    .time-badge-plan {
+      color: var(--accent-amber);
+      font-weight: 600;
+    }
+
+    /* Кнопки действий */
+    .action-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 4px;
+    }
+
     .btn {
       width: 100%;
       border: none;
-      padding: 13px;
+      padding: 12px;
       border-radius: 12px;
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 600;
       cursor: pointer;
       text-align: center;
-      transition: opacity 0.2s ease;
+      transition: all 0.2s ease;
     }
 
     .btn-join {
@@ -228,8 +265,14 @@
       color: #ffffff;
     }
 
-    .btn-join:active {
-      background: var(--primary-hover);
+    .btn-plan {
+      background: #1e293b;
+      border: 1px solid #3b82f6;
+      color: #93c5fd;
+    }
+
+    .btn-plan:hover {
+      background: rgba(59, 130, 246, 0.15);
     }
 
     .btn-leave {
@@ -237,11 +280,7 @@
       color: #cbd5e1;
     }
 
-    .btn-leave:active {
-      background: #475569;
-    }
-
-    /* Модальное окно смены имени */
+    /* Модалки */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -258,37 +297,55 @@
       background: var(--card-bg);
       border: 1px solid var(--card-border);
       width: 100%;
-      max-width: 380px;
+      max-width: 360px;
       border-radius: 20px;
-      padding: 24px 20px;
+      padding: 20px;
       box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      text-align: center;
       display: flex;
       flex-direction: column;
-      align-items: center;
       gap: 14px;
+      text-align: center;
     }
 
-    .modal-logo {
-      width: 84px;
-      height: 84px;
-      border-radius: 50%;
-      object-fit: cover;
-      background: #0b1120;
-      border: 2px solid #38bdf8;
-      box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+    .quick-plan-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
     }
 
-    .modal-box h2 {
-      font-size: 18px;
-      font-weight: 700;
+    .btn-quick-time {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      color: #cbd5e1;
+      padding: 10px 4px;
+      border-radius: 10px;
+      font-size: 13px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+
+    .btn-quick-time:hover {
+      border-color: var(--accent-sky);
       color: #ffffff;
     }
 
-    .modal-box p {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.5;
+    .custom-time-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      margin-top: 4px;
+    }
+
+    .input-time {
+      background: #0b1120;
+      border: 1px solid var(--card-border);
+      color: #fff;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
+      flex: 1;
+      text-align: center;
     }
 
     .input-name {
@@ -303,34 +360,13 @@
       text-align: center;
     }
 
-    .input-name:focus {
-      border-color: var(--primary);
-    }
-
-    .error-hint {
-      color: #f87171;
-      font-size: 12px;
-      display: none;
-    }
-
-    .btn-save-name {
-      width: 100%;
-      background: var(--primary);
-      color: white;
-      border: none;
-      padding: 12px;
-      border-radius: 10px;
-      font-size: 15px;
-      font-weight: 700;
-      cursor: pointer;
-    }
-
     .btn-cancel-modal {
       background: transparent;
       border: none;
       color: var(--text-muted);
       font-size: 13px;
       cursor: pointer;
+      margin-top: 4px;
     }
   </style>
 </head>
@@ -338,12 +374,12 @@
 
 <div class="container">
 
-  <!-- Шапка с логотипом клуба -->
+  <!-- Шапка клуба -->
   <div class="club-header">
     <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
     <div class="club-header-text">
       <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
-      <p>Чекин игроков у столов в реальном времени</p>
+      <p>Чекин игроков и планирование тренировок</p>
     </div>
   </div>
 
@@ -359,16 +395,28 @@
       <div>
         <div class="card-title">🌳 Парк им. Тищенко</div>
         <div class="card-desc">Столы на свежем воздухе</div>
+        <div class="weather-badge" id="weather-park">
+          <span>Загрузка погоды...</span>
+        </div>
       </div>
       <span class="counter" id="badge-park">0 игроков</span>
     </div>
 
+    <!-- За столом -->
+    <div class="section-label">Сейчас играют:</div>
     <div class="player-list" id="list-park">
-      <span class="empty-note">Сейчас у столов свободно</span>
+      <span class="empty-note">У столов пока свободно</span>
     </div>
 
-    <div id="btn-container-park">
-      <button class="btn btn-join" onclick="checkIn('park')">Я у стола</button>
+    <!-- Планируют подойти -->
+    <div class="section-label">Собираются прийти:</div>
+    <div class="player-list" id="plan-list-park">
+      <span class="empty-note">Никто не планировал</span>
+    </div>
+
+    <div class="action-group" id="btn-container-park">
+      <button class="btn btn-join" onclick="checkIn('park')">🏓 Я уже у стола</button>
+      <button class="btn btn-plan" onclick="openPlanModal('park')">⏳ Буду позже...</button>
     </div>
   </div>
 
@@ -382,38 +430,70 @@
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
 
+    <!-- За столом -->
+    <div class="section-label">Сейчас играют:</div>
     <div class="player-list" id="list-vostok">
-      <span class="empty-note">Сейчас у столов свободно</span>
+      <span class="empty-note">У столов пока свободно</span>
     </div>
 
-    <div id="btn-container-vostok">
-      <button class="btn btn-join" onclick="checkIn('vostok')">Я у стола</button>
+    <!-- Планируют подойти -->
+    <div class="section-label">Собираются прийти:</div>
+    <div class="player-list" id="plan-list-vostok">
+      <span class="empty-note">Никто не планировал</span>
+    </div>
+
+    <div class="action-group" id="btn-container-vostok">
+      <button class="btn btn-join" onclick="checkIn('vostok')">🏓 Я уже у стола</button>
+      <button class="btn btn-plan" onclick="openPlanModal('vostok')">⏳ Буду позже...</button>
     </div>
   </div>
 
+</div>
+
+<!-- Модальное окно планирования визита -->
+<div class="modal-overlay" id="plan-modal">
+  <div class="modal-box">
+    <h3 style="font-size: 17px;">Когда планируете прийти?</h3>
+    <p style="font-size: 13px; color: var(--text-muted);">Бот предупредит одноклубников в Telegram-чате</p>
+
+    <div class="quick-plan-grid">
+      <button class="btn-quick-time" onclick="submitQuickPlan(15)">+15 мин</button>
+      <button class="btn-quick-time" onclick="submitQuickPlan(30)">+30 мин</button>
+      <button class="btn-quick-time" onclick="submitQuickPlan(45)">+45 мин</button>
+    </div>
+
+    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">или укажите точное время:</div>
+    <div class="custom-time-row">
+      <input type="time" id="exact-time-input" class="input-time" />
+      <button class="btn btn-join" style="padding: 10px 16px; width: auto;" onclick="submitExactPlan()">ОК</button>
+    </div>
+
+    <button class="btn-cancel-modal" onclick="closePlanModal()">Отмена</button>
+  </div>
 </div>
 
 <!-- Модальное окно смены имени -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
-    <img src="logo.png" alt="ЧМЗ" class="modal-logo" onerror="this.style.display='none'">
-    <h2 id="modal-title">Ваше имя в клубе</h2>
-    <p>Введите имя или никнейм. Под этим именем вас увидят одноклубники в списке столов и чате.</p>
+    <h3>Ваше имя в клубе</h3>
+    <p style="font-size: 13px; color: var(--text-muted);">Введите имя или никнейм для чекинов и чата</p>
     <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="28" />
-    <span class="error-hint" id="name-error">Это имя уже занято игроком у стола</span>
-    <button class="btn-save-name" onclick="saveCustomName()">Сохранить</button>
-    <button class="btn-cancel-modal" id="modal-cancel-btn" onclick="hideNameModal()">Отмена</button>
+    <span style="color: #f87171; font-size: 12px; display: none;" id="name-error">Это имя уже занято за столом!</span>
+    <button class="btn btn-join" onclick="saveCustomName()">Сохранить</button>
+    <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
   </div>
 </div>
 
 <script>
-  // ================= ШЛЮЗ ОПОВЕЩЕНИЙ GOOGLE APPS SCRIPT =================
+  // ================= ШЛЮЗ TELEGRAM =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
     vostok: "в ДК «Восток» 🏛"
   };
+
+  let activePlanningLoc = null;
 
   function getUserId() {
     let uid = localStorage.getItem('tt_uid');
@@ -424,42 +504,28 @@
     return uid;
   }
 
-  // Безопасное экранирование для Telegram HTML
   function cleanHtml(str) {
     if (!str) return '';
-    return String(str)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;');
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // Склонение слова "игрок"
   function getPlayersCountSuffix(count) {
     const mod10 = count % 10;
     const mod100 = count % 100;
-    if (mod100 >= 11 && mod100 <= 19) {
-      return `${count} игроков`;
-    }
-    if (mod10 === 1) {
-      return `${count} игрок`;
-    }
-    if (mod10 >= 2 && mod10 <= 4) {
-      return `${count} игрока`;
-    }
+    if (mod100 >= 11 && mod100 <= 19) return `${count} игроков`;
+    if (mod10 === 1) return `${count} игрок`;
+    if (mod10 >= 2 && mod10 <= 4) return `${count} игрока`;
     return `${count} игроков`;
   }
 
-  // Оформление состава в виде цветной плашки-цитаты <blockquote>
   function buildBlockquoteList(list, title) {
     if (!list || list.length === 0) return "";
     const lines = list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n");
     return `\n\n<blockquote>👥 <b>${title} (${getPlayersCountSuffix(list.length)}):</b>\n${lines}</blockquote>`;
   }
 
-  // Отправка через нативную форму в невидимый iframe
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
-
     try {
       let sinkFrame = document.getElementById('tg_sink_frame');
       if (!sinkFrame) {
@@ -483,7 +549,6 @@
 
       form.appendChild(input);
       document.body.appendChild(form);
-
       form.submit();
 
       setTimeout(() => {
@@ -491,6 +556,33 @@
       }, 2000);
     } catch (e) {
       console.error('Ошибка отправки формы:', e);
+    }
+  }
+
+  // ================= ПОГОДА ДЛЯ ПАРКА ТИЩЕНКО =================
+  async function loadParkWeather() {
+    const badge = document.getElementById('weather-park');
+    try {
+      // Координаты Челябинска (ЧМЗ): 55.25°N, 61.40°E
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,relative_humidity_2m,weather_code,wind_speed_10m');
+      const data = await res.json();
+      const temp = Math.round(data.current.temperature_2m);
+      const code = data.current.weather_code;
+      const wind = Math.round(data.current.wind_speed_10m);
+
+      let status = "☀️ Ясно";
+      if (code >= 1 && code <= 3) status = "⛅️ Облачно";
+      if (code >= 51 && code <= 67) status = "🌧 Дождь";
+      if (code >= 71 && code <= 77) status = "❄️ Снег";
+      if (code >= 80 && code <= 82) status = "🌧 Ливень";
+
+      badge.innerHTML = `<span>${status}, ${temp}°C</span> <span>• ветер ${wind} км/ч</span>`;
+      if (code >= 51 && code <= 82) {
+        badge.style.borderColor = "#f87171";
+        badge.style.color = "#f87171";
+      }
+    } catch (e) {
+      badge.innerHTML = `<span>Парк: столы на улице</span>`;
     }
   }
 
@@ -507,14 +599,9 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  if (window.Telegram?.WebApp) {
-    window.Telegram.WebApp.ready();
-    window.Telegram.WebApp.expand();
-  }
-
   let locationsData = {
-    park: [],
-    vostok: []
+    park: { players: [], plans: [] },
+    vostok: { players: [], plans: [] }
   };
 
   function resolvePlayerName() {
@@ -538,9 +625,7 @@
   function showNameModal() {
     const modal = document.getElementById('name-modal');
     const input = document.getElementById('name-input');
-    const err = document.getElementById('name-error');
-    err.style.display = 'none';
-
+    document.getElementById('name-error').style.display = 'none';
     const current = localStorage.getItem('tt_name') || '';
     input.value = current.startsWith("Гость #") ? "" : current;
     modal.style.display = 'flex';
@@ -551,82 +636,19 @@
     document.getElementById('name-modal').style.display = 'none';
   }
 
-  function isNameTakenByOthers(newName) {
-    const myUid = getUserId();
-    const cleanNew = newName.trim().toLowerCase();
-
-    for (const loc of ['park', 'vostok']) {
-      for (const p of locationsData[loc]) {
-        const pName = (p.name || '').trim().toLowerCase();
-        const pUid = p.uid || p.name;
-        if (pName === cleanNew && pUid !== myUid) {
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
   async function saveCustomName() {
     const input = document.getElementById('name-input');
-    const err = document.getElementById('name-error');
     let val = input.value.trim();
+    if (!val) val = "Гость #" + Math.floor(100 + Math.random() * 900);
 
-    if (!val) {
-      val = "Гость #" + Math.floor(100 + Math.random() * 900);
-    }
-
-    if (isNameTakenByOthers(val)) {
-      err.innerText = "Это имя уже занято другим игроком у стола!";
-      err.style.display = 'block';
-      return;
-    }
-
-    const oldName = localStorage.getItem('tt_name');
-    const myUid = getUserId();
     localStorage.setItem('tt_name', val);
     hideNameModal();
     document.getElementById('user-display').innerText = val;
-
-    if (oldName && oldName !== val) {
-      try {
-        for (const loc of ['park', 'vostok']) {
-          const locRef = db.collection('locations').doc(loc);
-          await db.runTransaction(async (t) => {
-            const doc = await t.get(locRef);
-            if (!doc.exists) return;
-            let list = doc.data().players || [];
-            let updated = false;
-
-            list = list.map(p => {
-              const pIdentifier = (typeof p === 'object' && p.uid) ? p.uid : (p.name || p);
-              if (pIdentifier === myUid || (typeof p === 'object' && p.name === oldName) || p === oldName) {
-                updated = true;
-                return {
-                  name: val,
-                  time: p.time || Date.now(),
-                  uid: myUid
-                };
-              }
-              return p;
-            });
-
-            if (updated) {
-              t.set(locRef, { players: list });
-            }
-          });
-        }
-      } catch (e) {
-        console.error("Ошибка синхронизации имени:", e);
-      }
-    }
-
     renderAll();
   }
 
-  function formatCheckinTime(ts) {
-    const date = new Date(ts);
-    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  function formatTime(ts) {
+    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   function formatDuration(ts) {
@@ -634,20 +656,22 @@
     if (minutes < 1) return 'только что';
     if (minutes < 60) return `${minutes} мин`;
     const hours = Math.floor(minutes / 60);
-    const remMinutes = minutes % 60;
-    return `${hours} ч ${remMinutes} мин`;
+    return `${hours} ч ${minutes % 60} мин`;
   }
 
+  function formatUntil(targetTs) {
+    const diff = targetTs - Date.now();
+    if (diff <= 0) return 'сейчас подходит';
+    const mins = Math.ceil(diff / 60000);
+    if (mins < 60) return `через ~${mins} мин`;
+    const hours = Math.floor(mins / 60);
+    return `через ${hours} ч ${mins % 60} мин`;
+  }
+
+  // ================= ЧЕКИНЫ И ПЛАНЫ =================
   async function checkIn(loc) {
     const name = resolvePlayerName();
     const myUid = getUserId();
-
-    if (isNameTakenByOthers(name)) {
-      alert("Имя «" + name + "» уже занято за столом. Смените имя.");
-      showNameModal();
-      return;
-    }
-
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
     let finalList = [];
@@ -657,48 +681,39 @@
       const otherRef = db.collection('locations').doc(otherLoc);
 
       await db.runTransaction(async (transaction) => {
-        const targetDoc = await transaction.get(targetRef);
-        const otherDoc = await transaction.get(otherRef);
+        const tDoc = await transaction.get(targetRef);
+        const oDoc = await transaction.get(otherRef);
 
-        let targetList = (targetDoc.exists && targetDoc.data().players) || [];
-        let otherList = (otherDoc.exists && otherDoc.data().players) || [];
+        let tPlayers = (tDoc.exists && tDoc.data().players) || [];
+        let oPlayers = (oDoc.exists && oDoc.data().players) || [];
+        let tPlans = (tDoc.exists && tDoc.data().plans) || [];
 
-        const filterFn = p => {
-          if (typeof p === 'string') return p !== name;
-          return p.uid !== myUid && p.name !== name;
-        };
+        const filterFn = p => (p.uid || p) !== myUid && (p.name || p) !== name;
 
-        targetList = targetList.filter(filterFn);
-        otherList = otherList.filter(filterFn);
+        tPlayers = tPlayers.filter(filterFn);
+        oPlayers = oPlayers.filter(filterFn);
+        tPlans = tPlans.filter(filterFn); // убираем из планов при чекине
 
-        targetList.unshift({
-          name: name,
-          time: now,
-          uid: myUid
-        });
+        tPlayers.unshift({ name, time: now, uid: myUid });
+        finalList = tPlayers;
 
-        finalList = targetList;
-
-        transaction.set(targetRef, { players: targetList });
-        transaction.set(otherRef, { players: otherList });
+        transaction.set(targetRef, { players: tPlayers, plans: tPlans }, { merge: true });
+        transaction.set(otherRef, { players: oPlayers }, { merge: true });
       });
 
-      // Сообщение: чекин + цветной блок участников
       const locText = LOCATION_NAMES[loc];
       const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
-
       const alertMsg = `🏓 игрок <b>${cleanHtml(name)}</b> уже у стола ${locText}!${quoteBlock}\n\nКто составит компанию?`;
       sendTelegramAlert(alertMsg);
 
     } catch (e) {
-      console.error("Ошибка чекина:", e);
+      console.error(e);
     }
   }
 
   async function leave(loc) {
     const name = resolvePlayerName();
     const myUid = getUserId();
-
     let spentTimeStr = "";
     let finalList = [];
     const locRef = db.collection('locations').doc(loc);
@@ -709,60 +724,120 @@
         if (!doc.exists) return;
         let list = doc.data().players || [];
         
-        const currentPlayer = list.find(p => {
-          if (typeof p === 'string') return p === name;
-          return p.uid === myUid || p.name === name;
-        });
-
+        const currentPlayer = list.find(p => (p.uid || p) === myUid || (p.name || p) === name);
         if (currentPlayer && currentPlayer.time) {
           spentTimeStr = formatDuration(currentPlayer.time);
         }
 
-        list = list.filter(p => {
-          if (typeof p === 'string') return p !== name;
-          return p.uid !== myUid && p.name !== name;
-        });
-
+        list = list.filter(p => (p.uid || p) !== myUid && (p.name || p) !== name);
         finalList = list;
 
-        transaction.set(locRef, { players: list });
+        transaction.set(locRef, { players: list }, { merge: true });
       });
 
-      // Сообщение: добавлена фраза "время тренировки: ..."
       const locText = LOCATION_NAMES[loc];
       const timeInfo = spentTimeStr ? ` (время тренировки: <code>${spentTimeStr}</code>)` : "";
-      
-      let quoteBlock = "";
-      if (finalList.length > 0) {
-        quoteBlock = buildBlockquoteList(finalList, "Остались у столов");
-      } else {
-        quoteBlock = "\n\n<i>(столы освободились)</i>";
-      }
+      let quoteBlock = finalList.length > 0 
+        ? buildBlockquoteList(finalList, "Остались у столов") 
+        : "\n\n<i>(столы освободились)</i>";
 
       const alertMsg = `👋 игрок <b>${cleanHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.${quoteBlock}`;
       sendTelegramAlert(alertMsg);
 
     } catch (e) {
-      console.error("Ошибка выхода:", e);
+      console.error(e);
     }
   }
 
+  // Модалка планов
+  function openPlanModal(loc) {
+    activePlanningLoc = loc;
+    document.getElementById('plan-modal').style.display = 'flex';
+  }
+
+  function closePlanModal() {
+    document.getElementById('plan-modal').style.display = 'none';
+    activePlanningLoc = null;
+  }
+
+  async function submitQuickPlan(minutes) {
+    const targetTs = Date.now() + minutes * 60000;
+    await applyPlan(targetTs, `через ~${minutes} минут`);
+  }
+
+  async function submitExactPlan() {
+    const timeVal = document.getElementById('exact-time-input').value;
+    if (!timeVal) return;
+    const [h, m] = timeVal.split(':').map(Number);
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+
+    if (target.getTime() <= Date.now()) {
+      target.setDate(target.getDate() + 1); // на завтра, если время уже прошло
+    }
+
+    await applyPlan(target.getTime(), `к ${timeVal}`);
+  }
+
+  async function applyPlan(targetTs, textLabel) {
+    const loc = activePlanningLoc;
+    const name = resolvePlayerName();
+    const myUid = getUserId();
+    closePlanModal();
+
+    try {
+      const locRef = db.collection('locations').doc(loc);
+      await db.runTransaction(async (t) => {
+        const doc = await t.get(locRef);
+        let plans = (doc.exists && doc.data().plans) || [];
+        plans = plans.filter(p => (p.uid || p) !== myUid && (p.name || p) !== name);
+        plans.push({ name, planTime: targetTs, uid: myUid });
+        t.set(locRef, { plans }, { merge: true });
+      });
+
+      const locText = LOCATION_NAMES[loc];
+      const alertMsg = `⏳ игрок <b>${cleanHtml(name)}</b> планирует быть у стола ${locText} <b>${textLabel}</b>!\n\nКто готов составить пару?`;
+      sendTelegramAlert(alertMsg);
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  async function cancelPlan(loc) {
+    const name = resolvePlayerName();
+    const myUid = getUserId();
+    try {
+      const locRef = db.collection('locations').doc(loc);
+      await db.runTransaction(async (t) => {
+        const doc = await t.get(locRef);
+        if (!doc.exists) return;
+        let plans = doc.data().plans || [];
+        plans = plans.filter(p => (p.uid || p) !== myUid && (p.name || p) !== name);
+        t.set(locRef, { plans }, { merge: true });
+      });
+    } catch (e) {
+      console.error(e);
+    }
+  }
+
+  // ================= РЕНДЕР =================
   function setupRealtimeListeners() {
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
         const rawPlayers = data.players || [];
+        const rawPlans = data.plans || [];
 
-        locationsData[loc] = rawPlayers.map(p => {
-          if (typeof p === 'string') {
-            return { name: p, time: Date.now(), uid: p };
-          }
+        // Авто-очистка просроченных планов (старше 2 часов)
+        const now = Date.now();
+        locationsData[loc].plans = rawPlans.filter(p => p.planTime && (now - p.planTime < 7200000));
+
+        locationsData[loc].players = rawPlayers.map(p => {
+          if (typeof p === 'string') return { name: p, time: Date.now(), uid: p };
           return p;
         });
 
         renderAll();
-      }, err => {
-        console.error("Ошибка подписки Firestore:", err);
       });
     });
   }
@@ -772,46 +847,77 @@
     const myUid = getUserId();
 
     ['park', 'vostok'].forEach(loc => {
-      const list = locationsData[loc];
-      const container = document.getElementById('list-' + loc);
+      const { players, plans } = locationsData[loc];
+      const listEl = document.getElementById('list-' + loc);
+      const planListEl = document.getElementById('plan-list-' + loc);
       const badge = document.getElementById('badge-' + loc);
       const btnBox = document.getElementById('btn-container-' + loc);
 
-      badge.innerText = `${list.length} ${list.length === 1 ? 'игрок' : 'игроков'}`;
-      badge.className = list.length > 0 ? 'counter has-players' : 'counter';
+      badge.innerText = `${players.length} ${players.length === 1 ? 'игрок' : 'игроков'}`;
+      badge.className = players.length > 0 ? 'counter has-players' : 'counter';
 
-      if (list.length === 0) {
-        container.innerHTML = '<span class="empty-note">Сейчас у столов свободно</span>';
+      // Список тех, кто за столом
+      if (players.length === 0) {
+        listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>';
       } else {
-        container.innerHTML = list.map(item => `
+        listEl.innerHTML = players.map(item => `
           <div class="player-row">
             <div class="player-name">
               <span>🏓</span>
               <span>${cleanHtml(item.name || 'Игрок')}</span>
             </div>
             <div class="player-time-box">
-              <span>с ${formatCheckinTime(item.time || Date.now())}</span>
+              <span>с ${formatTime(item.time || Date.now())}</span>
               <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
             </div>
           </div>
         `).join('');
       }
 
-      const isUserHere = list.some(p => (p.uid && p.uid === myUid) || p.name === currentName);
-
-      if (isUserHere) {
-        btnBox.innerHTML = `<button class="btn btn-leave" onclick="leave('${loc}')">Покинуть стол</button>`;
+      // Список тех, кто планирует
+      if (plans.length === 0) {
+        planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>';
       } else {
-        btnBox.innerHTML = `<button class="btn btn-join" onclick="checkIn('${loc}')">Я у стола</button>`;
+        planListEl.innerHTML = plans.map(p => `
+          <div class="player-row">
+            <div class="player-name">
+              <span>⏳</span>
+              <span>${cleanHtml(p.name || 'Игрок')}</span>
+            </div>
+            <div class="player-time-box">
+              <span>к ${formatTime(p.planTime)}</span>
+              <span class="time-badge-plan">${formatUntil(p.planTime)}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Кнопки
+      const isUserPlaying = players.some(p => (p.uid || p) === myUid || (p.name || p) === currentName);
+      const isUserPlanned = plans.some(p => (p.uid || p) === myUid || (p.name || p) === currentName);
+
+      if (isUserPlaying) {
+        btnBox.innerHTML = `<button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`;
+      } else if (isUserPlanned) {
+        btnBox.innerHTML = `
+          <button class="btn btn-join" onclick="checkIn('${loc}')">🏓 Я уже пришел (занять стол)</button>
+          <button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>
+        `;
+      } else {
+        btnBox.innerHTML = `
+          <button class="btn btn-join" onclick="checkIn('${loc}')">🏓 Я уже у стола</button>
+          <button class="btn btn-plan" onclick="openPlanModal('${loc}')">⏳ Буду позже...</button>
+        `;
       }
     });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    const name = resolvePlayerName();
-    document.getElementById('user-display').innerText = name;
+    document.getElementById('user-display').innerText = resolvePlayerName();
+    loadParkWeather();
     setupRealtimeListeners();
-    setInterval(renderAll, 60000);
+    setInterval(renderAll, 30000); // таймеры обратного отсчета каждые 30 сек
+    setInterval(loadParkWeather, 600000); // погода раз в 10 минут
   });
 </script>
 
