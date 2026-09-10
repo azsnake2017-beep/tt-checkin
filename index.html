@@ -120,54 +120,76 @@
       color: var(--accent-green);
     }
 
+    /* Вертикальный список игроков */
     .player-list {
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 12px;
+      padding: 8px 12px;
       min-height: 48px;
       display: flex;
-      flex-wrap: wrap;
-      gap: 6px;
-      align-items: center;
+      flex-direction: column;
+      gap: 8px;
+      justify-content: center;
     }
 
     .empty-note {
       font-size: 13px;
       color: var(--text-muted);
+      text-align: center;
+      padding: 6px 0;
     }
 
-    .tag {
-      background: #334155;
-      border: 1px solid #475569;
-      color: #f8fafc;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 13px;
-      display: inline-flex;
+    .player-row {
+      display: flex;
       align-items: center;
-      gap: 6px;
+      justify-content: space-between;
+      padding: 6px 0;
+      border-bottom: 1px solid rgba(51, 65, 85, 0.4);
     }
 
-    .btn-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
+    .player-row:last-child {
+      border-bottom: none;
     }
 
-    .btn {
-      border: none;
-      padding: 12px;
-      border-radius: 10px;
+    .player-name {
+      display: flex;
+      align-items: center;
+      gap: 8px;
       font-size: 14px;
+      font-weight: 500;
+    }
+
+    .player-time-box {
+      text-align: right;
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .time-badge {
+      color: var(--accent-green);
+      font-weight: 600;
+    }
+
+    /* Кнопки */
+    .btn {
+      width: 100%;
+      border: none;
+      padding: 13px;
+      border-radius: 12px;
+      font-size: 15px;
       font-weight: 600;
       cursor: pointer;
       text-align: center;
+      transition: opacity 0.2s ease;
     }
 
     .btn-join {
       background: var(--primary);
-      color: white;
+      color: #ffffff;
     }
 
     .btn-join:active {
@@ -179,7 +201,11 @@
       color: #cbd5e1;
     }
 
-    /* Модальное окно приветствия клуба */
+    .btn-leave:active {
+      background: #475569;
+    }
+
+    /* Модальное окно приветствия */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -263,7 +289,7 @@
   </div>
 
   <!-- Парк Тищенко -->
-  <div class="card">
+  <div class="card" id="card-park">
     <div class="card-top">
       <div>
         <div class="card-title">🌳 Парк им. Тищенко</div>
@@ -276,14 +302,13 @@
       <span class="empty-note">Сейчас у столов свободно</span>
     </div>
 
-    <div class="btn-row">
+    <div id="btn-container-park">
       <button class="btn btn-join" onclick="checkIn('park')">Я у стола</button>
-      <button class="btn btn-leave" onclick="leave('park')">Ушёл</button>
     </div>
   </div>
 
   <!-- ДК Восток -->
-  <div class="card">
+  <div class="card" id="card-vostok">
     <div class="card-top">
       <div>
         <div class="card-title">🏛 ДК «Восток»</div>
@@ -296,9 +321,8 @@
       <span class="empty-note">Сейчас у столов свободно</span>
     </div>
 
-    <div class="btn-row">
+    <div id="btn-container-vostok">
       <button class="btn btn-join" onclick="checkIn('vostok')">Я у стола</button>
-      <button class="btn btn-leave" onclick="leave('vostok')">Ушёл</button>
     </div>
   </div>
 
@@ -334,6 +358,12 @@
     window.Telegram.WebApp.ready();
     window.Telegram.WebApp.expand();
   }
+
+  // Локальный кэш данных игроков для перерисовки таймера
+  const locationsData = {
+    park: [],
+    vostok: []
+  };
 
   function resolvePlayerName() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
@@ -378,6 +408,22 @@
     } else {
       document.getElementById('user-display').innerText = name;
     }
+    renderAll();
+  }
+
+  // Форматирование времени
+  function formatCheckinTime(ts) {
+    const date = new Date(ts);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function formatDuration(ts) {
+    const minutes = Math.floor((Date.now() - ts) / 60000);
+    if (minutes < 1) return 'только что';
+    if (minutes < 60) return `${minutes} мин`;
+    const hours = Math.floor(minutes / 60);
+    const remMinutes = minutes % 60;
+    return `${hours} ч ${remMinutes} мин`;
   }
 
   // Облачные действия с базой Firestore
@@ -389,19 +435,34 @@
     }
 
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
+    const now = Date.now();
 
     try {
-      // Добавляем игрока в выбранную локацию
-      await db.collection('locations').doc(loc).set({
-        players: firebase.firestore.FieldValue.arrayUnion(name)
-      }, { merge: true });
+      const targetRef = db.collection('locations').doc(loc);
+      const otherRef = db.collection('locations').doc(otherLoc);
 
-      // Удаляем из другой локации (нельзя быть в двух местах одновременно)
-      await db.collection('locations').doc(otherLoc).set({
-        players: firebase.firestore.FieldValue.arrayRemove(name)
-      }, { merge: true });
+      await db.runTransaction(async (transaction) => {
+        const targetDoc = await transaction.get(targetRef);
+        const otherDoc = await transaction.get(otherRef);
+
+        let targetList = (targetDoc.exists && targetDoc.data().players) || [];
+        let otherList = (otherDoc.exists && otherDoc.data().players) || [];
+
+        // Удаляем игрока из обеих локаций
+        targetList = targetList.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
+        otherList = otherList.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
+
+        // Добавляем в целевую локацию объект с временем
+        targetList.unshift({
+          name: name,
+          time: now
+        });
+
+        transaction.set(targetRef, { players: targetList });
+        transaction.set(otherRef, { players: otherList });
+      });
     } catch (e) {
-      console.error("Ошибка при отметке:", e);
+      console.error("Ошибка при чекине:", e);
     }
   }
 
@@ -410,9 +471,14 @@
     if (!name) return;
 
     try {
-      await db.collection('locations').doc(loc).set({
-        players: firebase.firestore.FieldValue.arrayRemove(name)
-      }, { merge: true });
+      const locRef = db.collection('locations').doc(loc);
+      await db.runTransaction(async (transaction) => {
+        const doc = await transaction.get(locRef);
+        if (!doc.exists) return;
+        let list = doc.data().players || [];
+        list = list.filter(p => (typeof p === 'string' ? p !== name : p.name !== name));
+        transaction.set(locRef, { players: list });
+      });
     } catch (e) {
       console.error("Ошибка при выходе:", e);
     }
@@ -423,31 +489,62 @@
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
-        const players = data.players || [];
-        renderLocation(loc, players);
+        const rawPlayers = data.players || [];
+
+        // Совместимость со старым форматом строк
+        locationsData[loc] = rawPlayers.map(p => {
+          if (typeof p === 'string') {
+            return { name: p, time: Date.now() };
+          }
+          return p;
+        });
+
+        renderAll();
       }, err => {
         console.error("Ошибка синхронизации:", err);
       });
     });
   }
 
-  function renderLocation(loc, list) {
-    const container = document.getElementById('list-' + loc);
-    const badge = document.getElementById('badge-' + loc);
+  function renderAll() {
+    const currentName = resolvePlayerName();
 
-    badge.innerText = `${list.length} ${list.length === 1 ? 'игрок' : 'игроков'}`;
-    badge.className = list.length > 0 ? 'counter has-players' : 'counter';
+    ['park', 'vostok'].forEach(loc => {
+      const list = locationsData[loc];
+      const container = document.getElementById('list-' + loc);
+      const badge = document.getElementById('badge-' + loc);
+      const btnBox = document.getElementById('btn-container-' + loc);
 
-    if (list.length === 0) {
-      container.innerHTML = '<span class="empty-note">Сейчас у столов свободно</span>';
-    } else {
-      container.innerHTML = list.map(p => `
-        <div class="tag">
-          <span>🏓</span>
-          <span>${escapeHtml(p)}</span>
-        </div>
-      `).join('');
-    }
+      // Бейдж
+      badge.innerText = `${list.length} ${list.length === 1 ? 'игрок' : 'игроков'}`;
+      badge.className = list.length > 0 ? 'counter has-players' : 'counter';
+
+      // Список
+      if (list.length === 0) {
+        container.innerHTML = '<span class="empty-note">Сейчас у столов свободно</span>';
+      } else {
+        container.innerHTML = list.map(item => `
+          <div class="player-row">
+            <div class="player-name">
+              <span>🏓</span>
+              <span>${escapeHtml(item.name)}</span>
+            </div>
+            <div class="player-time-box">
+              <span>с ${formatCheckinTime(item.time)}</span>
+              <span class="time-badge">${formatDuration(item.time)}</span>
+            </div>
+          </div>
+        `).join('');
+      }
+
+      // Динамическая кнопка
+      const isUserHere = currentName && list.some(p => p.name === currentName);
+      if (isUserHere) {
+        btnBox.innerHTML = `<button class="btn btn-leave" onclick="leave('${loc}')">Покинуть стол</button>`;
+      } else {
+        btnBox.innerHTML = `<button class="btn btn-join" onclick="checkIn('${loc}')">Я у стола</button>`;
+      }
+    });
   }
 
   function escapeHtml(str) {
@@ -459,6 +556,9 @@
   document.addEventListener('DOMContentLoaded', () => {
     refreshUI();
     setupRealtimeListeners();
+
+    // Автообновление счетчика минут на экране раз в минуту
+    setInterval(renderAll, 60000);
   });
 </script>
 
