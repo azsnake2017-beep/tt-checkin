@@ -835,7 +835,7 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // ================= АВТОРИЗАЦИЯ (TG + Google) =================
+  // ================= АВТОРИЗАЦИЯ (TG + Google Redirect) =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
@@ -866,17 +866,26 @@
   async function loginWithGoogle() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      const result = await firebase.auth().signInWithPopup(provider);
-      const user = result.user;
-      
-      const uid = 'google_' + user.uid;
-      let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Google");
-      
-      localStorage.setItem('tt_member_id', uid);
-      await syncUserProfile(uid, name, 'google');
+      await firebase.auth().signInWithRedirect(provider);
     } catch (e) {
       console.error("Ошибка Google авторизации:", e);
-      alert("Не удалось войти через Google. Проверьте настройки в Firebase.");
+      alert("Не удалось запустить авторизацию Google: " + e.message);
+    }
+  }
+
+  async function checkGoogleRedirectResult() {
+    try {
+      const result = await firebase.auth().getRedirectResult();
+      if (result && result.user) {
+        const user = result.user;
+        const uid = 'google_' + user.uid;
+        let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Google");
+        
+        localStorage.setItem('tt_member_id', uid);
+        await syncUserProfile(uid, name, 'google');
+      }
+    } catch (e) {
+      console.error("Ошибка обработки редиректа Google:", e);
     }
   }
 
@@ -1885,6 +1894,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile();
+    checkGoogleRedirectResult();
     loadParkWeather();
     setupRealtimeListeners();
     listenLeaderboard();
