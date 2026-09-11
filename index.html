@@ -151,29 +151,50 @@
       text-align: center;
     }
 
-    .profile-bar {
+    /* Стильный блок профиля */
+    .profile-card {
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+    }
+
+    .profile-top-row {
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(30, 41, 59, 0.7);
-      border: 1px solid var(--card-border);
-      padding: 12px 14px;
-      border-radius: 12px;
-      font-size: 13px;
     }
 
-    .profile-info {
-      color: var(--text-muted);
+    .profile-user-main {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text);
       overflow: hidden;
       text-overflow: ellipsis;
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-      margin-right: 8px;
+      white-space: nowrap;
     }
 
-    .profile-info b {
-      color: var(--text);
+    .profile-stats-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+      border-top: 1px solid rgba(51, 65, 85, 0.4);
+      padding-top: 8px;
+    }
+
+    .profile-actions-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 2px;
     }
 
     .platform-badge {
@@ -182,44 +203,47 @@
       padding: 2px 6px;
       border-radius: 4px;
       font-weight: 700;
-      margin-left: 4px;
+      flex-shrink: 0;
     }
 
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
 
-    .profile-actions {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
     .btn-edit {
+      flex: 1;
       background: #334155;
       border: none;
       color: #cbd5e1;
-      padding: 5px 10px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      text-align: center;
+      transition: background 0.2s;
       display: none;
+    }
+    .btn-edit:hover {
+      background: #475569;
+      color: #fff;
     }
 
     .btn-logout {
-      background: rgba(225, 29, 72, 0.2);
-      border: 1px solid rgba(225, 29, 72, 0.4);
+      flex: 1;
+      background: rgba(225, 29, 72, 0.15);
+      border: 1px solid rgba(225, 29, 72, 0.3);
       color: #fda4af;
-      padding: 5px 10px;
-      border-radius: 6px;
+      padding: 7px 12px;
+      border-radius: 8px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      text-align: center;
+      transition: all 0.2s;
       display: none;
     }
     .btn-logout:hover {
-      background: rgba(225, 29, 72, 0.4);
+      background: rgba(225, 29, 72, 0.3);
       color: #fff;
     }
 
@@ -494,7 +518,6 @@
     .player-status-tag {
       font-size: 11px;
       color: var(--text-muted);
-      margin-top: 2px;
     }
 
     .modal-overlay {
@@ -651,12 +674,21 @@
     </div>
   </div>
 
-  <!-- Профиль -->
-  <div class="profile-bar">
-    <div class="profile-info" id="user-display">
-      <span>Вы: <b style="color: var(--text-muted);">Проверка...</b></span>
+  <!-- Гармоничный блок профиля -->
+  <div class="profile-card">
+    <div class="profile-top-row">
+      <div class="profile-user-main" id="user-name-container">
+        <span>Вы: <b style="color: var(--text-muted);">Проверка...</b></span>
+      </div>
+      <div id="user-score-container"></div>
     </div>
-    <div class="profile-actions">
+
+    <div class="profile-stats-row" id="user-stats-container">
+      <span class="player-status-tag">Статус: —</span>
+      <span style="font-weight: 600;">0В - 0П (0%)</span>
+    </div>
+
+    <div class="profile-actions-row">
       <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
       <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
     </div>
@@ -983,18 +1015,19 @@
     const matches = currentUserProfile.matches || 0;
     const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
 
-    document.getElementById('user-display').innerHTML = `
-      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
-        <div>Вы: <b>${cleanHtml(currentUserProfile.name)}</b> ${badgeHtml}</div>
-        <span style="color: var(--accent-purple); font-weight: 700;">${elo}</span>
-      </div>
-      <div class="player-status-tag" style="display: flex; justify-content: space-between; width: 100%;">
-        <span>${status}</span>
-        <span style="font-weight: 600; color: var(--text);">${wins}В - ${losses}П (${winrate}%)</span>
-      </div>
+    document.getElementById('user-name-container').innerHTML = `
+      <span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml}
     `;
-    document.getElementById('btn-edit-profile').style.display = 'inline-block';
-    document.getElementById('btn-logout').style.display = 'inline-block';
+    document.getElementById('user-score-container').innerHTML = `
+      <span class="rating-score" style="font-size: 16px;">${elo}</span>
+    `;
+    document.getElementById('user-stats-container').innerHTML = `
+      <span class="player-status-tag">${status}</span>
+      <span class="player-status-tag">${wins}В - ${losses}П (${winrate}%)</span>
+    `;
+
+    document.getElementById('btn-edit-profile').style.display = 'block';
+    document.getElementById('btn-logout').style.display = 'block';
   }
 
   function injectTelegramLoginWidget() {
@@ -1194,7 +1227,9 @@
     }
 
     currentUserProfile = { uid: null, name: "Гость" };
-    document.getElementById('user-display').innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
+    document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
+    document.getElementById('user-score-container').innerHTML = '';
+    document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
     document.getElementById('btn-edit-profile').style.display = 'none';
     document.getElementById('btn-logout').style.display = 'none';
     injectTelegramLoginWidget();
