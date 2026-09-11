@@ -4,11 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
+  
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -85,7 +88,7 @@
       margin-top: 2px;
     }
 
-    /* Плашка авторизации через Telegram */
+    /* Плашка авторизации */
     .auth-banner {
       display: none;
       background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
@@ -108,6 +111,34 @@
       font-size: 12px;
       color: var(--text-muted);
       line-height: 1.4;
+    }
+
+    .auth-methods-box {
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-width: 300px;
+      margin-top: 4px;
+    }
+
+    .btn-auth-provider {
+      width: 100%;
+      border: none;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: opacity 0.2s;
+    }
+
+    .btn-auth-provider:hover {
+      opacity: 0.9;
     }
 
     .vpn-hint {
@@ -142,6 +173,25 @@
 
     .profile-info b {
       color: var(--text);
+    }
+
+    .platform-badge {
+      display: inline-block;
+      font-size: 10px;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      margin-left: 4px;
+    }
+
+    .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
+    .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+
+    .profile-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
     }
 
     .btn-edit {
@@ -558,15 +608,23 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации через Telegram -->
+  <!-- Плашка авторизации: Telegram + Google -->
   <div class="auth-banner" id="web-auth-banner">
-    <h3>🔐 Подтвердите профиль Telegram</h3>
-    <p>Для участия в рейтинге клуба авторизуйтесь через Telegram в 1 клик:</p>
+    <h3>🔐 Подтвердите профиль игрока</h3>
+    <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
     
-    <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
+    <div class="auth-methods-box">
+      <!-- 1. Telegram Widget -->
+      <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
+
+      <!-- 2. Google Button -->
+      <button class="btn-auth-provider" style="background: #ffffff; color: #1e293b; border: 1px solid #334155;" onclick="loginWithGoogle()">
+        <span>🌐</span> Войти через Google
+      </button>
+    </div>
 
     <div class="vpn-hint">
-      💡 Если кнопка первичной авторизации через Telegram не отображается, используйте VPN подключение и повторите попытку.
+      💡 Если кнопка Telegram скрыта из-за настроек сети, используйте быстрый вход через Google.
     </div>
   </div>
 
@@ -750,7 +808,7 @@
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <h3>Ваше имя в клубе</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">Имя закрепляется за вашим Telegram ID</p>
+    <p style="font-size: 13px; color: var(--text-muted);">Имя закрепляется за вашим профилем</p>
     <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="26" />
     <span class="name-error-msg" id="name-error-box">Это имя уже занято другим игроком клуба!</span>
     <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()">Сохранить</button>
@@ -777,39 +835,60 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // ================= АВТОРИЗАЦИЯ =================
-  function isTelegramVerified() {
+  // ================= АВТОРИЗАЦИЯ (TG + Google) =================
+  function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
-    const savedTgId = localStorage.getItem('tt_browser_tg_id');
-    return !!(savedTgId && savedTgId.startsWith('tg_'));
+    const savedId = localStorage.getItem('tt_member_id');
+    return !!(savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_')));
   }
 
-  function getVerifiedTgId() {
+  function getVerifiedUserId() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
     }
-    const savedTgId = localStorage.getItem('tt_browser_tg_id');
-    if (savedTgId && savedTgId.startsWith('tg_')) {
-      return savedTgId;
+    const savedId = localStorage.getItem('tt_member_id');
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
+      return savedId;
     }
     return null;
   }
 
   window.onTelegramAuth = async function(user) {
     const tgUid = 'tg_' + user.id;
-    localStorage.setItem('tt_browser_tg_id', tgUid);
+    localStorage.setItem('tt_member_id', tgUid);
 
     let fullName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim();
     if (!fullName) fullName = user.username || ("Игрок #" + String(user.id).slice(-4));
 
-    const userRef = db.collection('users').doc(tgUid);
+    await syncUserProfile(tgUid, fullName, 'tg');
+  };
+
+  async function loginWithGoogle() {
+    try {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      const result = await firebase.auth().signInWithPopup(provider);
+      const user = result.user;
+      
+      const uid = 'google_' + user.uid;
+      let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Google");
+      
+      localStorage.setItem('tt_member_id', uid);
+      await syncUserProfile(uid, name, 'google');
+    } catch (e) {
+      console.error("Ошибка Google авторизации:", e);
+      alert("Не удалось войти через Google. Проверьте настройки в Firebase.");
+    }
+  }
+
+  async function syncUserProfile(uid, displayName, platform) {
+    const userRef = db.collection('users').doc(uid);
     const snap = await userRef.get();
 
     if (!snap.exists) {
       currentUserProfile = {
-        uid: tgUid,
-        name: fullName,
-        username: user.username || '',
+        uid: uid,
+        name: displayName,
+        platform: platform,
         elo: 1000,
         matches: 0,
         wins: 0,
@@ -823,14 +902,23 @@
     }
 
     document.getElementById('web-auth-banner').style.display = 'none';
-    document.getElementById('user-display').innerText = currentUserProfile.name;
-    document.getElementById('btn-edit-profile').style.display = 'inline-block';
+    updateProfileDisplay();
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
-  };
+  }
+
+  function updateProfileDisplay() {
+    const isGoogle = currentUserProfile.uid?.startsWith('google_');
+    const badgeHtml = isGoogle 
+      ? '<span class="platform-badge badge-google">Google</span>' 
+      : '<span class="platform-badge badge-tg">TG</span>';
+
+    document.getElementById('user-display').innerHTML = `${cleanHtml(currentUserProfile.name)} ${badgeHtml}`;
+    document.getElementById('btn-edit-profile').style.display = 'inline-block';
+  }
 
   function injectTelegramLoginWidget() {
-    if (isTelegramVerified()) {
+    if (isUserVerified()) {
       document.getElementById('web-auth-banner').style.display = 'none';
       return;
     }
@@ -851,22 +939,22 @@
   }
 
   function handleEditProfileClick() {
-    if (!isTelegramVerified()) return;
+    if (!isUserVerified()) return;
     showNameModal();
   }
 
   function handleCheckInClick(loc) {
-    if (!isTelegramVerified()) return;
+    if (!isUserVerified()) return;
     checkIn(loc);
   }
 
   function handlePlanClick(loc) {
-    if (!isTelegramVerified()) return;
+    if (!isUserVerified()) return;
     openPlanModal(loc);
   }
 
   function handleMatchClick() {
-    if (!isTelegramVerified()) return;
+    if (!isUserVerified()) return;
     openMatchModal();
   }
 
@@ -1005,41 +1093,17 @@
       const tgUid = 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
       const u = window.Telegram.WebApp.initDataUnsafe.user;
       let tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок";
-
-      const userRef = db.collection('users').doc(tgUid);
-      const snap = await userRef.get();
-
-      if (snap.exists) {
-        currentUserProfile = snap.data();
-      } else {
-        currentUserProfile = {
-          uid: tgUid,
-          name: tgName,
-          elo: 1000,
-          matches: 0,
-          wins: 0,
-          losses: 0,
-          isVerified: true,
-          createdAt: Date.now()
-        };
-        await userRef.set(currentUserProfile);
-      }
-
-      document.getElementById('user-display').innerText = currentUserProfile.name;
-      document.getElementById('btn-edit-profile').style.display = 'inline-block';
-      document.getElementById('web-auth-banner').style.display = 'none';
-      renderAll();
+      await syncUserProfile(tgUid, tgName, 'tg');
       return;
     }
 
-    const savedTgId = localStorage.getItem('tt_browser_tg_id');
-    if (savedTgId && savedTgId.startsWith('tg_')) {
+    const savedId = localStorage.getItem('tt_member_id');
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
       try {
-        const snap = await db.collection('users').doc(savedTgId).get();
+        const snap = await db.collection('users').doc(savedId).get();
         if (snap.exists) {
           currentUserProfile = snap.data();
-          document.getElementById('user-display').innerText = currentUserProfile.name;
-          document.getElementById('btn-edit-profile').style.display = 'inline-block';
+          updateProfileDisplay();
           document.getElementById('web-auth-banner').style.display = 'none';
           renderAll();
           return;
@@ -1084,7 +1148,7 @@
   }
 
   async function saveCustomNameWithCheck() {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     const input = document.getElementById('name-input');
@@ -1116,7 +1180,7 @@
       await db.collection('users').doc(myUid).set({ name: val, isVerified: true }, { merge: true });
 
       localStorage.setItem('tt_name', val);
-      document.getElementById('user-display').innerText = val;
+      updateProfileDisplay();
       hideNameModal();
       renderAll();
 
@@ -1195,7 +1259,8 @@
         let rank = 1;
         snap.forEach(doc => {
           const d = doc.data();
-          if (!doc.id.startsWith('tg_') && !d.isVerified) return;
+          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || d.isVerified;
+          if (!isValid) return;
 
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
 
@@ -1205,13 +1270,16 @@
           const wins = d.wins || 0;
           const losses = d.losses || 0;
           const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+          const platformTag = doc.id.startsWith('google_') 
+            ? '<span class="platform-badge badge-google">Google</span>' 
+            : '<span class="platform-badge badge-tg">TG</span>';
 
           html += `
             <div class="leader-row">
               <div class="leader-left">
                 <span class="leader-rank ${rankClass}">${medal}</span>
                 <div>
-                  <b>${cleanHtml(d.name)}</b>
+                  <b>${cleanHtml(d.name)}</b> ${platformTag}
                   <div style="font-size: 11px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</div>
                 </div>
               </div>
@@ -1226,7 +1294,7 @@
   }
 
   function openMatchModal() {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     const select = document.getElementById('match-opponent-select');
@@ -1235,10 +1303,11 @@
     const opponents = allRegisteredUsers.filter(u => u.uid !== myUid);
 
     if (opponents.length === 0) {
-      select.innerHTML = '<option value="">(нет других зарегистрированных игроков)</option>';
+      select.innerHTML = '<option value="">(нет других подтвержденных игроков)</option>';
     } else {
       opponents.forEach(u => {
-        select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} (${u.elo})</option>`;
+        const pTag = u.uid.startsWith('google_') ? '[Google]' : '[TG]';
+        select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} ${pTag} (${u.elo})</option>`;
       });
     }
 
@@ -1264,7 +1333,7 @@
   }
 
   async function submitMatchResult() {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     const oppSelect = document.getElementById('match-opponent-select');
@@ -1344,7 +1413,7 @@
 
   // ================= ЛИДЕРБОРД ЧАСОВ =================
   async function recordTrainingTime(uid, name, durationMinutes) {
-    if (!uid || !uid.startsWith('tg_') || durationMinutes <= 0) return;
+    if (!uid || durationMinutes <= 0) return;
     try {
       const userRef = db.collection('leaderboard').doc(uid);
       await db.runTransaction(async (t) => {
@@ -1377,7 +1446,8 @@
         let html = '';
         let rank = 1;
         snap.forEach(doc => {
-          if (!doc.id.startsWith('tg_')) return;
+          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_');
+          if (!isValid) return;
           if (rank > 5) return;
 
           const d = doc.data();
@@ -1403,7 +1473,7 @@
 
   // ================= ЧЕКИН, УХОД И ПРОДЛЕНИЕ =================
   async function checkIn(loc) {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     requestPushPermission();
@@ -1455,7 +1525,7 @@
   }
 
   async function leave(loc) {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     const name = currentUserProfile.name;
@@ -1510,7 +1580,7 @@
   }
 
   async function extendSession(addMinutes) {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!currentUserActiveLoc || !myUid) return;
     const loc = currentUserActiveLoc;
     const addMs = addMinutes * 60 * 1000;
@@ -1573,7 +1643,7 @@
             if (elapsed >= limit) {
               changed = true;
               const durationMins = Math.floor(elapsed / 60000);
-              if (p.uid && p.uid.startsWith('tg_')) {
+              if (p.uid) {
                 recordTrainingTime(p.uid, p.name || 'Игрок', durationMins);
               }
               leftPlayers.push({
@@ -1677,7 +1747,7 @@
   }
 
   async function applyPlan(targetTs, textLabel) {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     const loc = activePlanningLoc;
@@ -1703,7 +1773,7 @@
   }
 
   async function cancelPlan(loc) {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     try {
@@ -1740,7 +1810,7 @@
   }
 
   function renderAll() {
-    const myUid = getVerifiedTgId();
+    const myUid = getVerifiedUserId();
     currentUserActiveLoc = null;
     currentUserActivePlayer = null;
 
