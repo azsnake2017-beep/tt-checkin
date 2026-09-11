@@ -208,8 +208,6 @@
 
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-    .badge-yandex { background: rgba(239, 68, 68, 0.2); color: #f87171; }
-    .badge-vk { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
 
     .btn-edit {
       flex: 1;
@@ -676,7 +674,7 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации: Telegram + Google + Яндекс + VK -->
+  <!-- Плашка авторизации: Telegram + Google -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
@@ -689,20 +687,10 @@
       <button class="btn-auth-provider" style="background: #ffffff; color: #1e293b; border: 1px solid #334155;" onclick="loginWithGoogle()">
         <span>🌐</span> Войти через Google
       </button>
-
-      <!-- 3. Yandex Button -->
-      <button class="btn-auth-provider" style="background: #fc3f1d; color: #ffffff;" onclick="loginWithYandex()">
-        <span>🔴</span> Войти через Яндекс
-      </button>
-
-      <!-- 4. VK Button -->
-      <button class="btn-auth-provider" style="background: #0077ff; color: #ffffff;" onclick="loginWithVK()">
-        <span>🔵</span> Войти через VK ID
-      </button>
     </div>
 
     <div class="vpn-hint">
-      💡 Доступны быстрые входы через популярные российские и международные сервисы.
+      💡 Доступны быстрые входы через Telegram и Google.
     </div>
   </div>
 
@@ -961,11 +949,11 @@
     return directions[index % 8];
   }
 
-  // ================= АВТОРИЗАЦИЯ (TG, Google, Yandex, VK) =================
+  // ================= АВТОРИЗАЦИЯ (TG, Google) =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
-    return !!(savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_') || savedId.startsWith('yandex_') || savedId.startsWith('vk_')));
+    return !!(savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_')));
   }
 
   function getVerifiedUserId() {
@@ -973,7 +961,7 @@
       return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
     }
     const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_') || savedId.startsWith('yandex_') || savedId.startsWith('vk_'))) {
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
       return savedId;
     }
     return null;
@@ -1004,26 +992,6 @@
     } catch (e) {
       console.error("Ошибка Google авторизации:", e);
       alert("Не удалось войти через Google: " + e.message);
-    }
-  }
-
-  async function loginWithYandex() {
-    try {
-      const provider = new firebase.auth.OAuthProvider('oidc.yandex');
-      await firebase.auth().signInWithRedirect(provider);
-    } catch (e) {
-      console.error("Ошибка Яндекс авторизации:", e);
-      alert("Не удалось войти через Яндекс: " + e.message);
-    }
-  }
-
-  async function loginWithVK() {
-    try {
-      const provider = new firebase.auth.OAuthProvider('oidc.vk');
-      await firebase.auth().signInWithRedirect(provider);
-    } catch (e) {
-      console.error("Ошибка VK авторизации:", e);
-      alert("Не удалось войти через VK: " + e.message);
     }
   }
 
@@ -1067,13 +1035,9 @@
 
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
-    const isYandex = currentUserProfile.uid?.startsWith('yandex_');
-    const isVK = currentUserProfile.uid?.startsWith('vk_');
 
     let badgeHtml = '<span class="platform-badge badge-tg">TG</span>';
     if (isGoogle) badgeHtml = '<span class="platform-badge badge-google">Google</span>';
-    if (isYandex) badgeHtml = '<span class="platform-badge badge-yandex">Яндекс</span>';
-    if (isVK) badgeHtml = '<span class="platform-badge badge-vk">VK</span>';
 
     const elo = currentUserProfile.elo || 1000;
     const status = getPlayerStatus(elo);
@@ -1301,7 +1265,7 @@
     }
 
     const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_') || savedId.startsWith('yandex_') || savedId.startsWith('vk_'))) {
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
       try {
         const snap = await db.collection('users').doc(savedId).get();
         if (snap.exists) {
@@ -1467,7 +1431,7 @@
 
         snap.forEach(doc => {
           const d = doc.data();
-          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || doc.id.startsWith('yandex_') || doc.id.startsWith('vk_') || d.isVerified;
+          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || d.isVerified;
           if (!isValid) return;
 
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
@@ -1488,8 +1452,6 @@
 
           let platformTag = '<span class="platform-badge badge-tg">TG</span>';
           if (doc.id.startsWith('google_')) platformTag = '<span class="platform-badge badge-google">Google</span>';
-          if (doc.id.startsWith('yandex_')) platformTag = '<span class="platform-badge badge-yandex">Яндекс</span>';
-          if (doc.id.startsWith('vk_')) platformTag = '<span class="platform-badge badge-vk">VK</span>';
 
           html += `
             <div class="leader-row">
@@ -1525,8 +1487,6 @@
       opponents.forEach(u => {
         let pTag = '[TG]';
         if (u.uid.startsWith('google_')) pTag = '[Google]';
-        if (u.uid.startsWith('yandex_')) pTag = '[Яндекс]';
-        if (u.uid.startsWith('vk_')) pTag = '[VK]';
 
         select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} ${pTag} (${u.elo})</option>`;
       });
@@ -1667,7 +1627,7 @@
         let html = '';
         let rank = 1;
         snap.forEach(doc => {
-          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || doc.id.startsWith('yandex_') || doc.id.startsWith('vk_');
+          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_');
           if (!isValid) return;
           if (rank > 5) return;
 
@@ -2102,29 +2062,6 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
-    // Обработка возврата после перенаправления (OAuth Redirect для Яндекса и VK)
-    firebase.auth().getRedirectResult().then(async (result) => {
-      if (result && result.user) {
-        const user = result.user;
-        const providerId = result.credential?.providerId || '';
-        let prefix = 'yandex_';
-        let defaultName = 'Игрок Яндекс';
-        
-        if (providerId.includes('vk')) {
-          prefix = 'vk_';
-          defaultName = 'Игрок VK';
-        }
-
-        const uid = prefix + user.uid;
-        let name = user.displayName || (user.email ? user.email.split('@')[0] : defaultName);
-        
-        localStorage.setItem('tt_member_id', uid);
-        await syncUserProfile(uid, name, prefix.replace('_', ''));
-      }
-    }).catch((error) => {
-      console.error("Ошибка получения результата редиректа авторизации:", error);
-    });
-
     initUserProfile();
     loadParkWeather();
     setupRealtimeListeners();
