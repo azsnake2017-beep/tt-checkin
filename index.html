@@ -1010,7 +1010,6 @@
   async function loginWithYandex() {
     try {
       const provider = new firebase.auth.OAuthProvider('oidc.yandex');
-      // Используем signInWithRedirect для стабильной работы в мобильных браузерах
       await firebase.auth().signInWithRedirect(provider);
     } catch (e) {
       console.error("Ошибка Яндекс авторизации:", e);
