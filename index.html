@@ -85,10 +85,10 @@
       margin-top: 2px;
     }
 
-    /* Предупреждение о необходимости входа */
-    .auth-alert-banner {
+    /* Плашка авторизации через Telegram */
+    .auth-banner {
       display: none;
-      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
       border: 1px solid var(--accent-sky);
       border-radius: 16px;
       padding: 16px;
@@ -99,15 +99,26 @@
       box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
     }
 
-    .auth-alert-banner h3 {
+    .auth-banner h3 {
       font-size: 15px;
       color: #f8fafc;
     }
 
-    .auth-alert-banner p {
+    .auth-banner p {
       font-size: 12px;
       color: var(--text-muted);
       line-height: 1.4;
+    }
+
+    .vpn-hint {
+      font-size: 11px;
+      color: #cbd5e1;
+      background: rgba(15, 23, 42, 0.8);
+      border: 1px dashed rgba(56, 189, 248, 0.4);
+      padding: 8px 10px;
+      border-radius: 8px;
+      line-height: 1.35;
+      text-align: center;
     }
 
     .profile-bar {
@@ -133,9 +144,10 @@
       background: #334155;
       border: none;
       color: #cbd5e1;
-      padding: 4px 10px;
+      padding: 5px 12px;
       border-radius: 6px;
       font-size: 12px;
+      font-weight: 600;
       cursor: pointer;
     }
 
@@ -541,11 +553,16 @@
     </div>
   </div>
 
-  <!-- Блок авторизации через Telegram -->
-  <div class="auth-alert-banner" id="web-auth-banner">
-    <h3>🔐 Требуется авторизация через Telegram</h3>
-    <p>Чекины у столов, Зал славы и рейтинг доступны только подтверждённым участникам клуба:</p>
-    <div id="telegram-login-container"></div>
+  <!-- Плашка авторизации через Telegram -->
+  <div class="auth-banner" id="web-auth-banner">
+    <h3>🔐 Подтвердите профиль Telegram</h3>
+    <p>Для участия в рейтинге клуба авторизуйтесь через Telegram в 1 клик:</p>
+    
+    <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
+
+    <div class="vpn-hint">
+      💡 Если кнопка первичной авторизации через Telegram не отображается, используйте VPN подключение и повторите попытку.
+    </div>
   </div>
 
   <!-- Профиль -->
@@ -615,7 +632,7 @@
     </div>
   </div>
 
-  <!-- Вкладки Рейтинг / Тренировки -->
+  <!-- Таблицы Рейтинг / Тренировки -->
   <div class="tabs-container">
     <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
     <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
@@ -643,18 +660,6 @@
     </div>
   </div>
 
-</div>
-
-<!-- Модальное окно требования авторизации -->
-<div class="modal-overlay" id="require-auth-modal">
-  <div class="modal-box" style="border-color: var(--accent-sky);">
-    <h3 style="font-size: 17px; color: #bae6fd;">🔒 Доступ ограничен</h3>
-    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
-      Для отметки у стола и участия в клубном рейтинге необходимо подтвердить личность через Telegram.
-    </p>
-    <div id="modal-tg-login-btn" style="display: flex; justify-content: center;"></div>
-    <button class="btn-cancel-modal" onclick="closeRequireAuthModal()">Понятно</button>
-  </div>
 </div>
 
 <!-- Модальное окно записи результата матча -->
@@ -692,7 +697,7 @@
   </div>
 </div>
 
-<!-- Модальное окно продления -->
+<!-- Модальное окно напоминания и продления -->
 <div class="modal-overlay" id="extend-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: #fde68a;">⏰ Вы уже 1 ч 45 мин у стола!</h3>
@@ -738,7 +743,7 @@
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <h3>Ваше имя в клубе</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">Имя закрепляется за вашим Telegram-профилем</p>
+    <p style="font-size: 13px; color: var(--text-muted);">Имя закрепляется за вашим Telegram ID</p>
     <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="26" />
     <span class="name-error-msg" id="name-error-box">Это имя уже занято другим игроком клуба!</span>
     <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()">Сохранить</button>
@@ -747,8 +752,9 @@
 </div>
 
 <script>
-  // ================= НАСТРОЙКИ И ШЛЮЗ TELEGRAM =================
+  // ================= НАСТРОЙКИ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
+  const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
@@ -764,16 +770,14 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // ================= СТРОГАЯ АВТОРИЗАЦИЯ ЧЕРЕЗ TELEGRAM =================
+  // ================= АВТОРИЗАЦИЯ =================
   function isTelegramVerified() {
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      return true;
-    }
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedTgId = localStorage.getItem('tt_browser_tg_id');
     return !!(savedTgId && savedTgId.startsWith('tg_'));
   }
 
-  function getVerifiedUserId() {
+  function getVerifiedTgId() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
     }
@@ -784,61 +788,6 @@
     return null;
   }
 
-  function showRequireAuthModal() {
-    const modal = document.getElementById('require-auth-modal');
-    modal.style.display = 'flex';
-    const container = document.getElementById('modal-tg-login-btn');
-    if (container && container.children.length === 0) {
-      const script = document.createElement('script');
-      script.src = "https://telegram.org/js/telegram-widget.js?22";
-      script.setAttribute('data-telegram-login', 'tennis_club_chmz_bot');
-      script.setAttribute('data-size', 'large');
-      script.setAttribute('data-radius', '10');
-      script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-      script.setAttribute('data-request-access', 'write');
-      script.async = true;
-      container.appendChild(script);
-    }
-  }
-
-  function closeRequireAuthModal() {
-    document.getElementById('require-auth-modal').style.display = 'none';
-  }
-
-  // Обработчики кликов с проверкой
-  function handleCheckInClick(loc) {
-    if (!isTelegramVerified()) {
-      showRequireAuthModal();
-      return;
-    }
-    checkIn(loc);
-  }
-
-  function handlePlanClick(loc) {
-    if (!isTelegramVerified()) {
-      showRequireAuthModal();
-      return;
-    }
-    openPlanModal(loc);
-  }
-
-  function handleMatchClick() {
-    if (!isTelegramVerified()) {
-      showRequireAuthModal();
-      return;
-    }
-    openMatchModal();
-  }
-
-  function handleEditProfileClick() {
-    if (!isTelegramVerified()) {
-      showRequireAuthModal();
-      return;
-    }
-    showNameModal();
-  }
-
-  // Callback официального Telegram Login Widget
   window.onTelegramAuth = async function(user) {
     const tgUid = 'tg_' + user.id;
     localStorage.setItem('tt_browser_tg_id', tgUid);
@@ -864,14 +813,11 @@
       await userRef.set(currentUserProfile);
     } else {
       currentUserProfile = snap.data();
-      if (!currentUserProfile.isVerified) {
-        await userRef.set({ isVerified: true }, { merge: true });
-      }
     }
 
     document.getElementById('web-auth-banner').style.display = 'none';
-    closeRequireAuthModal();
     document.getElementById('user-display').innerText = currentUserProfile.name;
+    document.getElementById('btn-edit-profile').innerText = "Сменить имя";
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
   };
@@ -888,13 +834,45 @@
 
     const script = document.createElement('script');
     script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute('data-telegram-login', 'tennis_club_chmz_bot');
+    script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
     script.setAttribute('data-size', 'large');
     script.setAttribute('data-radius', '10');
     script.setAttribute('data-onauth', 'onTelegramAuth(user)');
     script.setAttribute('data-request-access', 'write');
     script.async = true;
     container.appendChild(script);
+  }
+
+  function handleEditProfileClick() {
+    if (!isTelegramVerified()) {
+      alert("Сначала подтвердите профиль через Telegram!");
+      return;
+    }
+    showNameModal();
+  }
+
+  function handleCheckInClick(loc) {
+    if (!isTelegramVerified()) {
+      alert("Чекин доступен только подтверждённым участникам. Войдите через Telegram на плашке выше.");
+      return;
+    }
+    checkIn(loc);
+  }
+
+  function handlePlanClick(loc) {
+    if (!isTelegramVerified()) {
+      alert("Планирование визита доступно после авторизации через Telegram.");
+      return;
+    }
+    openPlanModal(loc);
+  }
+
+  function handleMatchClick() {
+    if (!isTelegramVerified()) {
+      alert("Запись матча доступна только авторизованным игрокам клуба.");
+      return;
+    }
+    openMatchModal();
   }
 
   function cleanHtml(str) {
@@ -1024,43 +1002,24 @@
 
   let currentUserProfile = {
     uid: null,
-    name: "Гость (не авторизован)"
+    name: "Гость"
   };
 
   async function initUserProfile() {
-    if (!isTelegramVerified()) {
-      currentUserProfile = { uid: null, name: "Гость (не авторизован)" };
-      document.getElementById('user-display').innerHTML = '<span style="color: #f87171;">Не авторизован</span>';
-      injectTelegramLoginWidget();
-      renderAll();
-      return;
-    }
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      const tgUid = 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
+      const u = window.Telegram.WebApp.initDataUnsafe.user;
+      let tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок";
 
-    const myUid = getVerifiedUserId();
-    const userRef = db.collection('users').doc(myUid);
-
-    try {
+      const userRef = db.collection('users').doc(tgUid);
       const snap = await userRef.get();
+
       if (snap.exists) {
         currentUserProfile = snap.data();
       } else {
-        let defaultName = "";
-        if (window.Telegram?.WebApp?.initDataUnsafe?.user) {
-          const u = window.Telegram.WebApp.initDataUnsafe.user;
-          defaultName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
-        }
-        if (!defaultName) {
-          defaultName = "Игрок #" + myUid.slice(-4);
-        }
-
-        const isTaken = await checkNameTaken(defaultName, myUid);
-        if (isTaken) {
-          defaultName = defaultName + " (" + myUid.slice(-3) + ")";
-        }
-
         currentUserProfile = {
-          uid: myUid,
-          name: defaultName,
+          uid: tgUid,
+          name: tgName,
           elo: 1000,
           matches: 0,
           wins: 0,
@@ -1070,13 +1029,33 @@
         };
         await userRef.set(currentUserProfile);
       }
-    } catch (e) {
-      console.error("Ошибка загрузки профиля:", e);
-      currentUserProfile.name = "Игрок";
+
+      document.getElementById('user-display').innerText = currentUserProfile.name;
+      document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+      document.getElementById('web-auth-banner').style.display = 'none';
+      renderAll();
+      return;
     }
 
-    document.getElementById('user-display').innerText = currentUserProfile.name;
-    localStorage.setItem('tt_name', currentUserProfile.name);
+    const savedTgId = localStorage.getItem('tt_browser_tg_id');
+    if (savedTgId && savedTgId.startsWith('tg_')) {
+      try {
+        const snap = await db.collection('users').doc(savedTgId).get();
+        if (snap.exists) {
+          currentUserProfile = snap.data();
+          document.getElementById('user-display').innerText = currentUserProfile.name;
+          document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+          document.getElementById('web-auth-banner').style.display = 'none';
+          renderAll();
+          return;
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    currentUserProfile = { uid: null, name: "Гость" };
+    document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
     injectTelegramLoginWidget();
     renderAll();
   }
@@ -1109,9 +1088,9 @@
   }
 
   async function saveCustomNameWithCheck() {
-    const myUid = getVerifiedUserId();
+    const myUid = getVerifiedTgId();
     if (!myUid) {
-      showRequireAuthModal();
+      alert("Сначала авторизуйтесь через Telegram!");
       return;
     }
 
@@ -1133,7 +1112,7 @@
       const taken = await checkNameTaken(val, myUid);
 
       if (taken) {
-        errBox.innerText = "Это имя уже занято другим игроком клуба!";
+        errBox.innerText = "Это имя уже закреплено за другим игроком клуба!";
         errBox.style.display = 'block';
         btn.innerText = "Сохранить";
         btn.disabled = false;
@@ -1200,7 +1179,7 @@
     }
   }
 
-  // ================= РЕЙТИНГ ЭЛО (СТРОГО ДЛЯ АВТОРИЗОВАННЫХ) =================
+  // ================= РЕЙТИНГ ЭЛО =================
   function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
     const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
     const deltaA = Math.round(k * (actualScoreA - expectedScoreA));
@@ -1224,7 +1203,6 @@
         let rank = 1;
         snap.forEach(doc => {
           const d = doc.data();
-          // Фильтруем только подтверждённых Telegram-пользователей
           if (!doc.id.startsWith('tg_') && !d.isVerified) return;
 
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
@@ -1256,9 +1234,9 @@
   }
 
   function openMatchModal() {
-    const myUid = getVerifiedUserId();
+    const myUid = getVerifiedTgId();
     if (!myUid) {
-      showRequireAuthModal();
+      alert("Сначала подтвердите профиль через Telegram!");
       return;
     }
 
@@ -1268,7 +1246,7 @@
     const opponents = allRegisteredUsers.filter(u => u.uid !== myUid);
 
     if (opponents.length === 0) {
-      select.innerHTML = '<option value="">(нет других подтверждённых игроков)</option>';
+      select.innerHTML = '<option value="">(нет других зарегистрированных игроков)</option>';
     } else {
       opponents.forEach(u => {
         select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} (${u.elo})</option>`;
@@ -1297,11 +1275,8 @@
   }
 
   async function submitMatchResult() {
-    const myUid = getVerifiedUserId();
-    if (!myUid) {
-      showRequireAuthModal();
-      return;
-    }
+    const myUid = getVerifiedTgId();
+    if (!myUid) return;
 
     const oppSelect = document.getElementById('match-opponent-select');
     const oppUid = oppSelect.value;
@@ -1382,7 +1357,7 @@
     }
   }
 
-  // ================= ЛИДЕРБОРД ЧАСОВ (СТРОГО ДЛЯ АВТОРИЗОВАННЫХ) =================
+  // ================= ЛИДЕРБОРД ЧАСОВ =================
   async function recordTrainingTime(uid, name, durationMinutes) {
     if (!uid || !uid.startsWith('tg_') || durationMinutes <= 0) return;
     try {
@@ -1417,7 +1392,6 @@
         let html = '';
         let rank = 1;
         snap.forEach(doc => {
-          // Исключаем неавторизованные аккаунты
           if (!doc.id.startsWith('tg_')) return;
           if (rank > 5) return;
 
@@ -1444,11 +1418,8 @@
 
   // ================= ЧЕКИН, УХОД И ПРОДЛЕНИЕ =================
   async function checkIn(loc) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) {
-      showRequireAuthModal();
-      return;
-    }
+    const myUid = getVerifiedTgId();
+    if (!myUid) return;
 
     requestPushPermission();
     hasTriggeredPush = false;
@@ -1499,7 +1470,7 @@
   }
 
   async function leave(loc) {
-    const myUid = getVerifiedUserId();
+    const myUid = getVerifiedTgId();
     if (!myUid) return;
 
     const name = currentUserProfile.name;
@@ -1554,7 +1525,7 @@
   }
 
   async function extendSession(addMinutes) {
-    const myUid = getVerifiedUserId();
+    const myUid = getVerifiedTgId();
     if (!currentUserActiveLoc || !myUid) return;
     const loc = currentUserActiveLoc;
     const addMs = addMinutes * 60 * 1000;
@@ -1721,11 +1692,8 @@
   }
 
   async function applyPlan(targetTs, textLabel) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) {
-      showRequireAuthModal();
-      return;
-    }
+    const myUid = getVerifiedTgId();
+    if (!myUid) return;
 
     const loc = activePlanningLoc;
     const name = currentUserProfile.name;
@@ -1750,7 +1718,7 @@
   }
 
   async function cancelPlan(loc) {
-    const myUid = getVerifiedUserId();
+    const myUid = getVerifiedTgId();
     if (!myUid) return;
 
     try {
@@ -1787,7 +1755,7 @@
   }
 
   function renderAll() {
-    const myUid = getVerifiedUserId();
+    const myUid = getVerifiedTgId();
     currentUserActiveLoc = null;
     currentUserActivePlayer = null;
 
