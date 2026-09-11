@@ -110,24 +110,6 @@
       line-height: 1.4;
     }
 
-    .btn-switch-account {
-      background: rgba(51, 65, 85, 0.6);
-      border: 1px dashed var(--card-border);
-      color: #93c5fd;
-      padding: 6px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      cursor: pointer;
-      font-weight: 500;
-      transition: all 0.2s;
-    }
-
-    .btn-switch-account:hover {
-      background: rgba(51, 65, 85, 1);
-      color: #ffffff;
-      border-color: var(--accent-sky);
-    }
-
     .vpn-hint {
       font-size: 11px;
       color: #cbd5e1;
@@ -607,10 +589,6 @@
     
     <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
 
-    <button class="btn-switch-account" onclick="switchTelegramAccount()">
-      👤 Войти под другим аккаунтом
-    </button>
-
     <div class="vpn-hint">
       💡 Если кнопка первичной авторизации через Telegram не отображается, используйте VPN подключение и повторите попытку.
     </div>
@@ -898,86 +876,36 @@
     container.appendChild(script);
   }
 
-  // Сброс сохранённого аккаунта в виджете Telegram
-  function switchTelegramAccount() {
-    localStorage.removeItem('tt_browser_tg_id');
-    localStorage.removeItem('tt_name');
-
-    // Извлекаем точный bot_id прямо из уже внедренного iframe
-    let botId = "";
-    const tgIframe = document.querySelector('#telegram-login-container iframe');
-    if (tgIframe && tgIframe.src) {
-      try {
-        const u = new URL(tgIframe.src);
-        botId = u.searchParams.get('bot_id') || "";
-      } catch (e) {}
-    }
-
-    // Если нашли bot_id — делаем корректный logout через официальный сервер
-    if (botId) {
-      const logoutUrl = `https://oauth.telegram.org/auth/logout?bot_id=${botId}`;
-      const win = window.open(logoutUrl, '_blank');
-      setTimeout(() => {
-        try { if (win) win.close(); } catch(e) {}
-        location.reload();
-      }, 1200);
-    } else {
-      // Иначе просто перезагружаем виджет с очисткой
-      injectTelegramLoginWidget();
-      alert("Сессия сброшена на этом устройстве. Если отображается старое имя, нажмите кнопку Telegram и выберите 'Log out'.");
-    }
-  }
-
-  // Выход из профиля на сайте
+  // Полный сброс сессии и выход
   async function logoutPlayer() {
     if (currentUserActiveLoc) {
-      const confirmLeave = confirm("Вы сейчас отмечены у стола. Освободить стол перед выходом?");
-      if (confirmLeave) {
-        await leave(currentUserActiveLoc);
-      }
+      await leave(currentUserActiveLoc);
     }
 
     localStorage.removeItem('tt_browser_tg_id');
     localStorage.removeItem('tt_name');
 
-    currentUserProfile = { uid: null, name: "Гость" };
-    document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
-    document.getElementById('btn-edit-profile').innerText = "Войти";
-    document.getElementById('btn-logout-profile').style.display = 'none';
-
-    injectTelegramLoginWidget();
-    renderAll();
+    // Перезагрузка страницы для полной очистки состояния
+    location.reload();
   }
 
   function handleEditProfileClick() {
-    if (!isTelegramVerified()) {
-      alert("Сначала подтвердите профиль через Telegram!");
-      return;
-    }
+    if (!isTelegramVerified()) return;
     showNameModal();
   }
 
   function handleCheckInClick(loc) {
-    if (!isTelegramVerified()) {
-      alert("Чекин доступен только подтверждённым участникам. Войдите через Telegram на плашке выше.");
-      return;
-    }
+    if (!isTelegramVerified()) return;
     checkIn(loc);
   }
 
   function handlePlanClick(loc) {
-    if (!isTelegramVerified()) {
-      alert("Планирование визита доступно после авторизации через Telegram.");
-      return;
-    }
+    if (!isTelegramVerified()) return;
     openPlanModal(loc);
   }
 
   function handleMatchClick() {
-    if (!isTelegramVerified()) {
-      alert("Запись матча доступна только авторизованным игрокам клуба.");
-      return;
-    }
+    if (!isTelegramVerified()) return;
     openMatchModal();
   }
 
@@ -1199,10 +1127,7 @@
 
   async function saveCustomNameWithCheck() {
     const myUid = getVerifiedTgId();
-    if (!myUid) {
-      alert("Сначала авторизуйтесь через Telegram!");
-      return;
-    }
+    if (!myUid) return;
 
     const input = document.getElementById('name-input');
     const errBox = document.getElementById('name-error-box');
@@ -1242,7 +1167,6 @@
       }
     } catch (e) {
       console.error(e);
-      alert("Ошибка сохранения имени. Попробуйте еще раз.");
     } finally {
       btn.innerText = "Сохранить";
       btn.disabled = false;
@@ -1345,10 +1269,7 @@
 
   function openMatchModal() {
     const myUid = getVerifiedTgId();
-    if (!myUid) {
-      alert("Сначала подтвердите профиль через Telegram!");
-      return;
-    }
+    if (!myUid) return;
 
     const select = document.getElementById('match-opponent-select');
     select.innerHTML = '';
@@ -1393,10 +1314,7 @@
     const scoreMy = parseInt(document.getElementById('match-my-score').value, 10);
     const scoreOpp = parseInt(document.getElementById('match-opp-score').value, 10);
 
-    if (!oppUid || oppUid === myUid) {
-      alert("Выберите подтверждённого соперника из списка!");
-      return;
-    }
+    if (!oppUid || oppUid === myUid) return;
 
     closeMatchModal();
 
@@ -1463,7 +1381,6 @@
 
     } catch (e) {
       console.error("Ошибка сохранения матча:", e);
-      alert("Не удалось записать результат матча.");
     }
   }
 
