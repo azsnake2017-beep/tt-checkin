@@ -1,3 +1,14 @@
+Чтобы вы могли в любой момент сменить аккаунт и переключиться между Telegram и Google, добавим кнопку **«Выйти»** прямо в плашку профиля рядом со статусом авторизации.
+
+**Что было изменено и добавлено:**
+
+1. **Кнопка «Выйти»**: В HTML-блок `.profile-actions` добавлена кнопка выход (`btn-logout`) с красным акцентом.
+2. **Функция выхода (`logout`)**: Очищает сохранённый `tt_member_id` и `tt_name` в локальном хранилище (`localStorage`), выполняет выход из сессии Firebase Auth и перезагружает интерфейс, возвращая экран выбора способа входа.
+3. **Обновление стилей**: Добавлены визуальные стили для кнопки выхода.
+
+Вот готовый код файла `index.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -204,6 +215,22 @@
       font-weight: 600;
       cursor: pointer;
       display: none;
+    }
+
+    .btn-logout {
+      background: rgba(225, 29, 72, 0.2);
+      border: 1px solid rgba(225, 29, 72, 0.4);
+      color: #fda4af;
+      padding: 5px 10px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+    }
+    .btn-logout:hover {
+      background: rgba(225, 29, 72, 0.4);
+      color: #fff;
     }
 
     .btn-match-quick {
@@ -633,6 +660,7 @@
     <span class="profile-info">Вы: <b id="user-display">Проверка...</b></span>
     <div class="profile-actions">
       <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
+      <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
     </div>
   </div>
 
@@ -835,7 +863,7 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // ================= АВТОРИЗАЦИЯ (TG + Google Redirect) =================
+  // ================= АВТОРИЗАЦИЯ (TG + Google Redirect + Выход) =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
@@ -889,6 +917,18 @@
     }
   }
 
+  // Функция выхода из аккаунта
+  async function logoutProfile() {
+    try {
+      await firebase.auth().signOut();
+    } catch (e) {
+      console.error("Ошибка выхода из Firebase Auth:", e);
+    }
+    localStorage.removeItem('tt_member_id');
+    localStorage.removeItem('tt_name');
+    window.location.reload();
+  }
+
   async function syncUserProfile(uid, displayName, platform) {
     const userRef = db.collection('users').doc(uid);
     const snap = await userRef.get();
@@ -924,6 +964,7 @@
 
     document.getElementById('user-display').innerHTML = `${cleanHtml(currentUserProfile.name)} ${badgeHtml}`;
     document.getElementById('btn-edit-profile').style.display = 'inline-block';
+    document.getElementById('btn-logout').style.display = 'inline-block';
   }
 
   function injectTelegramLoginWidget() {
@@ -1125,6 +1166,7 @@
     currentUserProfile = { uid: null, name: "Гость" };
     document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
     document.getElementById('btn-edit-profile').style.display = 'none';
+    document.getElementById('btn-logout').style.display = 'none';
     injectTelegramLoginWidget();
     renderAll();
   }
@@ -1909,3 +1951,5 @@
 
 </body>
 </html>
+
+```
