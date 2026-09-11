@@ -1010,11 +1010,11 @@
     }
   }
 
-  // ================= ПОГОДА =================
+  // ================= ПОГОДА (ВЕТЕР В М/С) =================
   async function loadParkWeather() {
     const badge = document.getElementById('weather-park');
     try {
-      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m');
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m&wind_speed_unit=ms');
       const data = await res.json();
       const temp = Math.round(data.current.temperature_2m);
       const code = data.current.weather_code;
@@ -1026,7 +1026,7 @@
       if (code >= 71 && code <= 77) status = "❄️ Снег";
       if (code >= 80 && code <= 82) status = "🌧 Ливень";
 
-      badge.innerHTML = `<span>${status}, ${temp}°C</span> <span>• ветер ${wind} км/ч</span>`;
+      badge.innerHTML = `<span>${status}, ${temp}°C</span> <span>• ветер ${wind} м/с</span>`;
       if (code >= 51 && code <= 82) {
         badge.style.borderColor = "#f87171";
         badge.style.color = "#f87171";
@@ -1086,7 +1086,7 @@
 
       document.getElementById('user-display').innerText = currentUserProfile.name;
       document.getElementById('btn-edit-profile').innerText = "Сменить имя";
-      document.getElementById('btn-logout-profile').style.display = 'none'; // Внутри Telegram WebApp выход не нужен
+      document.getElementById('btn-logout-profile').style.display = 'none';
       document.getElementById('web-auth-banner').style.display = 'none';
       renderAll();
       return;
