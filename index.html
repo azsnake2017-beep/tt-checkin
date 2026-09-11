@@ -208,6 +208,8 @@
 
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-yandex { background: rgba(239, 68, 68, 0.2); color: #f87171; }
+    .badge-vk { background: rgba(59, 130, 246, 0.2); color: #60a5fa; }
 
     .btn-edit {
       flex: 1;
@@ -674,7 +676,7 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации: Telegram + Google -->
+  <!-- Плашка авторизации: Telegram + Google + Яндекс + VK -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
@@ -687,10 +689,20 @@
       <button class="btn-auth-provider" style="background: #ffffff; color: #1e293b; border: 1px solid #334155;" onclick="loginWithGoogle()">
         <span>🌐</span> Войти через Google
       </button>
+
+      <!-- 3. Yandex Button -->
+      <button class="btn-auth-provider" style="background: #fc3f1d; color: #ffffff;" onclick="loginWithYandex()">
+        <span>🔴</span> Войти через Яндекс
+      </button>
+
+      <!-- 4. VK Button -->
+      <button class="btn-auth-provider" style="background: #0077ff; color: #ffffff;" onclick="loginWithVK()">
+        <span>🔵</span> Войти через VK ID
+      </button>
     </div>
 
     <div class="vpn-hint">
-      💡 Если кнопка Telegram скрыта из-за настроек сети, используйте быстрый вход через Google.
+      💡 Доступны быстрые входы через популярные российские и международные сервисы.
     </div>
   </div>
 
@@ -780,11 +792,11 @@
 
   <!-- Таблицы Рейтинг / Тренировки -->
   <div class="tabs-container">
-    <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
+    <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Клубный рейтинг</button>
     <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
   </div>
 
-  <!-- Блок 1: Рейтинг Эло -->
+  <!-- Блок 1: Клубный рейтинг -->
   <div class="rating-card" id="view-rating">
     <div class="card-block-title" style="color: var(--accent-purple);">
       <span>⚔️</span>
@@ -813,7 +825,7 @@
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: #d8b4fe;">⚔️ Запись матча</h3>
     <p style="font-size: 13px; color: var(--text-muted);">
-      Матч повлияет на официальный клубный рейтинг Эло
+      Матч повлияет на официальный клубный рейтинг
     </p>
 
     <div style="text-align: left;">
@@ -949,11 +961,11 @@
     return directions[index % 8];
   }
 
-  // ================= АВТОРИЗАЦИЯ (TG + Google Popup + Выход) =================
+  // ================= АВТОРИЗАЦИЯ (TG, Google, Yandex, VK) =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
-    return !!(savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_')));
+    return !!(savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_') || savedId.startsWith('yandex_') || savedId.startsWith('vk_')));
   }
 
   function getVerifiedUserId() {
@@ -961,7 +973,7 @@
       return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
     }
     const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_') || savedId.startsWith('yandex_') || savedId.startsWith('vk_'))) {
       return savedId;
     }
     return null;
@@ -992,6 +1004,42 @@
     } catch (e) {
       console.error("Ошибка Google авторизации:", e);
       alert("Не удалось войти через Google: " + e.message);
+    }
+  }
+
+  async function loginWithYandex() {
+    try {
+      const provider = new firebase.auth.OAuthProvider('oidc.yandex');
+      const result = await firebase.auth().signInWithPopup(provider);
+      if (result && result.user) {
+        const user = result.user;
+        const uid = 'yandex_' + user.uid;
+        let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Яндекс");
+        
+        localStorage.setItem('tt_member_id', uid);
+        await syncUserProfile(uid, name, 'yandex');
+      }
+    } catch (e) {
+      console.error("Ошибка Яндекс авторизации:", e);
+      alert("Не удалось войти через Яндекс: " + e.message);
+    }
+  }
+
+  async function loginWithVK() {
+    try {
+      const provider = new firebase.auth.OAuthProvider('oidc.vk');
+      const result = await firebase.auth().signInWithPopup(provider);
+      if (result && result.user) {
+        const user = result.user;
+        const uid = 'vk_' + user.uid;
+        let name = user.displayName || "Игрок VK";
+        
+        localStorage.setItem('tt_member_id', uid);
+        await syncUserProfile(uid, name, 'vk');
+      }
+    } catch (e) {
+      console.error("Ошибка VK авторизации:", e);
+      alert("Не удалось войти через VK: " + e.message);
     }
   }
 
@@ -1035,9 +1083,13 @@
 
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
-    const badgeHtml = isGoogle 
-      ? '<span class="platform-badge badge-google">Google</span>' 
-      : '<span class="platform-badge badge-tg">TG</span>';
+    const isYandex = currentUserProfile.uid?.startsWith('yandex_');
+    const isVK = currentUserProfile.uid?.startsWith('vk_');
+
+    let badgeHtml = '<span class="platform-badge badge-tg">TG</span>';
+    if (isGoogle) badgeHtml = '<span class="platform-badge badge-google">Google</span>';
+    if (isYandex) badgeHtml = '<span class="platform-badge badge-yandex">Яндекс</span>';
+    if (isVK) badgeHtml = '<span class="platform-badge badge-vk">VK</span>';
 
     const elo = currentUserProfile.elo || 1000;
     const status = getPlayerStatus(elo);
@@ -1196,7 +1248,6 @@
       const windDirDeg = data.current.wind_direction_10m;
       const windDirStr = getWindDirection(windDirDeg);
 
-      // Прогноз на завтра (индекс 1 в массиве daily)
       const tomorrowMax = Math.round(data.daily.temperature_2m_max[1]);
       const tomorrowMin = Math.round(data.daily.temperature_2m_min[1]);
       const tomorrowCode = data.daily.weather_code[1];
@@ -1266,7 +1317,7 @@
     }
 
     const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_') || savedId.startsWith('yandex_') || savedId.startsWith('vk_'))) {
       try {
         const snap = await db.collection('users').doc(savedId).get();
         if (snap.exists) {
@@ -1406,7 +1457,7 @@
     }
   }
 
-  // ================= РЕЙТИНГ ЭЛО =================
+  // ================= РЕЙТИНГ =================
   function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
     const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
     const deltaA = Math.round(k * (actualScoreA - expectedScoreA));
@@ -1432,7 +1483,7 @@
 
         snap.forEach(doc => {
           const d = doc.data();
-          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || d.isVerified;
+          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || doc.id.startsWith('yandex_') || doc.id.startsWith('vk_') || d.isVerified;
           if (!isValid) return;
 
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
@@ -1451,9 +1502,10 @@
           const currentElo = d.elo || 1000;
           const playerStatus = getPlayerStatus(currentElo);
 
-          const platformTag = doc.id.startsWith('google_') 
-            ? '<span class="platform-badge badge-google">Google</span>' 
-            : '<span class="platform-badge badge-tg">TG</span>';
+          let platformTag = '<span class="platform-badge badge-tg">TG</span>';
+          if (doc.id.startsWith('google_')) platformTag = '<span class="platform-badge badge-google">Google</span>';
+          if (doc.id.startsWith('yandex_')) platformTag = '<span class="platform-badge badge-yandex">Яндекс</span>';
+          if (doc.id.startsWith('vk_')) platformTag = '<span class="platform-badge badge-vk">VK</span>';
 
           html += `
             <div class="leader-row">
@@ -1487,7 +1539,11 @@
       select.innerHTML = '<option value="">(нет других подтвержденных игроков)</option>';
     } else {
       opponents.forEach(u => {
-        const pTag = u.uid.startsWith('google_') ? '[Google]' : '[TG]';
+        let pTag = '[TG]';
+        if (u.uid.startsWith('google_')) pTag = '[Google]';
+        if (u.uid.startsWith('yandex_')) pTag = '[Яндекс]';
+        if (u.uid.startsWith('vk_')) pTag = '[VK]';
+
         select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} ${pTag} (${u.elo})</option>`;
       });
     }
@@ -1577,7 +1633,7 @@
 
       const alertMsg = `🏆 <b>Рейтинговый матч завершён!</b>\n\n` +
         `🏓 <b>${cleanHtml(myName)}</b>  <code>${scoreMy} : ${scoreOpp}</code>  <b>${cleanHtml(oppName)}</b>\n\n` +
-        `<blockquote>📊 <b>Изменение клубного рейтинга:</b>\n` +
+        `<blockquote>📊 <b>Изменение рейтинга:</b>\n` +
         `• ${cleanHtml(myName)}: ${newMyElo} (${mySign})\n` +
         `• ${cleanHtml(oppName)}: ${newOppElo} (${oppSign})</blockquote>`;
 
@@ -1627,7 +1683,7 @@
         let html = '';
         let rank = 1;
         snap.forEach(doc => {
-          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_');
+          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || doc.id.startsWith('yandex_') || doc.id.startsWith('vk_');
           if (!isValid) return;
           if (rank > 5) return;
 
@@ -1936,7 +1992,7 @@
     try {
       const locRef = db.collection('locations').doc(loc);
       await db.runTransaction(async (t) => {
-        const doc = await t.get(locRef);
+        const doc = > t.get(locRef);
         let plans = (doc.exists && doc.data().plans) || [];
         plans = plans.filter(p => (p.uid || p) !== myUid);
         plans.push({ name, planTime: targetTs, uid: myUid });
