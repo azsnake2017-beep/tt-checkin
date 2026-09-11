@@ -809,7 +809,6 @@
   // ================= НАСТРОЙКИ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
-  const TELEGRAM_BOT_ID = "7637058648"; // ID бота для сброса сессии Telegram Widget
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
@@ -904,15 +903,29 @@
     localStorage.removeItem('tt_browser_tg_id');
     localStorage.removeItem('tt_name');
 
-    // Открываем страницу выхода из виджета Telegram в небольшом окне/вкладке
-    const logoutUrl = `https://oauth.telegram.org/auth/logout?bot_id=${TELEGRAM_BOT_ID}`;
-    const win = window.open(logoutUrl, '_blank', 'width=500,height=450');
+    // Извлекаем точный bot_id прямо из уже внедренного iframe
+    let botId = "";
+    const tgIframe = document.querySelector('#telegram-login-container iframe');
+    if (tgIframe && tgIframe.src) {
+      try {
+        const u = new URL(tgIframe.src);
+        botId = u.searchParams.get('bot_id') || "";
+      } catch (e) {}
+    }
 
-    // Через 1.5 сек перезагружаем виджет на странице
-    setTimeout(() => {
-      try { if (win) win.close(); } catch(e) {}
+    // Если нашли bot_id — делаем корректный logout через официальный сервер
+    if (botId) {
+      const logoutUrl = `https://oauth.telegram.org/auth/logout?bot_id=${botId}`;
+      const win = window.open(logoutUrl, '_blank');
+      setTimeout(() => {
+        try { if (win) win.close(); } catch(e) {}
+        location.reload();
+      }, 1200);
+    } else {
+      // Иначе просто перезагружаем виджет с очисткой
       injectTelegramLoginWidget();
-    }, 1500);
+      alert("Сессия сброшена на этом устройстве. Если отображается старое имя, нажмите кнопку Telegram и выберите 'Log out'.");
+    }
   }
 
   // Выход из профиля на сайте
