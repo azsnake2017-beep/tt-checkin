@@ -690,7 +690,7 @@
     </div>
 
     <div class="vpn-hint">
-      💡 Доступны быстрые входы через Telegram и Google.
+      💡 Если Telegram-виджет не загружается, воспользуйтесь VPN или авторизуйтесь через Google.
     </div>
   </div>
 
@@ -1836,7 +1836,7 @@
           }
 
           const activePlans = plans.filter(pl => {
-            if (!pl.planTime || now - pl.planTime > 7200000) {
+            if (!pl.planTime || now > pl.planTime + 300000) {
               changed = true;
               return false;
             }
@@ -1989,11 +1989,14 @@
 
   function renderAll() {
     const myUid = getVerifiedUserId();
+    const now = Date.now();
     currentUserActiveLoc = null;
     currentUserActivePlayer = null;
 
     ['park', 'vostok'].forEach(loc => {
-      const { players, plans } = locationsData[loc];
+      const { players } = locationsData[loc];
+      const plans = (locationsData[loc].plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
+
       const listEl = document.getElementById('list-' + loc);
       const planListEl = document.getElementById('plan-list-' + loc);
       const badge = document.getElementById('badge-' + loc);
