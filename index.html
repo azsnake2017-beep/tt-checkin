@@ -1010,15 +1010,8 @@
   async function loginWithYandex() {
     try {
       const provider = new firebase.auth.OAuthProvider('oidc.yandex');
-      const result = await firebase.auth().signInWithPopup(provider);
-      if (result && result.user) {
-        const user = result.user;
-        const uid = 'yandex_' + user.uid;
-        let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Яндекс");
-        
-        localStorage.setItem('tt_member_id', uid);
-        await syncUserProfile(uid, name, 'yandex');
-      }
+      // Используем signInWithRedirect для стабильной работы в мобильных браузерах
+      await firebase.auth().signInWithRedirect(provider);
     } catch (e) {
       console.error("Ошибка Яндекс авторизации:", e);
       alert("Не удалось войти через Яндекс: " + e.message);
@@ -1028,15 +1021,7 @@
   async function loginWithVK() {
     try {
       const provider = new firebase.auth.OAuthProvider('oidc.vk');
-      const result = await firebase.auth().signInWithPopup(provider);
-      if (result && result.user) {
-        const user = result.user;
-        const uid = 'vk_' + user.uid;
-        let name = user.displayName || "Игрок VK";
-        
-        localStorage.setItem('tt_member_id', uid);
-        await syncUserProfile(uid, name, 'vk');
-      }
+      await firebase.auth().signInWithRedirect(provider);
     } catch (e) {
       console.error("Ошибка VK авторизации:", e);
       alert("Не удалось войти через VK: " + e.message);
@@ -2118,6 +2103,29 @@
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+    // Обработка возврата после перенаправления (OAuth Redirect для Яндекса и VK)
+    firebase.auth().getRedirectResult().then(async (result) => {
+      if (result && result.user) {
+        const user = result.user;
+        const providerId = result.credential?.providerId || '';
+        let prefix = 'yandex_';
+        let defaultName = 'Игрок Яндекс';
+        
+        if (providerId.includes('vk')) {
+          prefix = 'vk_';
+          defaultName = 'Игрок VK';
+        }
+
+        const uid = prefix + user.uid;
+        let name = user.displayName || (user.email ? user.email.split('@')[0] : defaultName);
+        
+        localStorage.setItem('tt_member_id', uid);
+        await syncUserProfile(uid, name, prefix.replace('_', ''));
+      }
+    }).catch((error) => {
+      console.error("Ошибка получения результата редиректа авторизации:", error);
+    });
+
     initUserProfile();
     loadParkWeather();
     setupRealtimeListeners();
