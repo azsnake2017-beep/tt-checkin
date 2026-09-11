@@ -861,7 +861,7 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // Функция определения спортивного статуса по Эло
+  // Функция определения спортивного статуса по очкам рейтинга
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢";
     if (elo <= 1200) return "Ученик 📘";
@@ -986,7 +986,7 @@
     document.getElementById('user-display').innerHTML = `
       <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
         <div>Вы: <b>${cleanHtml(currentUserProfile.name)}</b> ${badgeHtml}</div>
-        <span style="color: var(--accent-purple); font-weight: 700;">${elo} Эло</span>
+        <span style="color: var(--accent-purple); font-weight: 700;">${elo}</span>
       </div>
       <div class="player-status-tag" style="display: flex; justify-content: space-between; width: 100%;">
         <span>${status}</span>
