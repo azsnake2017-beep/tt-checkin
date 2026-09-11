@@ -8,7 +8,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Firebase SDK -->
+  <!-- Firebase SDK Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -88,7 +88,6 @@
       margin-top: 2px;
     }
 
-    /* Плашка авторизации */
     .auth-banner {
       display: none;
       background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
@@ -906,7 +905,6 @@
     }
   }
 
-  // Функция выхода из аккаунта
   async function logoutProfile() {
     try {
       await firebase.auth().signOut();
@@ -1078,7 +1076,7 @@
     }
   }
 
-  // ================= ПОГОДА (ВЕТЕР В М/С) =================
+  // ================= ПОГОДА =================
   async function loadParkWeather() {
     const badge = document.getElementById('weather-park');
     try {
@@ -1106,7 +1104,7 @@
 
   // ================= FIREBASE =================
   const firebaseConfig = {
-    apiKey: "AIzaSyA4NIFGbCOxhhykyW0QosrWFJj5eU4bOuY",
+    apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
     projectId: "tt-chmz",
     storageBucket: "tt-chmz.firebasestorage.app",
@@ -1657,7 +1655,6 @@
     }
   }
 
-  // ================= МОНИТОРИНГ ТАЙМАУТОВ =================
   async function monitorSessions() {
     const now = Date.now();
 
@@ -1756,7 +1753,6 @@
     }
   }
 
-  // Планы
   function openPlanModal(loc) {
     activePlanningLoc = loc;
     document.getElementById('plan-modal').style.display = 'flex';
@@ -1830,7 +1826,6 @@
     }
   }
 
-  // ================= РЕНДЕР =================
   function setupRealtimeListeners() {
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
