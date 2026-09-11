@@ -134,21 +134,50 @@
 
     .profile-info {
       color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      margin-right: 8px;
     }
 
     .profile-info b {
       color: var(--text);
     }
 
+    .profile-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-shrink: 0;
+    }
+
     .btn-edit {
       background: #334155;
       border: none;
       color: #cbd5e1;
-      padding: 5px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+    }
+
+    .btn-logout {
+      background: rgba(239, 68, 68, 0.15);
+      border: 1px solid rgba(239, 68, 68, 0.3);
+      color: #fca5a5;
+      padding: 5px 8px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: none;
+      transition: all 0.2s;
+    }
+
+    .btn-logout:hover {
+      background: rgba(239, 68, 68, 0.25);
+      color: #ffffff;
     }
 
     .btn-match-quick {
@@ -568,7 +597,10 @@
   <!-- Профиль -->
   <div class="profile-bar">
     <span class="profile-info">Вы: <b id="user-display">Проверка...</b></span>
-    <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
+    <div class="profile-actions">
+      <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
+      <button class="btn-logout" id="btn-logout-profile" onclick="logoutPlayer()">Выйти</button>
+    </div>
   </div>
 
   <!-- Кнопка записи матча -->
@@ -818,6 +850,7 @@
     document.getElementById('web-auth-banner').style.display = 'none';
     document.getElementById('user-display').innerText = currentUserProfile.name;
     document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+    document.getElementById('btn-logout-profile').style.display = 'inline-block';
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
   };
@@ -841,6 +874,27 @@
     script.setAttribute('data-request-access', 'write');
     script.async = true;
     container.appendChild(script);
+  }
+
+  // Выход и смена игрока
+  async function logoutPlayer() {
+    if (currentUserActiveLoc) {
+      const confirmLeave = confirm("Вы сейчас отмечены у стола. Освободить стол перед выходом?");
+      if (confirmLeave) {
+        await leave(currentUserActiveLoc);
+      }
+    }
+
+    localStorage.removeItem('tt_browser_tg_id');
+    localStorage.removeItem('tt_name');
+
+    currentUserProfile = { uid: null, name: "Гость" };
+    document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
+    document.getElementById('btn-edit-profile').innerText = "Войти";
+    document.getElementById('btn-logout-profile').style.display = 'none';
+
+    injectTelegramLoginWidget();
+    renderAll();
   }
 
   function handleEditProfileClick() {
@@ -1032,6 +1086,7 @@
 
       document.getElementById('user-display').innerText = currentUserProfile.name;
       document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+      document.getElementById('btn-logout-profile').style.display = 'none'; // Внутри Telegram WebApp выход не нужен
       document.getElementById('web-auth-banner').style.display = 'none';
       renderAll();
       return;
@@ -1045,6 +1100,7 @@
           currentUserProfile = snap.data();
           document.getElementById('user-display').innerText = currentUserProfile.name;
           document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+          document.getElementById('btn-logout-profile').style.display = 'inline-block';
           document.getElementById('web-auth-banner').style.display = 'none';
           renderAll();
           return;
@@ -1056,6 +1112,8 @@
 
     currentUserProfile = { uid: null, name: "Гость" };
     document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
+    document.getElementById('btn-edit-profile').innerText = "Войти";
+    document.getElementById('btn-logout-profile').style.display = 'none';
     injectTelegramLoginWidget();
     renderAll();
   }
