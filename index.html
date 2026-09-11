@@ -1992,7 +1992,7 @@
     try {
       const locRef = db.collection('locations').doc(loc);
       await db.runTransaction(async (t) => {
-        const doc = > t.get(locRef);
+        const doc = await t.get(locRef);
         let plans = (doc.exists && doc.data().plans) || [];
         plans = plans.filter(p => (p.uid || p) !== myUid);
         plans.push({ name, planTime: targetTs, uid: myUid });
