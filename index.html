@@ -110,6 +110,24 @@
       line-height: 1.4;
     }
 
+    .btn-switch-account {
+      background: rgba(51, 65, 85, 0.6);
+      border: 1px dashed var(--card-border);
+      color: #93c5fd;
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-size: 12px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .btn-switch-account:hover {
+      background: rgba(51, 65, 85, 1);
+      color: #ffffff;
+      border-color: var(--accent-sky);
+    }
+
     .vpn-hint {
       font-size: 11px;
       color: #cbd5e1;
@@ -589,6 +607,10 @@
     
     <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
 
+    <button class="btn-switch-account" onclick="switchTelegramAccount()">
+      👤 Войти под другим аккаунтом
+    </button>
+
     <div class="vpn-hint">
       💡 Если кнопка первичной авторизации через Telegram не отображается, используйте VPN подключение и повторите попытку.
     </div>
@@ -787,6 +809,7 @@
   // ================= НАСТРОЙКИ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
+  const TELEGRAM_BOT_ID = "7637058648"; // ID бота для сброса сессии Telegram Widget
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
@@ -876,7 +899,23 @@
     container.appendChild(script);
   }
 
-  // Выход и смена игрока
+  // Сброс сохранённого аккаунта в виджете Telegram
+  function switchTelegramAccount() {
+    localStorage.removeItem('tt_browser_tg_id');
+    localStorage.removeItem('tt_name');
+
+    // Открываем страницу выхода из виджета Telegram в небольшом окне/вкладке
+    const logoutUrl = `https://oauth.telegram.org/auth/logout?bot_id=${TELEGRAM_BOT_ID}`;
+    const win = window.open(logoutUrl, '_blank', 'width=500,height=450');
+
+    // Через 1.5 сек перезагружаем виджет на странице
+    setTimeout(() => {
+      try { if (win) win.close(); } catch(e) {}
+      injectTelegramLoginWidget();
+    }, 1500);
+  }
+
+  // Выход из профиля на сайте
   async function logoutPlayer() {
     if (currentUserActiveLoc) {
       const confirmLeave = confirm("Вы сейчас отмечены у стола. Освободить стол перед выходом?");
