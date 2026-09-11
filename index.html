@@ -851,7 +851,7 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // ================= АВТОРИЗАЦИЯ (TG + Google Redirect + Выход) =================
+  // ================= АВТОРИЗАЦИЯ (TG + Google Popup + Выход) =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
@@ -882,16 +882,7 @@
   async function loginWithGoogle() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      await firebase.auth().signInWithRedirect(provider);
-    } catch (e) {
-      console.error("Ошибка Google авторизации:", e);
-      alert("Не удалось запустить авторизацию Google: " + e.message);
-    }
-  }
-
-  async function checkGoogleRedirectResult() {
-    try {
-      const result = await firebase.auth().getRedirectResult();
+      const result = await firebase.auth().signInWithPopup(provider);
       if (result && result.user) {
         const user = result.user;
         const uid = 'google_' + user.uid;
@@ -901,7 +892,8 @@
         await syncUserProfile(uid, name, 'google');
       }
     } catch (e) {
-      console.error("Ошибка обработки редиректа Google:", e);
+      console.error("Ошибка Google авторизации:", e);
+      alert("Не удалось войти через Google: " + e.message);
     }
   }
 
@@ -1920,7 +1912,6 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile();
-    checkGoogleRedirectResult();
     loadParkWeather();
     setupRealtimeListeners();
     listenLeaderboard();
