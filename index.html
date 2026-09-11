@@ -157,7 +157,7 @@
       justify-content: space-between;
       background: rgba(30, 41, 59, 0.7);
       border: 1px solid var(--card-border);
-      padding: 10px 14px;
+      padding: 12px 14px;
       border-radius: 12px;
       font-size: 13px;
     }
@@ -166,7 +166,9 @@
       color: var(--text-muted);
       overflow: hidden;
       text-overflow: ellipsis;
-      white-space: nowrap;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
       margin-right: 8px;
     }
 
@@ -489,6 +491,12 @@
       color: var(--accent-purple);
     }
 
+    .player-status-tag {
+      font-size: 11px;
+      color: var(--text-muted);
+      margin-top: 2px;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -645,7 +653,9 @@
 
   <!-- Профиль -->
   <div class="profile-bar">
-    <span class="profile-info">Вы: <b id="user-display">Проверка...</b></span>
+    <div class="profile-info" id="user-display">
+      <span>Вы: <b style="color: var(--text-muted);">Проверка...</b></span>
+    </div>
     <div class="profile-actions">
       <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
       <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
@@ -851,6 +861,31 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
+  // Функция определения спортивного статуса по Эло
+  function getPlayerStatus(elo) {
+    if (elo <= 1000) return "Новичок 🟢";
+    if (elo <= 1200) return "Ученик 📘";
+    if (elo <= 1400) return "Любитель 👟";
+    if (elo <= 1600) return "Игрок основы 🏃‍♂️";
+    if (elo <= 1800) return "Третий разряд 🥉";
+    if (elo <= 2000) return "Второй разряд 🥈";
+    if (elo <= 2200) return "Первый разряд 🥇";
+    if (elo <= 2400) return "КМС 🏅";
+    if (elo <= 2600) return "Мастер спорта 🏆";
+    if (elo <= 2800) return "Элитный игрок ⭐";
+    if (elo <= 3000) return "Мастер атаки 🔥";
+    if (elo <= 3200) return "Гроссмейстер ♟️";
+    if (elo <= 3400) return "Чемпион клуба 👑";
+    if (elo <= 3600) return "Гранд-мастер 🎖️";
+    if (elo <= 3800) return "Снайпер 🎯";
+    if (elo <= 4000) return "Легенда клуба 🏛️";
+    if (elo <= 4200) return "Премьер-лига 📈";
+    if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
+    if (elo <= 4600) return "Властелин стола 👑🏓";
+    if (elo <= 4800) return "Феномен 🌠";
+    return "Легенда спорта 🌟🏆";
+  }
+
   // ================= АВТОРИЗАЦИЯ (TG + Google Popup + Выход) =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
@@ -941,7 +976,23 @@
       ? '<span class="platform-badge badge-google">Google</span>' 
       : '<span class="platform-badge badge-tg">TG</span>';
 
-    document.getElementById('user-display').innerHTML = `${cleanHtml(currentUserProfile.name)} ${badgeHtml}`;
+    const elo = currentUserProfile.elo || 1000;
+    const status = getPlayerStatus(elo);
+    const wins = currentUserProfile.wins || 0;
+    const losses = currentUserProfile.losses || 0;
+    const matches = currentUserProfile.matches || 0;
+    const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+
+    document.getElementById('user-display').innerHTML = `
+      <div style="display: flex; justify-content: space-between; align-items: center; width: 100%;">
+        <div>Вы: <b>${cleanHtml(currentUserProfile.name)}</b> ${badgeHtml}</div>
+        <span style="color: var(--accent-purple); font-weight: 700;">${elo} Эло</span>
+      </div>
+      <div class="player-status-tag" style="display: flex; justify-content: space-between; width: 100%;">
+        <span>${status}</span>
+        <span style="font-weight: 600; color: var(--text);">${wins}В - ${losses}П (${winrate}%)</span>
+      </div>
+    `;
     document.getElementById('btn-edit-profile').style.display = 'inline-block';
     document.getElementById('btn-logout').style.display = 'inline-block';
   }
@@ -1143,7 +1194,7 @@
     }
 
     currentUserProfile = { uid: null, name: "Гость" };
-    document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
+    document.getElementById('user-display').innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
     document.getElementById('btn-edit-profile').style.display = 'none';
     document.getElementById('btn-logout').style.display = 'none';
     injectTelegramLoginWidget();
@@ -1287,6 +1338,8 @@
 
         let html = '';
         let rank = 1;
+        const myUid = getVerifiedUserId();
+
         snap.forEach(doc => {
           const d = doc.data();
           const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || d.isVerified;
@@ -1294,12 +1347,20 @@
 
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
 
+          if (doc.id === myUid) {
+            currentUserProfile = { ...currentUserProfile, ...d };
+            updateProfileDisplay();
+          }
+
           const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
           const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
           const matches = d.matches || 0;
           const wins = d.wins || 0;
           const losses = d.losses || 0;
           const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+          const currentElo = d.elo || 1000;
+          const playerStatus = getPlayerStatus(currentElo);
+
           const platformTag = doc.id.startsWith('google_') 
             ? '<span class="platform-badge badge-google">Google</span>' 
             : '<span class="platform-badge badge-tg">TG</span>';
@@ -1309,11 +1370,11 @@
               <div class="leader-left">
                 <span class="leader-rank ${rankClass}">${medal}</span>
                 <div>
-                  <b>${cleanHtml(d.name)}</b> ${platformTag}
-                  <div style="font-size: 11px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</div>
+                  <div><b>${cleanHtml(d.name)}</b> ${platformTag}</div>
+                  <div class="player-status-tag">${playerStatus} • ${wins}В - ${losses}П (${winrate}%)</div>
                 </div>
               </div>
-              <span class="rating-score">${d.elo || 1000}</span>
+              <span class="rating-score">${currentElo}</span>
             </div>
           `;
           rank++;
