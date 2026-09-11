@@ -51,7 +51,6 @@
       padding-bottom: 40px;
     }
 
-    /* Шапка клуба */
     .club-header {
       display: flex;
       align-items: center;
@@ -86,10 +85,10 @@
       margin-top: 2px;
     }
 
-    /* Баннер авторизации в браузере */
-    .web-auth-card {
+    /* Предупреждение о необходимости входа */
+    .auth-alert-banner {
       display: none;
-      background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
+      background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
       border: 1px solid var(--accent-sky);
       border-radius: 16px;
       padding: 16px;
@@ -100,18 +99,17 @@
       box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
     }
 
-    .web-auth-card h3 {
+    .auth-alert-banner h3 {
       font-size: 15px;
       color: #f8fafc;
     }
 
-    .web-auth-card p {
+    .auth-alert-banner p {
       font-size: 12px;
       color: var(--text-muted);
-      line-height: 1.3;
+      line-height: 1.4;
     }
 
-    /* Профиль */
     .profile-bar {
       display: flex;
       align-items: center;
@@ -141,7 +139,6 @@
       cursor: pointer;
     }
 
-    /* Кнопка быстрого матча в профиле */
     .btn-match-quick {
       background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
       color: #fff;
@@ -159,11 +156,6 @@
       transition: all 0.2s ease;
     }
 
-    .btn-match-quick:hover {
-      filter: brightness(1.1);
-    }
-
-    /* Карточка локации */
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -322,7 +314,6 @@
       color: #cbd5e1;
     }
 
-    /* Таблицы Зала славы и Рейтинга */
     .tabs-container {
       display: flex;
       gap: 8px;
@@ -416,7 +407,6 @@
       color: var(--accent-purple);
     }
 
-    /* Модальные окна */
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -551,21 +541,21 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации через Telegram при входе из обычного браузера -->
-  <div class="web-auth-card" id="web-auth-banner">
-    <h3>🔐 Подтвердите профиль клуба</h3>
-    <p>Чтобы защитить ваш рейтинг и имя от подделки, авторизуйтесь через Telegram в 1 клик:</p>
+  <!-- Блок авторизации через Telegram -->
+  <div class="auth-alert-banner" id="web-auth-banner">
+    <h3>🔐 Требуется авторизация через Telegram</h3>
+    <p>Чекины у столов, Зал славы и рейтинг доступны только подтверждённым участникам клуба:</p>
     <div id="telegram-login-container"></div>
   </div>
 
   <!-- Профиль -->
   <div class="profile-bar">
-    <span class="profile-info">Вы: <b id="user-display">Авторизация...</b></span>
-    <button class="btn-edit" onclick="showNameModal()">Сменить имя</button>
+    <span class="profile-info">Вы: <b id="user-display">Проверка...</b></span>
+    <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
   </div>
 
   <!-- Кнопка записи матча -->
-  <button class="btn-match-quick" onclick="openMatchModal()">
+  <button class="btn-match-quick" onclick="handleMatchClick()">
     <span>⚔️</span>
     <span>Записать результат матча</span>
   </button>
@@ -594,8 +584,8 @@
     </div>
 
     <div class="action-group" id="btn-container-park">
-      <button class="btn btn-join" onclick="checkIn('park')">🏓 Я уже у стола</button>
-      <button class="btn btn-plan" onclick="openPlanModal('park')">⏳ Буду позже...</button>
+      <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
+      <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
     </div>
   </div>
 
@@ -620,12 +610,12 @@
     </div>
 
     <div class="action-group" id="btn-container-vostok">
-      <button class="btn btn-join" onclick="checkIn('vostok')">🏓 Я уже у стола</button>
-      <button class="btn btn-plan" onclick="openPlanModal('vostok')">⏳ Буду позже...</button>
+      <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
+      <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
     </div>
   </div>
 
-  <!-- Переключатель Рейтинг / Тренировки -->
+  <!-- Вкладки Рейтинг / Тренировки -->
   <div class="tabs-container">
     <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
     <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
@@ -653,6 +643,18 @@
     </div>
   </div>
 
+</div>
+
+<!-- Модальное окно требования авторизации -->
+<div class="modal-overlay" id="require-auth-modal">
+  <div class="modal-box" style="border-color: var(--accent-sky);">
+    <h3 style="font-size: 17px; color: #bae6fd;">🔒 Доступ ограничен</h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
+      Для отметки у стола и участия в клубном рейтинге необходимо подтвердить личность через Telegram.
+    </p>
+    <div id="modal-tg-login-btn" style="display: flex; justify-content: center;"></div>
+    <button class="btn-cancel-modal" onclick="closeRequireAuthModal()">Понятно</button>
+  </div>
 </div>
 
 <!-- Модальное окно записи результата матча -->
@@ -690,7 +692,7 @@
   </div>
 </div>
 
-<!-- Модальное окно напоминания и продления -->
+<!-- Модальное окно продления -->
 <div class="modal-overlay" id="extend-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: #fde68a;">⏰ Вы уже 1 ч 45 мин у стола!</h3>
@@ -745,7 +747,7 @@
 </div>
 
 <script>
-  // ================= ШЛЮЗ TELEGRAM =================
+  // ================= НАСТРОЙКИ И ШЛЮЗ TELEGRAM =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
 
   const LOCATION_NAMES = {
@@ -762,36 +764,90 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
 
-  // ================= АВТОРИЗАЦИЯ (TELEGRAM MINI APP + БРАУЗЕР) =================
-  function getUserId() {
-    // 1. Если внутри Telegram Mini App
+  // ================= СТРОГАЯ АВТОРИЗАЦИЯ ЧЕРЕЗ TELEGRAM =================
+  function isTelegramVerified() {
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      return true;
+    }
+    const savedTgId = localStorage.getItem('tt_browser_tg_id');
+    return !!(savedTgId && savedTgId.startsWith('tg_'));
+  }
+
+  function getVerifiedUserId() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
     }
-    // 2. Если уже авторизован в обычном браузере через Telegram Widget
     const savedTgId = localStorage.getItem('tt_browser_tg_id');
-    if (savedTgId) {
+    if (savedTgId && savedTgId.startsWith('tg_')) {
       return savedTgId;
     }
-    // 3. До первой авторизации в браузере
-    let guestUid = localStorage.getItem('tt_guest_uid');
-    if (!guestUid) {
-      guestUid = 'guest_' + Math.random().toString(36).substring(2, 9);
-      localStorage.setItem('tt_guest_uid', guestUid);
-    }
-    return guestUid;
+    return null;
   }
 
-  // Callback от официального Telegram Login Widget в браузере
+  function showRequireAuthModal() {
+    const modal = document.getElementById('require-auth-modal');
+    modal.style.display = 'flex';
+    const container = document.getElementById('modal-tg-login-btn');
+    if (container && container.children.length === 0) {
+      const script = document.createElement('script');
+      script.src = "https://telegram.org/js/telegram-widget.js?22";
+      script.setAttribute('data-telegram-login', 'tennis_club_chmz_bot');
+      script.setAttribute('data-size', 'large');
+      script.setAttribute('data-radius', '10');
+      script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+      script.setAttribute('data-request-access', 'write');
+      script.async = true;
+      container.appendChild(script);
+    }
+  }
+
+  function closeRequireAuthModal() {
+    document.getElementById('require-auth-modal').style.display = 'none';
+  }
+
+  // Обработчики кликов с проверкой
+  function handleCheckInClick(loc) {
+    if (!isTelegramVerified()) {
+      showRequireAuthModal();
+      return;
+    }
+    checkIn(loc);
+  }
+
+  function handlePlanClick(loc) {
+    if (!isTelegramVerified()) {
+      showRequireAuthModal();
+      return;
+    }
+    openPlanModal(loc);
+  }
+
+  function handleMatchClick() {
+    if (!isTelegramVerified()) {
+      showRequireAuthModal();
+      return;
+    }
+    openMatchModal();
+  }
+
+  function handleEditProfileClick() {
+    if (!isTelegramVerified()) {
+      showRequireAuthModal();
+      return;
+    }
+    showNameModal();
+  }
+
+  // Callback официального Telegram Login Widget
   window.onTelegramAuth = async function(user) {
     const tgUid = 'tg_' + user.id;
     localStorage.setItem('tt_browser_tg_id', tgUid);
 
-    const userRef = db.collection('users').doc(tgUid);
-    const snap = await userRef.get();
-
     let fullName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim();
     if (!fullName) fullName = user.username || ("Игрок #" + String(user.id).slice(-4));
+
+    const userRef = db.collection('users').doc(tgUid);
+    const snap = await userRef.get();
 
     if (!snap.exists) {
       currentUserProfile = {
@@ -802,30 +858,30 @@
         matches: 0,
         wins: 0,
         losses: 0,
+        isVerified: true,
         createdAt: Date.now()
       };
       await userRef.set(currentUserProfile);
     } else {
       currentUserProfile = snap.data();
+      if (!currentUserProfile.isVerified) {
+        await userRef.set({ isVerified: true }, { merge: true });
+      }
     }
 
     document.getElementById('web-auth-banner').style.display = 'none';
+    closeRequireAuthModal();
     document.getElementById('user-display').innerText = currentUserProfile.name;
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
   };
 
   function injectTelegramLoginWidget() {
-    // Если пользователь уже авторизован или сидит внутри Telegram Mini App — виджет не нужен
-    const isInsideTg = !!window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    const isBrowserAuthorized = !!localStorage.getItem('tt_browser_tg_id');
-
-    if (isInsideTg || isBrowserAuthorized) {
+    if (isTelegramVerified()) {
       document.getElementById('web-auth-banner').style.display = 'none';
       return;
     }
 
-    // Показываем плашку и вставляем официальную кнопку Telegram
     document.getElementById('web-auth-banner').style.display = 'flex';
     const container = document.getElementById('telegram-login-container');
     container.innerHTML = '';
@@ -967,12 +1023,20 @@
   };
 
   let currentUserProfile = {
-    uid: getUserId(),
-    name: "Игрок"
+    uid: null,
+    name: "Гость (не авторизован)"
   };
 
   async function initUserProfile() {
-    const myUid = getUserId();
+    if (!isTelegramVerified()) {
+      currentUserProfile = { uid: null, name: "Гость (не авторизован)" };
+      document.getElementById('user-display').innerHTML = '<span style="color: #f87171;">Не авторизован</span>';
+      injectTelegramLoginWidget();
+      renderAll();
+      return;
+    }
+
+    const myUid = getVerifiedUserId();
     const userRef = db.collection('users').doc(myUid);
 
     try {
@@ -986,7 +1050,7 @@
           defaultName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim();
         }
         if (!defaultName) {
-          defaultName = localStorage.getItem('tt_name') || ("Игрок #" + myUid.slice(-4));
+          defaultName = "Игрок #" + myUid.slice(-4);
         }
 
         const isTaken = await checkNameTaken(defaultName, myUid);
@@ -1001,13 +1065,14 @@
           matches: 0,
           wins: 0,
           losses: 0,
+          isVerified: true,
           createdAt: Date.now()
         };
         await userRef.set(currentUserProfile);
       }
     } catch (e) {
       console.error("Ошибка загрузки профиля:", e);
-      currentUserProfile.name = localStorage.getItem('tt_name') || "Игрок";
+      currentUserProfile.name = "Игрок";
     }
 
     document.getElementById('user-display').innerText = currentUserProfile.name;
@@ -1044,6 +1109,12 @@
   }
 
   async function saveCustomNameWithCheck() {
+    const myUid = getVerifiedUserId();
+    if (!myUid) {
+      showRequireAuthModal();
+      return;
+    }
+
     const input = document.getElementById('name-input');
     const errBox = document.getElementById('name-error-box');
     const btn = document.getElementById('btn-save-name');
@@ -1059,11 +1130,10 @@
     btn.disabled = true;
 
     try {
-      const myUid = getUserId();
       const taken = await checkNameTaken(val, myUid);
 
       if (taken) {
-        errBox.innerText = "Это имя уже закреплено за другим игроком клуба!";
+        errBox.innerText = "Это имя уже занято другим игроком клуба!";
         errBox.style.display = 'block';
         btn.innerText = "Сохранить";
         btn.disabled = false;
@@ -1071,7 +1141,7 @@
       }
 
       currentUserProfile.name = val;
-      await db.collection('users').doc(myUid).set({ name: val }, { merge: true });
+      await db.collection('users').doc(myUid).set({ name: val, isVerified: true }, { merge: true });
 
       localStorage.setItem('tt_name', val);
       document.getElementById('user-display').innerText = val;
@@ -1111,7 +1181,6 @@
     return `через ${hours} ч ${mins % 60} мин`;
   }
 
-  // ================= ВКЛАДКИ =================
   function switchTab(tab) {
     const tabRating = document.getElementById('tab-btn-rating');
     const tabTime = document.getElementById('tab-btn-time');
@@ -1131,7 +1200,7 @@
     }
   }
 
-  // ================= РЕЙТИНГ ЭЛО =================
+  // ================= РЕЙТИНГ ЭЛО (СТРОГО ДЛЯ АВТОРИЗОВАННЫХ) =================
   function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
     const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
     const deltaA = Math.round(k * (actualScoreA - expectedScoreA));
@@ -1141,7 +1210,7 @@
   function listenRatings() {
     db.collection('users')
       .orderBy('elo', 'desc')
-      .limit(20)
+      .limit(30)
       .onSnapshot(snap => {
         const listEl = document.getElementById('rating-list');
         allRegisteredUsers = [];
@@ -1155,6 +1224,9 @@
         let rank = 1;
         snap.forEach(doc => {
           const d = doc.data();
+          // Фильтруем только подтверждённых Telegram-пользователей
+          if (!doc.id.startsWith('tg_') && !d.isVerified) return;
+
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
 
           const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
@@ -1178,20 +1250,25 @@
           `;
           rank++;
         });
-        listEl.innerHTML = html;
+
+        listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
       });
   }
 
-  // ================= ЗАПИСЬ РЕЗУЛЬТАТА МАТЧА =================
   function openMatchModal() {
-    const myUid = getUserId();
+    const myUid = getVerifiedUserId();
+    if (!myUid) {
+      showRequireAuthModal();
+      return;
+    }
+
     const select = document.getElementById('match-opponent-select');
     select.innerHTML = '';
 
     const opponents = allRegisteredUsers.filter(u => u.uid !== myUid);
 
     if (opponents.length === 0) {
-      select.innerHTML = '<option value="">(нет других зарегистрированных игроков)</option>';
+      select.innerHTML = '<option value="">(нет других подтверждённых игроков)</option>';
     } else {
       opponents.forEach(u => {
         select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} (${u.elo})</option>`;
@@ -1220,7 +1297,12 @@
   }
 
   async function submitMatchResult() {
-    const myUid = getUserId();
+    const myUid = getVerifiedUserId();
+    if (!myUid) {
+      showRequireAuthModal();
+      return;
+    }
+
     const oppSelect = document.getElementById('match-opponent-select');
     const oppUid = oppSelect.value;
     const scoreMy = parseInt(document.getElementById('match-my-score').value, 10);
@@ -1300,9 +1382,9 @@
     }
   }
 
-  // ================= ЛИДЕРБОРД (ТРЕНИРОВКИ) =================
+  // ================= ЛИДЕРБОРД ЧАСОВ (СТРОГО ДЛЯ АВТОРИЗОВАННЫХ) =================
   async function recordTrainingTime(uid, name, durationMinutes) {
-    if (!name || durationMinutes <= 0) return;
+    if (!uid || !uid.startsWith('tg_') || durationMinutes <= 0) return;
     try {
       const userRef = db.collection('leaderboard').doc(uid);
       await db.runTransaction(async (t) => {
@@ -1324,7 +1406,7 @@
   function listenLeaderboard() {
     db.collection('leaderboard')
       .orderBy('totalMinutes', 'desc')
-      .limit(5)
+      .limit(20)
       .onSnapshot(snap => {
         const listEl = document.getElementById('leaderboard-list');
         if (snap.empty) {
@@ -1335,6 +1417,10 @@
         let html = '';
         let rank = 1;
         snap.forEach(doc => {
+          // Исключаем неавторизованные аккаунты
+          if (!doc.id.startsWith('tg_')) return;
+          if (rank > 5) return;
+
           const d = doc.data();
           const hours = (d.totalMinutes / 60).toFixed(1);
           const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
@@ -1351,17 +1437,23 @@
           `;
           rank++;
         });
-        listEl.innerHTML = html;
+
+        listEl.innerHTML = html || '<span class="empty-note">Сыграйте первую партию!</span>';
       });
   }
 
   // ================= ЧЕКИН, УХОД И ПРОДЛЕНИЕ =================
   async function checkIn(loc) {
+    const myUid = getVerifiedUserId();
+    if (!myUid) {
+      showRequireAuthModal();
+      return;
+    }
+
     requestPushPermission();
     hasTriggeredPush = false;
 
     const name = currentUserProfile.name;
-    const myUid = getUserId();
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
     let finalList = [];
@@ -1407,8 +1499,10 @@
   }
 
   async function leave(loc) {
+    const myUid = getVerifiedUserId();
+    if (!myUid) return;
+
     const name = currentUserProfile.name;
-    const myUid = getUserId();
     let spentMinutes = 0;
     let spentTimeStr = "";
     let finalList = [];
@@ -1460,9 +1554,9 @@
   }
 
   async function extendSession(addMinutes) {
-    if (!currentUserActiveLoc) return;
+    const myUid = getVerifiedUserId();
+    if (!currentUserActiveLoc || !myUid) return;
     const loc = currentUserActiveLoc;
-    const myUid = getUserId();
     const addMs = addMinutes * 60 * 1000;
 
     try {
@@ -1523,7 +1617,9 @@
             if (elapsed >= limit) {
               changed = true;
               const durationMins = Math.floor(elapsed / 60000);
-              recordTrainingTime(p.uid || 'anon', p.name || 'Игрок', durationMins);
+              if (p.uid && p.uid.startsWith('tg_')) {
+                recordTrainingTime(p.uid, p.name || 'Игрок', durationMins);
+              }
               leftPlayers.push({
                 name: p.name || 'Игрок',
                 durationStr: formatDuration(pTime)
@@ -1625,9 +1721,14 @@
   }
 
   async function applyPlan(targetTs, textLabel) {
+    const myUid = getVerifiedUserId();
+    if (!myUid) {
+      showRequireAuthModal();
+      return;
+    }
+
     const loc = activePlanningLoc;
     const name = currentUserProfile.name;
-    const myUid = getUserId();
     closePlanModal();
 
     try {
@@ -1649,7 +1750,9 @@
   }
 
   async function cancelPlan(loc) {
-    const myUid = getUserId();
+    const myUid = getVerifiedUserId();
+    if (!myUid) return;
+
     try {
       const locRef = db.collection('locations').doc(loc);
       await db.runTransaction(async (t) => {
@@ -1684,7 +1787,7 @@
   }
 
   function renderAll() {
-    const myUid = getUserId();
+    const myUid = getVerifiedUserId();
     currentUserActiveLoc = null;
     currentUserActivePlayer = null;
 
@@ -1732,8 +1835,8 @@
         `).join('');
       }
 
-      const activePlayerObj = players.find(p => (p.uid || p) === myUid);
-      const isUserPlanned = plans.some(p => (p.uid || p) === myUid);
+      const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
+      const isUserPlanned = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
 
       if (activePlayerObj) {
         currentUserActiveLoc = loc;
@@ -1743,13 +1846,13 @@
         `;
       } else if (isUserPlanned) {
         btnBox.innerHTML = `
-          <button class="btn btn-join" onclick="checkIn('${loc}')">🏓 Я уже пришел (занять стол)</button>
+          <button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел (занять стол)</button>
           <button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>
         `;
       } else {
         btnBox.innerHTML = `
-          <button class="btn btn-join" onclick="checkIn('${loc}')">🏓 Я уже у стола</button>
-          <button class="btn btn-plan" onclick="openPlanModal('${loc}')">⏳ Буду позже...</button>
+          <button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button>
+          <button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>
         `;
       }
     });
