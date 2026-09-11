@@ -110,6 +110,15 @@
       line-height: 1.4;
     }
 
+    .link-switch-user {
+      display: inline-block;
+      font-size: 12px;
+      color: #93c5fd;
+      text-decoration: underline;
+      cursor: pointer;
+      margin-top: 2px;
+    }
+
     .vpn-hint {
       font-size: 11px;
       color: #cbd5e1;
@@ -160,6 +169,7 @@
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
+      display: none;
     }
 
     .btn-logout {
@@ -589,6 +599,10 @@
     
     <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
 
+    <a href="https://oauth.telegram.org/" target="_blank" class="link-switch-user" onclick="handleSwitchUserClick()">
+      Войти под другим пользователем (сбросить сессию в Telegram)
+    </a>
+
     <div class="vpn-hint">
       💡 Если кнопка первичной авторизации через Telegram не отображается, используйте VPN подключение и повторите попытку.
     </div>
@@ -849,7 +863,7 @@
 
     document.getElementById('web-auth-banner').style.display = 'none';
     document.getElementById('user-display').innerText = currentUserProfile.name;
-    document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+    document.getElementById('btn-edit-profile').style.display = 'inline-block';
     document.getElementById('btn-logout-profile').style.display = 'inline-block';
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
@@ -876,7 +890,11 @@
     container.appendChild(script);
   }
 
-  // Полный сброс сессии и выход
+  function handleSwitchUserClick() {
+    localStorage.removeItem('tt_browser_tg_id');
+    localStorage.removeItem('tt_name');
+  }
+
   async function logoutPlayer() {
     if (currentUserActiveLoc) {
       await leave(currentUserActiveLoc);
@@ -885,7 +903,6 @@
     localStorage.removeItem('tt_browser_tg_id');
     localStorage.removeItem('tt_name');
 
-    // Перезагрузка страницы для полной очистки состояния
     location.reload();
   }
 
@@ -1065,7 +1082,7 @@
       }
 
       document.getElementById('user-display').innerText = currentUserProfile.name;
-      document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+      document.getElementById('btn-edit-profile').style.display = 'inline-block';
       document.getElementById('btn-logout-profile').style.display = 'none';
       document.getElementById('web-auth-banner').style.display = 'none';
       renderAll();
@@ -1079,7 +1096,7 @@
         if (snap.exists) {
           currentUserProfile = snap.data();
           document.getElementById('user-display').innerText = currentUserProfile.name;
-          document.getElementById('btn-edit-profile').innerText = "Сменить имя";
+          document.getElementById('btn-edit-profile').style.display = 'inline-block';
           document.getElementById('btn-logout-profile').style.display = 'inline-block';
           document.getElementById('web-auth-banner').style.display = 'none';
           renderAll();
@@ -1092,7 +1109,7 @@
 
     currentUserProfile = { uid: null, name: "Гость" };
     document.getElementById('user-display').innerHTML = '<span style="color: #94a3b8;">Не авторизован</span>';
-    document.getElementById('btn-edit-profile').innerText = "Войти";
+    document.getElementById('btn-edit-profile').style.display = 'none';
     document.getElementById('btn-logout-profile').style.display = 'none';
     injectTelegramLoginWidget();
     renderAll();
