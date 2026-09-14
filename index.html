@@ -106,11 +106,24 @@
       gap: 8px;
     }
 
-    .btn-social {
-      border: none;
+    .social-card-item {
+      background: #0f172a;
+      border: 1px solid var(--card-border);
+      border-radius: 12px;
       padding: 10px;
-      border-radius: 10px;
-      font-size: 13px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      align-items: center;
+      text-align: center;
+    }
+
+    .btn-social {
+      width: 100%;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -126,18 +139,33 @@
     .btn-tg { background: #0ea5e9; color: #fff; }
     .btn-max { background: #8b5cf6; color: #fff; }
 
-    .qr-buttons-row {
+    .btn-qr-mini {
+      background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.25);
+      color: var(--accent-sky);
+      width: 100%;
+      padding: 6px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
       display: flex;
-      gap: 8px;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.2s;
+    }
+    .btn-qr-mini:hover {
+      background: rgba(56, 189, 248, 0.2);
+      color: #fff;
     }
 
-    .btn-qr {
-      flex: 1;
+    .btn-qr-app {
       background: #334155;
       color: #f8fafc;
       border: 1px solid var(--card-border);
       padding: 8px;
-      border-radius: 8px;
+      border-radius: 10px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
@@ -147,7 +175,7 @@
       gap: 6px;
       transition: background 0.2s;
     }
-    .btn-qr:hover {
+    .btn-qr-app:hover {
       background: #475569;
     }
 
@@ -826,18 +854,23 @@
     </div>
   </div>
 
-  <!-- Блок ссылок на чаты и QR-коды -->
+  <!-- Блок сообществ и QR-кодов -->
   <div class="social-links-card">
     <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);">💬 Наши сообщества:</div>
     <div class="social-buttons-grid">
-      <a href="https://t.me/ttchmz" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram чат</a>
-      <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС чат</a>
+      <!-- Telegram карточка -->
+      <div class="social-card-item">
+        <a href="https://t.me/ttchmz" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram чат</a>
+        <button class="btn-qr-mini" onclick="openQrModal('tg')"><span>📷</span> QR-код</button>
+      </div>
+      <!-- Макс карточка -->
+      <div class="social-card-item">
+        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС чат</a>
+        <button class="btn-qr-mini" onclick="openQrModal('max')"><span>📷</span> QR-код</button>
+      </div>
     </div>
-    <div class="qr-buttons-row">
-      <button class="btn-qr" onclick="openQrModal('tg')"><span>📷</span> QR Telegram</button>
-      <button class="btn-qr" onclick="openQrModal('max')"><span>📷</span> QR МАКС</button>
-      <button class="btn-qr" onclick="openQrModal('app')"><span>📱</span> QR Приложения</button>
-    </div>
+    <!-- Отдельная кнопка для QR приложения -->
+    <button class="btn-qr-app" onclick="openQrModal('app')"><span>📱</span> Показать QR-код этого приложения</button>
   </div>
 
   <!-- Плашка авторизации: Telegram + Google -->
