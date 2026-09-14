@@ -380,7 +380,7 @@
 
 <div class="container">
 
-  <!-- Шапка клуба (Логотип и кнопка App.webp) -->
+  <!-- Шапка клуба -->
   <div class="club-header">
     <div class="club-header-left">
       <img src="logo.webp" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
@@ -395,7 +395,7 @@
     </button>
   </div>
 
-  <!-- Блок сообществ (TG.webp и Max.webp) -->
+  <!-- Блок сообществ -->
   <div class="social-links-minimal">
     <div class="social-pill">
       <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg">
@@ -556,7 +556,7 @@
   </div>
 </div>
 
-<!-- Остальные модальные окна -->
+<!-- Модальные окна -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -662,7 +662,7 @@
     if (!currentModalUrl) return;
     const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
     if (navigator.share) {
-      try { await navigator.share({ title: 'Клуб настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {}
+      try { await navigator.share({ title: 'Клуб любителей настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {}
     } else {
       navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => alert("📋 Ссылка скопирована!"));
     }
@@ -695,11 +695,6 @@
     if (elo <= 2800) return "Элитный игрок ⭐";
     if (elo <= 3000) return "Мастер атаки 🔥";
     return "Легенда спорта 🌟🏆";
-  }
-
-  function getWindDirection(deg) {
-    if (deg === undefined || deg === null) return "";
-    return ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"][Math.round((deg % 360) / 45) % 8];
   }
 
   function isUserVerified() {
@@ -803,22 +798,6 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  function sendTelegramAlert(text) {
-    if (!GOOGLE_GATEWAY_URL) return;
-    try {
-      let f = document.getElementById('tg_sink_frame');
-      if (!f) {
-        f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none';
-        document.body.appendChild(f);
-      }
-      const form = document.createElement('form');
-      form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
-      const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
-      form.appendChild(input); document.body.appendChild(form); form.submit();
-      setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
-    } catch (e) {}
-  }
-
   // Firebase Init
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
@@ -831,8 +810,12 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
+  let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
+  let currentUserProfile = { uid: null, name: "Гость" };
+
   document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile();
+    initUserProfile(); // Восстановлено для корректной авторизации и отображения профиля
+    
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
@@ -843,7 +826,6 @@
     });
     
     setTimeout(() => {
-      // Фоновые подгрузки погоды и рейтингов
       fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto')
         .then(r => r.json()).then(data => {
           const t = Math.round(data.current.temperature_2m);
