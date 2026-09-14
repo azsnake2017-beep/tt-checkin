@@ -714,6 +714,9 @@
     </div>
   </div>
 
+  <!-- Блок уведомлений о подтверждении матчей -->
+  <div id="pending-matches-container"></div>
+
   <!-- Кнопка записи матча -->
   <button class="btn-match-quick" onclick="handleMatchClick()">
     <span>⚔️</span>
@@ -813,11 +816,11 @@
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: #d8b4fe;">⚔️ Запись матча</h3>
     <p style="font-size: 13px; color: var(--text-muted);">
-      Матч повлияет на официальный клубный рейтинг
+      Соперник должен быть за тем же столом. Результат пойдет в зачет после его подтверждения.
     </p>
 
     <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Ваш соперник:</label>
+      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Соперник за вашим столом:</label>
       <select id="match-opponent-select" class="input-select"></select>
     </div>
 
@@ -836,8 +839,8 @@
     <input type="hidden" id="match-my-score" value="3" />
     <input type="hidden" id="match-opp-score" value="0" />
 
-    <button class="btn btn-join" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" onclick="submitMatchResult()">
-      Сохранить результат
+    <button class="btn btn-join" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" onclick="submitMatchProposal()">
+      Отправить запрос сопернику
     </button>
     <button class="btn-cancel-modal" onclick="closeMatchModal()">Отмена</button>
   </div>
@@ -1405,7 +1408,7 @@
     }
   }
 
-  // ================= РЕЙТИНГ =================
+  // ================= РЕЙТИНГ И МАТЧИ С ПОДТВЕРЖДЕНИЕМ =================
   function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
     const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
     const deltaA = Math.round(k * (actualScoreA - expectedScoreA));
@@ -1476,19 +1479,25 @@
     const myUid = getVerifiedUserId();
     if (!myUid) return;
 
+    if (!currentUserActiveLoc) {
+      alert("❌ Записывать матчи могут только игроки, которые находятся за столом (отмечены в Парке или ДК «Восток»)! Сначала сделайте чекин.");
+      return;
+    }
+
     const select = document.getElementById('match-opponent-select');
     select.innerHTML = '';
 
-    const opponents = allRegisteredUsers.filter(u => u.uid !== myUid);
+    // Находим всех игроков, которые сейчас находятся за тем же столом
+    const currentTablePlayers = locationsData[currentUserActiveLoc].players || [];
+    const opponents = currentTablePlayers.filter(p => (p.uid || p) !== myUid);
 
     if (opponents.length === 0) {
-      select.innerHTML = '<option value="">(нет других подтвержденных игроков)</option>';
+      select.innerHTML = '<option value="">(за вашим столом больше нет других игроков)</option>';
     } else {
-      opponents.forEach(u => {
-        let pTag = '[TG]';
-        if (u.uid.startsWith('google_')) pTag = '[Google]';
-
-        select.innerHTML += `<option value="${cleanHtml(u.uid)}">${cleanHtml(u.name)} ${pTag} (${u.elo})</option>`;
+      opponents.forEach(p => {
+        const uInfo = allRegisteredUsers.find(u => u.uid === (p.uid || p));
+        const elo = uInfo ? uInfo.elo : 1000;
+        select.innerHTML += `<option value="${cleanHtml(p.uid || p)}">${cleanHtml(p.name)} (${elo} Elo)</option>`;
       });
     }
 
@@ -1513,7 +1522,7 @@
     });
   }
 
-  async function submitMatchResult() {
+  async function submitMatchProposal() {
     const myUid = getVerifiedUserId();
     if (!myUid) return;
 
@@ -1522,64 +1531,129 @@
     const scoreMy = parseInt(document.getElementById('match-my-score').value, 10);
     const scoreOpp = parseInt(document.getElementById('match-opp-score').value, 10);
 
-    if (!oppUid || oppUid === myUid) return;
+    if (!oppUid || oppUid === myUid) {
+      alert("Выберите соперника за вашим столом!");
+      return;
+    }
 
     closeMatchModal();
 
     try {
-      const myRef = db.collection('users').doc(myUid);
-      const oppRef = db.collection('users').doc(oppUid);
+      const oppInfo = allRegisteredUsers.find(u => u.uid === oppUid);
+      const oppName = oppInfo ? oppInfo.name : "Соперник";
+
+      // Создаем предложение матча в коллекции pending_matches
+      await db.collection('pending_matches').add({
+        proposerUid: myUid,
+        proposerName: currentUserProfile.name,
+        opponentUid: oppUid,
+        opponentName: oppName,
+        scoreProposer: scoreMy,
+        scoreOpponent: scoreOpp,
+        timestamp: Date.now()
+      });
+
+      alert("✅ Запрос на подтверждение матча отправлен сопернику!");
+    } catch (e) {
+      console.error("Ошибка отправки матча:", e);
+      alert("Не удалось отправить запрос.");
+    }
+  }
+
+  // Слушатель запросов на подтверждение матчей для текущего пользователя
+  function listenPendingMatches() {
+    const myUid = getVerifiedUserId();
+    if (!myUid) return;
+
+    db.collection('pending_matches')
+      .where('opponentUid', '==', myUid)
+      .onSnapshot(snap => {
+        const container = document.getElementById('pending-matches-container');
+        if (snap.empty) {
+          container.innerHTML = '';
+          return;
+        }
+
+        let html = '';
+        snap.forEach(doc => {
+          const m = doc.data();
+          html += `
+            <div style="background: rgba(168, 85, 247, 0.15); border: 1px solid var(--accent-purple); padding: 12px 14px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
+              <div style="font-size: 13px; font-weight: 600; color: #d8b4fe;">
+                ⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b>
+              </div>
+              <div style="font-size: 13px;">
+                Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}
+              </div>
+              <div style="display: flex; gap: 8px; margin-top: 4px;">
+                <button class="btn btn-join" style="background: var(--accent-green); padding: 8px;" onclick="confirmMatch('${doc.id}')">Подтвердить</button>
+                <button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${doc.id}')">Отклонить</button>
+              </div>
+            </div>
+          `;
+        });
+        container.innerHTML = html;
+      });
+  }
+
+  async function confirmMatch(matchId) {
+    const myUid = getVerifiedUserId();
+    if (!myUid) return;
+
+    try {
+      const matchRef = db.collection('pending_matches').doc(matchId);
+      const matchDoc = await matchRef.get();
+      if (!matchDoc.exists) return;
+
+      const m = matchDoc.data();
+      const proposerRef = db.collection('users').doc(m.proposerUid);
+      const opponentRef = db.collection('users').doc(m.opponentUid);
 
       let myDelta = 0;
-      let newMyElo = 1000;
-      let newOppElo = 1000;
-      let myName = currentUserProfile.name;
-      let oppName = "Соперник";
+      let newProposerElo = 1000;
+      let newOpponentElo = 1000;
 
       await db.runTransaction(async (t) => {
-        const myDoc = await t.get(myRef);
-        const oppDoc = await t.get(oppRef);
+        const propDoc = await t.get(proposerRef);
+        const oppDoc = await t.get(opponentRef);
 
-        const myData = myDoc.exists ? myDoc.data() : { name: myName, elo: 1000, matches: 0, wins: 0, losses: 0 };
-        const oppData = oppDoc.exists ? oppDoc.data() : { name: "Игрок", elo: 1000, matches: 0, wins: 0, losses: 0 };
+        const propData = propDoc.exists ? propDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0 };
+        const oppData = oppDoc.exists ? oppDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0 };
 
-        myName = myData.name || myName;
-        oppName = oppData.name || oppName;
+        const isProposerWin = m.scoreProposer > m.scoreOpponent;
+        const actualScoreProp = isProposerWin ? 1 : 0;
+        
+        myDelta = calculateElo(propData.elo || 1000, oppData.elo || 1000, actualScoreProp);
 
-        const isWin = scoreMy > scoreOpp;
-        const actualScoreA = isWin ? 1 : 0;
-        myDelta = calculateElo(myData.elo || 1000, oppData.elo || 1000, actualScoreA);
+        newProposerElo = Math.max(100, (propData.elo || 1000) + myDelta);
+        newOpponentElo = Math.max(100, (oppData.elo || 1000) - myDelta);
 
-        newMyElo = Math.max(100, (myData.elo || 1000) + myDelta);
-        newOppElo = Math.max(100, (oppData.elo || 1000) - myDelta);
-
-        t.set(myRef, {
-          name: myName,
-          elo: newMyElo,
-          matches: (myData.matches || 0) + 1,
-          wins: (myData.wins || 0) + (isWin ? 1 : 0),
-          losses: (myData.losses || 0) + (isWin ? 0 : 1),
+        t.set(proposerRef, {
+          elo: newProposerElo,
+          matches: (propData.matches || 0) + 1,
+          wins: (propData.wins || 0) + (isProposerWin ? 1 : 0),
+          losses: (propData.losses || 0) + (isProposerWin ? 0 : 1),
           updatedAt: Date.now()
         }, { merge: true });
 
-        t.set(oppRef, {
-          name: oppName,
-          elo: newOppElo,
+        t.set(opponentRef, {
+          elo: newOpponentElo,
           matches: (oppData.matches || 0) + 1,
-          wins: (oppData.wins || 0) + (isWin ? 0 : 1),
-          losses: (oppData.losses || 0) + (isWin ? 1 : 0),
+          wins: (oppData.wins || 0) + (isProposerWin ? 0 : 1),
+          losses: (oppData.losses || 0) + (isProposerWin ? 1 : 0),
           updatedAt: Date.now()
         }, { merge: true });
       });
 
-      const mySign = myDelta >= 0 ? `+${myDelta}` : `${myDelta}`;
-      const oppSign = (-myDelta) >= 0 ? `+${-myDelta}` : `${-myDelta}`;
+      // Удаляем предложение матча
+      await matchRef.delete();
 
-      const alertMsg = `🏆 <b>Рейтинговый матч завершён!</b>\n\n` +
-        `🏓 <b>${cleanHtml(myName)}</b>  <code>${scoreMy} : ${scoreOpp}</code>  <b>${cleanHtml(oppName)}</b>\n\n` +
-        `<blockquote>📊 <b>Изменение рейтинга:</b>\n` +
-        `• ${cleanHtml(myName)}: ${newMyElo} (${mySign})\n` +
-        `• ${cleanHtml(oppName)}: ${newOppElo} (${oppSign})</blockquote>`;
+      // Отправляем уведомление в Telegram
+      const alertMsg = `🏆 <b>Рейтинговый матч подтверждён и зачтён!</b>\n\n` +
+        `🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n` +
+        `<blockquote>📊 <b>Новый рейтинг:</b>\n` +
+        `• ${cleanHtml(m.proposerName)}: ${newProposerElo}\n` +
+        `• ${cleanHtml(m.opponentName)}: ${newOpponentElo}</blockquote>`;
 
       sendTelegramAlert(alertMsg);
 
@@ -1588,7 +1662,17 @@
       }
 
     } catch (e) {
-      console.error("Ошибка сохранения матча:", e);
+      console.error("Ошибка подтверждения матча:", e);
+      alert("Не удалось подтвердить матч.");
+    }
+  }
+
+  async function rejectMatch(matchId) {
+    try {
+      await db.collection('pending_matches').doc(matchId).delete();
+      document.getElementById('pending-matches-container').innerHTML = '';
+    } catch (e) {
+      console.error(e);
     }
   }
 
@@ -1666,7 +1750,6 @@
     let isAlreadyThere = false;
 
     try {
-      // Кулдаун на клиенте (5 минут / 300 000 мс)
       const lastAction = parseInt(localStorage.getItem('tt_last_action_ts') || '0', 10);
       if (now - lastAction < 300000 && lastAction > 0) {
         alert("⏳ Слишком частые изменения статуса. Подождите немного перед повторным чекином.");
@@ -1684,14 +1767,12 @@
         let oPlayers = (oDoc.exists && oDoc.data().players) || [];
         let tPlans = (tDoc.exists && tDoc.data().plans) || [];
 
-        // Проверяем, не отмечен ли игрок уже за этим столом
         const existingPlayer = tPlayers.find(p => (p.uid || p) === myUid);
         if (existingPlayer) {
           isAlreadyThere = true;
           return;
         }
 
-        // Удаляем из других мест и планов
         tPlayers = tPlayers.filter(p => (p.uid || p) !== myUid);
         oPlayers = oPlayers.filter(p => (p.uid || p) !== myUid);
         tPlans = tPlans.filter(p => (p.uid || p) !== myUid);
@@ -2092,6 +2173,7 @@
     setupRealtimeListeners();
     listenLeaderboard();
     listenRatings();
+    listenPendingMatches();
     monitorSessions();
 
     setInterval(renderAll, 30000); 
