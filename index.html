@@ -534,12 +534,6 @@
     return myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake');
   }
 
-  window.onTelegramAuth = async function(user) {
-    const uid = 'tg_' + user.id;
-    localStorage.setItem('tt_member_id', uid);
-    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
-  };
-
   async function loginWithGoogle() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -562,16 +556,79 @@
 
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
-    const snap = await ref.get();
-    if (!snap.exists) {
-      currentUserProfile = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
-      await ref.set(currentUserProfile);
-    } else { currentUserProfile = snap.data(); }
-    document.getElementById('web-auth-banner').style.display = 'none';
+    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
+    
+    try {
+      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+      const snap = await Promise.race([ref.get(), timeoutPromise]);
+      if (!snap.exists) {
+        await ref.set(userData);
+      } else {
+        userData = snap.data();
+      }
+    } catch (e) {}
+    
+    currentUserProfile = userData;
+    const banner = document.getElementById('web-auth-banner');
+    if (banner) banner.style.display = 'none';
     updateProfileDisplay();
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
   }
+
+  async function initUserProfile() {
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      const u = window.Telegram.WebApp.initDataUnsafe.user;
+      await syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
+      return;
+    }
+    const savedId = localStorage.getItem('tt_member_id');
+    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
+      try {
+        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
+        const snap = await Promise.race([db.collection('users').doc(savedId).get(), timeoutPromise]);
+        if (snap.exists) {
+          currentUserProfile = snap.data();
+          updateProfileDisplay();
+          const banner = document.getElementById('web-auth-banner');
+          if (banner) banner.style.display = 'none';
+          renderAll();
+          return;
+        }
+      } catch (e) {}
+    }
+    
+    currentUserProfile = { uid: null, name: "Гость" };
+    const nameEl = document.getElementById('user-name-container');
+    if (nameEl) nameEl.innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
+    const statsEl = document.getElementById('user-stats-container');
+    if (statsEl) statsEl.innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
+    
+    // Только для ПК-браузера подгружаем виджет, в Телеграме он не нужен
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      const banner = document.getElementById('web-auth-banner');
+      if (banner) banner.style.display = 'flex';
+      const container = document.getElementById('telegram-login-container');
+      if (container) {
+        container.innerHTML = '';
+        const script = document.createElement('script');
+        script.src = "https://telegram.org/js/telegram-widget.js?22";
+        script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
+        script.setAttribute('data-size', 'large');
+        script.setAttribute('data-radius', '10');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
+        script.setAttribute('data-request-access', 'write');
+        container.appendChild(script);
+      }
+    }
+    renderAll();
+  }
+
+  window.onTelegramAuth = async function(user) {
+    const uid = 'tg_' + user.id;
+    localStorage.setItem('tt_member_id', uid);
+    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
+  };
 
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
@@ -579,36 +636,28 @@
     let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
 
-    document.getElementById('user-name-container').innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
-    document.getElementById('user-score-container').innerHTML = `<span class="rating-score" style="font-size: 16px;">${elo}</span>`;
-    document.getElementById('user-stats-container').innerHTML = `
+    const nameEl = document.getElementById('user-name-container');
+    if (nameEl) nameEl.innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
+    const scoreEl = document.getElementById('user-score-container');
+    if (scoreEl) scoreEl.innerHTML = `<span class="rating-score" style="font-size: 16px;">${elo}</span>`;
+    const statsEl = document.getElementById('user-stats-container');
+    if (statsEl) statsEl.innerHTML = `
       <span class="player-status-tag">${getPlayerStatus(elo)}</span>
       <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>
     `;
-    document.getElementById('btn-edit-profile').style.display = 'block';
-    document.getElementById('btn-logout').style.display = 'block';
+    const editBtn = document.getElementById('btn-edit-profile');
+    if (editBtn) editBtn.style.display = 'block';
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) logoutBtn.style.display = 'block';
 
     if (isSuperAdmin()) {
-      document.getElementById('admin-broadcast-panel').style.display = 'flex';
-      document.getElementById('btn-edit-announcement-park').style.display = 'block';
-      document.getElementById('btn-edit-announcement-vostok').style.display = 'block';
+      const adminPanel = document.getElementById('admin-broadcast-panel');
+      if (adminPanel) adminPanel.style.display = 'flex';
+      const edPark = document.getElementById('btn-edit-announcement-park');
+      if (edPark) edPark.style.display = 'block';
+      const edVost = document.getElementById('btn-edit-announcement-vostok');
+      if (edVost) edVost.style.display = 'block';
     }
-  }
-
-  function injectTelegramLoginWidget() {
-    if (isUserVerified()) return;
-    document.getElementById('web-auth-banner').style.display = 'flex';
-    const container = document.getElementById('telegram-login-container');
-    container.innerHTML = '';
-    const script = document.createElement('script');
-    script.src = "https://telegram.org/js/telegram-widget.js?22";
-    script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
-    script.setAttribute('data-size', 'large');
-    script.setAttribute('data-radius', '10');
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-    script.setAttribute('data-request-access', 'write');
-    script.async = true;
-    container.appendChild(script);
   }
 
   function cleanHtml(str) {
@@ -650,7 +699,8 @@
     fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto')
       .then(r => r.json()).then(data => {
         const t = Math.round(data.current.temperature_2m);
-        document.getElementById('weather-park').innerHTML = `<div class="weather-badge"><span>🌡️ ${t}°C, ветер ${Math.round(data.current.wind_speed_10m)} м/с</span></div>`;
+        const wEl = document.getElementById('weather-park');
+        if (wEl) wEl.innerHTML = `<div class="weather-badge"><span>🌡️ ${t}°C, ветер ${Math.round(data.current.wind_speed_10m)} м/с</span></div>`;
       }).catch(() => {});
   });
 </script>
