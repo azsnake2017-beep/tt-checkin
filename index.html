@@ -114,8 +114,12 @@
     .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .card-title::after { content: ' ▼'; font-size: 10px; color: var(--text-muted); transition: transform 0.2s ease; }
     .card.expanded .card-title::after { transform: rotate(180deg); }
-    .card-body-collapse { display: none; flex-direction: column; gap: 12px; margin-top: 4px; }
+    
+    /* Плавное раскрытие карточек */
+    .card-body-collapse { display: none; flex-direction: column; gap: 12px; margin-top: 4px; animation: fadeIn 0.25s ease; }
     .card.expanded .card-body-collapse { display: flex; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
     .card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
     .weather-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
@@ -355,7 +359,7 @@
 
 </div>
 
-<!-- Модальное окно с QR-кодами -->
+<!-- Модальные окна -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -374,7 +378,6 @@
   </div>
 </div>
 
-<!-- Модальные окна -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -475,6 +478,25 @@
   let hasTriggeredPush = false, allRegisteredUsers = [], announcementsData = { park: "", vostok: "" }, currentModalUrl = "";
 
   function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
+
+  function switchTab(tab) {
+    const tabRating = document.getElementById('tab-btn-rating');
+    const tabTime = document.getElementById('tab-btn-time');
+    const viewRating = document.getElementById('view-rating');
+    const viewTime = document.getElementById('view-time');
+
+    if (tab === 'rating') {
+      tabRating.classList.add('active');
+      tabTime.classList.remove('active');
+      viewRating.style.display = 'flex';
+      viewTime.style.display = 'none';
+    } else {
+      tabTime.classList.add('active');
+      tabRating.classList.remove('active');
+      viewTime.style.display = 'flex';
+      viewRating.style.display = 'none';
+    }
+  }
 
   async function shareModalUrl() {
     if (!currentModalUrl) return;
@@ -604,7 +626,6 @@
     const statsEl = document.getElementById('user-stats-container');
     if (statsEl) statsEl.innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
     
-    // Только для ПК-браузера подгружаем виджет, в Телеграме он не нужен
     if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       const banner = document.getElementById('web-auth-banner');
       if (banner) banner.style.display = 'flex';
@@ -623,12 +644,6 @@
     }
     renderAll();
   }
-
-  window.onTelegramAuth = async function(user) {
-    const uid = 'tg_' + user.id;
-    localStorage.setItem('tt_member_id', uid);
-    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
-  };
 
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
@@ -665,6 +680,63 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
+  // Загрузка рейтингов и лидерборда
+  function listenRatings() {
+    db.collection('users').orderBy('elo', 'desc').limit(30).onSnapshot(snap => {
+      const listEl = document.getElementById('rating-list');
+      allRegisteredUsers = [];
+      if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
+      let html = '', rank = 1, myUid = getVerifiedUserId();
+      snap.forEach(doc => {
+        const d = doc.data();
+        if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_') && !d.isVerified) return;
+        allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
+        if (doc.id === myUid) { currentUserProfile = { ...currentUserProfile, ...d }; updateProfileDisplay(); }
+        const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+        const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0;
+        const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+        let pTag = doc.id.startsWith('google_') ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
+        html += `
+          <div class="leader-row">
+            <div class="leader-left">
+              <span class="leader-rank ${rankClass}">${medal}</span>
+              <div><div><b>${cleanHtml(d.name)}</b> ${pTag}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)} • ${wins}В - ${losses}П (${winrate}%)</div></div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="rating-score">${d.elo || 1000}</span>
+              <button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button>
+            </div>
+          </div>
+        `;
+        rank++;
+      });
+      listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
+    });
+  }
+
+  function listenLeaderboard() {
+    db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(5).onSnapshot(snap => {
+      const listEl = document.getElementById('leaderboard-list');
+      if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
+      let html = '', rank = 1;
+      snap.forEach(doc => {
+        const d = doc.data();
+        const hours = (d.totalMinutes / 60).toFixed(1);
+        const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
+        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+        html += `
+          <div class="leader-row">
+            <div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><b>${cleanHtml(d.name)}</b></div>
+            <span class="leader-score">${hours} ч (${d.sessions} игр)</span>
+          </div>
+        `;
+        rank++;
+      });
+      listEl.innerHTML = html;
+    });
+  }
+
   // Firebase Init & Start Listeners
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
@@ -675,9 +747,7 @@
     appId: "1:763705864834:web:d9035408eaf3e31d0efa9b"
   };
   
-  if (!firebase.apps.length) {
-    firebase.initializeApp(firebaseConfig);
-  }
+  if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   const db = firebase.firestore();
 
   let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
@@ -685,6 +755,8 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile();
+    listenRatings();
+    listenLeaderboard();
     
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
