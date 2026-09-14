@@ -5,13 +5,13 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
-  <!-- Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Telegram WebApp SDK (async) -->
+  <script src="https://telegram.org/js/telegram-web-app.js" async></script>
 
-  <!-- Firebase SDK Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- Firebase SDK Compat (async) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" async></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" async></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" async></script>
 
   <style>
     :root {
@@ -854,40 +854,38 @@
 
 <div class="container">
 
-  <!-- Шапка клуба с большой круглой кнопкой QR приложения (App.png) справа под высоту блока -->
+  <!-- Шапка клуба -->
   <div class="club-header">
     <div class="club-header-left">
-      <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
+      <img src="logo.png" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
       <div class="club-header-text">
         <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
         <p>Радар столов, клубный рейтинг и статистика</p>
       </div>
     </div>
     <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
-      <img src="App.png" alt="App QR" class="icon-img-large" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <img src="App.png" alt="App QR" class="icon-img-large" width="28" height="28" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
       <span style="display: none; font-size: 18px;">📱</span>
     </button>
   </div>
 
-  <!-- Минималистичный блок сообществ: Telegram и МАКС с фирменными цветами и круглыми QR-иконками -->
+  <!-- Блок сообществ -->
   <div class="social-links-minimal">
-    <!-- Telegram -->
     <div class="social-pill">
       <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg">
         <span>✈️</span> Telegram
       </a>
       <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram">
-        <img src="TG.png" alt="TG" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <img src="TG.png" alt="TG" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
         <span style="display: none; font-size: 11px;">📷</span>
       </button>
     </div>
-    <!-- МАКС -->
     <div class="social-pill">
       <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max">
         <span>💬</span> МАКС
       </a>
       <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС">
-        <img src="Max.png" alt="Max" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <img src="Max.png" alt="Max" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
         <span style="display: none; font-size: 11px;">📷</span>
       </button>
     </div>
@@ -899,10 +897,7 @@
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
     
     <div class="auth-methods-box">
-      <!-- 1. Telegram Widget -->
       <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
-
-      <!-- 2. Google Button -->
       <button class="btn-auth-provider" style="background: #ffffff; color: #1e293b; border: 1px solid #334155;" onclick="loginWithGoogle()">
         <span>🌐</span> Войти через Google
       </button>
@@ -913,11 +908,11 @@
     </div>
   </div>
 
-  <!-- Скомпанованный блок профиля -->
+  <!-- Блок профиля -->
   <div class="profile-card">
     <div class="profile-top-row">
       <div class="profile-user-main" id="user-name-container">
-        <span>Вы: <b style="color: var(--text-muted);">Проверка...</b></span>
+        <span>Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
       </div>
       <div id="user-score-container"></div>
     </div>
@@ -933,7 +928,7 @@
     </div>
   </div>
 
-  <!-- Панель администратора для отправки сообщений в Telegram от имени бота -->
+  <!-- Панель администратора -->
   <div class="admin-panel-card" id="admin-broadcast-panel">
     <div style="font-size: 14px; font-weight: 700; color: #fde68a; display: flex; align-items: center; gap: 6px;">
       <span>📢</span> Панель администратора: Сообщение в чат
@@ -944,10 +939,8 @@
     </button>
   </div>
 
-  <!-- Блок уведомлений о подтверждении матчей -->
   <div id="pending-matches-container"></div>
 
-  <!-- Кнопка записи матча -->
   <button class="btn-match-quick" onclick="handleMatchClick()">
     <span>⚔️</span>
     <span>Записать результат матча</span>
@@ -968,7 +961,6 @@
         <div class="weather-badge"><span>Загрузка погоды...</span></div>
       </div>
 
-      <!-- Информационное поле / Анонсы -->
       <div class="event-badge" id="announcement-box-park" style="display: none;">
         <span id="announcement-text-park"></span>
       </div>
@@ -1002,7 +994,6 @@
     </div>
 
     <div class="card-body-collapse">
-      <!-- Информационное поле / Анонсы -->
       <div class="event-badge" id="announcement-box-vostok" style="display: none;">
         <span id="announcement-text-vostok"></span>
       </div>
@@ -1025,13 +1016,11 @@
     </div>
   </div>
 
-  <!-- Таблицы Рейтинг / Тренировки -->
   <div class="tabs-container">
     <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Клубный рейтинг</button>
     <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
   </div>
 
-  <!-- Блок 1: Клубный рейтинг -->
   <div class="rating-card" id="view-rating">
     <div class="card-block-title" style="color: var(--accent-purple);">
       <span>⚔️</span>
@@ -1042,7 +1031,6 @@
     </div>
   </div>
 
-  <!-- Блок 2: Зал славы (Тренировки) -->
   <div class="leaderboard-card" id="view-time" style="display: none;">
     <div class="card-block-title" style="color: var(--accent-gold);">
       <span>🥇</span>
@@ -1055,7 +1043,7 @@
 
 </div>
 
-<!-- Модальное окно с QR-кодами и нативным системным меню "Поделиться" -->
+<!-- Модальное окно с QR-кодами -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -1066,7 +1054,7 @@
       Покажите этот QR-код друзьям для быстрого доступа:
     </p>
     <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;">
-      <img id="qr-code-img" src="" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+      <img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" />
     </div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
@@ -1076,14 +1064,13 @@
   </div>
 </div>
 
-<!-- Модальное окно профиля игрока [i] -->
+<!-- Модальные окна -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль игрока</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
-
     <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
       <div style="display: flex; justify-content: space-between; font-size: 13px;">
         <span style="color: var(--text-muted);">Рейтинг Elo:</span>
@@ -1106,56 +1093,38 @@
         <span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-sky);">0 ч 0 мин</span>
       </div>
     </div>
-
-    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">
-      📜 История матчей:
-    </div>
-    
+    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">📜 История матчей:</div>
     <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
       <span class="empty-note">История матчей пуста</span>
     </div>
-
     <button class="btn btn-join" style="background: #334155; margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
   </div>
 </div>
 
-<!-- Модальное окно редактирования анонса (для Admin) -->
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: #fde68a;">📢 Редактирование анонса</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">
-      Информация отобразится на карточке локации и будет отправлена в Telegram-чат.
-    </p>
-
+    <p style="font-size: 13px; color: var(--text-muted);">Информация отобразится на карточке локации и будет отправлена в Telegram-чат.</p>
     <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;" id="announcement-modal-label">Текст анонса / уведомления:</label>
-      <textarea id="announcement-textarea" class="textarea-announcement" placeholder="Например: Встреча клуба в субботу в 15:00..."></textarea>
+      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;" id="announcement-modal-label">Текст анонса:</label>
+      <textarea id="announcement-textarea" class="textarea-announcement"></textarea>
     </div>
-
     <input type="hidden" id="announcement-target-loc" value="" />
-
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">
-      Сохранить и отправить в чат
-    </button>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить в чат</button>
     <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
   </div>
 </div>
 
-<!-- Модальное окно записи результата матча -->
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: #d8b4fe;">⚔️ Запись матча</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">
-      Соперник должен быть за тем же столом. Результат пойдет в зачет после его подтверждения.
-    </p>
-
+    <p style="font-size: 13px; color: var(--text-muted);">Соперник должен быть за тем же столом.</p>
     <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Соперник за вашим столом:</label>
+      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Соперник:</label>
       <select id="match-opponent-select" class="input-select"></select>
     </div>
-
     <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Счёт по партиям (в вашу пользу / соперника):</label>
+      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Счёт по партиям:</label>
       <div class="score-picker">
         <button class="score-btn" onclick="selectScore(3, 0)">3 : 0</button>
         <button class="score-btn" onclick="selectScore(3, 1)">3 : 1</button>
@@ -1165,84 +1134,60 @@
         <button class="score-btn" onclick="selectScore(0, 3)">0 : 3</button>
       </div>
     </div>
-
     <input type="hidden" id="match-my-score" value="3" />
     <input type="hidden" id="match-opp-score" value="0" />
-
-    <button class="btn btn-join" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" onclick="submitMatchProposal()">
-      Отправить запрос сопернику
-    </button>
+    <button class="btn btn-join" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" onclick="submitMatchProposal()">Отправить запрос</button>
     <button class="btn-cancel-modal" onclick="closeMatchModal()">Отмена</button>
   </div>
 </div>
 
-<!-- Модальное окно напоминания и продления -->
 <div class="modal-overlay" id="extend-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: #fde68a;">⏰ Вы уже 1 ч 45 мин у стола!</h3>
-    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">
-      Продлить время пребывания? Если не выбрать, через 15 минут стол автоматически освободится.
-    </p>
-
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">Продлить время пребывания?</p>
     <div class="modal-options-grid">
       <button class="btn-opt" onclick="extendSession(30)">+30 мин</button>
       <button class="btn-opt" onclick="extendSession(60)">+1 час</button>
       <button class="btn-opt" onclick="extendSession(120)">+2 часа</button>
     </div>
-
-    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c;" onclick="confirmLeaveFromModal()">
-      👋 Уйти со стола сейчас
-    </button>
+    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c;" onclick="confirmLeaveFromModal()">👋 Уйти со стола сейчас</button>
   </div>
 </div>
 
-<!-- Модальное окно планов -->
 <div class="modal-overlay" id="plan-modal">
   <div class="modal-box">
     <h3 style="font-size: 17px;">Когда планируете прийти?</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">Бот предупредит одноклубников в Telegram-чате</p>
-
     <div class="modal-options-grid">
       <button class="btn-opt" onclick="submitQuickPlan(15)">+15 мин</button>
       <button class="btn-opt" onclick="submitQuickPlan(30)">+30 мин</button>
       <button class="btn-opt" onclick="submitQuickPlan(45)">+45 мин</button>
     </div>
-
     <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">или укажите точное время:</div>
     <div class="custom-time-row">
       <input type="time" id="exact-time-input" class="input-time" />
       <button class="btn btn-join" style="padding: 10px 16px; width: auto;" onclick="submitExactPlan()">ОК</button>
     </div>
-
     <button class="btn-cancel-modal" onclick="closePlanModal()">Отмена</button>
   </div>
 </div>
 
-<!-- Модальное окно смены имени -->
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <h3>Ваше имя в клубе</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">Имя закрепляется за вашим профилем</p>
-    <input type="text" id="name-input" class="input-name" placeholder="Например: Иван Смирнов" maxlength="26" />
-    <span class="name-error-msg" id="name-error-box">Это имя уже занято другим игроком клуба!</span>
+    <input type="text" id="name-input" class="input-name" placeholder="Иван Смирнов" maxlength="26" />
+    <span class="name-error-msg" id="name-error-box">Это имя уже занято!</span>
     <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()">Сохранить</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
   </div>
 </div>
 
 <script>
-  // ================= НАСТРОЙКИ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
-  
   const TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
   const MAX_CHAT_URL = "https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E";
 
-  const LOCATION_NAMES = {
-    park: "в Парке им. Тищенко 🌳",
-    vostok: "в ДК «Восток» 🏛"
-  };
-
+  const LOCATION_NAMES = { park: "в Парке им. Тищенко 🌳", vostok: "в ДК «Восток» 🏛" };
   const DEFAULT_LIMIT_MS = 120 * 60 * 1000;
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
 
@@ -1255,32 +1200,20 @@
   let currentModalUrl = "";
 
   function toggleCard(loc) {
-    const cardEl = document.getElementById('card-' + loc);
-    cardEl.classList.toggle('expanded');
+    document.getElementById('card-' + loc).classList.toggle('expanded');
   }
 
   async function shareModalUrl() {
     if (!currentModalUrl) return;
     const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
-    
     if (navigator.share) {
       try {
-        await navigator.share({
-          title: 'Клуб любителей настольного тенниса ЧМЗ',
-          text: shareText,
-          url: currentModalUrl,
-        });
+        await navigator.share({ title: 'Клуб любителей настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl });
       } catch (err) {
-        if (err.name !== 'AbortError') {
-          console.error('Ошибка шаринга:', err);
-        }
+        if (err.name !== 'AbortError') console.error(err);
       }
     } else {
-      navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => {
-        alert("📋 Ссылка и приветственный текст скопированы в буфер обмена!");
-      }).catch(err => {
-        console.error('Ошибка копирования:', err);
-      });
+      navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => alert("📋 Ссылка скопирована!"));
     }
   }
 
@@ -1304,16 +1237,12 @@
     document.getElementById('qr-modal-desc').innerText = desc;
 
     const qrImg = document.getElementById('qr-code-img');
-    const urlText = document.getElementById('qr-url-text');
-    
+    document.getElementById('qr-url-text').innerText = targetUrl;
     qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
-    urlText.innerText = targetUrl;
     document.getElementById('qr-modal').style.display = 'flex';
   }
 
-  function closeQrModal() {
-    document.getElementById('qr-modal').style.display = 'none';
-  }
+  function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢";
@@ -1342,11 +1271,9 @@
   function getWindDirection(degrees) {
     if (degrees === undefined || degrees === null) return "";
     const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
-    const index = Math.round((degrees % 360) / 45);
-    return directions[index % 8];
+    return directions[Math.round((degrees % 360) / 45) % 8];
   }
 
-  // ================= АВТОРИЗАЦИЯ И ПРАВА СУПЕРПОЛЬЗОВАТЕЛЯ =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
@@ -1354,35 +1281,22 @@
   }
 
   function getVerifiedUserId() {
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
-    }
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
     const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
-      return savedId;
-    }
-    return null;
+    return (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) ? savedId : null;
   }
 
   function isSuperAdmin() {
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    if (tgUser && (tgUser.username?.toLowerCase() === 'azsnake')) {
-      return true;
-    }
+    if (tgUser && tgUser.username?.toLowerCase() === 'azsnake') return true;
     const myUid = getVerifiedUserId();
-    if (myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake')) {
-      return true;
-    }
-    return false;
+    return myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake');
   }
 
   window.onTelegramAuth = async function(user) {
     const tgUid = 'tg_' + user.id;
     localStorage.setItem('tt_member_id', tgUid);
-
-    let fullName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim();
-    if (!fullName) fullName = user.username || ("Игрок #" + String(user.id).slice(-4));
-
+    let fullName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || ("Игрок #" + String(user.id).slice(-4));
     await syncUserProfile(tgUid, fullName, 'tg');
   };
 
@@ -1394,22 +1308,16 @@
         const user = result.user;
         const uid = 'google_' + user.uid;
         let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Google");
-        
         localStorage.setItem('tt_member_id', uid);
         await syncUserProfile(uid, name, 'google');
       }
     } catch (e) {
-      console.error("Ошибка Google авторизации:", e);
       alert("Не удалось войти через Google: " + e.message);
     }
   }
 
   async function logoutProfile() {
-    try {
-      await firebase.auth().signOut();
-    } catch (e) {
-      console.error("Ошибка выхода из Firebase Auth:", e);
-    }
+    try { await firebase.auth().signOut(); } catch (e) {}
     localStorage.removeItem('tt_member_id');
     localStorage.removeItem('tt_name');
     window.location.reload();
@@ -1418,24 +1326,12 @@
   async function syncUserProfile(uid, displayName, platform) {
     const userRef = db.collection('users').doc(uid);
     const snap = await userRef.get();
-
     if (!snap.exists) {
-      currentUserProfile = {
-        uid: uid,
-        name: displayName,
-        platform: platform,
-        elo: 1000,
-        matches: 0,
-        wins: 0,
-        losses: 0,
-        isVerified: true,
-        createdAt: Date.now()
-      };
+      currentUserProfile = { uid, name: displayName, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
       await userRef.set(currentUserProfile);
     } else {
       currentUserProfile = snap.data();
     }
-
     document.getElementById('web-auth-banner').style.display = 'none';
     updateProfileDisplay();
     localStorage.setItem('tt_name', currentUserProfile.name);
@@ -1445,28 +1341,15 @@
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
     const adminTag = isSuperAdmin() ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
-
-    let badgeHtml = '<span class="platform-badge badge-tg">TG</span>';
-    if (isGoogle) badgeHtml = '<span class="platform-badge badge-google">Google</span>';
-
+    let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
-    const status = getPlayerStatus(elo);
-    const wins = currentUserProfile.wins || 0;
-    const losses = currentUserProfile.losses || 0;
-    const matches = currentUserProfile.matches || 0;
-    const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
 
-    document.getElementById('user-name-container').innerHTML = `
-      <span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}
-    `;
-    document.getElementById('user-score-container').innerHTML = `
-      <span class="rating-score" style="font-size: 16px;">${elo}</span>
-    `;
+    document.getElementById('user-name-container').innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
+    document.getElementById('user-score-container').innerHTML = `<span class="rating-score" style="font-size: 16px;">${elo}</span>`;
     document.getElementById('user-stats-container').innerHTML = `
-      <span class="player-status-tag">${status}</span>
-      <span class="player-status-tag">${wins}В - ${losses}П (${winrate}%)</span>
+      <span class="player-status-tag">${getPlayerStatus(elo)}</span>
+      <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>
     `;
-
     document.getElementById('btn-edit-profile').style.display = 'block';
     document.getElementById('btn-logout').style.display = 'block';
 
@@ -1478,15 +1361,10 @@
   }
 
   function injectTelegramLoginWidget() {
-    if (isUserVerified()) {
-      document.getElementById('web-auth-banner').style.display = 'none';
-      return;
-    }
-
+    if (isUserVerified()) return;
     document.getElementById('web-auth-banner').style.display = 'flex';
     const container = document.getElementById('telegram-login-container');
     container.innerHTML = '';
-
     const script = document.createElement('script');
     script.src = "https://telegram.org/js/telegram-widget.js?22";
     script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
@@ -1498,44 +1376,22 @@
     container.appendChild(script);
   }
 
-  function handleEditProfileClick() {
-    if (!isUserVerified()) return;
-    showNameModal();
-  }
-
-  function handleCheckInClick(loc) {
-    if (!isUserVerified()) return;
-    checkIn(loc);
-  }
-
-  function handlePlanClick(loc) {
-    if (!isUserVerified()) return;
-    openPlanModal(loc);
-  }
-
-  function handleMatchClick() {
-    if (!isUserVerified()) return;
-    openMatchModal();
-  }
-
   function cleanHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   function getPlayersCountSuffix(count) {
-    const mod10 = count % 10;
-    const mod100 = count % 100;
-    if (mod100 >= 11 && mod100 <= 19) return `${count} игроков`;
-    if (mod10 === 1) return `${count} игрок`;
-    if (mod10 >= 2 && mod10 <= 4) return `${count} игрока`;
+    const m10 = count % 10, m100 = count % 100;
+    if (m100 >= 11 && m100 <= 19) return `${count} игроков`;
+    if (m10 === 1) return `${count} игрок`;
+    if (m10 >= 2 && m10 <= 4) return `${count} игрока`;
     return `${count} игроков`;
   }
 
   function buildBlockquoteList(list, title) {
     if (!list || list.length === 0) return "";
-    const lines = list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n");
-    return `\n\n<blockquote>👥 <b>${title} (${getPlayersCountSuffix(list.length)}):</b>\n${lines}</blockquote>`;
+    return `\n\n<blockquote>👥 <b>${title} (${getPlayersCountSuffix(list.length)}):</b>\n` + list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n") + `</blockquote>`;
   }
 
   function sendTelegramAlert(text) {
@@ -1545,279 +1401,26 @@
       if (!sinkFrame) {
         sinkFrame = document.createElement('iframe');
         sinkFrame.id = 'tg_sink_frame';
-        sinkFrame.name = 'tg_sink_frame';
         sinkFrame.style.display = 'none';
         document.body.appendChild(sinkFrame);
       }
-
       const form = document.createElement('form');
       form.method = 'GET';
       form.action = GOOGLE_GATEWAY_URL;
       form.target = 'tg_sink_frame';
       form.style.display = 'none';
-
       const input = document.createElement('input');
       input.type = 'hidden';
       input.name = 'text';
       input.value = text;
-
       form.appendChild(input);
       document.body.appendChild(form);
       form.submit();
-
-      setTimeout(() => {
-        if (form.parentNode) form.parentNode.removeChild(form);
-      }, 2000);
-    } catch (e) {
-      console.error('Ошибка отправки формы:', e);
-    }
+      setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
+    } catch (e) {}
   }
 
-  // ================= ПРОСМОТР ИНФОРМАЦИИ О ПОЛЬЗОВАТЕЛЕ [i] =================
-  async function showUserInfoModal(uid) {
-    const modal = document.getElementById('user-info-modal');
-    document.getElementById('info-modal-title').innerText = "👤 Загрузка профиля...";
-    document.getElementById('info-modal-elo').innerText = "—";
-    document.getElementById('info-modal-status').innerText = "—";
-    document.getElementById('info-modal-matches').innerText = "—";
-    document.getElementById('info-modal-winloss').innerText = "—";
-    document.getElementById('info-modal-total-time').innerText = "—";
-    document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка истории...</span>';
-    modal.style.display = 'flex';
-
-    try {
-      const userDoc = await db.collection('users').doc(uid).get();
-      if (!userDoc.exists) {
-        alert("Пользователь не найден.");
-        closeUserInfoModal();
-        return;
-      }
-
-      const u = userDoc.data();
-      const elo = u.elo || 1000;
-      const wins = u.wins || 0;
-      const losses = u.losses || 0;
-      const matches = u.matches || 0;
-      const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-
-      const lbDoc = await db.collection('leaderboard').doc(uid).get();
-      let totalMinutes = 0;
-      if (lbDoc.exists) {
-        totalMinutes = lbDoc.data().totalMinutes || 0;
-      }
-      const totalHours = Math.floor(totalMinutes / 60);
-      const remainMins = totalMinutes % 60;
-      const totalTimeStr = totalHours > 0 ? `${totalHours} ч ${remainMins} мин` : `${remainMins} мин`;
-
-      document.getElementById('info-modal-title').innerText = `👤 ${u.name || "Игрок"}`;
-      document.getElementById('info-modal-elo').innerText = elo;
-      document.getElementById('info-modal-status').innerText = getPlayerStatus(elo);
-      document.getElementById('info-modal-matches').innerText = matches;
-      document.getElementById('info-modal-winloss').innerText = `${wins}В - ${losses}П (${winrate}%)`;
-      document.getElementById('info-modal-total-time').innerText = totalTimeStr;
-
-      const matchesSnap = await db.collection('matches_history')
-        .where('participants', 'array-contains', uid)
-        .orderBy('timestamp', 'desc')
-        .limit(10)
-        .get();
-
-      const historyEl = document.getElementById('info-modal-history');
-      if (matchesSnap.empty) {
-        historyEl.innerHTML = '<span class="empty-note">История матчей пуста</span>';
-        return;
-      }
-
-      let historyHtml = '';
-      matchesSnap.forEach(doc => {
-        const m = doc.data();
-        const isPlayer1 = m.p1Uid === uid;
-        const myScore = isPlayer1 ? m.p1Score : m.p2Score;
-        const oppScore = isPlayer1 ? m.p2Score : m.p1Score;
-        const oppName = isPlayer1 ? m.p2Name : m.p1Name;
-        const isWin = myScore > oppScore;
-        const badgeColor = isWin ? 'var(--accent-green)' : '#f87171';
-        const resultLabel = isWin ? 'Победа' : 'Поражение';
-        const dateStr = new Date(m.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
-
-        historyHtml += `
-          <div style="background: rgba(11, 17, 32, 0.5); padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
-            <div>
-              <div>против <b>${cleanHtml(oppName)}</b></div>
-              <div style="color: var(--text-muted); font-size: 11px;">${dateStr}</div>
-            </div>
-            <div style="text-align: right;">
-              <div style="font-weight: 700; color: ${badgeColor};">${myScore} : ${oppScore} (${resultLabel})</div>
-            </div>
-          </div>
-        `;
-      });
-      historyEl.innerHTML = historyHtml;
-
-    } catch (e) {
-      console.error("Ошибка загрузки профиля:", e);
-      document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки данных</span>';
-    }
-  }
-
-  function closeUserInfoModal() {
-    document.getElementById('user-info-modal').style.display = 'none';
-  }
-
-  // ================= РАССЫЛКА И АНОНСЫ =================
-  function sendAdminBroadcast() {
-    if (!isSuperAdmin()) return;
-    const input = document.getElementById('admin-broadcast-text');
-    const msg = input.value.trim();
-
-    if (!msg) {
-      alert("Введите текст сообщения!");
-      return;
-    }
-
-    const formattedMsg = `📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(msg)}`;
-    sendTelegramAlert(formattedMsg);
-
-    input.value = '';
-    alert("✅ Сообщение успешно отправлено в Telegram-чат от имени бота!");
-  }
-
-  function openAnnouncementModal(loc) {
-    if (!isSuperAdmin()) return;
-    document.getElementById('announcement-target-loc').value = loc;
-    const titleLabel = loc === 'park' ? 'Парк им. Тищенко' : 'ДК «Восток»';
-    document.getElementById('announcement-modal-label').innerText = `Анонс / уведомление для локации: ${titleLabel}`;
-    document.getElementById('announcement-textarea').value = announcementsData[loc] || '';
-    document.getElementById('announcement-modal').style.display = 'flex';
-  }
-
-  function closeAnnouncementModal() {
-    document.getElementById('announcement-modal').style.display = 'none';
-  }
-
-  async function saveAnnouncement() {
-    if (!isSuperAdmin()) return;
-    const loc = document.getElementById('announcement-target-loc').value;
-    const text = document.getElementById('announcement-textarea').value.trim();
-
-    try {
-      await db.collection('settings').doc('announcements').set({
-        [loc]: text
-      }, { merge: true });
-
-      closeAnnouncementModal();
-
-      if (text) {
-        const locTitle = LOCATION_NAMES[loc];
-        const alertMsg = `📢 <b>Обновление информации ${locTitle}</b>\n\n${cleanHtml(text)}`;
-        sendTelegramAlert(alertMsg);
-      }
-    } catch (e) {
-      console.error("Ошибка сохранения анонса:", e);
-      alert("Не удалось сохранить анонс.");
-    }
-  }
-
-  function listenAnnouncements() {
-    db.collection('settings').doc('announcements').onSnapshot(doc => {
-      if (doc.exists) {
-        announcementsData = doc.data() || { park: "", vostok: "" };
-      } else {
-        announcementsData = { park: "", vostok: "" };
-      }
-      renderAnnouncements();
-    });
-  }
-
-  function renderAnnouncements() {
-    ['park', 'vostok'].forEach(loc => {
-      const box = document.getElementById('announcement-box-' + loc);
-      const txt = document.getElementById('announcement-text-' + loc);
-      const content = announcementsData[loc];
-
-      if (content && content.trim() !== "") {
-        txt.innerHTML = cleanHtml(content).replace(/\n/g, '<br>');
-        box.style.display = 'flex';
-      } else {
-        box.style.display = 'none';
-      }
-    });
-  }
-
-  function requestPushPermission() {
-    if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
-    }
-  }
-
-  function sendDevicePushNotification(title, body) {
-    if ('Notification' in window && Notification.permission === 'granted') {
-      try {
-        new Notification(title, {
-          body: body,
-          icon: 'logo.png',
-          badge: 'logo.png',
-          vibrate: [200, 100, 200]
-        });
-      } catch (e) {
-        console.log("Push failed:", e);
-      }
-    }
-
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
-    }
-  }
-
-  async function loadParkWeather() {
-    const container = document.getElementById('weather-park');
-    try {
-      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto');
-      const data = await res.json();
-      
-      const currTemp = Math.round(data.current.temperature_2m);
-      const currCode = data.current.weather_code;
-      const windSpeed = Math.round(data.current.wind_speed_10m);
-      const windDirDeg = data.current.wind_direction_10m;
-      const windDirStr = getWindDirection(windDirDeg);
-
-      const tomorrowMax = Math.round(data.daily.temperature_2m_max[1]);
-      const tomorrowMin = Math.round(data.daily.temperature_2m_min[1]);
-      const tomorrowCode = data.daily.weather_code[1];
-
-      let currStatus = "☀️ Ясно";
-      if (currCode >= 1 && currCode <= 3) currStatus = "⛅️ Облачно";
-      if (currCode >= 51 && currCode <= 67) currStatus = "🌧 Дождь";
-      if (currCode >= 71 && currCode <= 77) currStatus = "❄️ Снег";
-      if (currCode >= 80 && currCode <= 82) currStatus = "🌧 Ливень";
-
-      let tomorrowStatus = "☀️ Завтра: ясно";
-      if (tomorrowCode >= 1 && tomorrowCode <= 3) tomorrowStatus = "⛅️ Завтра: облачно";
-      if (tomorrowCode >= 51 && tomorrowCode <= 67) tomorrowStatus = "🌧 Завтра: дождь";
-      if (tomorrowCode >= 71 && tomorrowCode <= 77) tomorrowStatus = "❄️ Завтра: снег";
-      if (tomorrowCode >= 80 && tomorrowCode <= 82) tomorrowStatus = "🌧 Завтра: ливень";
-
-      let html = `
-        <div class="weather-badge">
-          <span>${currStatus}, ${currTemp}°C • ветер ${windSpeed} м/с (${windDirStr})</span>
-        </div>
-        <div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #d8b4fe;">
-          <span>${tomorrowStatus}, от ${tomorrowMin}° до ${tomorrowMax}°C</span>
-        </div>
-      `;
-
-      container.innerHTML = html;
-
-      if (currCode >= 51 && currCode <= 82) {
-        container.children[0].style.borderColor = "#f87171";
-        container.children[0].style.color = "#f87171";
-      }
-    } catch (e) {
-      container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`;
-    }
-  }
-
-  // ================= FIREBASE =================
+  // Firebase Init & Deferred Listeners
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
@@ -1830,25 +1433,15 @@
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  let locationsData = {
-    park: { players: [], plans: [] },
-    vostok: { players: [], plans: [] }
-  };
-
-  let currentUserProfile = {
-    uid: null,
-    name: "Гость"
-  };
+  let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
+  let currentUserProfile = { uid: null, name: "Гость" };
 
   async function initUserProfile() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      const tgUid = 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
       const u = window.Telegram.WebApp.initDataUnsafe.user;
-      let tgName = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок";
-      await syncUserProfile(tgUid, tgName, 'tg');
+      await syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
       return;
     }
-
     const savedId = localStorage.getItem('tt_member_id');
     if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
       try {
@@ -1860,821 +1453,21 @@
           renderAll();
           return;
         }
-      } catch (e) {
-        console.error(e);
-      }
+      } catch (e) {}
     }
-
     currentUserProfile = { uid: null, name: "Гость" };
     document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
-    document.getElementById('user-score-container').innerHTML = '';
     document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
-    document.getElementById('btn-edit-profile').style.display = 'none';
-    document.getElementById('btn-logout').style.display = 'none';
     injectTelegramLoginWidget();
     renderAll();
-  }
-
-  async function checkNameTaken(name, currentUid) {
-    const query = await db.collection('users')
-      .where('name', '==', name.trim())
-      .get();
-
-    if (query.empty) return false;
-    let taken = false;
-    query.forEach(doc => {
-      if (doc.id !== currentUid) taken = true;
-    });
-    return taken;
-  }
-
-  function showNameModal() {
-    const modal = document.getElementById('name-modal');
-    const input = document.getElementById('name-input');
-    const errBox = document.getElementById('name-error-box');
-    errBox.style.display = 'none';
-    input.value = currentUserProfile.name || '';
-    modal.style.display = 'flex';
-    input.focus();
-  }
-
-  function hideNameModal() {
-    document.getElementById('name-modal').style.display = 'none';
-  }
-
-  async function saveCustomNameWithCheck() {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    const input = document.getElementById('name-input');
-    const errBox = document.getElementById('name-error-box');
-    const btn = document.getElementById('btn-save-name');
-    let val = input.value.trim();
-
-    if (!val || val.length < 2) {
-      errBox.innerText = "Имя должно быть от 2 символов!";
-      errBox.style.display = 'block';
-      return;
-    }
-
-    btn.innerText = "Проверка...";
-    btn.disabled = true;
-
-    try {
-      const taken = await checkNameTaken(val, myUid);
-
-      if (taken) {
-        errBox.innerText = "Это имя уже закреплено за другим игроком клуба!";
-        errBox.style.display = 'block';
-        btn.innerText = "Сохранить";
-        btn.disabled = false;
-        return;
-      }
-
-      currentUserProfile.name = val;
-      await db.collection('users').doc(myUid).set({ name: val, isVerified: true }, { merge: true });
-
-      localStorage.setItem('tt_name', val);
-      updateProfileDisplay();
-      hideNameModal();
-      renderAll();
-
-      if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-      }
-    } catch (e) {
-      console.error(e);
-    } finally {
-      btn.innerText = "Сохранить";
-      btn.disabled = false;
-    }
-  }
-
-  function formatTime(ts) {
-    return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  function formatDuration(ts) {
-    const minutes = Math.floor((Date.now() - ts) / 60000);
-    if (minutes < 1) return 'только что';
-    if (minutes < 60) return `${minutes} мин`;
-    const hours = Math.floor(minutes / 60);
-    return `${hours} ч ${minutes % 60} мин`;
-  }
-
-  function formatUntil(targetTs) {
-    const diff = targetTs - Date.now();
-    if (diff <= 0) return 'сейчас подходит';
-    const mins = Math.ceil(diff / 60000);
-    if (mins < 60) return `через ~${mins} мин`;
-    const hours = Math.floor(mins / 60);
-    return `через ${hours} ч ${mins % 60} мин`;
-  }
-
-  function switchTab(tab) {
-    const tabRating = document.getElementById('tab-btn-rating');
-    const tabTime = document.getElementById('tab-btn-time');
-    const viewRating = document.getElementById('view-rating');
-    const viewTime = document.getElementById('view-time');
-
-    if (tab === 'rating') {
-      tabRating.classList.add('active');
-      tabTime.classList.remove('active');
-      viewRating.style.display = 'flex';
-      viewTime.style.display = 'none';
-    } else {
-      tabTime.classList.add('active');
-      tabRating.classList.remove('active');
-      viewTime.style.display = 'flex';
-      viewRating.style.display = 'none';
-    }
-  }
-
-  // ================= РЕЙТИНГ И МАТЧИ С СОХРАНЕНИЕМ ИСТОРИИ =================
-  function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
-    const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-    const deltaA = Math.round(k * (actualScoreA - expectedScoreA));
-    return deltaA;
-  }
-
-  function listenRatings() {
-    db.collection('users')
-      .orderBy('elo', 'desc')
-      .limit(30)
-      .onSnapshot(snap => {
-        const listEl = document.getElementById('rating-list');
-        allRegisteredUsers = [];
-
-        if (snap.empty) {
-          listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>';
-          return;
-        }
-
-        let html = '';
-        let rank = 1;
-        const myUid = getVerifiedUserId();
-
-        snap.forEach(doc => {
-          const d = doc.data();
-          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_') || d.isVerified;
-          if (!isValid) return;
-
-          allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
-
-          if (doc.id === myUid) {
-            currentUserProfile = { ...currentUserProfile, ...d };
-            updateProfileDisplay();
-          }
-
-          const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
-          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
-          const matches = d.matches || 0;
-          const wins = d.wins || 0;
-          const losses = d.losses || 0;
-          const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-          const currentElo = d.elo || 1000;
-          const playerStatus = getPlayerStatus(currentElo);
-
-          let platformTag = '<span class="platform-badge badge-tg">TG</span>';
-          if (doc.id.startsWith('google_')) platformTag = '<span class="platform-badge badge-google">Google</span>';
-
-          html += `
-            <div class="leader-row">
-              <div class="leader-left">
-                <span class="leader-rank ${rankClass}">${medal}</span>
-                <div>
-                  <div><b>${cleanHtml(d.name)}</b> ${platformTag}</div>
-                  <div class="player-status-tag">${playerStatus} • ${wins}В - ${losses}П (${winrate}%)</div>
-                </div>
-              </div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="rating-score">${currentElo}</span>
-                <button class="btn-info" onclick="showUserInfoModal('${doc.id}')" title="Информация об игроке">i</button>
-              </div>
-            </div>
-          `;
-          rank++;
-        });
-
-        listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
-      });
-  }
-
-  function openMatchModal() {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    if (!currentUserActiveLoc) {
-      alert("❌ Записывать матчи могут только игроки, которые находятся за столом (отмечены в Парке или ДК «Восток»)! Сначала сделайте чекин.");
-      return;
-    }
-
-    const select = document.getElementById('match-opponent-select');
-    select.innerHTML = '';
-
-    const currentTablePlayers = locationsData[currentUserActiveLoc].players || [];
-    const opponents = currentTablePlayers.filter(p => (p.uid || p) !== myUid);
-
-    if (opponents.length === 0) {
-      select.innerHTML = '<option value="">(за вашим столом больше нет других игроков)</option>';
-    } else {
-      opponents.forEach(p => {
-        const uInfo = allRegisteredUsers.find(u => u.uid === (p.uid || p));
-        const elo = uInfo ? uInfo.elo : 1000;
-        select.innerHTML += `<option value="${cleanHtml(p.uid || p)}">${cleanHtml(p.name)} (${elo} Elo)</option>`;
-      });
-    }
-
-    selectScore(3, 0);
-    document.getElementById('match-modal').style.display = 'flex';
-  }
-
-  function closeMatchModal() {
-    document.getElementById('match-modal').style.display = 'none';
-  }
-
-  function selectScore(my, opp) {
-    document.getElementById('match-my-score').value = my;
-    document.getElementById('match-opp-score').value = opp;
-
-    document.querySelectorAll('.score-btn').forEach(btn => {
-      if (btn.innerText === `${my} : ${opp}`) {
-        btn.classList.add('active');
-      } else {
-        btn.classList.remove('active');
-      }
-    });
-  }
-
-  async function submitMatchProposal() {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    const oppSelect = document.getElementById('match-opponent-select');
-    const oppUid = oppSelect.value;
-    const scoreMy = parseInt(document.getElementById('match-my-score').value, 10);
-    const scoreOpp = parseInt(document.getElementById('match-opp-score').value, 10);
-
-    if (!oppUid || oppUid === myUid) {
-      alert("Выберите соперника за вашим столом!");
-      return;
-    }
-
-    closeMatchModal();
-
-    try {
-      const oppInfo = allRegisteredUsers.find(u => u.uid === oppUid);
-      const oppName = oppInfo ? oppInfo.name : "Соперник";
-
-      await db.collection('pending_matches').add({
-        proposerUid: myUid,
-        proposerName: currentUserProfile.name,
-        opponentUid: oppUid,
-        opponentName: oppName,
-        scoreProposer: scoreMy,
-        scoreOpponent: scoreOpp,
-        timestamp: Date.now()
-      });
-
-      alert("✅ Запрос на подтверждение матча отправлен сопернику!");
-    } catch (e) {
-      console.error("Ошибка отправки матча:", e);
-      alert("Не удалось отправить запрос.");
-    }
-  }
-
-  function listenPendingMatches() {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    db.collection('pending_matches')
-      .where('opponentUid', '==', myUid)
-      .onSnapshot(snap => {
-        const container = document.getElementById('pending-matches-container');
-        if (snap.empty) {
-          container.innerHTML = '';
-          return;
-        }
-
-        let html = '';
-        snap.forEach(doc => {
-          const m = doc.data();
-          html += `
-            <div style="background: rgba(168, 85, 247, 0.15); border: 1px solid var(--accent-purple); padding: 12px 14px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
-              <div style="font-size: 13px; font-weight: 600; color: #d8b4fe;">
-                ⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b>
-              </div>
-              <div style="font-size: 13px;">
-                Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}
-              </div>
-              <div style="display: flex; gap: 8px; margin-top: 4px;">
-                <button class="btn btn-join" style="background: var(--accent-green); padding: 8px;" onclick="confirmMatch('${doc.id}')">Подтвердить</button>
-                <button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${doc.id}')">Отклонить</button>
-              </div>
-            </div>
-          `;
-        });
-        container.innerHTML = html;
-      });
-  }
-
-  async function confirmMatch(matchId) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    try {
-      const matchRef = db.collection('pending_matches').doc(matchId);
-      const matchDoc = await matchRef.get();
-      if (!matchDoc.exists) return;
-
-      const m = matchDoc.data();
-      const proposerRef = db.collection('users').doc(m.proposerUid);
-      const opponentRef = db.collection('users').doc(m.opponentUid);
-
-      let myDelta = 0;
-      let newProposerElo = 1000;
-      let newOpponentElo = 1000;
-
-      await db.runTransaction(async (t) => {
-        const propDoc = await t.get(proposerRef);
-        const oppDoc = await t.get(opponentRef);
-
-        const propData = propDoc.exists ? propDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0 };
-        const oppData = oppDoc.exists ? oppDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0 };
-
-        const isProposerWin = m.scoreProposer > m.scoreOpponent;
-        const actualScoreProp = isProposerWin ? 1 : 0;
-        
-        myDelta = calculateElo(propData.elo || 1000, oppData.elo || 1000, actualScoreProp);
-
-        newProposerElo = Math.max(100, (propData.elo || 1000) + myDelta);
-        newOpponentElo = Math.max(100, (oppData.elo || 1000) - myDelta);
-
-        t.set(proposerRef, {
-          elo: newProposerElo,
-          matches: (propData.matches || 0) + 1,
-          wins: (propData.wins || 0) + (isProposerWin ? 1 : 0),
-          losses: (propData.losses || 0) + (isProposerWin ? 0 : 1),
-          updatedAt: Date.now()
-        }, { merge: true });
-
-        t.set(opponentRef, {
-          elo: newOpponentElo,
-          matches: (oppData.matches || 0) + 1,
-          wins: (oppData.wins || 0) + (isProposerWin ? 0 : 1),
-          losses: (oppData.losses || 0) + (isProposerWin ? 1 : 0),
-          updatedAt: Date.now()
-        }, { merge: true });
-      });
-
-      await db.collection('matches_history').add({
-        p1Uid: m.proposerUid,
-        p1Name: m.proposerName,
-        p1Score: m.scoreProposer,
-        p2Uid: m.opponentUid,
-        p2Name: m.opponentName,
-        p2Score: m.scoreOpponent,
-        participants: [m.proposerUid, m.opponentUid],
-        timestamp: Date.now()
-      });
-
-      await matchRef.delete();
-
-      const alertMsg = `🏆 <b>Рейтинговый матч подтверждён и зачтён!</b>\n\n` +
-        `🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n` +
-        `<blockquote>📊 <b>Новый рейтинг:</b>\n` +
-        `• ${cleanHtml(m.proposerName)}: ${newProposerElo}\n` +
-        `• ${cleanHtml(m.opponentName)}: ${newOpponentElo}</blockquote>`;
-
-      sendTelegramAlert(alertMsg);
-
-      if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-      }
-
-    } catch (e) {
-      console.error("Ошибка подтверждения матча:", e);
-      alert("Не удалось подтвердить матч.");
-    }
-  }
-
-  async function rejectMatch(matchId) {
-    try {
-      await db.collection('pending_matches').doc(matchId).delete();
-      document.getElementById('pending-matches-container').innerHTML = '';
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  // ================= ЛИДЕРБОРД ЧАСОВ =================
-  async function recordTrainingTime(uid, name, durationMinutes) {
-    if (!uid || durationMinutes <= 0) return;
-    try {
-      const userRef = db.collection('leaderboard').doc(uid);
-      await db.runTransaction(async (t) => {
-        const doc = await t.get(userRef);
-        const data = doc.data() || { name: name, totalMinutes: 0, sessions: 0 };
-        t.set(userRef, {
-          name: name,
-          uid: uid,
-          totalMinutes: (data.totalMinutes || 0) + durationMinutes,
-          sessions: (data.sessions || 0) + 1,
-          lastPlayed: Date.now()
-        }, { merge: true });
-      });
-    } catch (e) {
-      console.error("Ошибка лидерборда:", e);
-    }
-  }
-
-  function listenLeaderboard() {
-    db.collection('leaderboard')
-      .orderBy('totalMinutes', 'desc')
-      .limit(20)
-      .onSnapshot(snap => {
-        const listEl = document.getElementById('leaderboard-list');
-        if (snap.empty) {
-          listEl.innerHTML = '<span class="empty-note">Сыграйте первую партию!</span>';
-          return;
-        }
-
-        let html = '';
-        let rank = 1;
-        snap.forEach(doc => {
-          const isValid = doc.id.startsWith('tg_') || doc.id.startsWith('google_');
-          if (!isValid) return;
-          if (rank > 5) return;
-
-          const d = doc.data();
-          const hours = (d.totalMinutes / 60).toFixed(1);
-          const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
-          const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
-
-          html += `
-            <div class="leader-row">
-              <div class="leader-left">
-                <span class="leader-rank ${rankClass}">${medal}</span>
-                <b>${cleanHtml(d.name)}</b>
-              </div>
-              <span class="leader-score">${hours} ч (${d.sessions} игр)</span>
-            </div>
-          `;
-          rank++;
-        });
-
-        listEl.innerHTML = html || '<span class="empty-note">Сыграйте первую партию!</span>';
-      });
-  }
-
-  // ================= ЧЕКИН С ЗАЩИТОЙ ОТ СПАМА И КУЛДАУНОМ =================
-  async function checkIn(loc) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    requestPushPermission();
-
-    const name = currentUserProfile.name;
-    const otherLoc = loc === 'park' ? 'vostok' : 'park';
-    const now = Date.now();
-    let finalList = [];
-    let isAlreadyThere = false;
-
-    try {
-      const lastAction = parseInt(localStorage.getItem('tt_last_action_ts') || '0', 10);
-      if (now - lastAction < 300000 && lastAction > 0) {
-        alert("⏳ Слишком частые изменения статуса. Подождите немного перед повторным чекином.");
-        return;
-      }
-
-      const targetRef = db.collection('locations').doc(loc);
-      const otherRef = db.collection('locations').doc(otherLoc);
-
-      await db.runTransaction(async (transaction) => {
-        const tDoc = await transaction.get(targetRef);
-        const oDoc = await transaction.get(otherRef);
-
-        let tPlayers = (tDoc.exists && tDoc.data().players) || [];
-        let oPlayers = (oDoc.exists && oDoc.data().players) || [];
-        let tPlans = (tDoc.exists && tDoc.data().plans) || [];
-
-        const existingPlayer = tPlayers.find(p => (p.uid || p) === myUid);
-        if (existingPlayer) {
-          isAlreadyThere = true;
-          return;
-        }
-
-        tPlayers = tPlayers.filter(p => (p.uid || p) !== myUid);
-        oPlayers = oPlayers.filter(p => (p.uid || p) !== myUid);
-        tPlans = tPlans.filter(p => (p.uid || p) !== myUid);
-
-        tPlayers.unshift({
-          name: name,
-          time: now,
-          uid: myUid,
-          maxLimitMs: DEFAULT_LIMIT_MS
-        });
-        finalList = tPlayers;
-
-        transaction.set(targetRef, { players: tPlayers, plans: tPlans }, { merge: true });
-        transaction.set(otherRef, { players: oPlayers }, { merge: true });
-      });
-
-      if (isAlreadyThere) {
-        alert("⚠️ Вы уже отмечены за этим столом! Повторные уведомления в чат не отправляются.");
-        return;
-      }
-
-      localStorage.setItem('tt_last_action_ts', now.toString());
-      hasTriggeredPush = false;
-
-      const locText = LOCATION_NAMES[loc];
-      const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
-      const alertMsg = `🏓 игрок <b>${cleanHtml(name)}</b> уже у стола ${locText}!${quoteBlock}\n\nКто составит компанию?`;
-      sendTelegramAlert(alertMsg);
-
-    } catch (e) {
-      console.error("Ошибка чекина:", e);
-    }
-  }
-
-  async function leave(loc) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    const name = currentUserProfile.name;
-    let spentMinutes = 0;
-    let spentTimeStr = "";
-    let finalList = [];
-    const locRef = db.collection('locations').doc(loc);
-
-    try {
-      await db.runTransaction(async (transaction) => {
-        const doc = await transaction.get(locRef);
-        if (!doc.exists) return;
-        let list = doc.data().players || [];
-        
-        const currentPlayer = list.find(p => (p.uid || p) === myUid);
-        if (currentPlayer && currentPlayer.time) {
-          spentMinutes = Math.floor((Date.now() - currentPlayer.time) / 60000);
-          spentTimeStr = formatDuration(currentPlayer.time);
-        }
-
-        list = list.filter(p => (p.uid || p) !== myUid);
-        finalList = list;
-
-        transaction.set(locRef, { players: list }, { merge: true });
-      });
-
-      if (spentMinutes > 0) {
-        recordTrainingTime(myUid, name, spentMinutes);
-      }
-
-      hasTriggeredPush = false;
-      document.getElementById('extend-modal').style.display = 'none';
-
-      const locText = LOCATION_NAMES[loc];
-      const timeInfo = spentTimeStr ? ` (время тренировки: <code>${spentTimeStr}</code>)` : "";
-      let quoteBlock = finalList.length > 0 
-        ? buildBlockquoteList(finalList, "Остались у столов") 
-        : "\n\n<i>(столы освободились)</i>";
-
-      const alertMsg = `👋 игрок <b>${cleanHtml(name)}</b> закончил тренировку и покинул стол ${locText}${timeInfo}.${quoteBlock}`;
-      sendTelegramAlert(alertMsg);
-
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  function confirmLeaveFromModal() {
-    if (currentUserActiveLoc) {
-      leave(currentUserActiveLoc);
-    }
-  }
-
-  async function extendSession(addMinutes) {
-    const myUid = getVerifiedUserId();
-    if (!currentUserActiveLoc || !myUid) return;
-    const loc = currentUserActiveLoc;
-    const addMs = addMinutes * 60 * 1000;
-
-    try {
-      const locRef = db.collection('locations').doc(loc);
-      await db.runTransaction(async (t) => {
-        const doc = await t.get(locRef);
-        if (!doc.exists) return;
-        let list = doc.data().players || [];
-
-        list = list.map(p => {
-          if ((p.uid || p) === myUid) {
-            const currentLimit = p.maxLimitMs || DEFAULT_LIMIT_MS;
-            return {
-              ...p,
-              maxLimitMs: currentLimit + addMs
-            };
-          }
-          return p;
-        });
-
-        t.set(locRef, { players: list }, { merge: true });
-      });
-
-      hasTriggeredPush = false;
-      document.getElementById('extend-modal').style.display = 'none';
-
-      if (window.Telegram?.WebApp?.HapticFeedback) {
-        window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
-      }
-    } catch (e) {
-      console.error("Ошибка продления:", e);
-    }
-  }
-
-  async function monitorSessions() {
-    const now = Date.now();
-
-    for (const loc of ['park', 'vostok']) {
-      try {
-        const locRef = db.collection('locations').doc(loc);
-        let leftPlayers = [];
-        let remainingList = [];
-
-        await db.runTransaction(async (t) => {
-          const doc = await t.get(locRef);
-          if (!doc.exists) return;
-          let players = doc.data().players || [];
-          let plans = doc.data().plans || [];
-          let changed = false;
-
-          const activePlayers = [];
-          for (const p of players) {
-            const pTime = p.time || now;
-            const elapsed = now - pTime;
-            const limit = p.maxLimitMs || DEFAULT_LIMIT_MS;
-
-            if (elapsed >= limit) {
-              changed = true;
-              const durationMins = Math.floor(elapsed / 60000);
-              if (p.uid) {
-                recordTrainingTime(p.uid, p.name || 'Игрок', durationMins);
-              }
-              leftPlayers.push({
-                name: p.name || 'Игрок',
-                durationStr: formatDuration(pTime)
-              });
-            } else {
-              activePlayers.push(p);
-            }
-          }
-
-          const activePlans = plans.filter(pl => {
-            if (!pl.planTime || now > pl.planTime + 300000) {
-              changed = true;
-              return false;
-            }
-            return true;
-          });
-
-          if (changed) {
-            t.set(locRef, { players: activePlayers, plans: activePlans }, { merge: true });
-            remainingList = activePlayers;
-          }
-        });
-
-        if (leftPlayers.length > 0) {
-          const locText = LOCATION_NAMES[loc];
-          const quoteBlock = remainingList.length > 0 
-            ? buildBlockquoteList(remainingList, "Остались у столов") 
-            : "\n\n<i>(столы освободились)</i>";
-
-          for (const lp of leftPlayers) {
-            const alertMsg = `👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${locText} (время тренировки: <code>${lp.durationStr}</code>).${quoteBlock}`;
-            sendTelegramAlert(alertMsg);
-          }
-        }
-
-      } catch (e) {
-        console.error("Ошибка мониторинга сессий:", e);
-      }
-    }
-  }
-
-  function checkLocalUserPrompt() {
-    const modal = document.getElementById('extend-modal');
-    if (!currentUserActiveLoc || !currentUserActivePlayer) {
-      modal.style.display = 'none';
-      hasTriggeredPush = false;
-      return;
-    }
-
-    const now = Date.now();
-    const pTime = currentUserActivePlayer.time || now;
-    const elapsed = now - pTime;
-    const limit = currentUserActivePlayer.maxLimitMs || DEFAULT_LIMIT_MS;
-    const remindThreshold = limit - REMIND_BEFORE_MS;
-
-    if (elapsed >= remindThreshold && elapsed < limit) {
-      modal.style.display = 'flex';
-
-      if (!hasTriggeredPush) {
-        hasTriggeredPush = true;
-        sendDevicePushNotification(
-          "🏓 Настольный теннис ЧМЗ",
-          "Вы уже 1 ч 45 мин у стола! Продлите визит в приложении или освободите стол."
-        );
-      }
-    } else {
-      modal.style.display = 'none';
-    }
-  }
-
-  function openPlanModal(loc) {
-    activePlanningLoc = loc;
-    document.getElementById('plan-modal').style.display = 'flex';
-  }
-
-  function closePlanModal() {
-    document.getElementById('plan-modal').style.display = 'none';
-    activePlanningLoc = null;
-  }
-
-  async function submitQuickPlan(minutes) {
-    const targetTs = Date.now() + minutes * 60000;
-    await applyPlan(targetTs, `через ~${minutes} минут`);
-  }
-
-  async function submitExactPlan() {
-    const timeVal = document.getElementById('exact-time-input').value;
-    if (!timeVal) return;
-    const [h, m] = timeVal.split(':').map(Number);
-    const target = new Date();
-    target.setHours(h, m, 0, 0);
-
-    if (target.getTime() <= Date.now()) {
-      target.setDate(target.getDate() + 1);
-    }
-
-    await applyPlan(target.getTime(), `к ${timeVal}`);
-  }
-
-  async function applyPlan(targetTs, textLabel) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    const loc = activePlanningLoc;
-    const name = currentUserProfile.name;
-    closePlanModal();
-
-    try {
-      const locRef = db.collection('locations').doc(loc);
-      await db.runTransaction(async (t) => {
-        const doc = await t.get(locRef);
-        let plans = (doc.exists && doc.data().plans) || [];
-        plans = plans.filter(p => (p.uid || p) !== myUid);
-        plans.push({ name, planTime: targetTs, uid: myUid });
-        t.set(locRef, { plans }, { merge: true });
-      });
-
-      const locText = LOCATION_NAMES[loc];
-      const alertMsg = `⏳ игрок <b>${cleanHtml(name)}</b> планирует быть у стола ${locText} <b>${textLabel}</b>!\n\nКто готов составить пару?`;
-      sendTelegramAlert(alertMsg);
-    } catch (e) {
-      console.error(e);
-    }
-  }
-
-  async function cancelPlan(loc) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
-    try {
-      const locRef = db.collection('locations').doc(loc);
-      await db.runTransaction(async (t) => {
-        const doc = await t.get(locRef);
-        if (!doc.exists) return;
-        let plans = doc.data().plans || [];
-        plans = plans.filter(p => (p.uid || p) !== myUid);
-        t.set(locRef, { plans }, { merge: true });
-      });
-    } catch (e) {
-      console.error(e);
-    }
   }
 
   function setupRealtimeListeners() {
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
-        const rawPlayers = data.players || [];
-        const rawPlans = data.plans || [];
-
-        locationsData[loc].plans = rawPlans;
-        locationsData[loc].players = rawPlayers.map(p => {
-          if (typeof p === 'string') return { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS };
-          return p;
-        });
-
+        locationsData[loc].plans = data.plans || [];
+        locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p);
         renderAll();
       });
     });
@@ -2690,95 +1483,73 @@
       const { players } = locationsData[loc];
       const plans = (locationsData[loc].plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
 
-      const listEl = document.getElementById('list-' + loc);
-      const planListEl = document.getElementById('plan-list-' + loc);
       const badge = document.getElementById('badge-' + loc);
-      const btnBox = document.getElementById('btn-container-' + loc);
-
       badge.innerText = `${players.length} ${players.length === 1 ? 'игрок' : 'игроков'}`;
       badge.className = players.length > 0 ? 'counter has-players' : 'counter';
 
-      if (players.length === 0) {
-        listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>';
-      } else {
-        listEl.innerHTML = players.map(item => `
-          <div class="player-row">
-            <div class="player-name">
-              <span>🏓</span>
-              <span>${cleanHtml(item.name || 'Игрок')}</span>
+      document.getElementById('list-' + loc).innerHTML = players.length === 0 ? '<span class="empty-note">У столов пока свободно</span>' : players.map(item => `
+        <div class="player-row">
+          <div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="player-time-box">
+              <span>с ${new Date(item.time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="player-time-box">
-                <span>с ${formatTime(item.time || Date.now())}</span>
-                <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
-              </div>
-              ${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')" title="Информация об игроке">i</button>` : ''}
-            </div>
+            ${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}
           </div>
-        `).join('');
-      }
+        </div>
+      `).join('');
 
-      if (plans.length === 0) {
-        planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>';
-      } else {
-        planListEl.innerHTML = plans.map(p => `
-          <div class="player-row">
-            <div class="player-name">
-              <span>⏳</span>
-              <span>${cleanHtml(p.name || 'Игрок')}</span>
+      document.getElementById('plan-list-' + loc).innerHTML = plans.length === 0 ? '<span class="empty-note">Никто не планировал</span>' : plans.map(p => `
+        <div class="player-row">
+          <div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="player-time-box">
+              <span>к ${new Date(p.planTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span class="time-badge-plan">скоро</span>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div class="player-time-box">
-                <span>к ${formatTime(p.planTime)}</span>
-                <span class="time-badge-plan">${formatUntil(p.planTime)}</span>
-              </div>
-              ${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')" title="Информация об игроке">i</button>` : ''}
-            </div>
+            ${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}
           </div>
-        `).join('');
-      }
+        </div>
+      `).join('');
 
       const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
       const isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
+      const btnBox = document.getElementById('btn-container-' + loc);
 
       if (activePlayerObj) {
         currentUserActiveLoc = loc;
         currentUserActivePlayer = activePlayerObj;
-        btnBox.innerHTML = `
-          <div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы уже отмечены у этого стола</div>
-          <button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>
-        `;
+        btnBox.innerHTML = `<div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`;
       } else if (isUserOpened) {
-        btnBox.innerHTML = `
-          <button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел (занять стол)</button>
-          <button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>
-        `;
+        btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`;
       } else {
-        btnBox.innerHTML = `
-          <button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button>
-          <button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>
-        `;
+        btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`;
       }
     });
-
-    checkLocalUserPrompt();
   }
 
+  function formatDuration(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'только что';
+    if (mins < 60) return `${mins} мин`;
+    return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  }
+
+  // Deferred startup initialization
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile();
-    loadParkWeather();
     setupRealtimeListeners();
-    listenLeaderboard();
-    listenRatings();
-    listenPendingMatches();
-    listenAnnouncements();
-    monitorSessions();
-
-    setInterval(renderAll, 30000); 
-    setInterval(monitorSessions, 60000); 
-    setInterval(loadParkWeather, 600000); 
+    
+    // Delayed non-critical loads
+    setTimeout(() => {
+      loadParkWeather();
+      listenLeaderboard();
+      listenRatings();
+      listenPendingMatches();
+      listenAnnouncements();
+    }, 300);
   });
 </script>
-
 </body>
 </html>
