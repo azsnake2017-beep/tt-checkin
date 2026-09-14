@@ -1261,11 +1261,13 @@
 
   async function shareModalUrl() {
     if (!currentModalUrl) return;
+    const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
+    
     if (navigator.share) {
       try {
         await navigator.share({
           title: 'Клуб любителей настольного тенниса ЧМЗ',
-          text: 'Присоединяйтесь к нашему клубу и играм!',
+          text: shareText,
           url: currentModalUrl,
         });
       } catch (err) {
@@ -1274,9 +1276,8 @@
         }
       }
     } else {
-      // Запасной вариант (копирование в буфер) для браузеров без поддержки Web Share API
-      navigator.clipboard.writeText(currentModalUrl).then(() => {
-        alert("📋 Ссылка скопирована в буфер обмена!");
+      navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => {
+        alert("📋 Ссылка и приветственный текст скопированы в буфер обмена!");
       }).catch(err => {
         console.error('Ошибка копирования:', err);
       });
