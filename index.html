@@ -148,8 +148,18 @@
       text-decoration: none;
       font-size: 13px;
       font-weight: 600;
+      padding: 6px 10px;
+      border-radius: 8px;
       color: #fff;
+      flex: 1;
+      justify-content: center;
+      transition: opacity 0.2s;
     }
+    .social-pill-left:hover {
+      opacity: 0.9;
+    }
+    .pill-tg { background: #0ea5e9; }
+    .pill-max { background: #8b5cf6; }
 
     .btn-qr-icon-only {
       background: #334155;
@@ -166,6 +176,7 @@
       padding: 0;
       overflow: hidden;
       flex-shrink: 0;
+      margin-left: 6px;
     }
     .btn-qr-icon-only:hover {
       background: #475569;
@@ -858,11 +869,11 @@
     </button>
   </div>
 
-  <!-- Минималистичный блок сообществ: Telegram и МАКС в одну строку со своими круглыми прозрачными QR-иконками (TG.png и Max.png) -->
+  <!-- Минималистичный блок сообществ: Telegram и МАКС с фирменными цветами и круглыми QR-иконками -->
   <div class="social-links-minimal">
     <!-- Telegram -->
     <div class="social-pill">
-      <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left">
+      <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg">
         <span>✈️</span> Telegram
       </a>
       <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram">
@@ -872,7 +883,7 @@
     </div>
     <!-- МАКС -->
     <div class="social-pill">
-      <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left">
+      <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max">
         <span>💬</span> МАКС
       </a>
       <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС">
@@ -1044,7 +1055,7 @@
 
 </div>
 
-<!-- Модальное окно с QR-кодами и функцией копирования ссылки -->
+<!-- Модальное окно с QR-кодами и нативным системным меню "Поделиться" -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -1059,7 +1070,7 @@
     </div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
-      <button class="btn btn-join" style="background: #334155; flex: 1;" onclick="copyModalUrl()">📋 Скопировать ссылку</button>
+      <button class="btn btn-join" style="background: #334155; flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
       <button class="btn btn-join" style="background: var(--primary); flex: 1;" onclick="closeQrModal()">Готово</button>
     </div>
   </div>
@@ -1248,8 +1259,22 @@
     cardEl.classList.toggle('expanded');
   }
 
-  function copyModalUrl() {
-    if (currentModalUrl) {
+  async function shareModalUrl() {
+    if (!currentModalUrl) return;
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: 'Клуб любителей настольного тенниса ЧМЗ',
+          text: 'Присоединяйтесь к нашему клубу и играм!',
+          url: currentModalUrl,
+        });
+      } catch (err) {
+        if (err.name !== 'AbortError') {
+          console.error('Ошибка шаринга:', err);
+        }
+      }
+    } else {
+      // Запасной вариант (копирование в буфер) для браузеров без поддержки Web Share API
       navigator.clipboard.writeText(currentModalUrl).then(() => {
         alert("📋 Ссылка скопирована в буфер обмена!");
       }).catch(err => {
