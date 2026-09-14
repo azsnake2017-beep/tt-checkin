@@ -88,6 +88,45 @@
       margin-top: 2px;
     }
 
+    /* Блок соцсетей и QR */
+    .social-links-card {
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 14px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
+    }
+
+    .social-buttons-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-social {
+      flex: 1;
+      border: none;
+      padding: 10px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      text-decoration: none;
+      transition: opacity 0.2s;
+    }
+    .btn-social:hover {
+      opacity: 0.9;
+    }
+    .btn-tg { background: #0ea5e9; color: #fff; }
+    .btn-max { background: #8b5cf6; color: #fff; }
+    .btn-qr { background: #334155; color: #f8fafc; border: 1px solid var(--card-border); }
+
     .auth-banner {
       display: none;
       background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
@@ -763,6 +802,16 @@
     </div>
   </div>
 
+  <!-- Блок ссылок на чаты и QR-коды -->
+  <div class="social-links-card">
+    <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);">💬 Наши сообщества:</div>
+    <div class="social-buttons-row">
+      <a href="https://t.me/your_telegram_chat" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram чат</a>
+      <a href="https://max.ru/your_max_chat" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС чат</a>
+      <button class="btn-social btn-qr" onclick="openQrModal()"><span>📷</span> QR-код</button>
+    </div>
+  </div>
+
   <!-- Плашка авторизации: Telegram + Google -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
@@ -923,6 +972,25 @@
     </div>
   </div>
 
+</div>
+
+<!-- Модальное окно с QR-кодами -->
+<div class="modal-overlay" id="qr-modal">
+  <div class="modal-box" style="border-color: var(--accent-sky);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
+      <h3 style="font-size: 16px; color: var(--accent-sky);">📷 Поделиться клубом</h3>
+      <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
+    </div>
+    <p style="font-size: 13px; color: var(--text-muted);">
+      Покажите этот QR-код друзьям, чтобы они могли присоединиться к нашему приложению и чату:
+    </p>
+    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;">
+      <!-- Генерация QR-кода приложения через публичный API (ссылка на текущую страницу) -->
+      <img id="qr-code-img" src="" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
+    </div>
+    <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
+    <button class="btn btn-join" style="background: #334155; margin-top: 4px;" onclick="closeQrModal()">Закрыть</button>
+  </div>
 </div>
 
 <!-- Модальное окно профиля игрока [i] -->
@@ -1102,6 +1170,20 @@
   function toggleCard(loc) {
     const cardEl = document.getElementById('card-' + loc);
     cardEl.classList.toggle('expanded');
+  }
+
+  function openQrModal() {
+    const currentUrl = window.location.href;
+    const qrImg = document.getElementById('qr-code-img');
+    const urlText = document.getElementById('qr-url-text');
+    
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentUrl)}`;
+    urlText.innerText = currentUrl;
+    document.getElementById('qr-modal').style.display = 'flex';
+  }
+
+  function closeQrModal() {
+    document.getElementById('qr-modal').style.display = 'none';
   }
 
   function getPlayerStatus(elo) {
