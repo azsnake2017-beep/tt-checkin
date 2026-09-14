@@ -208,6 +208,7 @@
 
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .badge-admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; margin-left: 4px; }
 
     .btn-edit {
       flex: 1;
@@ -311,6 +312,36 @@
       font-size: 12px;
       color: var(--accent-sky);
       width: fit-content;
+    }
+
+    .event-badge {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.25);
+      padding: 8px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+      color: #d8b4fe;
+      margin-top: 6px;
+    }
+
+    .btn-admin-edit-announcement {
+      background: rgba(245, 158, 11, 0.15);
+      border: 1px solid rgba(245, 158, 11, 0.4);
+      color: #fde68a;
+      font-size: 11px;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      cursor: pointer;
+      width: fit-content;
+      margin-top: 4px;
+      display: none;
+    }
+    .btn-admin-edit-announcement:hover {
+      background: rgba(245, 158, 11, 0.3);
     }
 
     .counter {
@@ -583,7 +614,7 @@
       margin-top: 4px;
     }
 
-    .input-time, .input-select {
+    .input-time, .input-select, .textarea-announcement {
       background: #0b1120;
       border: 1px solid var(--card-border);
       color: #fff;
@@ -592,6 +623,10 @@
       font-size: 14px;
       outline: none;
       width: 100%;
+    }
+    .textarea-announcement {
+      resize: vertical;
+      min-height: 90px;
     }
 
     .input-name {
@@ -722,7 +757,13 @@
       <span class="counter" id="badge-park">0 игроков</span>
     </div>
 
-    <div class="section-label">Сейчас играют:</div>
+    <!-- Информационное поле / Анонсы -->
+    <div class="event-badge" id="announcement-box-park" style="display: none;">
+      <span id="announcement-text-park"></span>
+    </div>
+    <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
+
+    <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
     <div class="player-list" id="list-park">
       <span class="empty-note">У столов пока свободно</span>
     </div>
@@ -748,7 +789,13 @@
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
 
-    <div class="section-label">Сейчас играют:</div>
+    <!-- Информационное поле / Анонсы -->
+    <div class="event-badge" id="announcement-box-vostok" style="display: none;">
+      <span id="announcement-text-vostok"></span>
+    </div>
+    <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
+
+    <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
     <div class="player-list" id="list-vostok">
       <span class="empty-note">У столов пока свободно</span>
     </div>
@@ -792,6 +839,28 @@
     </div>
   </div>
 
+</div>
+
+<!-- Модальное окно редактирования анонса (для Admin) -->
+<div class="modal-overlay" id="announcement-modal">
+  <div class="modal-box" style="border-color: var(--accent-amber);">
+    <h3 style="font-size: 18px; color: #fde68a;">📢 Редактирование анонса</h3>
+    <p style="font-size: 13px; color: var(--text-muted);">
+      Информация отобразится на карточке локации и будет отправлена в Telegram-чат.
+    </p>
+
+    <div style="text-align: left;">
+      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;" id="announcement-modal-label">Текст анонса / уведомления:</label>
+      <textarea id="announcement-textarea" class="textarea-announcement" placeholder="Например: Встреча клуба в субботу в 15:00..."></textarea>
+    </div>
+
+    <input type="hidden" id="announcement-target-loc" value="" />
+
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">
+      Сохранить и отправить в чат
+    </button>
+    <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
+  </div>
 </div>
 
 <!-- Модальное окно записи результата матча -->
@@ -901,6 +970,7 @@
   let currentUserActivePlayer = null;
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
+  let announcementsData = { park: "", vostok: "" };
 
   // Функция определения спортивного статуса по очкам рейтинга
   function getPlayerStatus(elo) {
@@ -935,7 +1005,7 @@
     return directions[index % 8];
   }
 
-  // ================= АВТОРИЗАЦИЯ (TG, Google) =================
+  // ================= АВТОРИЗАЦИЯ И ПРАВА СУПЕРПОЛЬЗОВАТЕЛЯ =================
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
     const savedId = localStorage.getItem('tt_member_id');
@@ -951,6 +1021,20 @@
       return savedId;
     }
     return null;
+  }
+
+  // Проверка суперпользователя (Сергей Колчин / @azsnake)
+  function isSuperAdmin() {
+    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
+    if (tgUser && (tgUser.username === 'azsnake' || String(tgUser.id) === '00000000')) { // Замените ID при необходимости
+      return true;
+    }
+    const myUid = getVerifiedUserId();
+    // Также разрешаем по сохраненному ID или если имя содержит Сергей Колчин / azsnake
+    if (myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake')) {
+      return true;
+    }
+    return false;
   }
 
   window.onTelegramAuth = async function(user) {
@@ -1021,6 +1105,7 @@
 
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
+    const adminTag = isSuperAdmin() ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
 
     let badgeHtml = '<span class="platform-badge badge-tg">TG</span>';
     if (isGoogle) badgeHtml = '<span class="platform-badge badge-google">Google</span>';
@@ -1033,7 +1118,7 @@
     const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
 
     document.getElementById('user-name-container').innerHTML = `
-      <span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml}
+      <span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}
     `;
     document.getElementById('user-score-container').innerHTML = `
       <span class="rating-score" style="font-size: 16px;">${elo}</span>
@@ -1045,6 +1130,12 @@
 
     document.getElementById('btn-edit-profile').style.display = 'block';
     document.getElementById('btn-logout').style.display = 'block';
+
+    // Показываем кнопки управления анонсами для суперпользователя
+    if (isSuperAdmin()) {
+      document.getElementById('btn-edit-announcement-park').style.display = 'block';
+      document.getElementById('btn-edit-announcement-vostok').style.display = 'block';
+    }
   }
 
   function injectTelegramLoginWidget() {
@@ -1141,6 +1232,70 @@
     } catch (e) {
       console.error('Ошибка отправки формы:', e);
     }
+  }
+
+  // ================= УПРАВЛЕНИЕ АНОНСАМИ И ИНФО-ПОЛЯМИ =================
+  function openAnnouncementModal(loc) {
+    if (!isSuperAdmin()) return;
+    document.getElementById('announcement-target-loc').value = loc;
+    const titleLabel = loc === 'park' ? 'Парк им. Тищенко' : 'ДК «Восток»';
+    document.getElementById('announcement-modal-label').innerText = `Анонс / уведомление для локации: ${titleLabel}`;
+    document.getElementById('announcement-textarea').value = announcementsData[loc] || '';
+    document.getElementById('announcement-modal').style.display = 'flex';
+  }
+
+  function closeAnnouncementModal() {
+    document.getElementById('announcement-modal').style.display = 'none';
+  }
+
+  async function saveAnnouncement() {
+    if (!isSuperAdmin()) return;
+    const loc = document.getElementById('announcement-target-loc').value;
+    const text = document.getElementById('announcement-textarea').value.trim();
+
+    try {
+      await db.collection('settings').doc('announcements').set({
+        [loc]: text
+      }, { merge: true });
+
+      closeAnnouncementModal();
+
+      // Отправка уведомления в Telegram чат
+      if (text) {
+        const locTitle = LOCATION_NAMES[loc];
+        const alertMsg = `📢 <b>Обновление информации ${locTitle}</b>\n\n${cleanHtml(text)}`;
+        sendTelegramAlert(alertMsg);
+      }
+    } catch (e) {
+      console.error("Ошибка сохранения анонса:", e);
+      alert("Не удалось сохранить анонс.");
+    }
+  }
+
+  function listenAnnouncements() {
+    db.collection('settings').doc('announcements').onSnapshot(doc => {
+      if (doc.exists) {
+        announcementsData = doc.data() || { park: "", vostok: "" };
+      } else {
+        announcementsData = { park: "", vostok: "" };
+      }
+      renderAnnouncements();
+    });
+  }
+
+  function renderAnnouncements() {
+    ['park', 'vostok'].forEach(loc => {
+      const box = document.getElementById('announcement-box-' + loc);
+      const txt = document.getElementById('announcement-text-' + loc);
+      const content = announcementsData[loc];
+
+      if (content && content.trim() !== "") {
+        txt.innerHTML = cleanHtml(content).replace(/\n/g, '<br>');
+        box.style.display = 'flex';
+      } else {
+        box.style.display = 'none';
+      }
+    });
   }
 
   // ================= PUSH & ВИБРАЦИЯ =================
@@ -2152,6 +2307,7 @@
     listenLeaderboard();
     listenRatings();
     listenPendingMatches();
+    listenAnnouncements();
     monitorSessions();
 
     setInterval(renderAll, 30000); 
