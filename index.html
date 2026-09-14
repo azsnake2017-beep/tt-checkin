@@ -313,20 +313,6 @@
       width: fit-content;
     }
 
-    .event-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(168, 85, 247, 0.25);
-      padding: 5px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      color: #d8b4fe;
-      margin-top: 6px;
-      width: fit-content;
-    }
-
     .counter {
       background: rgba(225, 29, 72, 0.15);
       color: #fda4af;
@@ -758,9 +744,6 @@
       <div>
         <div class="card-title">🏛 ДК «Восток»</div>
         <div class="card-desc">ул. Сталеваров, 5а</div>
-        <div class="event-badge">
-          <span>📅 13.09.2026 с 15:00 до 20:00 — встреча клуба</span>
-        </div>
       </div>
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
@@ -1487,7 +1470,6 @@
     const select = document.getElementById('match-opponent-select');
     select.innerHTML = '';
 
-    // Находим всех игроков, которые сейчас находятся за тем же столом
     const currentTablePlayers = locationsData[currentUserActiveLoc].players || [];
     const opponents = currentTablePlayers.filter(p => (p.uid || p) !== myUid);
 
@@ -1542,7 +1524,6 @@
       const oppInfo = allRegisteredUsers.find(u => u.uid === oppUid);
       const oppName = oppInfo ? oppInfo.name : "Соперник";
 
-      // Создаем предложение матча в коллекции pending_matches
       await db.collection('pending_matches').add({
         proposerUid: myUid,
         proposerName: currentUserProfile.name,
@@ -1560,7 +1541,6 @@
     }
   }
 
-  // Слушатель запросов на подтверждение матчей для текущего пользователя
   function listenPendingMatches() {
     const myUid = getVerifiedUserId();
     if (!myUid) return;
@@ -1645,10 +1625,8 @@
         }, { merge: true });
       });
 
-      // Удаляем предложение матча
       await matchRef.delete();
 
-      // Отправляем уведомление в Telegram
       const alertMsg = `🏆 <b>Рейтинговый матч подтверждён и зачтён!</b>\n\n` +
         `🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n` +
         `<blockquote>📊 <b>Новый рейтинг:</b>\n` +
