@@ -115,7 +115,6 @@
     .card-title::after { content: ' ▼'; font-size: 10px; color: var(--text-muted); transition: transform 0.2s ease; }
     .card.expanded .card-title::after { transform: rotate(180deg); }
     
-    /* Плавное раскрытие карточек */
     .card-body-collapse { display: none; flex-direction: column; gap: 12px; margin-top: 4px; animation: fadeIn 0.25s ease; }
     .card.expanded .card-body-collapse { display: flex; }
     @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
@@ -359,14 +358,14 @@
 
 </div>
 
-<!-- Модальные окна -->
+<!-- Модальное окно с QR-кодами -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="qr-modal-title">📷 QR-код</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
-    <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям:</p>
+    <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
     <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;">
       <img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" />
     </div>
@@ -378,6 +377,7 @@
   </div>
 </div>
 
+<!-- Модальные окна -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -510,11 +510,13 @@
 
   function openQrModal(type) {
     let targetUrl = window.location.href, title = "QR-код приложения";
-    if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; }
-    else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; }
+    let desc = "Покажите этот QR-код друзьям для быстрого доступа:";
+    if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
+    else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
 
     currentModalUrl = targetUrl;
     document.getElementById('qr-modal-title').innerText = "📷 " + title;
+    document.getElementById('qr-modal-desc').innerText = desc;
     document.getElementById('qr-url-text').innerText = targetUrl;
     document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
     document.getElementById('qr-modal').style.display = 'flex';
@@ -599,7 +601,10 @@
   }
 
   async function initUserProfile() {
+    const banner = document.getElementById('web-auth-banner');
+    
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
+      if (banner) banner.style.display = 'none';
       const u = window.Telegram.WebApp.initDataUnsafe.user;
       await syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
       return;
@@ -612,7 +617,6 @@
         if (snap.exists) {
           currentUserProfile = snap.data();
           updateProfileDisplay();
-          const banner = document.getElementById('web-auth-banner');
           if (banner) banner.style.display = 'none';
           renderAll();
           return;
@@ -627,7 +631,6 @@
     if (statsEl) statsEl.innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
     
     if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      const banner = document.getElementById('web-auth-banner');
       if (banner) banner.style.display = 'flex';
       const container = document.getElementById('telegram-login-container');
       if (container) {
@@ -680,7 +683,6 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // Загрузка рейтингов и лидерборда
   function listenRatings() {
     db.collection('users').orderBy('elo', 'desc').limit(30).onSnapshot(snap => {
       const listEl = document.getElementById('rating-list');
