@@ -86,7 +86,7 @@
     }
     .profile-top-row { display: flex; align-items: center; justify-content: space-between; }
     .profile-user-main { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .profile-stats-row { display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 8px; }
+    .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
     .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; }
@@ -169,11 +169,11 @@
     .leader-rank-1 { color: #f59e0b; } .leader-rank-2 { color: #94a3b8; } .leader-rank-3 { color: #b45309; }
     .leader-score { font-weight: 700; color: var(--accent-sky); }
     .rating-score { font-weight: 700; color: var(--accent-purple); }
-    .player-status-tag { font-size: 11px; color: var(--text-muted); }
+    .player-status-tag { font-size: 11px; color: var(--text-muted); display: block; }
 
     .btn-info {
       background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-sky);
-      width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+      width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
     }
 
     .modal-overlay {
@@ -264,7 +264,7 @@
       <span class="player-status-tag">0В - 0П (0%)</span>
     </div>
     <div class="profile-actions-row">
-      <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
+      <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Изменить</button>
       <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
     </div>
   </div>
@@ -377,7 +377,7 @@
   </div>
 </div>
 
-<!-- Модальные окна -->
+<!-- Модальные окна Информации -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -386,10 +386,11 @@
     </div>
     <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг Elo:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--accent-sky);">Не указан</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span id="info-modal-matches" style="font-weight: 600;">0</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-sky);">0 мин</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-gold);">0 мин</span></div>
     </div>
     <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
     <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
@@ -456,10 +457,11 @@
 
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
-    <h3>Ваше имя в клубе</h3>
-    <input type="text" id="name-input" class="input-name" placeholder="Имя" maxlength="26" />
+    <h3>Редактирование профиля</h3>
+    <input type="text" id="name-input" class="input-name" placeholder="Имя в клубе" maxlength="26" />
+    <input type="number" id="rttf-input" class="input-name" placeholder="Рейтинг РТТФ (если есть)" min="0" max="4000" style="margin-top: 8px;" />
     <span class="name-error-msg" id="name-error-box">Занято!</span>
-    <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()">Сохранить</button>
+    <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()" style="margin-top: 8px;">Сохранить</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
   </div>
 </div>
@@ -474,7 +476,7 @@
   const LOCATION_NAMES = { park: "в Парке им. Тищенко 🌳", vostok: "в ДК «Восток» 🏛" };
   const DEFAULT_LIMIT_MS = 120 * 60 * 1000;
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
-  const ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; // 5 минут таймаут для Telegram-спама
+  const ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; 
 
   let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
   let currentUserProfile = { uid: null, name: "Гость" };
@@ -486,6 +488,7 @@
   let allRegisteredUsers = [];
   let announcementsData = { park: "", vostok: "" };
   let currentModalUrl = "";
+  let currentUserLeaderboardUnsubscribe = null;
 
   // ================= ИНИЦИАЛИЗАЦИЯ FIREBASE =================
   const firebaseConfig = {
@@ -508,11 +511,15 @@
 
   function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
   
-  function formatDuration(ts) {
-    const mins = Math.floor((Date.now() - ts) / 60000);
-    if (mins < 1) return 'только что';
+  function formatMinutes(mins) {
+    if (!mins) return '0 мин';
     if (mins < 60) return `${mins} мин`;
     return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  }
+
+  function formatDuration(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    return formatMinutes(mins);
   }
   
   function formatUntil(ts) {
@@ -569,7 +576,7 @@
     const now = Date.now();
     const lastTime = localStorage.getItem('tt_last_alert_' + actionType);
     if (lastTime && (now - parseInt(lastTime)) < ANTI_SPAM_COOLDOWN) {
-      console.log(`[Антиспам] Уведомление типа '${actionType}' отклонено. Повторите позже.`);
+      console.log(`[Антиспам] Уведомление отклонено.`);
       return false;
     }
     localStorage.setItem('tt_last_alert_' + actionType, now.toString());
@@ -600,33 +607,6 @@
       window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
     }
   }
-
-  // ================= ФУНКЦИИ QR-КОДОВ =================
-  async function shareModalUrl() {
-    if (!currentModalUrl) return;
-    const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Клуб любителей настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {}
-    } else {
-      navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => alert("📋 Ссылка скопирована!"));
-    }
-  }
-
-  function openQrModal(type) {
-    let targetUrl = window.location.href, title = "QR-код приложения";
-    let desc = "Покажите этот QR-код друзьям для быстрого доступа:";
-    if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
-    else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
-
-    currentModalUrl = targetUrl;
-    document.getElementById('qr-modal-title').innerText = "📷 " + title;
-    document.getElementById('qr-modal-desc').innerText = desc;
-    document.getElementById('qr-url-text').innerText = targetUrl;
-    document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
-    document.getElementById('qr-modal').style.display = 'flex';
-  }
-
-  function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
   // ================= ФУНКЦИИ ПРОФИЛЯ И АВТОРИЗАЦИИ =================
   function getPlayerStatus(elo) {
@@ -698,6 +678,14 @@
     window.location.reload();
   }
 
+  function subscribeToUserLeaderboard(uid) {
+    if (currentUserLeaderboardUnsubscribe) currentUserLeaderboardUnsubscribe();
+    currentUserLeaderboardUnsubscribe = db.collection('leaderboard').doc(uid).onSnapshot(doc => {
+        currentUserProfile.totalMinutes = doc.exists ? (doc.data().totalMinutes || 0) : 0;
+        updateProfileDisplay();
+    });
+  }
+
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
     let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
@@ -715,6 +703,8 @@
     currentUserProfile = userData;
     const banner = document.getElementById('web-auth-banner');
     if (banner) banner.style.display = 'none';
+    
+    subscribeToUserLeaderboard(uid);
     
     updateProfileDisplay();
     localStorage.setItem('tt_name', currentUserProfile.name);
@@ -739,6 +729,7 @@
         if (snap.exists) {
           currentUserProfile = snap.data();
           updateProfileDisplay();
+          subscribeToUserLeaderboard(savedId);
           if (banner) banner.style.display = 'none';
           renderAll();
           return;
@@ -783,11 +774,20 @@
     if (nameEl) nameEl.innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
     const scoreEl = document.getElementById('user-score-container');
     if (scoreEl) scoreEl.innerHTML = `<span class="rating-score" style="font-size: 16px;">${elo}</span>`;
+    
     const statsEl = document.getElementById('user-stats-container');
+    const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : 'РТТФ: —';
     if (statsEl) statsEl.innerHTML = `
-      <span class="player-status-tag">${getPlayerStatus(elo)}</span>
-      <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П (${currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0}%)</span>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <span class="player-status-tag">${getPlayerStatus(elo)} • ${rttfText}</span>
+        <span class="player-status-tag" style="color: var(--accent-sky);">⏱ За столом: ${formatMinutes(currentUserProfile.totalMinutes || 0)}</span>
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
+        <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>
+        <span class="player-status-tag">(${currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0}%)</span>
+      </div>
     `;
+
     const editBtn = document.getElementById('btn-edit-profile');
     if (editBtn) editBtn.style.display = 'block';
     const logoutBtn = document.getElementById('btn-logout');
@@ -803,10 +803,11 @@
     }
   }
 
-  // ================= ФУНКЦИИ РЕДАКТИРОВАНИЯ ИМЕНИ =================
+  // ================= ФУНКЦИИ РЕДАКТИРОВАНИЯ ИМЕНИ И РТТФ =================
   function handleEditProfileClick() { if (isUserVerified()) showNameModal(); }
   function showNameModal() {
     document.getElementById('name-input').value = currentUserProfile.name || '';
+    document.getElementById('rttf-input').value = currentUserProfile.rttf || '';
     document.getElementById('name-error-box').style.display = 'none';
     document.getElementById('name-modal').style.display = 'flex';
   }
@@ -815,10 +816,18 @@
     const uid = getVerifiedUserId();
     if (!uid) return;
     const val = document.getElementById('name-input').value.trim();
+    const rttfRaw = document.getElementById('rttf-input').value.trim();
+    const rttfVal = rttfRaw ? parseInt(rttfRaw) : null;
     if (val.length < 2) return;
+    
     try {
-      await db.collection('users').doc(uid).set({ name: val }, { merge: true });
+      const updateData = { name: val };
+      if (rttfVal !== null) updateData.rttf = rttfVal;
+      else updateData.rttf = firebase.firestore.FieldValue.delete();
+      
+      await db.collection('users').doc(uid).set(updateData, { merge: true });
       currentUserProfile.name = val;
+      currentUserProfile.rttf = rttfVal;
       localStorage.setItem('tt_name', val);
       updateProfileDisplay();
       hideNameModal();
@@ -1103,6 +1112,7 @@
       const u = d.data();
       document.getElementById('info-modal-title').innerText = `👤 ${u.name||"Игрок"}`;
       document.getElementById('info-modal-elo').innerText = u.elo||1000;
+      document.getElementById('info-modal-rttf').innerText = u.rttf||"Не указан";
       document.getElementById('info-modal-status').innerText = getPlayerStatus(u.elo||1000);
       document.getElementById('info-modal-matches').innerText = u.matches||0;
       const winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
@@ -1110,7 +1120,7 @@
       
       const ld = await db.collection('leaderboard').doc(uid).get();
       const mins = ld.exists ? ld.data().totalMinutes||0 : 0;
-      document.getElementById('info-modal-total-time').innerText = `${Math.floor(mins/60)} ч ${mins%60} мин`;
+      document.getElementById('info-modal-total-time').innerText = formatMinutes(mins);
       
       const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
       const hEl = document.getElementById('info-modal-history');
@@ -1171,11 +1181,16 @@
         const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0;
         const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
         let pTag = doc.id.startsWith('google_') ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
+        let rttfTag = d.rttf ? `<span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 6px; border-radius: 4px; color: var(--accent-sky); margin-left: 4px; font-weight: 600;">РТТФ: ${d.rttf}</span>` : '';
+        
         html += `
           <div class="leader-row">
             <div class="leader-left">
               <span class="leader-rank ${rankClass}">${medal}</span>
-              <div><div><b>${cleanHtml(d.name)}</b> ${pTag}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)} • ${wins}В - ${losses}П (${winrate}%)</div></div>
+              <div>
+                 <div><b>${cleanHtml(d.name)}</b> ${pTag} ${rttfTag}</div>
+                 <div class="player-status-tag">${getPlayerStatus(d.elo || 1000)} • ${wins}В - ${losses}П (${winrate}%)</div>
+              </div>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="rating-score">${d.elo || 1000}</span>
@@ -1428,7 +1443,7 @@
 
     setInterval(renderAll, 30000); 
     setInterval(monitorSessions, 60000); 
-    setInterval(loadParkWeather, 600000); // Обновление погоды каждые 10 минут
+    setInterval(loadParkWeather, 600000); 
   });
 </script>
 </body>
