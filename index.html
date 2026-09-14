@@ -286,18 +286,52 @@
       flex-direction: column;
       gap: 12px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+      transition: border-color 0.2s;
     }
 
     .card-top {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
+      cursor: pointer;
+      user-select: none;
     }
 
     .card-title {
       font-size: 18px;
       font-weight: 700;
       letter-spacing: 0.2px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .card-title::after {
+      content: ' ▼';
+      font-size: 10px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .card.expanded .card-title::after {
+      transform: rotate(180deg);
+    }
+
+    .card-body-collapse {
+      display: none;
+      flex-direction: column;
+      gap: 12px;
+      margin-top: 4px;
+      animation: fadeIn 0.25s ease;
+    }
+
+    .card.expanded .card-body-collapse {
+      display: flex;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(-4px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .card-desc {
@@ -791,42 +825,45 @@
 
   <!-- Парк Тищенко -->
   <div class="card" id="card-park">
-    <div class="card-top">
+    <div class="card-top" onclick="toggleCard('park')">
       <div>
         <div class="card-title">🌳 Парк им. Тищенко</div>
         <div class="card-desc">Столы на свежем воздухе</div>
-        <div class="weather-container" id="weather-park">
-          <div class="weather-badge"><span>Загрузка погоды...</span></div>
-        </div>
       </div>
       <span class="counter" id="badge-park">0 игроков</span>
     </div>
 
-    <!-- Информационное поле / Анонсы -->
-    <div class="event-badge" id="announcement-box-park" style="display: none;">
-      <span id="announcement-text-park"></span>
-    </div>
-    <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
+    <div class="card-body-collapse">
+      <div class="weather-container" id="weather-park">
+        <div class="weather-badge"><span>Загрузка погоды...</span></div>
+      </div>
 
-    <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-    <div class="player-list" id="list-park">
-      <span class="empty-note">У столов пока свободно</span>
-    </div>
+      <!-- Информационное поле / Анонсы -->
+      <div class="event-badge" id="announcement-box-park" style="display: none;">
+        <span id="announcement-text-park"></span>
+      </div>
+      <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
 
-    <div class="section-label">Собираются прийти:</div>
-    <div class="player-list" id="plan-list-park">
-      <span class="empty-note">Никто не планировал</span>
-    </div>
+      <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+      <div class="player-list" id="list-park">
+        <span class="empty-note">У столов пока свободно</span>
+      </div>
 
-    <div class="action-group" id="btn-container-park">
-      <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
-      <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
+      <div class="section-label">Собираются прийти:</div>
+      <div class="player-list" id="plan-list-park">
+        <span class="empty-note">Никто не планировал</span>
+      </div>
+
+      <div class="action-group" id="btn-container-park">
+        <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
+        <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
+      </div>
     </div>
   </div>
 
   <!-- ДК Восток -->
   <div class="card" id="card-vostok">
-    <div class="card-top">
+    <div class="card-top" onclick="toggleCard('vostok')">
       <div>
         <div class="card-title">🏛 ДК «Восток»</div>
         <div class="card-desc">ул. Сталеваров, 5а</div>
@@ -834,25 +871,27 @@
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
 
-    <!-- Информационное поле / Анонсы -->
-    <div class="event-badge" id="announcement-box-vostok" style="display: none;">
-      <span id="announcement-text-vostok"></span>
-    </div>
-    <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
+    <div class="card-body-collapse">
+      <!-- Информационное поле / Анонсы -->
+      <div class="event-badge" id="announcement-box-vostok" style="display: none;">
+        <span id="announcement-text-vostok"></span>
+      </div>
+      <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
 
-    <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-    <div class="player-list" id="list-vostok">
-      <span class="empty-note">У столов пока свободно</span>
-    </div>
+      <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+      <div class="player-list" id="list-vostok">
+        <span class="empty-note">У столов пока свободно</span>
+      </div>
 
-    <div class="section-label">Собираются прийти:</div>
-    <div class="player-list" id="plan-list-vostok">
-      <span class="empty-note">Никто не планировал</span>
-    </div>
+      <div class="section-label">Собираются прийти:</div>
+      <div class="player-list" id="plan-list-vostok">
+        <span class="empty-note">Никто не планировал</span>
+      </div>
 
-    <div class="action-group" id="btn-container-vostok">
-      <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
-      <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
+      <div class="action-group" id="btn-container-vostok">
+        <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
+        <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
+      </div>
     </div>
   </div>
 
@@ -1059,6 +1098,11 @@
   let hasTriggeredPush = false;
   let allRegisteredUsers = [];
   let announcementsData = { park: "", vostok: "" };
+
+  function toggleCard(loc) {
+    const cardEl = document.getElementById('card-' + loc);
+    cardEl.classList.toggle('expanded');
+  }
 
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢";
