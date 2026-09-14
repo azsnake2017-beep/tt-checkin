@@ -154,7 +154,7 @@
     .btn-leave { background: #334155; color: #cbd5e1; }
 
     .tabs-container { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); }
-    .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
+    .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
     .tab-btn.active { background: #334155; color: #ffffff; }
 
     .leaderboard-card, .rating-card {
@@ -578,6 +578,12 @@
     window.location.reload();
   }
 
+  window.onTelegramAuth = async function(user) {
+    const uid = 'tg_' + user.id;
+    localStorage.setItem('tt_member_id', uid);
+    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
+  };
+
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
     let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
@@ -609,6 +615,7 @@
       await syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
       return;
     }
+    
     const savedId = localStorage.getItem('tt_member_id');
     if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
       try {
@@ -616,8 +623,8 @@
         const snap = await Promise.race([db.collection('users').doc(savedId).get(), timeoutPromise]);
         if (snap.exists) {
           currentUserProfile = snap.data();
-          updateProfileDisplay();
           if (banner) banner.style.display = 'none';
+          updateProfileDisplay();
           renderAll();
           return;
         }
@@ -664,7 +671,7 @@
     const statsEl = document.getElementById('user-stats-container');
     if (statsEl) statsEl.innerHTML = `
       <span class="player-status-tag">${getPlayerStatus(elo)}</span>
-      <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>
+      <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П (${currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0}%)</span>
     `;
     const editBtn = document.getElementById('btn-edit-profile');
     if (editBtn) editBtn.style.display = 'block';
@@ -684,6 +691,29 @@
   function cleanHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  function formatDuration(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'только что';
+    if (mins < 60) return `${mins} мин`;
+    return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  }
+  function formatUntil(ts) {
+    const diff = ts - Date.now();
+    if (diff <= 0) return 'скоро';
+    const mins = Math.ceil(diff / 60000);
+    if (mins < 60) return `через ~${mins} мин`;
+    return `через ${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  }
+
+  function getPlayersCountSuffix(count) {
+    const m10 = count % 10, m100 = count % 100;
+    if (m100 >= 11 && m100 <= 19) return `игроков`;
+    if (m10 === 1) return `игрок`;
+    if (m10 >= 2 && m10 <= 4) return `игрока`;
+    return `игроков`;
   }
 
   function listenRatings() {
@@ -721,29 +751,324 @@
   }
 
   function listenLeaderboard() {
-    db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(5).onSnapshot(snap => {
+    db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(15).onSnapshot(snap => {
       const listEl = document.getElementById('leaderboard-list');
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
       let html = '', rank = 1;
       snap.forEach(doc => {
         const d = doc.data();
+        if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_')) return;
         const hours = (d.totalMinutes / 60).toFixed(1);
         const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
         const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
         html += `
           <div class="leader-row">
             <div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><b>${cleanHtml(d.name)}</b></div>
-            <span class="leader-score">${hours} ч (${d.sessions} игр)</span>
+            <span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span>
           </div>
         `;
         rank++;
       });
-      listEl.innerHTML = html;
+      listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
     });
   }
 
-  // Заглушка renderAll на случай, если полная логика чекина инициализируется позже
-  function renderAll() {}
+  // ==== ФУНКЦИИ ЧЕКИНА И МОДАЛОК (Полностью восстановлены) ====
+  
+  function handleEditProfileClick() { if (isUserVerified()) showNameModal(); }
+  function showNameModal() {
+    document.getElementById('name-input').value = currentUserProfile.name || '';
+    document.getElementById('name-error-box').style.display = 'none';
+    document.getElementById('name-modal').style.display = 'flex';
+  }
+  function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
+  async function saveCustomNameWithCheck() {
+    const uid = getVerifiedUserId();
+    if (!uid) return;
+    const val = document.getElementById('name-input').value.trim();
+    if (val.length < 2) return;
+    try {
+      await db.collection('users').doc(uid).set({ name: val }, { merge: true });
+      currentUserProfile.name = val;
+      localStorage.setItem('tt_name', val);
+      updateProfileDisplay();
+      hideNameModal();
+      renderAll();
+    } catch (e) {}
+  }
+
+  function handleCheckInClick(loc) { if (isUserVerified()) checkIn(loc); }
+  function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
+  function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
+  
+  async function checkIn(loc) {
+    const uid = getVerifiedUserId();
+    if (!uid) return;
+    const now = Date.now();
+    const otherLoc = loc === 'park' ? 'vostok' : 'park';
+    try {
+      await db.runTransaction(async t => {
+        const tDoc = await t.get(db.collection('locations').doc(loc));
+        const oDoc = await t.get(db.collection('locations').doc(otherLoc));
+        let tP = tDoc.exists ? tDoc.data().players || [] : [];
+        let oP = oDoc.exists ? oDoc.data().players || [] : [];
+        let tPl = tDoc.exists ? tDoc.data().plans || [] : [];
+        if (tP.find(p => (p.uid || p) === uid)) return;
+        tP = tP.filter(p => (p.uid || p) !== uid);
+        oP = oP.filter(p => (p.uid || p) !== uid);
+        tPl = tPl.filter(p => (p.uid || p) !== uid);
+        tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS });
+        t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true });
+        t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
+      });
+    } catch(e) {}
+  }
+
+  async function leave(loc) {
+    const uid = getVerifiedUserId();
+    if (!uid) return;
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(loc));
+        if (!d.exists) return;
+        let p = d.data().players || [];
+        p = p.filter(pl => (pl.uid || pl) !== uid);
+        t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
+      });
+      document.getElementById('extend-modal').style.display = 'none';
+    } catch(e) {}
+  }
+
+  function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
+
+  async function extendSession(addMins) {
+    const uid = getVerifiedUserId();
+    if (!uid || !currentUserActiveLoc) return;
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(currentUserActiveLoc));
+        if(!d.exists) return;
+        let p = d.data().players || [];
+        p = p.map(pl => {
+          if ((pl.uid||pl) === uid) return { ...pl, maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) };
+          return pl;
+        });
+        t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
+      });
+      document.getElementById('extend-modal').style.display = 'none';
+    } catch(e) {}
+  }
+
+  async function submitQuickPlan(m) { await applyPlan(Date.now() + m * 60000); }
+  async function submitExactPlan() {
+    const val = document.getElementById('exact-time-input').value;
+    if(!val) return;
+    const [h, m] = val.split(':').map(Number);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+    await applyPlan(d.getTime());
+  }
+  async function applyPlan(ts) {
+    const uid = getVerifiedUserId();
+    if(!uid) return;
+    closePlanModal();
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(activePlanningLoc));
+        let pl = d.exists ? d.data().plans || [] : [];
+        pl = pl.filter(p => (p.uid||p) !== uid);
+        pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid });
+        t.set(db.collection('locations').doc(activePlanningLoc), { plans: pl }, { merge: true });
+      });
+    } catch(e) {}
+  }
+  async function cancelPlan(loc) {
+    const uid = getVerifiedUserId();
+    if(!uid) return;
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(loc));
+        if(!d.exists) return;
+        let pl = d.data().plans || [];
+        pl = pl.filter(p => (p.uid||p) !== uid);
+        t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
+      });
+    } catch(e) {}
+  }
+
+  function handleMatchClick() { if (isUserVerified()) openMatchModal(); }
+  function openMatchModal() {
+    const uid = getVerifiedUserId();
+    if (!currentUserActiveLoc || !uid) { alert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!"); return; }
+    const sel = document.getElementById('match-opponent-select');
+    sel.innerHTML = '';
+    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
+    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; }
+    else { opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; }); }
+    selectScore(3,0);
+    document.getElementById('match-modal').style.display = 'flex';
+  }
+  function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
+  function selectScore(my, opp) {
+    document.getElementById('match-my-score').value = my;
+    document.getElementById('match-opp-score').value = opp;
+    document.querySelectorAll('.score-btn').forEach(b => {
+      b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`);
+    });
+  }
+  async function submitMatchProposal() {
+    const uid = getVerifiedUserId();
+    const oppUid = document.getElementById('match-opponent-select').value;
+    if(!uid || !oppUid || uid===oppUid) return alert("Выберите соперника!");
+    closeMatchModal();
+    try {
+      await db.collection('pending_matches').add({
+        proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: "Соперник",
+        scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
+        timestamp: Date.now()
+      });
+      alert("✅ Запрос отправлен!");
+    } catch(e){}
+  }
+
+  async function showUserInfoModal(uid) {
+    document.getElementById('info-modal-title').innerText = "👤 Загрузка...";
+    document.getElementById('user-info-modal').style.display = 'flex';
+    try {
+      const d = await db.collection('users').doc(uid).get();
+      if(!d.exists) { closeUserInfoModal(); return; }
+      const u = d.data();
+      document.getElementById('info-modal-title').innerText = `👤 ${u.name||"Игрок"}`;
+      document.getElementById('info-modal-elo').innerText = u.elo||1000;
+      document.getElementById('info-modal-status').innerText = getPlayerStatus(u.elo||1000);
+      document.getElementById('info-modal-matches').innerText = u.matches||0;
+      document.getElementById('info-modal-winloss').innerText = `${u.wins||0}В - ${u.losses||0}П`;
+      
+      const ld = await db.collection('leaderboard').doc(uid).get();
+      const mins = ld.exists ? ld.data().totalMinutes||0 : 0;
+      document.getElementById('info-modal-total-time').innerText = `${Math.floor(mins/60)} ч ${mins%60} мин`;
+      
+      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
+      const hEl = document.getElementById('info-modal-history');
+      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
+      let h = '';
+      snaps.forEach(doc => {
+        const m = doc.data(); const isP1 = m.p1Uid === uid;
+        const myS = isP1?m.p1Score:m.p2Score; const opS = isP1?m.p2Score:m.p1Score;
+        const opN = isP1?m.p2Name:m.p1Name; const isWin = myS>opS;
+        h += `<div style="background: rgba(11,17,32,0.5); padding: 8px; border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;">
+                <div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div>
+                <div style="color:${isWin?'var(--accent-green)':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div>
+              </div>`;
+      });
+      hEl.innerHTML = h;
+    } catch(e){}
+  }
+  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
+
+  function sendAdminBroadcast() {
+    if(!isSuperAdmin()) return;
+    const t = document.getElementById('admin-broadcast-text').value.trim();
+    if(!t) return;
+    // alert("✅ Отправлено"); // Placeholder for gateway logic
+    document.getElementById('admin-broadcast-text').value = '';
+  }
+  function openAnnouncementModal(loc) {
+    if(!isSuperAdmin()) return;
+    document.getElementById('announcement-target-loc').value = loc;
+    document.getElementById('announcement-textarea').value = announcementsData[loc] || '';
+    document.getElementById('announcement-modal').style.display = 'flex';
+  }
+  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
+  async function saveAnnouncement() {
+    const loc = document.getElementById('announcement-target-loc').value;
+    const txt = document.getElementById('announcement-textarea').value.trim();
+    await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true });
+    closeAnnouncementModal();
+  }
+
+  // ==== ФУНКЦИЯ ОТРИСОВКИ RENDER ALL ====
+  function renderAll() {
+    const myUid = getVerifiedUserId();
+    const now = Date.now();
+    currentUserActiveLoc = null;
+    currentUserActivePlayer = null;
+
+    ['park', 'vostok'].forEach(loc => {
+      const { players } = locationsData[loc] || { players: [] };
+      const plans = (locationsData[loc]?.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
+
+      const badge = document.getElementById('badge-' + loc);
+      if(badge) {
+        badge.innerText = `${players.length} ${getPlayersCountSuffix(players.length)}`;
+        badge.className = players.length > 0 ? 'counter has-players' : 'counter';
+      }
+
+      const listEl = document.getElementById('list-' + loc);
+      if(listEl) {
+        if (players.length === 0) {
+          listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>';
+        } else {
+          listEl.innerHTML = players.map(item => `
+            <div class="player-row">
+              <div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="player-time-box">
+                  <span>с ${formatTime(item.time || Date.now())}</span>
+                  <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
+                </div>
+                ${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      const planListEl = document.getElementById('plan-list-' + loc);
+      if(planListEl) {
+        if (plans.length === 0) {
+          planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>';
+        } else {
+          planListEl.innerHTML = plans.map(p => `
+            <div class="player-row">
+              <div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div class="player-time-box">
+                  <span>к ${formatTime(p.planTime)}</span>
+                  <span class="time-badge-plan">${formatUntil(p.planTime)}</span>
+                </div>
+                ${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}
+              </div>
+            </div>
+          `).join('');
+        }
+      }
+
+      const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
+      const isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
+      const btnBox = document.getElementById('btn-container-' + loc);
+
+      if(btnBox) {
+        if (activePlayerObj) {
+          currentUserActiveLoc = loc;
+          currentUserActivePlayer = activePlayerObj;
+          btnBox.innerHTML = `<div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`;
+        } else if (isUserOpened) {
+          btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`;
+        } else {
+          btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`;
+        }
+      }
+    });
+
+    // Check reminder modal
+    if (currentUserActiveLoc && currentUserActivePlayer) {
+      const elap = Date.now() - (currentUserActivePlayer.time||Date.now());
+      if (elap >= ((currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS)-REMIND_BEFORE_MS) && elap < (currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS)) {
+        document.getElementById('extend-modal').style.display = 'flex';
+      }
+    }
+  }
 
   // Firebase Init & Start Listeners
   const firebaseConfig = {
@@ -758,9 +1083,6 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   const db = firebase.firestore();
 
-  let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
-  let currentUserProfile = { uid: null, name: "Гость" };
-
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile();
     listenRatings();
@@ -772,6 +1094,18 @@
         locationsData[loc].plans = data.plans || [];
         locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p);
         if (typeof renderAll === 'function') renderAll();
+      });
+    });
+
+    db.collection('settings').doc('announcements').onSnapshot(doc => {
+      announcementsData = doc.data() || {park:"", vostok:""};
+      ['park','vostok'].forEach(loc => {
+        const b = document.getElementById('announcement-box-'+loc);
+        const t = document.getElementById('announcement-text-'+loc);
+        if(b && t) {
+          if(announcementsData[loc]) { t.innerHTML=cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display='flex'; }
+          else { b.style.display='none'; }
+        }
       });
     });
 
