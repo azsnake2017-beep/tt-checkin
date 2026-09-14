@@ -474,8 +474,8 @@
   const LOCATION_NAMES = { park: "в Парке им. Тищенко 🌳", vostok: "в ДК «Восток» 🏛" };
   const DEFAULT_LIMIT_MS = 120 * 60 * 1000;
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
+  const ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; // 5 минут таймаут для Telegram-спама
 
-  // Обязательные переменные, необходимые для работы приложения
   let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
   let currentUserProfile = { uid: null, name: "Гость" };
   
@@ -564,7 +564,18 @@
     return directions[index % 8];
   }
 
-  // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ В ТЕЛЕГРАМ =================
+  // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ И АНТИСПАМ =================
+  function canSendTgAlert(actionType) {
+    const now = Date.now();
+    const lastTime = localStorage.getItem('tt_last_alert_' + actionType);
+    if (lastTime && (now - parseInt(lastTime)) < ANTI_SPAM_COOLDOWN) {
+      console.log(`[Антиспам] Уведомление типа '${actionType}' отклонено. Повторите позже.`);
+      return false;
+    }
+    localStorage.setItem('tt_last_alert_' + actionType, now.toString());
+    return true;
+  }
+
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
     try {
@@ -836,7 +847,7 @@
         let oP = oDoc.exists ? oDoc.data().players || [] : [];
         let tPl = tDoc.exists ? tDoc.data().plans || [] : [];
         
-        if (tP.find(p => (p.uid || p) === uid)) return; // Уже отмечен
+        if (tP.find(p => (p.uid || p) === uid)) return;
         
         tP = tP.filter(p => (p.uid || p) !== uid);
         oP = oP.filter(p => (p.uid || p) !== uid);
@@ -850,8 +861,10 @@
       });
 
       hasTriggeredPush = false;
-      const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
-      sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${quoteBlock}\n\nКто составит компанию?`);
+      if (canSendTgAlert('status_change')) {
+        const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
+        sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${quoteBlock}\n\nКто составит компанию?`);
+      }
     } catch(e) {}
   }
 
@@ -882,9 +895,11 @@
       document.getElementById('extend-modal').style.display = 'none';
       hasTriggeredPush = false;
 
-      const timeInfo = spentStr ? ` (время тренировки: <code>${spentStr}</code>)` : "";
-      let quoteBlock = finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>";
-      sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${timeInfo}.${quoteBlock}`);
+      if (canSendTgAlert('status_change')) {
+        const timeInfo = spentStr ? ` (время тренировки: <code>${spentStr}</code>)` : "";
+        let quoteBlock = finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>";
+        sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${timeInfo}.${quoteBlock}`);
+      }
     } catch(e) {}
   }
 
@@ -934,8 +949,10 @@
         t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
       });
       
-      let textLabel = formatUntil(ts);
-      sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${textLabel}</b>!\n\nКто готов составить пару?`);
+      if (canSendTgAlert('status_change')) {
+        let textLabel = formatUntil(ts);
+        sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${textLabel}</b>!\n\nКто готов составить пару?`);
+      }
     } catch(e) {}
   }
   
