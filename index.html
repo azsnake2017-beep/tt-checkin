@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
-  <!-- Telegram WebApp SDK (async) -->
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js" async></script>
 
-  <!-- Firebase SDK Compat (async) -->
+  <!-- Firebase SDK Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" async></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" async></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" async></script>
@@ -203,16 +203,8 @@
       box-shadow: 0 4px 16px rgba(56, 189, 248, 0.2);
     }
 
-    .auth-banner h3 {
-      font-size: 15px;
-      color: #f8fafc;
-    }
-
-    .auth-banner p {
-      font-size: 12px;
-      color: var(--text-muted);
-      line-height: 1.4;
-    }
+    .auth-banner h3 { font-size: 15px; color: #f8fafc; }
+    .auth-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
 
     .auth-methods-box {
       width: 100%;
@@ -237,10 +229,7 @@
       gap: 8px;
       transition: opacity 0.2s;
     }
-
-    .btn-auth-provider:hover {
-      opacity: 0.9;
-    }
+    .btn-auth-provider:hover { opacity: 0.9; }
 
     .vpn-hint {
       font-size: 11px;
@@ -264,619 +253,156 @@
       box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
 
-    .profile-top-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
+    .profile-top-row { display: flex; align-items: center; justify-content: space-between; }
     .profile-user-main {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
+      display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text);
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
     }
-
     .profile-stats-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-muted);
-      border-top: 1px solid rgba(51, 65, 85, 0.4);
-      padding-top: 8px;
+      display: flex; align-items: center; justify-content: space-between; font-size: 12px; color: var(--text-muted);
+      border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 8px;
     }
+    .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
-    .profile-actions-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 2px;
-    }
-
-    .platform-badge {
-      display: inline-block;
-      font-size: 10px;
-      padding: 2px 6px;
-      border-radius: 4px;
-      font-weight: 700;
-      flex-shrink: 0;
-    }
-
+    .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; }
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
     .badge-admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; margin-left: 4px; }
 
-    .btn-edit {
-      flex: 1;
-      background: #334155;
-      border: none;
-      color: #cbd5e1;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: background 0.2s;
-      display: none;
+    .btn-edit, .btn-logout {
+      flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none;
     }
-    .btn-edit:hover {
-      background: #475569;
-      color: #fff;
-    }
-
-    .btn-logout {
-      flex: 1;
-      background: rgba(225, 29, 72, 0.15);
-      border: 1px solid rgba(225, 29, 72, 0.3);
-      color: #fda4af;
-      padding: 7px 12px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s;
-      display: none;
-    }
-    .btn-logout:hover {
-      background: rgba(225, 29, 72, 0.3);
-      color: #fff;
-    }
+    .btn-edit { background: #334155; color: #cbd5e1; }
+    .btn-edit:hover { background: #475569; color: #fff; }
+    .btn-logout { background: rgba(225, 29, 72, 0.15); border: 1px solid rgba(225, 29, 72, 0.3); color: #fda4af; }
+    .btn-logout:hover { background: rgba(225, 29, 72, 0.3); color: #fff; }
 
     .btn-match-quick {
-      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);
-      color: #fff;
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      padding: 12px;
-      border-radius: 14px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
-      transition: all 0.2s ease;
+      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4);
+      padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
     }
 
     .admin-panel-card {
-      display: none;
-      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-      border: 1px solid var(--accent-amber);
-      border-radius: 16px;
-      padding: 14px 16px;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+      display: none; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--accent-amber);
+      border-radius: 16px; padding: 14px 16px; flex-direction: column; gap: 10px;
     }
 
     .card {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-      transition: border-color 0.2s;
+      background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px;
+      display: flex; flex-direction: column; gap: 12px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
     }
+    .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
+    .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+    .card-title::after { content: ' ▼'; font-size: 10px; color: var(--text-muted); transition: transform 0.2s ease; }
+    .card.expanded .card-title::after { transform: rotate(180deg); }
+    .card-body-collapse { display: none; flex-direction: column; gap: 12px; margin-top: 4px; }
+    .card.expanded .card-body-collapse { display: flex; }
+    .card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
-    .card-top {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
-      cursor: pointer;
-      user-select: none;
-    }
-
-    .card-title {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: 0.2px;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    .card-title::after {
-      content: ' ▼';
-      font-size: 10px;
-      color: var(--text-muted);
-      transition: transform 0.2s ease;
-    }
-
-    .card.expanded .card-title::after {
-      transform: rotate(180deg);
-    }
-
-    .card-body-collapse {
-      display: none;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 4px;
-      animation: fadeIn 0.25s ease;
-    }
-
-    .card.expanded .card-body-collapse {
-      display: flex;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(-4px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .card-desc {
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .weather-container {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      margin-top: 6px;
-    }
-
+    .weather-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
     .weather-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.2);
-      padding: 5px 10px;
-      border-radius: 8px;
-      font-size: 12px;
-      color: var(--accent-sky);
-      width: fit-content;
+      display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1);
+      border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: var(--accent-sky); width: fit-content;
     }
-
     .event-badge {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      background: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(168, 85, 247, 0.25);
-      padding: 8px 10px;
-      border-radius: 10px;
-      font-size: 12px;
-      color: #d8b4fe;
-      margin-top: 6px;
+      display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1);
+      border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #d8b4fe; margin-top: 6px;
     }
-
     .btn-admin-edit-announcement {
-      background: rgba(245, 158, 11, 0.15);
-      border: 1px solid rgba(245, 158, 11, 0.4);
-      color: #fde68a;
-      font-size: 11px;
-      font-weight: 600;
-      padding: 4px 8px;
-      border-radius: 6px;
-      cursor: pointer;
-      width: fit-content;
-      margin-top: 4px;
-      display: none;
-    }
-    .btn-admin-edit-announcement:hover {
-      background: rgba(245, 158, 11, 0.3);
+      background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fde68a;
+      font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; width: fit-content; margin-top: 4px; display: none;
     }
 
-    .counter {
-      background: rgba(225, 29, 72, 0.15);
-      color: #fda4af;
-      padding: 4px 10px;
-      border-radius: 20px;
-      font-size: 12px;
-      font-weight: 600;
-      white-space: nowrap;
-    }
+    .counter { background: rgba(225, 29, 72, 0.15); color: #fda4af; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .counter.has-players { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
 
-    .counter.has-players {
-      background: rgba(16, 185, 129, 0.15);
-      color: var(--accent-green);
-    }
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; color: var(--text-muted); margin-top: 4px; }
+    .player-list { background: rgba(11, 17, 32, 0.6); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .empty-note { font-size: 13px; color: var(--text-muted); text-align: center; padding: 6px 0; }
+    .player-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(51, 65, 85, 0.3); }
+    .player-row:last-child { border-bottom: none; }
+    .player-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
+    .player-time-box { text-align: right; font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; }
+    .time-badge { color: var(--accent-green); font-weight: 600; }
+    .time-badge-plan { color: var(--accent-amber); font-weight: 600; }
 
-    .section-label {
-      font-size: 11px;
-      text-transform: uppercase;
-      letter-spacing: 0.6px;
-      font-weight: 700;
-      color: var(--text-muted);
-      margin-top: 4px;
-    }
+    .btn { width: 100%; border: none; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
+    .btn-join { background: var(--primary); color: #ffffff; }
+    .btn-plan { background: #1e293b; border: 1px solid #3b82f6; color: #93c5fd; }
+    .btn-leave { background: #334155; color: #cbd5e1; }
 
-    .player-list {
-      background: rgba(11, 17, 32, 0.6);
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 8px 12px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
+    .tabs-container { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); }
+    .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
+    .tab-btn.active { background: #334155; color: #ffffff; }
 
-    .empty-note {
-      font-size: 13px;
-      color: var(--text-muted);
-      text-align: center;
-      padding: 6px 0;
+    .leaderboard-card, .rating-card {
+      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
     }
-
-    .player-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 6px 0;
-      border-bottom: 1px solid rgba(51, 65, 85, 0.3);
-    }
-
-    .player-row:last-child {
-      border-bottom: none;
-    }
-
-    .player-name {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      font-size: 14px;
-      font-weight: 500;
-    }
-
-    .player-time-box {
-      text-align: right;
-      font-size: 12px;
-      color: var(--text-muted);
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .time-badge {
-      color: var(--accent-green);
-      font-weight: 600;
-    }
-
-    .time-badge-plan {
-      color: var(--accent-amber);
-      font-weight: 600;
-    }
-
-    .action-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      margin-top: 4px;
-    }
-
-    .btn {
-      width: 100%;
-      border: none;
-      padding: 12px;
-      border-radius: 12px;
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      text-align: center;
-      transition: all 0.2s ease;
-    }
-
-    .btn-join {
-      background: var(--primary);
-      color: #ffffff;
-    }
-
-    .btn-plan {
-      background: #1e293b;
-      border: 1px solid #3b82f6;
-      color: #93c5fd;
-    }
-
-    .btn-leave {
-      background: #334155;
-      color: #cbd5e1;
-    }
-
-    .tabs-container {
-      display: flex;
-      gap: 8px;
-      background: rgba(15, 23, 42, 0.8);
-      padding: 4px;
-      border-radius: 12px;
-      border: 1px solid var(--card-border);
-    }
-
-    .tab-btn {
-      flex: 1;
-      padding: 8px 12px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      font-size: 13px;
-      font-weight: 600;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .tab-btn.active {
-      background: #334155;
-      color: #ffffff;
-    }
-
-    .leaderboard-card {
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-      border: 1px solid rgba(251, 191, 36, 0.3);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-    }
-
-    .rating-card {
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
-      border: 1px solid rgba(168, 85, 247, 0.4);
-      border-radius: 16px;
-      padding: 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
-    }
-
-    .card-block-title {
-      font-size: 16px;
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .leader-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 10px;
-      border-radius: 8px;
-      background: rgba(15, 23, 42, 0.6);
-      font-size: 13px;
-    }
-
-    .leader-left {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .leader-rank {
-      font-weight: 700;
-      width: 22px;
-      color: var(--text-muted);
-    }
-
-    .leader-rank-1 { color: #f59e0b; }
-    .leader-rank-2 { color: #94a3b8; }
-    .leader-rank-3 { color: #b45309; }
-
-    .leader-score {
-      font-weight: 700;
-      color: var(--accent-sky);
-    }
-
-    .rating-score {
-      font-weight: 700;
-      color: var(--accent-purple);
-    }
-
-    .player-status-tag {
-      font-size: 11px;
-      color: var(--text-muted);
-    }
+    .rating-card { border: 1px solid rgba(168, 85, 247, 0.4); }
+    .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
+    .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); font-size: 13px; }
+    .leader-left { display: flex; align-items: center; gap: 8px; }
+    .leader-rank { font-weight: 700; width: 22px; color: var(--text-muted); }
+    .leader-rank-1 { color: #f59e0b; } .leader-rank-2 { color: #94a3b8; } .leader-rank-3 { color: #b45309; }
+    .leader-score { font-weight: 700; color: var(--accent-sky); }
+    .rating-score { font-weight: 700; color: var(--accent-purple); }
+    .player-status-tag { font-size: 11px; color: var(--text-muted); }
 
     .btn-info {
-      background: rgba(56, 189, 248, 0.15);
-      border: 1px solid rgba(56, 189, 248, 0.3);
-      color: var(--accent-sky);
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      font-size: 12px;
-      font-weight: 700;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.2s;
-    }
-    .btn-info:hover {
-      background: rgba(56, 189, 248, 0.3);
-      color: #fff;
+      background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-sky);
+      width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
     }
 
     .modal-overlay {
-      position: fixed;
-      inset: 0;
-      background: rgba(11, 17, 32, 0.92);
-      backdrop-filter: blur(6px);
-      display: none;
-      align-items: center;
-      justify-content: center;
-      padding: 20px;
-      z-index: 999;
+      position: fixed; inset: 0; background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 999;
     }
-
     .modal-box {
-      background: var(--card-bg);
-      border: 1px solid var(--card-border);
-      width: 100%;
-      max-width: 360px;
-      border-radius: 20px;
-      padding: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
-      display: flex;
-      flex-direction: column;
-      gap: 14px;
-      text-align: center;
-      max-height: 85vh;
-      overflow-y: auto;
+      background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto;
     }
-
-    .modal-options-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+    .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .btn-opt { background: #0f172a; border: 1px solid var(--card-border); color: #cbd5e1; padding: 12px 4px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600; }
+    .input-time, .input-select, .textarea-announcement, .input-name {
+      background: #0b1120; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-size: 14px; outline: none; width: 100%;
     }
-
-    .btn-opt {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      color: #cbd5e1;
-      padding: 12px 4px;
-      border-radius: 10px;
-      font-size: 13px;
-      cursor: pointer;
-      font-weight: 600;
-      transition: all 0.2s;
-    }
-
-    .btn-opt:hover {
-      border-color: var(--accent-amber);
-      color: #ffffff;
-      background: rgba(245, 158, 11, 0.1);
-    }
-
-    .custom-time-row {
-      display: flex;
-      gap: 8px;
-      align-items: center;
-      margin-top: 4px;
-    }
-
-    .input-time, .input-select, .textarea-announcement {
-      background: #0b1120;
-      border: 1px solid var(--card-border);
-      color: #fff;
-      padding: 10px;
-      border-radius: 10px;
-      font-size: 14px;
-      outline: none;
-      width: 100%;
-    }
-    .textarea-announcement {
-      resize: vertical;
-      min-height: 90px;
-    }
-
-    .input-name {
-      width: 100%;
-      background: #0b1120;
-      border: 1px solid var(--card-border);
-      border-radius: 10px;
-      padding: 12px 14px;
-      color: #f8fafc;
-      font-size: 15px;
-      outline: none;
-      text-align: center;
-    }
-
-    .name-error-msg {
-      color: #f87171;
-      font-size: 12px;
-      display: none;
-      line-height: 1.3;
-    }
-
-    .btn-cancel-modal {
-      background: transparent;
-      border: none;
-      color: var(--text-muted);
-      font-size: 13px;
-      cursor: pointer;
-      margin-top: 4px;
-    }
-
-    .score-picker {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
-    }
-
-    .score-btn {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      color: #f8fafc;
-      padding: 10px 0;
-      border-radius: 8px;
-      font-size: 14px;
-      font-weight: 700;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-
-    .score-btn.active {
-      border-color: var(--accent-purple);
-      background: rgba(168, 85, 247, 0.2);
-      color: var(--accent-purple);
-    }
+    .textarea-announcement { resize: vertical; min-height: 90px; }
+    .input-name { text-align: center; font-size: 15px; padding: 12px 14px; }
+    .name-error-msg { color: #f87171; font-size: 12px; display: none; }
+    .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
+    .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+    .score-btn { background: #0f172a; border: 1px solid var(--card-border); color: #f8fafc; padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .score-btn.active { border-color: var(--accent-purple); background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
   </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- Шапка клуба -->
+  <!-- Шапка клуба (Логотип и кнопка App.webp) -->
   <div class="club-header">
     <div class="club-header-left">
-      <img src="logo.png" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
+      <img src="logo.webp" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
       <div class="club-header-text">
         <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
         <p>Радар столов, клубный рейтинг и статистика</p>
       </div>
     </div>
     <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
-      <img src="App.png" alt="App QR" class="icon-img-large" width="28" height="28" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <img src="App.webp" alt="App QR" class="icon-img-large" width="28" height="28" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
       <span style="display: none; font-size: 18px;">📱</span>
     </button>
   </div>
 
-  <!-- Блок сообществ -->
+  <!-- Блок сообществ (TG.webp и Max.webp) -->
   <div class="social-links-minimal">
     <div class="social-pill">
       <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg">
         <span>✈️</span> Telegram
       </a>
       <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram">
-        <img src="TG.png" alt="TG" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <img src="TG.webp" alt="TG" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
         <span style="display: none; font-size: 11px;">📷</span>
       </button>
     </div>
@@ -885,27 +411,23 @@
         <span>💬</span> МАКС
       </a>
       <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС">
-        <img src="Max.png" alt="Max" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <img src="Max.webp" alt="Max" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
         <span style="display: none; font-size: 11px;">📷</span>
       </button>
     </div>
   </div>
 
-  <!-- Плашка авторизации: Telegram + Google -->
+  <!-- Плашка авторизации -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
-    
     <div class="auth-methods-box">
       <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
       <button class="btn-auth-provider" style="background: #ffffff; color: #1e293b; border: 1px solid #334155;" onclick="loginWithGoogle()">
         <span>🌐</span> Войти через Google
       </button>
     </div>
-
-    <div class="vpn-hint">
-      💡 Если Telegram-виджет не загружается, воспользуйтесь VPN или авторизуйтесь через Google.
-    </div>
+    <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
   </div>
 
   <!-- Блок профиля -->
@@ -916,34 +438,29 @@
       </div>
       <div id="user-score-container"></div>
     </div>
-
     <div class="profile-stats-row" id="user-stats-container">
       <span class="player-status-tag">Статус: —</span>
       <span class="player-status-tag">0В - 0П (0%)</span>
     </div>
-
     <div class="profile-actions-row">
       <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Сменить имя</button>
       <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
     </div>
   </div>
 
-  <!-- Панель администратора -->
+  <!-- Админ панель -->
   <div class="admin-panel-card" id="admin-broadcast-panel">
     <div style="font-size: 14px; font-weight: 700; color: #fde68a; display: flex; align-items: center; gap: 6px;">
       <span>📢</span> Панель администратора: Сообщение в чат
     </div>
-    <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Введите текст сообщения для отправки в Telegram-чат от имени бота..." style="min-height: 70px;"></textarea>
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; padding: 10px;" onclick="sendAdminBroadcast()">
-      Отправить сообщение в чат
-    </button>
+    <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram..."></textarea>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; padding: 10px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
   </div>
 
   <div id="pending-matches-container"></div>
 
   <button class="btn-match-quick" onclick="handleMatchClick()">
-    <span>⚔️</span>
-    <span>Записать результат матча</span>
+    <span>⚔️</span><span>Записать результат матча</span>
   </button>
 
   <!-- Парк Тищенко -->
@@ -955,27 +472,16 @@
       </div>
       <span class="counter" id="badge-park">0 игроков</span>
     </div>
-
     <div class="card-body-collapse">
       <div class="weather-container" id="weather-park">
         <div class="weather-badge"><span>Загрузка погоды...</span></div>
       </div>
-
-      <div class="event-badge" id="announcement-box-park" style="display: none;">
-        <span id="announcement-text-park"></span>
-      </div>
+      <div class="event-badge" id="announcement-box-park" style="display: none;"><span id="announcement-text-park"></span></div>
       <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
-
       <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-      <div class="player-list" id="list-park">
-        <span class="empty-note">У столов пока свободно</span>
-      </div>
-
+      <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
       <div class="section-label">Собираются прийти:</div>
-      <div class="player-list" id="plan-list-park">
-        <span class="empty-note">Никто не планировал</span>
-      </div>
-
+      <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
       <div class="action-group" id="btn-container-park">
         <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
         <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
@@ -992,23 +498,13 @@
       </div>
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
-
     <div class="card-body-collapse">
-      <div class="event-badge" id="announcement-box-vostok" style="display: none;">
-        <span id="announcement-text-vostok"></span>
-      </div>
+      <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
       <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
-
       <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-      <div class="player-list" id="list-vostok">
-        <span class="empty-note">У столов пока свободно</span>
-      </div>
-
+      <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
       <div class="section-label">Собираются прийти:</div>
-      <div class="player-list" id="plan-list-vostok">
-        <span class="empty-note">Никто не планировал</span>
-      </div>
-
+      <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
       <div class="action-group" id="btn-container-vostok">
         <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
         <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
@@ -1023,8 +519,7 @@
 
   <div class="rating-card" id="view-rating">
     <div class="card-block-title" style="color: var(--accent-purple);">
-      <span>⚔️</span>
-      <span>Клубный рейтинг игроков</span>
+      <span>⚔️</span><span>Клубный рейтинг игроков</span>
     </div>
     <div id="rating-list" style="display: flex; flex-direction: column; gap: 6px;">
       <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
@@ -1033,8 +528,7 @@
 
   <div class="leaderboard-card" id="view-time" style="display: none;">
     <div class="card-block-title" style="color: var(--accent-gold);">
-      <span>🥇</span>
-      <span>Зал славы (Топ по часам)</span>
+      <span>🥇</span><span>Зал славы (Топ по часам)</span>
     </div>
     <div id="leaderboard-list" style="display: flex; flex-direction: column; gap: 6px;">
       <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
@@ -1050,9 +544,7 @@
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="qr-modal-title">📷 QR-код</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
-    <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">
-      Покажите этот QR-код друзьям для быстрого доступа:
-    </p>
+    <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям:</p>
     <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;">
       <img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" />
     </div>
@@ -1064,53 +556,32 @@
   </div>
 </div>
 
-<!-- Модальные окна -->
+<!-- Остальные модальные окна -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
-      <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль игрока</h3>
+      <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
     <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
-      <div style="display: flex; justify-content: space-between; font-size: 13px;">
-        <span style="color: var(--text-muted);">Рейтинг Elo:</span>
-        <span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;">
-        <span style="color: var(--text-muted);">Спортивный статус:</span>
-        <span id="info-modal-status" style="font-weight: 600;">Новичок</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;">
-        <span style="color: var(--text-muted);">Матчей сыграно:</span>
-        <span id="info-modal-matches" style="font-weight: 600;">0</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;">
-        <span style="color: var(--text-muted);">Победы / Поражения:</span>
-        <span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П (0%)</span>
-      </div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;">
-        <span style="color: var(--text-muted);">Общее время за столом:</span>
-        <span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-sky);">0 ч 0 мин</span>
-      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг Elo:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span id="info-modal-matches" style="font-weight: 600;">0</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-sky);">0 мин</span></div>
     </div>
-    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">📜 История матчей:</div>
-    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
-      <span class="empty-note">История матчей пуста</span>
-    </div>
+    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
+    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
     <button class="btn btn-join" style="background: #334155; margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
-    <h3 style="font-size: 18px; color: #fde68a;">📢 Редактирование анонса</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">Информация отобразится на карточке локации и будет отправлена в Telegram-чат.</p>
-    <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;" id="announcement-modal-label">Текст анонса:</label>
-      <textarea id="announcement-textarea" class="textarea-announcement"></textarea>
-    </div>
+    <h3 style="font-size: 18px; color: #fde68a;">📢 Анонс</h3>
+    <textarea id="announcement-textarea" class="textarea-announcement"></textarea>
     <input type="hidden" id="announcement-target-loc" value="" />
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить в чат</button>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить</button>
     <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
   </div>
 </div>
@@ -1118,21 +589,14 @@
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: #d8b4fe;">⚔️ Запись матча</h3>
-    <p style="font-size: 13px; color: var(--text-muted);">Соперник должен быть за тем же столом.</p>
-    <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Соперник:</label>
-      <select id="match-opponent-select" class="input-select"></select>
-    </div>
-    <div style="text-align: left;">
-      <label style="font-size: 12px; color: var(--text-muted); margin-bottom: 4px; display: block;">Счёт по партиям:</label>
-      <div class="score-picker">
-        <button class="score-btn" onclick="selectScore(3, 0)">3 : 0</button>
-        <button class="score-btn" onclick="selectScore(3, 1)">3 : 1</button>
-        <button class="score-btn" onclick="selectScore(3, 2)">3 : 2</button>
-        <button class="score-btn" onclick="selectScore(2, 3)">2 : 3</button>
-        <button class="score-btn" onclick="selectScore(1, 3)">1 : 3</button>
-        <button class="score-btn" onclick="selectScore(0, 3)">0 : 3</button>
-      </div>
+    <select id="match-opponent-select" class="input-select"></select>
+    <div class="score-picker">
+      <button class="score-btn" onclick="selectScore(3, 0)">3 : 0</button>
+      <button class="score-btn" onclick="selectScore(3, 1)">3 : 1</button>
+      <button class="score-btn" onclick="selectScore(3, 2)">3 : 2</button>
+      <button class="score-btn" onclick="selectScore(2, 3)">2 : 3</button>
+      <button class="score-btn" onclick="selectScore(1, 3)">1 : 3</button>
+      <button class="score-btn" onclick="selectScore(0, 3)">0 : 3</button>
     </div>
     <input type="hidden" id="match-my-score" value="3" />
     <input type="hidden" id="match-opp-score" value="0" />
@@ -1143,14 +607,13 @@
 
 <div class="modal-overlay" id="extend-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
-    <h3 style="font-size: 18px; color: #fde68a;">⏰ Вы уже 1 ч 45 мин у стола!</h3>
-    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.4;">Продлить время пребывания?</p>
+    <h3 style="font-size: 18px; color: #fde68a;">⏰ Время у стола</h3>
     <div class="modal-options-grid">
       <button class="btn-opt" onclick="extendSession(30)">+30 мин</button>
       <button class="btn-opt" onclick="extendSession(60)">+1 час</button>
       <button class="btn-opt" onclick="extendSession(120)">+2 часа</button>
     </div>
-    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c;" onclick="confirmLeaveFromModal()">👋 Уйти со стола сейчас</button>
+    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c;" onclick="confirmLeaveFromModal()">👋 Уйти</button>
   </div>
 </div>
 
@@ -1162,7 +625,6 @@
       <button class="btn-opt" onclick="submitQuickPlan(30)">+30 мин</button>
       <button class="btn-opt" onclick="submitQuickPlan(45)">+45 мин</button>
     </div>
-    <div style="font-size: 12px; color: var(--text-muted); margin-top: 4px;">или укажите точное время:</div>
     <div class="custom-time-row">
       <input type="time" id="exact-time-input" class="input-time" />
       <button class="btn btn-join" style="padding: 10px 16px; width: auto;" onclick="submitExactPlan()">ОК</button>
@@ -1174,8 +636,8 @@
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <h3>Ваше имя в клубе</h3>
-    <input type="text" id="name-input" class="input-name" placeholder="Иван Смирнов" maxlength="26" />
-    <span class="name-error-msg" id="name-error-box">Это имя уже занято!</span>
+    <input type="text" id="name-input" class="input-name" placeholder="Имя" maxlength="26" />
+    <span class="name-error-msg" id="name-error-box">Занято!</span>
     <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()">Сохранить</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
   </div>
@@ -1191,54 +653,30 @@
   const DEFAULT_LIMIT_MS = 120 * 60 * 1000;
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
 
-  let activePlanningLoc = null;
-  let currentUserActiveLoc = null;
-  let currentUserActivePlayer = null;
-  let hasTriggeredPush = false;
-  let allRegisteredUsers = [];
-  let announcementsData = { park: "", vostok: "" };
-  let currentModalUrl = "";
+  let activePlanningLoc = null, currentUserActiveLoc = null, currentUserActivePlayer = null;
+  let hasTriggeredPush = false, allRegisteredUsers = [], announcementsData = { park: "", vostok: "" }, currentModalUrl = "";
 
-  function toggleCard(loc) {
-    document.getElementById('card-' + loc).classList.toggle('expanded');
-  }
+  function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
 
   async function shareModalUrl() {
     if (!currentModalUrl) return;
     const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
     if (navigator.share) {
-      try {
-        await navigator.share({ title: 'Клуб любителей настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl });
-      } catch (err) {
-        if (err.name !== 'AbortError') console.error(err);
-      }
+      try { await navigator.share({ title: 'Клуб настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {}
     } else {
       navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => alert("📋 Ссылка скопирована!"));
     }
   }
 
   function openQrModal(type) {
-    let targetUrl = window.location.href;
-    let title = "QR-код приложения";
-    let desc = "Покажите этот QR-код друзьям для доступа к приложению:";
-
-    if (type === 'tg') {
-      targetUrl = TELEGRAM_CHAT_URL;
-      title = "QR-код Telegram чата";
-      desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:";
-    } else if (type === 'max') {
-      targetUrl = MAX_CHAT_URL;
-      title = "QR-код МАКС чата";
-      desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:";
-    }
+    let targetUrl = window.location.href, title = "QR-код приложения";
+    if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; }
+    else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; }
 
     currentModalUrl = targetUrl;
     document.getElementById('qr-modal-title').innerText = "📷 " + title;
-    document.getElementById('qr-modal-desc').innerText = desc;
-
-    const qrImg = document.getElementById('qr-code-img');
     document.getElementById('qr-url-text').innerText = targetUrl;
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
+    document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
     document.getElementById('qr-modal').style.display = 'flex';
   }
 
@@ -1256,34 +694,24 @@
     if (elo <= 2600) return "Мастер спорта 🏆";
     if (elo <= 2800) return "Элитный игрок ⭐";
     if (elo <= 3000) return "Мастер атаки 🔥";
-    if (elo <= 3200) return "Гроссмейстер ♟️";
-    if (elo <= 3400) return "Чемпион клуба 👑";
-    if (elo <= 3600) return "Гранд-мастер 🎖️";
-    if (elo <= 3800) return "Снайпер 🎯";
-    if (elo <= 4000) return "Легенда клуба 🏛️";
-    if (elo <= 4200) return "Премьер-лига 📈";
-    if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
-    if (elo <= 4600) return "Властелин стола 👑🏓";
-    if (elo <= 4800) return "Феномен 🌠";
     return "Легенда спорта 🌟🏆";
   }
 
-  function getWindDirection(degrees) {
-    if (degrees === undefined || degrees === null) return "";
-    const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
-    return directions[Math.round((degrees % 360) / 45) % 8];
+  function getWindDirection(deg) {
+    if (deg === undefined || deg === null) return "";
+    return ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"][Math.round((deg % 360) / 45) % 8];
   }
 
   function isUserVerified() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return true;
-    const savedId = localStorage.getItem('tt_member_id');
-    return !!(savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_')));
+    const id = localStorage.getItem('tt_member_id');
+    return !!(id && (id.startsWith('tg_') || id.startsWith('google_')));
   }
 
   function getVerifiedUserId() {
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
-    const savedId = localStorage.getItem('tt_member_id');
-    return (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) ? savedId : null;
+    const id = localStorage.getItem('tt_member_id');
+    return (id && (id.startsWith('tg_') || id.startsWith('google_'))) ? id : null;
   }
 
   function isSuperAdmin() {
@@ -1294,26 +722,22 @@
   }
 
   window.onTelegramAuth = async function(user) {
-    const tgUid = 'tg_' + user.id;
-    localStorage.setItem('tt_member_id', tgUid);
-    let fullName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || ("Игрок #" + String(user.id).slice(-4));
-    await syncUserProfile(tgUid, fullName, 'tg');
+    const uid = 'tg_' + user.id;
+    localStorage.setItem('tt_member_id', uid);
+    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
   };
 
   async function loginWithGoogle() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
-      const result = await firebase.auth().signInWithPopup(provider);
-      if (result && result.user) {
-        const user = result.user;
-        const uid = 'google_' + user.uid;
-        let name = user.displayName || (user.email ? user.email.split('@')[0] : "Игрок Google");
+      const res = await firebase.auth().signInWithPopup(provider);
+      if (res && res.user) {
+        const u = res.user;
+        const uid = 'google_' + u.uid;
         localStorage.setItem('tt_member_id', uid);
-        await syncUserProfile(uid, name, 'google');
+        await syncUserProfile(uid, u.displayName || u.email.split('@')[0], 'google');
       }
-    } catch (e) {
-      alert("Не удалось войти через Google: " + e.message);
-    }
+    } catch (e) { alert("Ошибка входа: " + e.message); }
   }
 
   async function logoutProfile() {
@@ -1323,15 +747,13 @@
     window.location.reload();
   }
 
-  async function syncUserProfile(uid, displayName, platform) {
-    const userRef = db.collection('users').doc(uid);
-    const snap = await userRef.get();
+  async function syncUserProfile(uid, name, platform) {
+    const ref = db.collection('users').doc(uid);
+    const snap = await ref.get();
     if (!snap.exists) {
-      currentUserProfile = { uid, name: displayName, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
-      await userRef.set(currentUserProfile);
-    } else {
-      currentUserProfile = snap.data();
-    }
+      currentUserProfile = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
+      await ref.set(currentUserProfile);
+    } else { currentUserProfile = snap.data(); }
     document.getElementById('web-auth-banner').style.display = 'none';
     updateProfileDisplay();
     localStorage.setItem('tt_name', currentUserProfile.name);
@@ -1381,46 +803,23 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  function getPlayersCountSuffix(count) {
-    const m10 = count % 10, m100 = count % 100;
-    if (m100 >= 11 && m100 <= 19) return `${count} игроков`;
-    if (m10 === 1) return `${count} игрок`;
-    if (m10 >= 2 && m10 <= 4) return `${count} игрока`;
-    return `${count} игроков`;
-  }
-
-  function buildBlockquoteList(list, title) {
-    if (!list || list.length === 0) return "";
-    return `\n\n<blockquote>👥 <b>${title} (${getPlayersCountSuffix(list.length)}):</b>\n` + list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n") + `</blockquote>`;
-  }
-
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
     try {
-      let sinkFrame = document.getElementById('tg_sink_frame');
-      if (!sinkFrame) {
-        sinkFrame = document.createElement('iframe');
-        sinkFrame.id = 'tg_sink_frame';
-        sinkFrame.style.display = 'none';
-        document.body.appendChild(sinkFrame);
+      let f = document.getElementById('tg_sink_frame');
+      if (!f) {
+        f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none';
+        document.body.appendChild(f);
       }
       const form = document.createElement('form');
-      form.method = 'GET';
-      form.action = GOOGLE_GATEWAY_URL;
-      form.target = 'tg_sink_frame';
-      form.style.display = 'none';
-      const input = document.createElement('input');
-      input.type = 'hidden';
-      input.name = 'text';
-      input.value = text;
-      form.appendChild(input);
-      document.body.appendChild(form);
-      form.submit();
+      form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
+      const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
+      form.appendChild(input); document.body.appendChild(form); form.submit();
       setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
     } catch (e) {}
   }
 
-  // Firebase Init & Deferred Listeners
+  // Firebase Init
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
@@ -1429,40 +828,11 @@
     messagingSenderId: "763705864834",
     appId: "1:763705864834:web:d9035408eaf3e31d0efa9b"
   };
-
   firebase.initializeApp(firebaseConfig);
   const db = firebase.firestore();
 
-  let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
-  let currentUserProfile = { uid: null, name: "Гость" };
-
-  async function initUserProfile() {
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      const u = window.Telegram.WebApp.initDataUnsafe.user;
-      await syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
-      return;
-    }
-    const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
-      try {
-        const snap = await db.collection('users').doc(savedId).get();
-        if (snap.exists) {
-          currentUserProfile = snap.data();
-          updateProfileDisplay();
-          document.getElementById('web-auth-banner').style.display = 'none';
-          renderAll();
-          return;
-        }
-      } catch (e) {}
-    }
-    currentUserProfile = { uid: null, name: "Гость" };
-    document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
-    document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
-    injectTelegramLoginWidget();
-    renderAll();
-  }
-
-  function setupRealtimeListeners() {
+  document.addEventListener('DOMContentLoaded', () => {
+    initUserProfile();
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
@@ -1471,83 +841,14 @@
         renderAll();
       });
     });
-  }
-
-  function renderAll() {
-    const myUid = getVerifiedUserId();
-    const now = Date.now();
-    currentUserActiveLoc = null;
-    currentUserActivePlayer = null;
-
-    ['park', 'vostok'].forEach(loc => {
-      const { players } = locationsData[loc];
-      const plans = (locationsData[loc].plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
-
-      const badge = document.getElementById('badge-' + loc);
-      badge.innerText = `${players.length} ${players.length === 1 ? 'игрок' : 'игроков'}`;
-      badge.className = players.length > 0 ? 'counter has-players' : 'counter';
-
-      document.getElementById('list-' + loc).innerHTML = players.length === 0 ? '<span class="empty-note">У столов пока свободно</span>' : players.map(item => `
-        <div class="player-row">
-          <div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="player-time-box">
-              <span>с ${new Date(item.time || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
-            </div>
-            ${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}
-          </div>
-        </div>
-      `).join('');
-
-      document.getElementById('plan-list-' + loc).innerHTML = plans.length === 0 ? '<span class="empty-note">Никто не планировал</span>' : plans.map(p => `
-        <div class="player-row">
-          <div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div>
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <div class="player-time-box">
-              <span>к ${new Date(p.planTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span class="time-badge-plan">скоро</span>
-            </div>
-            ${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}
-          </div>
-        </div>
-      `).join('');
-
-      const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
-      const isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
-      const btnBox = document.getElementById('btn-container-' + loc);
-
-      if (activePlayerObj) {
-        currentUserActiveLoc = loc;
-        currentUserActivePlayer = activePlayerObj;
-        btnBox.innerHTML = `<div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`;
-      } else if (isUserOpened) {
-        btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`;
-      } else {
-        btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`;
-      }
-    });
-  }
-
-  function formatDuration(ts) {
-    const mins = Math.floor((Date.now() - ts) / 60000);
-    if (mins < 1) return 'только что';
-    if (mins < 60) return `${mins} мин`;
-    return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
-  }
-
-  // Deferred startup initialization
-  document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile();
-    setupRealtimeListeners();
     
-    // Delayed non-critical loads
     setTimeout(() => {
-      loadParkWeather();
-      listenLeaderboard();
-      listenRatings();
-      listenPendingMatches();
-      listenAnnouncements();
+      // Фоновые подгрузки погоды и рейтингов
+      fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto')
+        .then(r => r.json()).then(data => {
+          const t = Math.round(data.current.temperature_2m);
+          document.getElementById('weather-park').innerHTML = `<div class="weather-badge"><span>🌡️ ${t}°C, ветер ${Math.round(data.current.wind_speed_10m)} м/с</span></div>`;
+        }).catch(() => {});
     }, 300);
   });
 </script>
