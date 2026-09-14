@@ -57,17 +57,25 @@
     .club-header {
       display: flex;
       align-items: center;
-      gap: 14px;
+      justify-content: space-between;
+      gap: 10px;
       background: var(--card-bg);
       border: 1px solid var(--card-border);
-      padding: 12px 16px;
+      padding: 12px 14px;
       border-radius: 16px;
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     }
 
+    .club-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      overflow: hidden;
+    }
+
     .club-logo {
-      width: 54px;
-      height: 54px;
+      width: 48px;
+      height: 48px;
       border-radius: 50%;
       object-fit: cover;
       background: #0b1120;
@@ -76,19 +84,39 @@
     }
 
     .club-header-text h1 {
-      font-size: 15px;
+      font-size: 14px;
       font-weight: 700;
-      line-height: 1.25;
+      line-height: 1.2;
       color: #f8fafc;
     }
 
     .club-header-text p {
-      font-size: 12px;
+      font-size: 11px;
       color: var(--text-muted);
       margin-top: 2px;
     }
 
-    /* Блок соцсетей и QR */
+    .btn-app-qr-top {
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid var(--card-border);
+      padding: 6px 10px;
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      flex-shrink: 0;
+      transition: background 0.2s;
+    }
+    .btn-app-qr-top:hover {
+      background: #475569;
+    }
+
+    /* Блок соцсетей с аккуратным разделением Telegram и МАКС */
     .social-links-card {
       background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
       border: 1px solid var(--card-border);
@@ -100,30 +128,24 @@
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     }
 
-    .social-buttons-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
-
-    .social-card-item {
-      background: #0f172a;
-      border: 1px solid var(--card-border);
-      border-radius: 12px;
-      padding: 10px;
+    .social-rows-container {
       display: flex;
       flex-direction: column;
       gap: 8px;
+    }
+
+    .social-row-item {
+      display: flex;
+      gap: 8px;
       align-items: center;
-      text-align: center;
     }
 
     .btn-social {
-      width: 100%;
+      flex: 1;
       border: none;
-      padding: 8px 10px;
-      border-radius: 8px;
-      font-size: 12px;
+      padding: 10px 12px;
+      border-radius: 10px;
+      font-size: 13px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
@@ -139,43 +161,22 @@
     .btn-tg { background: #0ea5e9; color: #fff; }
     .btn-max { background: #8b5cf6; color: #fff; }
 
-    .btn-qr-mini {
-      background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.25);
-      color: var(--accent-sky);
-      width: 100%;
-      padding: 6px;
-      border-radius: 6px;
-      font-size: 11px;
-      font-weight: 600;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 4px;
-      transition: all 0.2s;
-    }
-    .btn-qr-mini:hover {
-      background: rgba(56, 189, 248, 0.2);
-      color: #fff;
-    }
-
-    .btn-qr-app {
+    .btn-qr-side {
       background: #334155;
       color: #f8fafc;
       border: 1px solid var(--card-border);
-      padding: 8px;
+      padding: 10px 12px;
       border-radius: 10px;
       font-size: 12px;
       font-weight: 600;
       cursor: pointer;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
+      gap: 4px;
+      flex-shrink: 0;
       transition: background 0.2s;
     }
-    .btn-qr-app:hover {
+    .btn-qr-side:hover {
       background: #475569;
     }
 
@@ -845,32 +846,36 @@
 
 <div class="container">
 
-  <!-- Шапка клуба -->
+  <!-- Шапка клуба с кнопкой QR-кода приложения справа -->
   <div class="club-header">
-    <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
-    <div class="club-header-text">
-      <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
-      <p>Радар столов, клубный рейтинг и статистика</p>
+    <div class="club-header-left">
+      <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
+      <div class="club-header-text">
+        <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
+        <p>Радар столов, клубный рейтинг и статистика</p>
+      </div>
     </div>
+    <button class="btn-app-qr-top" onclick="openQrModal('app')">
+      <span>📱</span>
+      <span>QR-код</span>
+    </button>
   </div>
 
-  <!-- Блок сообществ и QR-кодов -->
+  <!-- Блок сообществ с аккуратно разделенными кнопками Telegram и МАКС и боковыми QR-кодами -->
   <div class="social-links-card">
     <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);">💬 Наши сообщества:</div>
-    <div class="social-buttons-grid">
-      <!-- Telegram карточка -->
-      <div class="social-card-item">
-        <a href="https://t.me/ttchmz" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram чат</a>
-        <button class="btn-qr-mini" onclick="openQrModal('tg')"><span>📷</span> QR-код</button>
+    <div class="social-rows-container">
+      <!-- Telegram строка -->
+      <div class="social-row-item">
+        <a href="https://t.me/ttchmz" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram</a>
+        <button class="btn-qr-side" onclick="openQrModal('tg')"><span>📷</span> QR-код</button>
       </div>
-      <!-- Макс карточка -->
-      <div class="social-card-item">
-        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС чат</a>
-        <button class="btn-qr-mini" onclick="openQrModal('max')"><span>📷</span> QR-код</button>
+      <!-- МАКС строка -->
+      <div class="social-row-item">
+        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС</a>
+        <button class="btn-qr-side" onclick="openQrModal('max')"><span>📷</span> QR-код</button>
       </div>
     </div>
-    <!-- Отдельная кнопка для QR приложения -->
-    <button class="btn-qr-app" onclick="openQrModal('app')"><span>📱</span> Показать QR-код этого приложения</button>
   </div>
 
   <!-- Плашка авторизации: Telegram + Google -->
