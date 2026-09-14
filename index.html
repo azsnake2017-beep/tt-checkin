@@ -264,7 +264,7 @@
       <span class="player-status-tag">0В - 0П (0%)</span>
     </div>
     <div class="profile-actions-row">
-      <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Изменить</button>
+      <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
       <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
     </div>
   </div>
@@ -358,6 +358,15 @@
 
 </div>
 
+<!-- КАСТОМНОЕ УВЕДОМЛЕНИЕ ВМЕСТО ALERT() -->
+<div class="modal-overlay" id="custom-alert-modal">
+  <div class="modal-box" style="border-color: var(--accent-sky); padding: 24px;">
+    <h3 style="font-size: 16px; color: #f8fafc; margin-bottom: 8px;">Клуб любителей настольного тенниса ЧМЗ</h3>
+    <p id="custom-alert-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p>
+    <button class="btn btn-join" onclick="closeCustomAlert()">ОК</button>
+  </div>
+</div>
+
 <!-- Модальное окно с QR-кодами -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
@@ -385,7 +394,7 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
     <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг Elo:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--accent-sky);">Не указан</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span id="info-modal-matches" style="font-weight: 600;">0</span></div>
@@ -458,8 +467,10 @@
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <h3>Редактирование профиля</h3>
-    <input type="text" id="name-input" class="input-name" placeholder="Имя в клубе" maxlength="26" />
-    <input type="number" id="rttf-input" class="input-name" placeholder="Рейтинг РТТФ (если есть)" min="0" max="4000" style="margin-top: 8px;" />
+    <div style="text-align: left; font-size: 13px; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px;">Имя:</div>
+    <input type="text" id="name-input" class="input-name" placeholder="Ваше имя" maxlength="26" />
+    <div style="text-align: left; font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px;">Рейтинг РТТФ:</div>
+    <input type="number" id="rttf-input" class="input-name" placeholder="Например: 150" min="0" max="4000" />
     <span class="name-error-msg" id="name-error-box">Занято!</span>
     <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()" style="margin-top: 8px;">Сохранить</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
@@ -503,7 +514,15 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   const db = firebase.firestore();
 
-  // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =================
+  // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И КАСТОМНЫЙ ALERT =================
+  function customAlert(msg) {
+    document.getElementById('custom-alert-text').innerText = msg;
+    document.getElementById('custom-alert-modal').style.display = 'flex';
+  }
+  function closeCustomAlert() {
+    document.getElementById('custom-alert-modal').style.display = 'none';
+  }
+
   function cleanHtml(str) {
     if (!str) return '';
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -608,6 +627,33 @@
     }
   }
 
+  // ================= ФУНКЦИИ QR-КОДОВ =================
+  async function shareModalUrl() {
+    if (!currentModalUrl) return;
+    const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
+    if (navigator.share) {
+      try { await navigator.share({ title: 'Клуб любителей настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {}
+    } else {
+      navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => customAlert("📋 Ссылка скопирована!"));
+    }
+  }
+
+  function openQrModal(type) {
+    let targetUrl = window.location.href, title = "QR-код приложения";
+    let desc = "Покажите этот QR-код друзьям для быстрого доступа:";
+    if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
+    else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
+
+    currentModalUrl = targetUrl;
+    document.getElementById('qr-modal-title').innerText = "📷 " + title;
+    document.getElementById('qr-modal-desc').innerText = desc;
+    document.getElementById('qr-url-text').innerText = targetUrl;
+    document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
+    document.getElementById('qr-modal').style.display = 'flex';
+  }
+
+  function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
+
   // ================= ФУНКЦИИ ПРОФИЛЯ И АВТОРИЗАЦИИ =================
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢";
@@ -668,7 +714,7 @@
         localStorage.setItem('tt_member_id', uid);
         await syncUserProfile(uid, u.displayName || u.email.split('@')[0], 'google');
       }
-    } catch (e) { alert("Ошибка входа: " + e.message); }
+    } catch (e) { customAlert("Ошибка входа: " + e.message); }
   }
 
   async function logoutProfile() {
@@ -772,8 +818,13 @@
 
     const nameEl = document.getElementById('user-name-container');
     if (nameEl) nameEl.innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
+    
     const scoreEl = document.getElementById('user-score-container');
-    if (scoreEl) scoreEl.innerHTML = `<span class="rating-score" style="font-size: 16px;">${elo}</span>`;
+    if (scoreEl) scoreEl.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: flex-end;">
+        <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span>
+        <span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>
+      </div>`;
     
     const statsEl = document.getElementById('user-stats-container');
     const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : 'РТТФ: —';
@@ -983,7 +1034,7 @@
   function handleMatchClick() { if (isUserVerified()) openMatchModal(); }
   function openMatchModal() {
     const uid = getVerifiedUserId();
-    if (!currentUserActiveLoc || !uid) { alert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!"); return; }
+    if (!currentUserActiveLoc || !uid) { customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!"); return; }
     const sel = document.getElementById('match-opponent-select');
     sel.innerHTML = '';
     const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
@@ -1003,7 +1054,7 @@
   async function submitMatchProposal() {
     const uid = getVerifiedUserId();
     const oppUid = document.getElementById('match-opponent-select').value;
-    if(!uid || !oppUid || uid===oppUid) return alert("Выберите соперника!");
+    if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
     closeMatchModal();
     try {
       await db.collection('pending_matches').add({
@@ -1011,7 +1062,7 @@
         scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
         timestamp: Date.now()
       });
-      alert("✅ Запрос отправлен!");
+      customAlert("✅ Запрос отправлен!");
     } catch(e){}
   }
 
@@ -1104,13 +1155,16 @@
 
   // ================= ФУНКЦИИ ПРОСМОТРА ПРОФИЛЯ (INFO) =================
   async function showUserInfoModal(uid) {
-    document.getElementById('info-modal-title').innerText = "👤 Загрузка...";
+    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка...";
     document.getElementById('user-info-modal').style.display = 'flex';
     try {
       const d = await db.collection('users').doc(uid).get();
       if(!d.exists) { closeUserInfoModal(); return; }
       const u = d.data();
-      document.getElementById('info-modal-title').innerText = `👤 ${u.name||"Игрок"}`;
+      
+      let pTag = uid.startsWith('google_') ? '<span class="platform-badge badge-google" style="margin-left:6px;">Google</span>' : '<span class="platform-badge badge-tg" style="margin-left:6px;">TG</span>';
+      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${pTag}`;
+      
       document.getElementById('info-modal-elo').innerText = u.elo||1000;
       document.getElementById('info-modal-rttf').innerText = u.rttf||"Не указан";
       document.getElementById('info-modal-status').innerText = getPlayerStatus(u.elo||1000);
@@ -1147,7 +1201,7 @@
     if(!t) return;
     sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`);
     document.getElementById('admin-broadcast-text').value = '';
-    alert("✅ Отправлено");
+    customAlert("✅ Отправлено");
   }
   function openAnnouncementModal(loc) {
     if(!isSuperAdmin()) return;
@@ -1180,20 +1234,23 @@
         const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
         const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0;
         const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-        let pTag = doc.id.startsWith('google_') ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
-        let rttfTag = d.rttf ? `<span style="font-size: 10px; background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); padding: 2px 6px; border-radius: 4px; color: var(--accent-sky); margin-left: 4px; font-weight: 600;">РТТФ: ${d.rttf}</span>` : '';
+        
+        let rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : '';
         
         html += `
           <div class="leader-row">
             <div class="leader-left">
               <span class="leader-rank ${rankClass}">${medal}</span>
               <div>
-                 <div><b>${cleanHtml(d.name)}</b> ${pTag} ${rttfTag}</div>
-                 <div class="player-status-tag">${getPlayerStatus(d.elo || 1000)} • ${wins}В - ${losses}П (${winrate}%)</div>
+                 <div><b>${cleanHtml(d.name)}</b></div>
+                 <div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}</div>
               </div>
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="rating-score">${d.elo || 1000}</span>
+              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
+                <span class="rating-score">${d.elo || 1000}</span>
+                <span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span>
+              </div>
               <button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button>
             </div>
           </div>
