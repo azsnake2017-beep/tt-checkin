@@ -6,12 +6,12 @@
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
   <!-- Telegram WebApp SDK -->
-  <script src="https://telegram.org/js/telegram-web-app.js" async></script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <!-- Firebase SDK Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js" async></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js" async></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js" async></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -798,7 +798,7 @@
     return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
-  // Firebase Init
+  // Firebase Init & Start Listeners
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
@@ -807,14 +807,17 @@
     messagingSenderId: "763705864834",
     appId: "1:763705864834:web:d9035408eaf3e31d0efa9b"
   };
-  firebase.initializeApp(firebaseConfig);
+  
+  if (!firebase.apps.length) {
+    firebase.initializeApp(firebaseConfig);
+  }
   const db = firebase.firestore();
 
   let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
   let currentUserProfile = { uid: null, name: "Гость" };
 
   document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile(); // Восстановлено для корректной авторизации и отображения профиля
+    initUserProfile();
     
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
@@ -824,14 +827,13 @@
         renderAll();
       });
     });
-    
-    setTimeout(() => {
-      fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto')
-        .then(r => r.json()).then(data => {
-          const t = Math.round(data.current.temperature_2m);
-          document.getElementById('weather-park').innerHTML = `<div class="weather-badge"><span>🌡️ ${t}°C, ветер ${Math.round(data.current.wind_speed_10m)} м/с</span></div>`;
-        }).catch(() => {});
-    }, 300);
+
+    // Загрузка погоды
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto')
+      .then(r => r.json()).then(data => {
+        const t = Math.round(data.current.temperature_2m);
+        document.getElementById('weather-park').innerHTML = `<div class="weather-badge"><span>🌡️ ${t}°C, ветер ${Math.round(data.current.wind_speed_10m)} м/с</span></div>`;
+      }).catch(() => {});
   });
 </script>
 </body>
