@@ -84,8 +84,11 @@
     .profile-card {
       background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
-    .profile-top-row { display: flex; align-items: center; justify-content: space-between; }
-    .profile-user-main { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+    .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
+    .user-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+    #user-score-container { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
+    
     .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
@@ -93,6 +96,18 @@
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
     .badge-admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; margin-left: 4px; }
+    
+    .badge-teacher { background: rgba(16, 185, 129, 0.2); color: #10b981; margin-left: 4px; }
+    .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; margin-left: 4px; }
+    .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #38bdf8; margin-left: 4px; }
+    .badge-bot { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; margin-left: 4px; }
+
+    .badge-admin-btn {
+      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; 
+      font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; 
+      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); transition: transform 0.2s; flex-shrink: 0; margin-left: 4px;
+    }
+    .badge-admin-btn:active { transform: scale(0.95); }
 
     .btn-edit, .btn-logout {
       flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none;
@@ -255,7 +270,7 @@
   <div class="profile-card">
     <div class="profile-top-row">
       <div class="profile-user-main" id="user-name-container">
-        <span>Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
+        <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
       </div>
       <div id="user-score-container"></div>
     </div>
@@ -269,20 +284,11 @@
     </div>
   </div>
 
-  <!-- Админ панель -->
-  <div class="admin-panel-card" id="admin-broadcast-panel">
-    <div style="font-size: 14px; font-weight: 700; color: #fde68a; display: flex; align-items: center; gap: 6px;">
-      <span>📢</span> Панель администратора: Сообщение в чат
-    </div>
-    <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram..."></textarea>
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; padding: 10px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
-  </div>
-
-  <div id="pending-matches-container"></div>
-
   <button class="btn-match-quick" onclick="handleMatchClick()">
     <span>⚔️</span><span>Записать результат матча</span>
   </button>
+  
+  <div id="pending-matches-container"></div>
 
   <!-- Парк Тищенко -->
   <div class="card" id="card-park">
@@ -367,6 +373,19 @@
   </div>
 </div>
 
+<!-- Модальное окно Админки -->
+<div class="modal-overlay" id="admin-modal">
+  <div class="modal-box" style="border-color: var(--accent-amber);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 10px;">
+      <h3 style="font-size: 16px; color: var(--accent-amber);">⚙️ Панель администратора</h3>
+      <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeAdminMenu()">✕</button>
+    </div>
+    <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
+    <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
+  </div>
+</div>
+
 <!-- Модальное окно с QR-кодами -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
@@ -395,7 +414,7 @@
     </div>
     <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--accent-sky);">Не указан</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--text-muted);">Не указан</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span id="info-modal-matches" style="font-weight: 600;">0</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П</span></div>
@@ -588,6 +607,16 @@
     const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
     const index = Math.round((degrees % 360) / 45);
     return directions[index % 8];
+  }
+
+  function getCustomBadge(name) {
+    if (!name) return '';
+    const lower = name.toLowerCase();
+    if (lower.includes('валера штиль')) return '<span class="platform-badge badge-teacher">Учитель 🎓</span>';
+    if (lower.includes('владислав')) return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
+    if (lower.includes('ivan plaxin')) return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
+    if (lower.includes('félix lebrun') || lower.includes('felix lebrun')) return '<span class="platform-badge badge-bot">Бот 🤖</span>';
+    return '';
   }
 
   // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ И АНТИСПАМ =================
@@ -809,7 +838,8 @@
 
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
-    const adminTag = isSuperAdmin() ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
+    const adminTag = isSuperAdmin() ? `<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>` : '';
+    const customBadge = getCustomBadge(currentUserProfile.name);
     let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
 
@@ -817,7 +847,7 @@
     if (banner) banner.style.display = 'none';
 
     const nameEl = document.getElementById('user-name-container');
-    if (nameEl) nameEl.innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
+    if (nameEl) nameEl.innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag} ${customBadge}`;
     
     const scoreEl = document.getElementById('user-score-container');
     if (scoreEl) scoreEl.innerHTML = `
@@ -827,10 +857,10 @@
       </div>`;
     
     const statsEl = document.getElementById('user-stats-container');
-    const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : 'РТТФ: —';
+    const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : '';
     if (statsEl) statsEl.innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 4px;">
-        <span class="player-status-tag">${getPlayerStatus(elo)} • ${rttfText}</span>
+        <span class="player-status-tag">${getPlayerStatus(elo)} ${rttfText ? ' • ' + rttfText : ''}</span>
         <span class="player-status-tag" style="color: var(--accent-sky);">⏱ За столом: ${formatMinutes(currentUserProfile.totalMinutes || 0)}</span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
@@ -843,15 +873,13 @@
     if (editBtn) editBtn.style.display = 'block';
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) logoutBtn.style.display = 'block';
+  }
 
-    if (isSuperAdmin()) {
-      const adminPanel = document.getElementById('admin-broadcast-panel');
-      if (adminPanel) adminPanel.style.display = 'flex';
-      const edPark = document.getElementById('btn-edit-announcement-park');
-      if (edPark) edPark.style.display = 'block';
-      const edVost = document.getElementById('btn-edit-announcement-vostok');
-      if (edVost) edVost.style.display = 'block';
-    }
+  function openAdminMenu() {
+    document.getElementById('admin-modal').style.display = 'flex';
+  }
+  function closeAdminMenu() {
+    document.getElementById('admin-modal').style.display = 'none';
   }
 
   // ================= ФУНКЦИИ РЕДАКТИРОВАНИЯ ИМЕНИ И РТТФ =================
@@ -1162,8 +1190,11 @@
       if(!d.exists) { closeUserInfoModal(); return; }
       const u = d.data();
       
-      let pTag = uid.startsWith('google_') ? '<span class="platform-badge badge-google" style="margin-left:6px;">Google</span>' : '<span class="platform-badge badge-tg" style="margin-left:6px;">TG</span>';
-      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${pTag}`;
+      const isAdminProfile = uid === 'tg_azsnake' || (u.name && (u.name.toLowerCase().includes('сергей колчин') || u.name.toLowerCase().includes('azsnake')));
+      const adminTag = isAdminProfile ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+      const customBadge = getCustomBadge(u.name);
+      
+      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
       
       document.getElementById('info-modal-elo').innerText = u.elo||1000;
       document.getElementById('info-modal-rttf').innerText = u.rttf||"Не указан";
@@ -1201,6 +1232,7 @@
     if(!t) return;
     sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`);
     document.getElementById('admin-broadcast-text').value = '';
+    closeAdminMenu();
     customAlert("✅ Отправлено");
   }
   function openAnnouncementModal(loc) {
@@ -1235,6 +1267,9 @@
         const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0;
         const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
         
+        const isAdmin = doc.id === 'tg_azsnake' || (d.name && (d.name.toLowerCase().includes('сергей колчин') || d.name.toLowerCase().includes('azsnake')));
+        const adminBadgeHTML = isAdmin ? '<span class="platform-badge badge-admin" style="margin-left: 4px;">Админ ⭐</span>' : '';
+        const customBadge = getCustomBadge(d.name);
         let rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : '';
         
         html += `
@@ -1242,7 +1277,7 @@
             <div class="leader-left">
               <span class="leader-rank ${rankClass}">${medal}</span>
               <div>
-                 <div><b>${cleanHtml(d.name)}</b></div>
+                 <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div>
                  <div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}</div>
               </div>
             </div>
@@ -1272,9 +1307,14 @@
         const hours = (d.totalMinutes / 60).toFixed(1);
         const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
         const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+        
+        const isAdmin = doc.id === 'tg_azsnake' || (d.name && (d.name.toLowerCase().includes('сергей колчин') || d.name.toLowerCase().includes('azsnake')));
+        const adminBadgeHTML = isAdmin ? '<span class="platform-badge badge-admin" style="margin-left: 4px;">Админ ⭐</span>' : '';
+        const customBadge = getCustomBadge(d.name);
+        
         html += `
           <div class="leader-row">
-            <div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><b>${cleanHtml(d.name)}</b></div>
+            <div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div></div>
             <span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span>
           </div>
         `;
