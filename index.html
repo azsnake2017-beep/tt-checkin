@@ -265,6 +265,18 @@
       transition: all 0.2s ease;
     }
 
+    /* Админ-панель рассылки */
+    .admin-panel-card {
+      display: none;
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid var(--accent-amber);
+      border-radius: 16px;
+      padding: 14px 16px;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 16px rgba(245, 158, 11, 0.15);
+    }
+
     .card {
       background: var(--card-bg);
       border: 1px solid var(--card-border);
@@ -735,6 +747,17 @@
     </div>
   </div>
 
+  <!-- Панель администратора для отправки сообщений в Telegram от имени бота -->
+  <div class="admin-panel-card" id="admin-broadcast-panel">
+    <div style="font-size: 14px; font-weight: 700; color: #fde68a; display: flex; align-items: center; gap: 6px;">
+      <span>📢</span> Панель администратора: Сообщение в чат
+    </div>
+    <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Введите текст сообщения для отправки в Telegram-чат от имени бота..." style="min-height: 70px;"></textarea>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; padding: 10px;" onclick="sendAdminBroadcast()">
+      Отправить сообщение в чат
+    </button>
+  </div>
+
   <!-- Блок уведомлений о подтверждении матчей -->
   <div id="pending-matches-container"></div>
 
@@ -1023,14 +1046,13 @@
     return null;
   }
 
-  // Проверка суперпользователя (Сергей Колчин / @azsnake)
+  // Проверка суперпользователя (Сергей Колчин / azsnake)
   function isSuperAdmin() {
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    if (tgUser && (tgUser.username === 'azsnake' || String(tgUser.id) === '00000000')) { // Замените ID при необходимости
+    if (tgUser && (tgUser.username?.toLowerCase() === 'azsnake')) {
       return true;
     }
     const myUid = getVerifiedUserId();
-    // Также разрешаем по сохраненному ID или если имя содержит Сергей Колчин / azsnake
     if (myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake')) {
       return true;
     }
@@ -1131,8 +1153,9 @@
     document.getElementById('btn-edit-profile').style.display = 'block';
     document.getElementById('btn-logout').style.display = 'block';
 
-    // Показываем кнопки управления анонсами для суперпользователя
+    // Показываем инструменты админа (панель рассылки и кнопки анонсов)
     if (isSuperAdmin()) {
+      document.getElementById('admin-broadcast-panel').style.display = 'flex';
       document.getElementById('btn-edit-announcement-park').style.display = 'block';
       document.getElementById('btn-edit-announcement-vostok').style.display = 'block';
     }
@@ -1234,6 +1257,24 @@
     }
   }
 
+  // ================= ОТПРАВКА СООБЩЕНИЙ В ЧАТ ОТ ИМЕНИ БОТА (АДМИН) =================
+  function sendAdminBroadcast() {
+    if (!isSuperAdmin()) return;
+    const input = document.getElementById('admin-broadcast-text');
+    const msg = input.value.trim();
+
+    if (!msg) {
+      alert("Введите текст сообщения!");
+      return;
+    }
+
+    const formattedMsg = `📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(msg)}`;
+    sendTelegramAlert(formattedMsg);
+
+    input.value = '';
+    alert("✅ Сообщение успешно отправлено в Telegram-чат от имени бота!");
+  }
+
   // ================= УПРАВЛЕНИЕ АНОНСАМИ И ИНФО-ПОЛЯМИ =================
   function openAnnouncementModal(loc) {
     if (!isSuperAdmin()) return;
@@ -1260,7 +1301,6 @@
 
       closeAnnouncementModal();
 
-      // Отправка уведомления в Telegram чат
       if (text) {
         const locTitle = LOCATION_NAMES[loc];
         const alertMsg = `📢 <b>Обновление информации ${locTitle}</b>\n\n${cleanHtml(text)}`;
