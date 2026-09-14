@@ -569,6 +569,26 @@
       color: var(--text-muted);
     }
 
+    .btn-info {
+      background: rgba(56, 189, 248, 0.15);
+      border: 1px solid rgba(56, 189, 248, 0.3);
+      color: var(--accent-sky);
+      width: 26px;
+      height: 26px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.2s;
+    }
+    .btn-info:hover {
+      background: rgba(56, 189, 248, 0.3);
+      color: #fff;
+    }
+
     .modal-overlay {
       position: fixed;
       inset: 0;
@@ -593,6 +613,8 @@
       flex-direction: column;
       gap: 14px;
       text-align: center;
+      max-height: 85vh;
+      overflow-y: auto;
     }
 
     .modal-options-grid {
@@ -864,6 +886,45 @@
 
 </div>
 
+<!-- Модальное окно профиля игрока [i] -->
+<div class="modal-overlay" id="user-info-modal">
+  <div class="modal-box" style="border-color: var(--accent-sky);">
+    <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
+      <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль игрока</h3>
+      <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
+      <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <span style="color: var(--text-muted);">Рейтинг Elo:</span>
+        <span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <span style="color: var(--text-muted);">Спортивный статус:</span>
+        <span id="info-modal-status" style="font-weight: 600;">Новичок</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <span style="color: var(--text-muted);">Матчей сыграно:</span>
+        <span id="info-modal-matches" style="font-weight: 600;">0</span>
+      </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <span style="color: var(--text-muted);">Победы / Поражения:</span>
+        <span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П (0%)</span>
+      </div>
+    </div>
+
+    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">
+      📜 История матчей:
+    </div>
+    
+    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;">
+      <span class="empty-note">История матчей пуста</span>
+    </div>
+
+    <button class="btn btn-join" style="background: #334155; margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
+  </div>
+</div>
+
 <!-- Модальное окно редактирования анонса (для Admin) -->
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
@@ -995,7 +1056,6 @@
   let allRegisteredUsers = [];
   let announcementsData = { park: "", vostok: "" };
 
-  // Функция определения спортивного статуса по очкам рейтинга
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢";
     if (elo <= 1200) return "Ученик 📘";
@@ -1020,7 +1080,6 @@
     return "Легенда спорта 🌟🏆";
   }
 
-  // Функция перевода градусов направления ветра в румбы
   function getWindDirection(degrees) {
     if (degrees === undefined || degrees === null) return "";
     const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
@@ -1046,7 +1105,6 @@
     return null;
   }
 
-  // Проверка суперпользователя (Сергей Колчин / azsnake)
   function isSuperAdmin() {
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (tgUser && (tgUser.username?.toLowerCase() === 'azsnake')) {
@@ -1153,7 +1211,6 @@
     document.getElementById('btn-edit-profile').style.display = 'block';
     document.getElementById('btn-logout').style.display = 'block';
 
-    // Показываем инструменты админа (панель рассылки и кнопки анонсов)
     if (isSuperAdmin()) {
       document.getElementById('admin-broadcast-panel').style.display = 'flex';
       document.getElementById('btn-edit-announcement-park').style.display = 'block';
@@ -1257,7 +1314,88 @@
     }
   }
 
-  // ================= ОТПРАВКА СООБЩЕНИЙ В ЧАТ ОТ ИМЕНИ БОТА (АДМИН) =================
+  // ================= ПРОСМОТР ИНФОРМАЦИИ О ПОЛЬЗОВАТЕЛЕ [i] =================
+  async function showUserInfoModal(uid) {
+    const modal = document.getElementById('user-info-modal');
+    document.getElementById('info-modal-title').innerText = "👤 Загрузка профиля...";
+    document.getElementById('info-modal-elo').innerText = "—";
+    document.getElementById('info-modal-status').innerText = "—";
+    document.getElementById('info-modal-matches').innerText = "—";
+    document.getElementById('info-modal-winloss').innerText = "—";
+    document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка истории...</span>';
+    modal.style.display = 'flex';
+
+    try {
+      const userDoc = await db.collection('users').doc(uid).get();
+      if (!userDoc.exists) {
+        alert("Пользователь не найден.");
+        closeUserInfoModal();
+        return;
+      }
+
+      const u = userDoc.data();
+      const elo = u.elo || 1000;
+      const wins = u.wins || 0;
+      const losses = u.losses || 0;
+      const matches = u.matches || 0;
+      const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+
+      document.getElementById('info-modal-title').innerText = `👤 ${u.name || "Игрок"}`;
+      document.getElementById('info-modal-elo').innerText = elo;
+      document.getElementById('info-modal-status').innerText = getPlayerStatus(elo);
+      document.getElementById('info-modal-matches').innerText = matches;
+      document.getElementById('info-modal-winloss').innerText = `${wins}В - ${losses}П (${winrate}%)`;
+
+      // Загружаем историю матчей пользователя
+      const matchesSnap = await db.collection('matches_history')
+        .where('participants', 'array-contains', uid)
+        .orderBy('timestamp', 'desc')
+        .limit(10)
+        .get();
+
+      const historyEl = document.getElementById('info-modal-history');
+      if (matchesSnap.empty) {
+        historyEl.innerHTML = '<span class="empty-note">История матчей пуста</span>';
+        return;
+      }
+
+      let historyHtml = '';
+      matchesSnap.forEach(doc => {
+        const m = doc.data();
+        const isPlayer1 = m.p1Uid === uid;
+        const myScore = isPlayer1 ? m.p1Score : m.p2Score;
+        const oppScore = isPlayer1 ? m.p2Score : m.p1Score;
+        const oppName = isPlayer1 ? m.p2Name : m.p1Name;
+        const isWin = myScore > oppScore;
+        const badgeColor = isWin ? 'var(--accent-green)' : '#f87171';
+        const resultLabel = isWin ? 'Победа' : 'Поражение';
+        const dateStr = new Date(m.timestamp).toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+
+        historyHtml += `
+          <div style="background: rgba(11, 17, 32, 0.5); padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
+            <div>
+              <div> против <b>${cleanHtml(oppName)}</b></div>
+              <div style="color: var(--text-muted); font-size: 11px;">${dateStr}</div>
+            </div>
+            <div style="text-align: right;">
+              <div style="font-weight: 700; color: ${badgeColor};">${myScore} : ${oppScore} (${resultLabel})</div>
+            </div>
+          </div>
+        `;
+      });
+      historyEl.innerHTML = historyHtml;
+
+    } catch (e) {
+      console.error("Ошибка загрузки профиля:", e);
+      document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки данных</span>';
+    }
+  }
+
+  function closeUserInfoModal() {
+    document.getElementById('user-info-modal').style.display = 'none';
+  }
+
+  // ================= РАССЫЛКА И АНОНСЫ =================
   function sendAdminBroadcast() {
     if (!isSuperAdmin()) return;
     const input = document.getElementById('admin-broadcast-text');
@@ -1275,7 +1413,6 @@
     alert("✅ Сообщение успешно отправлено в Telegram-чат от имени бота!");
   }
 
-  // ================= УПРАВЛЕНИЕ АНОНСАМИ И ИНФО-ПОЛЯМИ =================
   function openAnnouncementModal(loc) {
     if (!isSuperAdmin()) return;
     document.getElementById('announcement-target-loc').value = loc;
@@ -1338,7 +1475,6 @@
     });
   }
 
-  // ================= PUSH & ВИБРАЦИЯ =================
   function requestPushPermission() {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
@@ -1364,7 +1500,6 @@
     }
   }
 
-  // ================= ПОГОДА (с направлением и прогнозом на завтра) =================
   async function loadParkWeather() {
     const container = document.getElementById('weather-park');
     try {
@@ -1586,7 +1721,7 @@
     }
   }
 
-  // ================= РЕЙТИНГ И МАТЧИ С ПОДТВЕРЖДЕНИЕМ =================
+  // ================= РЕЙТИНГ И МАТЧИ С СОХРАНЕНИЕМ ИСТОРИИ =================
   function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
     const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
     const deltaA = Math.round(k * (actualScoreA - expectedScoreA));
@@ -1643,7 +1778,10 @@
                   <div class="player-status-tag">${playerStatus} • ${wins}В - ${losses}П (${winrate}%)</div>
                 </div>
               </div>
-              <span class="rating-score">${currentElo}</span>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span class="rating-score">${currentElo}</span>
+                <button class="btn-info" onclick="showUserInfoModal('${doc.id}')" title="Информация об игроке">i</button>
+              </div>
             </div>
           `;
           rank++;
@@ -1818,6 +1956,18 @@
           losses: (oppData.losses || 0) + (isProposerWin ? 1 : 0),
           updatedAt: Date.now()
         }, { merge: true });
+      });
+
+      // Сохраняем в историю матчей
+      await db.collection('matches_history').add({
+        p1Uid: m.proposerUid,
+        p1Name: m.proposerName,
+        p1Score: m.scoreProposer,
+        p2Uid: m.opponentUid,
+        p2Name: m.opponentName,
+        p2Score: m.scoreOpponent,
+        participants: [m.proposerUid, m.opponentUid],
+        timestamp: Date.now()
       });
 
       await matchRef.delete();
@@ -2289,9 +2439,12 @@
               <span>🏓</span>
               <span>${cleanHtml(item.name || 'Игрок')}</span>
             </div>
-            <div class="player-time-box">
-              <span>с ${formatTime(item.time || Date.now())}</span>
-              <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="player-time-box">
+                <span>с ${formatTime(item.time || Date.now())}</span>
+                <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
+              </div>
+              ${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')" title="Информация об игроке">i</button>` : ''}
             </div>
           </div>
         `).join('');
@@ -2306,9 +2459,12 @@
               <span>⏳</span>
               <span>${cleanHtml(p.name || 'Игрок')}</span>
             </div>
-            <div class="player-time-box">
-              <span>к ${formatTime(p.planTime)}</span>
-              <span class="time-badge-plan">${formatUntil(p.planTime)}</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div class="player-time-box">
+                <span>к ${formatTime(p.planTime)}</span>
+                <span class="time-badge-plan">${formatUntil(p.planTime)}</span>
+              </div>
+              ${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')" title="Информация об игроке">i</button>` : ''}
             </div>
           </div>
         `).join('');
