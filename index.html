@@ -654,6 +654,9 @@
     let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
 
+    const banner = document.getElementById('web-auth-banner');
+    if (banner) banner.style.display = 'none';
+
     const nameEl = document.getElementById('user-name-container');
     if (nameEl) nameEl.innerHTML = `<span>Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag}`;
     const scoreEl = document.getElementById('user-score-container');
@@ -739,6 +742,9 @@
     });
   }
 
+  // Заглушка renderAll на случай, если полная логика чекина инициализируется позже
+  function renderAll() {}
+
   // Firebase Init & Start Listeners
   const firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
@@ -765,7 +771,7 @@
         const data = doc.data() || {};
         locationsData[loc].plans = data.plans || [];
         locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p);
-        renderAll();
+        if (typeof renderAll === 'function') renderAll();
       });
     });
 
