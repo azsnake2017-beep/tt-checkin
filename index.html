@@ -911,6 +911,10 @@
         <span style="color: var(--text-muted);">Победы / Поражения:</span>
         <span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П (0%)</span>
       </div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;">
+        <span style="color: var(--text-muted);">Общее время за столом:</span>
+        <span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-sky);">0 ч 0 мин</span>
+      </div>
     </div>
 
     <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">
@@ -1322,6 +1326,7 @@
     document.getElementById('info-modal-status').innerText = "—";
     document.getElementById('info-modal-matches').innerText = "—";
     document.getElementById('info-modal-winloss').innerText = "—";
+    document.getElementById('info-modal-total-time').innerText = "—";
     document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка истории...</span>';
     modal.style.display = 'flex';
 
@@ -1340,13 +1345,22 @@
       const matches = u.matches || 0;
       const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
 
+      const lbDoc = await db.collection('leaderboard').doc(uid).get();
+      let totalMinutes = 0;
+      if (lbDoc.exists) {
+        totalMinutes = lbDoc.data().totalMinutes || 0;
+      }
+      const totalHours = Math.floor(totalMinutes / 60);
+      const remainMins = totalMinutes % 60;
+      const totalTimeStr = totalHours > 0 ? `${totalHours} ч ${remainMins} мин` : `${remainMins} мин`;
+
       document.getElementById('info-modal-title').innerText = `👤 ${u.name || "Игрок"}`;
       document.getElementById('info-modal-elo').innerText = elo;
       document.getElementById('info-modal-status').innerText = getPlayerStatus(elo);
       document.getElementById('info-modal-matches').innerText = matches;
       document.getElementById('info-modal-winloss').innerText = `${wins}В - ${losses}П (${winrate}%)`;
+      document.getElementById('info-modal-total-time').innerText = totalTimeStr;
 
-      // Загружаем историю матчей пользователя
       const matchesSnap = await db.collection('matches_history')
         .where('participants', 'array-contains', uid)
         .orderBy('timestamp', 'desc')
@@ -1374,7 +1388,7 @@
         historyHtml += `
           <div style="background: rgba(11, 17, 32, 0.5); padding: 8px 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; font-size: 12px;">
             <div>
-              <div> против <b>${cleanHtml(oppName)}</b></div>
+              <div>против <b>${cleanHtml(oppName)}</b></div>
               <div style="color: var(--text-muted); font-size: 11px;">${dateStr}</div>
             </div>
             <div style="text-align: right;">
@@ -1958,7 +1972,6 @@
         }, { merge: true });
       });
 
-      // Сохраняем в историю матчей
       await db.collection('matches_history').add({
         p1Uid: m.proposerUid,
         p1Name: m.proposerName,
@@ -2471,7 +2484,7 @@
       }
 
       const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
-      const isUserPlanned = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
+      const isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
 
       if (activePlayerObj) {
         currentUserActiveLoc = loc;
@@ -2480,7 +2493,7 @@
           <div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы уже отмечены у этого стола</div>
           <button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>
         `;
-      } else if (isUserPlanned) {
+      } else if (isUserOpened) {
         btnBox.innerHTML = `
           <button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел (занять стол)</button>
           <button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>
