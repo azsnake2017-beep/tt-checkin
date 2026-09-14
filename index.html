@@ -1652,20 +1652,27 @@
       });
   }
 
-  // ================= ЧЕКИН, УХОД И ПРОДЛЕНИЕ =================
+  // ================= ЧЕКИН С ЗАЩИТОЙ ОТ СПАМА И КУЛДАУНОМ =================
   async function checkIn(loc) {
     const myUid = getVerifiedUserId();
     if (!myUid) return;
 
     requestPushPermission();
-    hasTriggeredPush = false;
 
     const name = currentUserProfile.name;
     const otherLoc = loc === 'park' ? 'vostok' : 'park';
     const now = Date.now();
     let finalList = [];
+    let isAlreadyThere = false;
 
     try {
+      // Кулдаун на клиенте (5 минут / 300 000 мс)
+      const lastAction = parseInt(localStorage.getItem('tt_last_action_ts') || '0', 10);
+      if (now - lastAction < 300000 && lastAction > 0) {
+        alert("⏳ Слишком частые изменения статуса. Подождите немного перед повторным чекином.");
+        return;
+      }
+
       const targetRef = db.collection('locations').doc(loc);
       const otherRef = db.collection('locations').doc(otherLoc);
 
@@ -1677,11 +1684,17 @@
         let oPlayers = (oDoc.exists && oDoc.data().players) || [];
         let tPlans = (tDoc.exists && tDoc.data().plans) || [];
 
-        const filterFn = p => (p.uid || p) !== myUid;
+        // Проверяем, не отмечен ли игрок уже за этим столом
+        const existingPlayer = tPlayers.find(p => (p.uid || p) === myUid);
+        if (existingPlayer) {
+          isAlreadyThere = true;
+          return;
+        }
 
-        tPlayers = tPlayers.filter(filterFn);
-        oPlayers = oPlayers.filter(filterFn);
-        tPlans = tPlans.filter(filterFn);
+        // Удаляем из других мест и планов
+        tPlayers = tPlayers.filter(p => (p.uid || p) !== myUid);
+        oPlayers = oPlayers.filter(p => (p.uid || p) !== myUid);
+        tPlans = tPlans.filter(p => (p.uid || p) !== myUid);
 
         tPlayers.unshift({
           name: name,
@@ -1695,13 +1708,21 @@
         transaction.set(otherRef, { players: oPlayers }, { merge: true });
       });
 
+      if (isAlreadyThere) {
+        alert("⚠️ Вы уже отмечены за этим столом! Повторные уведомления в чат не отправляются.");
+        return;
+      }
+
+      localStorage.setItem('tt_last_action_ts', now.toString());
+      hasTriggeredPush = false;
+
       const locText = LOCATION_NAMES[loc];
       const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
       const alertMsg = `🏓 игрок <b>${cleanHtml(name)}</b> уже у стола ${locText}!${quoteBlock}\n\nКто составит компанию?`;
       sendTelegramAlert(alertMsg);
 
     } catch (e) {
-      console.error(e);
+      console.error("Ошибка чекина:", e);
     }
   }
 
@@ -2046,6 +2067,7 @@
         currentUserActiveLoc = loc;
         currentUserActivePlayer = activePlayerObj;
         btnBox.innerHTML = `
+          <div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы уже отмечены у этого стола</div>
           <button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>
         `;
       } else if (isUserPlanned) {
