@@ -82,7 +82,7 @@
     .vpn-hint { font-size: 11px; color: #cbd5e1; background: rgba(15, 23, 42, 0.8); border: 1px dashed rgba(56, 189, 248, 0.4); padding: 8px 10px; border-radius: 8px; text-align: center; }
 
     .profile-card {
-      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;
+      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
     }
     .profile-top-row { display: flex; align-items: center; justify-content: space-between; }
     .profile-user-main { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -465,6 +465,7 @@
 </div>
 
 <script>
+  // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ И КОНСТАНТ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
   const TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
@@ -474,8 +475,66 @@
   const DEFAULT_LIMIT_MS = 120 * 60 * 1000;
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
 
-  let activePlanningLoc = null, currentUserActiveLoc = null, currentUserActivePlayer = null;
-  let hasTriggeredPush = false, allRegisteredUsers = [], announcementsData = { park: "", vostok: "" }, currentModalUrl = "";
+  // Обязательные переменные, необходимые для работы приложения
+  let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
+  let currentUserProfile = { uid: null, name: "Гость" };
+  
+  let activePlanningLoc = null;
+  let currentUserActiveLoc = null;
+  let currentUserActivePlayer = null;
+  let hasTriggeredPush = false;
+  let allRegisteredUsers = [];
+  let announcementsData = { park: "", vostok: "" };
+  let currentModalUrl = "";
+
+  // ================= ИНИЦИАЛИЗАЦИЯ FIREBASE =================
+  const firebaseConfig = {
+    apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
+    authDomain: "tt-chmz.firebaseapp.com",
+    projectId: "tt-chmz",
+    storageBucket: "tt-chmz.firebasestorage.app",
+    messagingSenderId: "763705864834",
+    appId: "1:763705864834:web:d9035408eaf3e31d0efa9b"
+  };
+  
+  if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+  const db = firebase.firestore();
+
+  // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =================
+  function cleanHtml(str) {
+    if (!str) return '';
+    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  }
+
+  function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
+  
+  function formatDuration(ts) {
+    const mins = Math.floor((Date.now() - ts) / 60000);
+    if (mins < 1) return 'только что';
+    if (mins < 60) return `${mins} мин`;
+    return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  }
+  
+  function formatUntil(ts) {
+    const diff = ts - Date.now();
+    if (diff <= 0) return 'скоро';
+    const mins = Math.ceil(diff / 60000);
+    if (mins < 60) return `через ~${mins} мин`;
+    return `через ${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  }
+
+  function getPlayersCountSuffix(count) {
+    const m10 = count % 10, m100 = count % 100;
+    if (m100 >= 11 && m100 <= 19) return `игроков`;
+    if (m10 === 1) return `игрок`;
+    if (m10 >= 2 && m10 <= 4) return `игрока`;
+    return `игроков`;
+  }
+
+  function buildBlockquoteList(list, title) {
+    if (!list || list.length === 0) return "";
+    return `\n\n<blockquote>👥 <b>${title} (${list.length} ${getPlayersCountSuffix(list.length)}):</b>\n` + list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n") + `</blockquote>`;
+  }
 
   function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
 
@@ -498,6 +557,40 @@
     }
   }
 
+  function getWindDirection(degrees) {
+    if (degrees === undefined || degrees === null) return "";
+    const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
+    const index = Math.round((degrees % 360) / 45);
+    return directions[index % 8];
+  }
+
+  // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ В ТЕЛЕГРАМ =================
+  function sendTelegramAlert(text) {
+    if (!GOOGLE_GATEWAY_URL) return;
+    try {
+      let f = document.getElementById('tg_sink_frame');
+      if (!f) {
+        f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none';
+        document.body.appendChild(f);
+      }
+      const form = document.createElement('form');
+      form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
+      const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
+      form.appendChild(input); document.body.appendChild(form); form.submit();
+      setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
+    } catch (e) {}
+  }
+
+  function sendDevicePushNotification(title, body) {
+    if ('Notification' in window && Notification.permission === 'granted') {
+      try { new Notification(title, { body: body, icon: 'logo.webp', badge: 'logo.webp', vibrate: [200, 100, 200] }); } catch (e) {}
+    }
+    if (window.Telegram?.WebApp?.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
+    }
+  }
+
+  // ================= ФУНКЦИИ QR-КОДОВ =================
   async function shareModalUrl() {
     if (!currentModalUrl) return;
     const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
@@ -524,6 +617,7 @@
 
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
+  // ================= ФУНКЦИИ ПРОФИЛЯ И АВТОРИЗАЦИИ =================
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢";
     if (elo <= 1200) return "Ученик 📘";
@@ -536,6 +630,15 @@
     if (elo <= 2600) return "Мастер спорта 🏆";
     if (elo <= 2800) return "Элитный игрок ⭐";
     if (elo <= 3000) return "Мастер атаки 🔥";
+    if (elo <= 3200) return "Гроссмейстер ♟️";
+    if (elo <= 3400) return "Чемпион клуба 👑";
+    if (elo <= 3600) return "Гранд-мастер 🎖️";
+    if (elo <= 3800) return "Снайпер 🎯";
+    if (elo <= 4000) return "Легенда клуба 🏛️";
+    if (elo <= 4200) return "Премьер-лига 📈";
+    if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
+    if (elo <= 4600) return "Властелин стола 👑🏓";
+    if (elo <= 4800) return "Феномен 🌠";
     return "Легенда спорта 🌟🏆";
   }
 
@@ -558,6 +661,12 @@
     return myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake');
   }
 
+  window.onTelegramAuth = async function(user) {
+    const uid = 'tg_' + user.id;
+    localStorage.setItem('tt_member_id', uid);
+    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
+  };
+
   async function loginWithGoogle() {
     try {
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -578,12 +687,6 @@
     window.location.reload();
   }
 
-  window.onTelegramAuth = async function(user) {
-    const uid = 'tg_' + user.id;
-    localStorage.setItem('tt_member_id', uid);
-    await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
-  };
-
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
     let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
@@ -601,6 +704,7 @@
     currentUserProfile = userData;
     const banner = document.getElementById('web-auth-banner');
     if (banner) banner.style.display = 'none';
+    
     updateProfileDisplay();
     localStorage.setItem('tt_name', currentUserProfile.name);
     renderAll();
@@ -623,8 +727,8 @@
         const snap = await Promise.race([db.collection('users').doc(savedId).get(), timeoutPromise]);
         if (snap.exists) {
           currentUserProfile = snap.data();
-          if (banner) banner.style.display = 'none';
           updateProfileDisplay();
+          if (banner) banner.style.display = 'none';
           renderAll();
           return;
         }
@@ -688,34 +792,352 @@
     }
   }
 
-  function cleanHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  // ================= ФУНКЦИИ РЕДАКТИРОВАНИЯ ИМЕНИ =================
+  function handleEditProfileClick() { if (isUserVerified()) showNameModal(); }
+  function showNameModal() {
+    document.getElementById('name-input').value = currentUserProfile.name || '';
+    document.getElementById('name-error-box').style.display = 'none';
+    document.getElementById('name-modal').style.display = 'flex';
+  }
+  function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
+  async function saveCustomNameWithCheck() {
+    const uid = getVerifiedUserId();
+    if (!uid) return;
+    const val = document.getElementById('name-input').value.trim();
+    if (val.length < 2) return;
+    try {
+      await db.collection('users').doc(uid).set({ name: val }, { merge: true });
+      currentUserProfile.name = val;
+      localStorage.setItem('tt_name', val);
+      updateProfileDisplay();
+      hideNameModal();
+      renderAll();
+    } catch (e) {}
   }
 
-  function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-  function formatDuration(ts) {
-    const mins = Math.floor((Date.now() - ts) / 60000);
-    if (mins < 1) return 'только что';
-    if (mins < 60) return `${mins} мин`;
-    return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
-  }
-  function formatUntil(ts) {
-    const diff = ts - Date.now();
-    if (diff <= 0) return 'скоро';
-    const mins = Math.ceil(diff / 60000);
-    if (mins < 60) return `через ~${mins} мин`;
-    return `через ${Math.floor(mins / 60)} ч ${mins % 60} мин`;
+  // ================= ФУНКЦИИ ЧЕКИНА И БРОНИРОВАНИЯ =================
+  function handleCheckInClick(loc) { if (isUserVerified()) checkIn(loc); }
+  function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
+  function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
+  
+  async function checkIn(loc) {
+    const uid = getVerifiedUserId();
+    if (!uid) return;
+    if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
+    const now = Date.now();
+    const otherLoc = loc === 'park' ? 'vostok' : 'park';
+    let finalList = [];
+    
+    try {
+      await db.runTransaction(async t => {
+        const tDoc = await t.get(db.collection('locations').doc(loc));
+        const oDoc = await t.get(db.collection('locations').doc(otherLoc));
+        let tP = tDoc.exists ? tDoc.data().players || [] : [];
+        let oP = oDoc.exists ? oDoc.data().players || [] : [];
+        let tPl = tDoc.exists ? tDoc.data().plans || [] : [];
+        
+        if (tP.find(p => (p.uid || p) === uid)) return; // Уже отмечен
+        
+        tP = tP.filter(p => (p.uid || p) !== uid);
+        oP = oP.filter(p => (p.uid || p) !== uid);
+        tPl = tPl.filter(p => (p.uid || p) !== uid);
+        
+        tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS });
+        finalList = tP;
+        
+        t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true });
+        t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
+      });
+
+      hasTriggeredPush = false;
+      const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
+      sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${quoteBlock}\n\nКто составит компанию?`);
+    } catch(e) {}
   }
 
-  function getPlayersCountSuffix(count) {
-    const m10 = count % 10, m100 = count % 100;
-    if (m100 >= 11 && m100 <= 19) return `игроков`;
-    if (m10 === 1) return `игрок`;
-    if (m10 >= 2 && m10 <= 4) return `игрока`;
-    return `игроков`;
+  async function leave(loc) {
+    const uid = getVerifiedUserId();
+    if (!uid) return;
+    let spentMins = 0;
+    let spentStr = "";
+    let finalList = [];
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(loc));
+        if (!d.exists) return;
+        let p = d.data().players || [];
+        
+        const cPlayer = p.find(pl => (pl.uid || pl) === uid);
+        if (cPlayer && cPlayer.time) {
+          spentMins = Math.floor((Date.now() - cPlayer.time) / 60000);
+          spentStr = formatDuration(cPlayer.time);
+        }
+        
+        p = p.filter(pl => (pl.uid || pl) !== uid);
+        finalList = p;
+        t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
+      });
+      
+      if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
+      document.getElementById('extend-modal').style.display = 'none';
+      hasTriggeredPush = false;
+
+      const timeInfo = spentStr ? ` (время тренировки: <code>${spentStr}</code>)` : "";
+      let quoteBlock = finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>";
+      sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${timeInfo}.${quoteBlock}`);
+    } catch(e) {}
   }
 
+  function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
+
+  async function extendSession(addMins) {
+    const uid = getVerifiedUserId();
+    if (!uid || !currentUserActiveLoc) return;
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(currentUserActiveLoc));
+        if(!d.exists) return;
+        let p = d.data().players || [];
+        p = p.map(pl => {
+          if ((pl.uid||pl) === uid) return { ...pl, maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) };
+          return pl;
+        });
+        t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
+      });
+      hasTriggeredPush = false;
+      document.getElementById('extend-modal').style.display = 'none';
+    } catch(e) {}
+  }
+
+  async function submitQuickPlan(m) { await applyPlan(Date.now() + m * 60000); }
+  
+  async function submitExactPlan() {
+    const val = document.getElementById('exact-time-input').value;
+    if(!val) return;
+    const [h, m] = val.split(':').map(Number);
+    const d = new Date(); d.setHours(h, m, 0, 0);
+    if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
+    await applyPlan(d.getTime());
+  }
+  
+  async function applyPlan(ts) {
+    const uid = getVerifiedUserId();
+    if(!uid) return;
+    const loc = activePlanningLoc;
+    closePlanModal();
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(loc));
+        let pl = d.exists ? d.data().plans || [] : [];
+        pl = pl.filter(p => (p.uid||p) !== uid);
+        pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid });
+        t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
+      });
+      
+      let textLabel = formatUntil(ts);
+      sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${textLabel}</b>!\n\nКто готов составить пару?`);
+    } catch(e) {}
+  }
+  
+  async function cancelPlan(loc) {
+    const uid = getVerifiedUserId();
+    if(!uid) return;
+    try {
+      await db.runTransaction(async t => {
+        const d = await t.get(db.collection('locations').doc(loc));
+        if(!d.exists) return;
+        let pl = d.data().plans || [];
+        pl = pl.filter(p => (p.uid||p) !== uid);
+        t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
+      });
+    } catch(e) {}
+  }
+
+  // ================= ФУНКЦИИ МАТЧЕЙ =================
+  function handleMatchClick() { if (isUserVerified()) openMatchModal(); }
+  function openMatchModal() {
+    const uid = getVerifiedUserId();
+    if (!currentUserActiveLoc || !uid) { alert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!"); return; }
+    const sel = document.getElementById('match-opponent-select');
+    sel.innerHTML = '';
+    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
+    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; }
+    else { opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; }); }
+    selectScore(3,0);
+    document.getElementById('match-modal').style.display = 'flex';
+  }
+  function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
+  function selectScore(my, opp) {
+    document.getElementById('match-my-score').value = my;
+    document.getElementById('match-opp-score').value = opp;
+    document.querySelectorAll('.score-btn').forEach(b => {
+      b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`);
+    });
+  }
+  async function submitMatchProposal() {
+    const uid = getVerifiedUserId();
+    const oppUid = document.getElementById('match-opponent-select').value;
+    if(!uid || !oppUid || uid===oppUid) return alert("Выберите соперника!");
+    closeMatchModal();
+    try {
+      await db.collection('pending_matches').add({
+        proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: "Соперник",
+        scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
+        timestamp: Date.now()
+      });
+      alert("✅ Запрос отправлен!");
+    } catch(e){}
+  }
+
+  function listenPendingMatches() {
+    const myUid = getVerifiedUserId();
+    if (!myUid) return;
+
+    db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(snap => {
+      const container = document.getElementById('pending-matches-container');
+      if (snap.empty) { container.innerHTML = ''; return; }
+      let html = '';
+      snap.forEach(doc => {
+        const m = doc.data();
+        html += `
+          <div style="background: rgba(168, 85, 247, 0.15); border: 1px solid var(--accent-purple); padding: 12px 14px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
+            <div style="font-size: 13px; font-weight: 600; color: #d8b4fe;">⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b></div>
+            <div style="font-size: 13px;">Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}</div>
+            <div style="display: flex; gap: 8px; margin-top: 4px;">
+              <button class="btn btn-join" style="background: var(--accent-green); padding: 8px;" onclick="confirmMatch('${doc.id}')">Подтвердить</button>
+              <button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${doc.id}')">Отклонить</button>
+            </div>
+          </div>
+        `;
+      });
+      container.innerHTML = html;
+    });
+  }
+
+  function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
+    const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
+    return Math.round(k * (actualScoreA - expectedScoreA));
+  }
+
+  async function confirmMatch(matchId) {
+    const myUid = getVerifiedUserId();
+    if (!myUid) return;
+    try {
+      const matchRef = db.collection('pending_matches').doc(matchId);
+      const matchDoc = await matchRef.get();
+      if (!matchDoc.exists) return;
+
+      const m = matchDoc.data();
+      const pRef = db.collection('users').doc(m.proposerUid);
+      const oRef = db.collection('users').doc(m.opponentUid);
+
+      let myDelta = 0, newPElo = 1000, newOElo = 1000;
+
+      await db.runTransaction(async (t) => {
+        const pDoc = await t.get(pRef);
+        const oDoc = await t.get(oRef);
+        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0 };
+        const oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0 };
+
+        const isPWin = m.scoreProposer > m.scoreOpponent;
+        myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
+
+        newPElo = Math.max(100, (pData.elo || 1000) + myDelta);
+        newOElo = Math.max(100, (oData.elo || 1000) - myDelta);
+
+        t.set(pRef, { elo: newPElo, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        t.set(oRef, { elo: newOElo, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+      });
+
+      await db.collection('matches_history').add({
+        p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer,
+        p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent,
+        participants: [m.proposerUid, m.opponentUid], timestamp: Date.now()
+      });
+
+      await matchRef.delete();
+      sendTelegramAlert(`🏆 <b>Рейтинговый матч подтверждён и зачтён!</b>\n\n🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ${cleanHtml(m.proposerName)}: ${newPElo}\n• ${cleanHtml(m.opponentName)}: ${newOElo}</blockquote>`);
+    } catch(e) {}
+  }
+
+  async function rejectMatch(matchId) {
+    try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {}
+  }
+
+  async function recordTrainingTime(uid, name, durationMinutes) {
+    if (!uid || durationMinutes <= 0) return;
+    try {
+      const userRef = db.collection('leaderboard').doc(uid);
+      await db.runTransaction(async (t) => {
+        const doc = await t.get(userRef);
+        const data = doc.data() || { name: name, totalMinutes: 0, sessions: 0 };
+        t.set(userRef, { name: name, uid: uid, totalMinutes: (data.totalMinutes || 0) + durationMinutes, sessions: (data.sessions || 0) + 1, lastPlayed: Date.now() }, { merge: true });
+      });
+    } catch(e) {}
+  }
+
+  // ================= ФУНКЦИИ ПРОСМОТРА ПРОФИЛЯ (INFO) =================
+  async function showUserInfoModal(uid) {
+    document.getElementById('info-modal-title').innerText = "👤 Загрузка...";
+    document.getElementById('user-info-modal').style.display = 'flex';
+    try {
+      const d = await db.collection('users').doc(uid).get();
+      if(!d.exists) { closeUserInfoModal(); return; }
+      const u = d.data();
+      document.getElementById('info-modal-title').innerText = `👤 ${u.name||"Игрок"}`;
+      document.getElementById('info-modal-elo').innerText = u.elo||1000;
+      document.getElementById('info-modal-status').innerText = getPlayerStatus(u.elo||1000);
+      document.getElementById('info-modal-matches').innerText = u.matches||0;
+      const winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
+      document.getElementById('info-modal-winloss').innerText = `${u.wins||0}В - ${u.losses||0}П (${winrate}%)`;
+      
+      const ld = await db.collection('leaderboard').doc(uid).get();
+      const mins = ld.exists ? ld.data().totalMinutes||0 : 0;
+      document.getElementById('info-modal-total-time').innerText = `${Math.floor(mins/60)} ч ${mins%60} мин`;
+      
+      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
+      const hEl = document.getElementById('info-modal-history');
+      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
+      let h = '';
+      snaps.forEach(doc => {
+        const m = doc.data(); const isP1 = m.p1Uid === uid;
+        const myS = isP1?m.p1Score:m.p2Score; const opS = isP1?m.p2Score:m.p1Score;
+        const opN = isP1?m.p2Name:m.p1Name; const isWin = myS>opS;
+        h += `<div style="background: rgba(11,17,32,0.5); padding: 8px; border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;">
+                <div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div>
+                <div style="color:${isWin?'var(--accent-green)':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div>
+              </div>`;
+      });
+      hEl.innerHTML = h;
+    } catch(e){}
+  }
+  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
+
+  // ================= АДМИН ПАНЕЛЬ =================
+  function sendAdminBroadcast() {
+    if(!isSuperAdmin()) return;
+    const t = document.getElementById('admin-broadcast-text').value.trim();
+    if(!t) return;
+    sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`);
+    document.getElementById('admin-broadcast-text').value = '';
+    alert("✅ Отправлено");
+  }
+  function openAnnouncementModal(loc) {
+    if(!isSuperAdmin()) return;
+    document.getElementById('announcement-target-loc').value = loc;
+    document.getElementById('announcement-textarea').value = announcementsData[loc] || '';
+    document.getElementById('announcement-modal').style.display = 'flex';
+  }
+  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
+  async function saveAnnouncement() {
+    const loc = document.getElementById('announcement-target-loc').value;
+    const txt = document.getElementById('announcement-textarea').value.trim();
+    await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true });
+    closeAnnouncementModal();
+    if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`);
+  }
+
+  // ================= РЕЙТИНГИ =================
   function listenRatings() {
     db.collection('users').orderBy('elo', 'desc').limit(30).onSnapshot(snap => {
       const listEl = document.getElementById('rating-list');
@@ -773,221 +1195,103 @@
     });
   }
 
-  // ==== ФУНКЦИИ ЧЕКИНА И МОДАЛОК (Полностью восстановлены) ====
-  
-  function handleEditProfileClick() { if (isUserVerified()) showNameModal(); }
-  function showNameModal() {
-    document.getElementById('name-input').value = currentUserProfile.name || '';
-    document.getElementById('name-error-box').style.display = 'none';
-    document.getElementById('name-modal').style.display = 'flex';
-  }
-  function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
-  async function saveCustomNameWithCheck() {
-    const uid = getVerifiedUserId();
-    if (!uid) return;
-    const val = document.getElementById('name-input').value.trim();
-    if (val.length < 2) return;
+  // ================= ФУНКЦИИ ПОГОДЫ =================
+  async function loadParkWeather() {
+    const container = document.getElementById('weather-park');
+    if (!container) return;
     try {
-      await db.collection('users').doc(uid).set({ name: val }, { merge: true });
-      currentUserProfile.name = val;
-      localStorage.setItem('tt_name', val);
-      updateProfileDisplay();
-      hideNameModal();
-      renderAll();
-    } catch (e) {}
+      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto');
+      const data = await res.json();
+
+      const currTemp = Math.round(data.current.temperature_2m);
+      const currCode = data.current.weather_code;
+      const windSpeed = Math.round(data.current.wind_speed_10m);
+      const windDirDeg = data.current.wind_direction_10m;
+      const windDirStr = getWindDirection(windDirDeg);
+
+      const tomorrowMax = Math.round(data.daily.temperature_2m_max[1]);
+      const tomorrowMin = Math.round(data.daily.temperature_2m_min[1]);
+      const tomorrowCode = data.daily.weather_code[1];
+
+      let currStatus = "☀️ Ясно";
+      if (currCode >= 1 && currCode <= 3) currStatus = "⛅️ Облачно";
+      if (currCode >= 51 && currCode <= 67) currStatus = "🌧 Дождь";
+      if (currCode >= 71 && currCode <= 77) currStatus = "❄️ Снег";
+      if (currCode >= 80 && currCode <= 82) currStatus = "🌧 Ливень";
+
+      let tomorrowStatus = "☀️ Завтра: ясно";
+      if (tomorrowCode >= 1 && tomorrowCode <= 3) tomorrowStatus = "⛅️ Завтра: облачно";
+      if (tomorrowCode >= 51 && tomorrowCode <= 67) tomorrowStatus = "🌧 Завтра: дождь";
+      if (tomorrowCode >= 71 && tomorrowCode <= 77) tomorrowStatus = "❄️ Завтра: снег";
+      if (tomorrowCode >= 80 && tomorrowCode <= 82) tomorrowStatus = "🌧 Завтра: ливень";
+
+      let html = `
+        <div class="weather-badge">
+          <span>${currStatus}, ${currTemp}°C • ветер ${windSpeed} м/с (${windDirStr})</span>
+        </div>
+        <div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #d8b4fe;">
+          <span>${tomorrowStatus}, от ${tomorrowMin}° до ${tomorrowMax}°C</span>
+        </div>
+      `;
+      container.innerHTML = html;
+
+      if (currCode >= 51 && currCode <= 82) {
+        container.children[0].style.borderColor = "#f87171";
+        container.children[0].style.color = "#f87171";
+      }
+    } catch (e) {
+      container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`;
+    }
   }
 
-  function handleCheckInClick(loc) { if (isUserVerified()) checkIn(loc); }
-  function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
-  function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
-  
-  async function checkIn(loc) {
-    const uid = getVerifiedUserId();
-    if (!uid) return;
+  // ================= ФУНКЦИЯ МОНИТОРИНГА СЕССИЙ =================
+  async function monitorSessions() {
     const now = Date.now();
-    const otherLoc = loc === 'park' ? 'vostok' : 'park';
-    try {
-      await db.runTransaction(async t => {
-        const tDoc = await t.get(db.collection('locations').doc(loc));
-        const oDoc = await t.get(db.collection('locations').doc(otherLoc));
-        let tP = tDoc.exists ? tDoc.data().players || [] : [];
-        let oP = oDoc.exists ? oDoc.data().players || [] : [];
-        let tPl = tDoc.exists ? tDoc.data().plans || [] : [];
-        if (tP.find(p => (p.uid || p) === uid)) return;
-        tP = tP.filter(p => (p.uid || p) !== uid);
-        oP = oP.filter(p => (p.uid || p) !== uid);
-        tPl = tPl.filter(p => (p.uid || p) !== uid);
-        tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS });
-        t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true });
-        t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
-      });
-    } catch(e) {}
-  }
+    for (const loc of ['park', 'vostok']) {
+      try {
+        let leftPlayers = [];
+        let remainingList = [];
+        await db.runTransaction(async (t) => {
+          const doc = await t.get(db.collection('locations').doc(loc));
+          if (!doc.exists) return;
+          let players = doc.data().players || [];
+          let plans = doc.data().plans || [];
+          let changed = false;
 
-  async function leave(loc) {
-    const uid = getVerifiedUserId();
-    if (!uid) return;
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc));
-        if (!d.exists) return;
-        let p = d.data().players || [];
-        p = p.filter(pl => (pl.uid || pl) !== uid);
-        t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
-      });
-      document.getElementById('extend-modal').style.display = 'none';
-    } catch(e) {}
-  }
+          const activePlayers = [];
+          for (const p of players) {
+            const pTime = p.time || now;
+            const elapsed = now - pTime;
+            const limit = p.maxLimitMs || DEFAULT_LIMIT_MS;
 
-  function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
+            if (elapsed >= limit) {
+              changed = true;
+              recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000));
+              leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(pTime) });
+            } else { activePlayers.push(p); }
+          }
+          const activePlans = plans.filter(pl => {
+            if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; }
+            return true;
+          });
 
-  async function extendSession(addMins) {
-    const uid = getVerifiedUserId();
-    if (!uid || !currentUserActiveLoc) return;
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(currentUserActiveLoc));
-        if(!d.exists) return;
-        let p = d.data().players || [];
-        p = p.map(pl => {
-          if ((pl.uid||pl) === uid) return { ...pl, maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) };
-          return pl;
+          if (changed) {
+            t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true });
+            remainingList = activePlayers;
+          }
         });
-        t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
-      });
-      document.getElementById('extend-modal').style.display = 'none';
-    } catch(e) {}
+
+        if (leftPlayers.length > 0) {
+          const quoteBlock = remainingList.length > 0 ? buildBlockquoteList(remainingList, "Остались у столов") : "\n\n<i>(столы освободились)</i>";
+          for (const lp of leftPlayers) {
+            sendTelegramAlert(`👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]} (время: <code>${lp.durationStr}</code>).${quoteBlock}`);
+          }
+        }
+      } catch(e) {}
+    }
   }
 
-  async function submitQuickPlan(m) { await applyPlan(Date.now() + m * 60000); }
-  async function submitExactPlan() {
-    const val = document.getElementById('exact-time-input').value;
-    if(!val) return;
-    const [h, m] = val.split(':').map(Number);
-    const d = new Date(); d.setHours(h, m, 0, 0);
-    if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
-    await applyPlan(d.getTime());
-  }
-  async function applyPlan(ts) {
-    const uid = getVerifiedUserId();
-    if(!uid) return;
-    closePlanModal();
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(activePlanningLoc));
-        let pl = d.exists ? d.data().plans || [] : [];
-        pl = pl.filter(p => (p.uid||p) !== uid);
-        pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid });
-        t.set(db.collection('locations').doc(activePlanningLoc), { plans: pl }, { merge: true });
-      });
-    } catch(e) {}
-  }
-  async function cancelPlan(loc) {
-    const uid = getVerifiedUserId();
-    if(!uid) return;
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc));
-        if(!d.exists) return;
-        let pl = d.data().plans || [];
-        pl = pl.filter(p => (p.uid||p) !== uid);
-        t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
-      });
-    } catch(e) {}
-  }
-
-  function handleMatchClick() { if (isUserVerified()) openMatchModal(); }
-  function openMatchModal() {
-    const uid = getVerifiedUserId();
-    if (!currentUserActiveLoc || !uid) { alert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!"); return; }
-    const sel = document.getElementById('match-opponent-select');
-    sel.innerHTML = '';
-    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
-    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; }
-    else { opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; }); }
-    selectScore(3,0);
-    document.getElementById('match-modal').style.display = 'flex';
-  }
-  function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
-  function selectScore(my, opp) {
-    document.getElementById('match-my-score').value = my;
-    document.getElementById('match-opp-score').value = opp;
-    document.querySelectorAll('.score-btn').forEach(b => {
-      b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`);
-    });
-  }
-  async function submitMatchProposal() {
-    const uid = getVerifiedUserId();
-    const oppUid = document.getElementById('match-opponent-select').value;
-    if(!uid || !oppUid || uid===oppUid) return alert("Выберите соперника!");
-    closeMatchModal();
-    try {
-      await db.collection('pending_matches').add({
-        proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: "Соперник",
-        scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
-        timestamp: Date.now()
-      });
-      alert("✅ Запрос отправлен!");
-    } catch(e){}
-  }
-
-  async function showUserInfoModal(uid) {
-    document.getElementById('info-modal-title').innerText = "👤 Загрузка...";
-    document.getElementById('user-info-modal').style.display = 'flex';
-    try {
-      const d = await db.collection('users').doc(uid).get();
-      if(!d.exists) { closeUserInfoModal(); return; }
-      const u = d.data();
-      document.getElementById('info-modal-title').innerText = `👤 ${u.name||"Игрок"}`;
-      document.getElementById('info-modal-elo').innerText = u.elo||1000;
-      document.getElementById('info-modal-status').innerText = getPlayerStatus(u.elo||1000);
-      document.getElementById('info-modal-matches').innerText = u.matches||0;
-      document.getElementById('info-modal-winloss').innerText = `${u.wins||0}В - ${u.losses||0}П`;
-      
-      const ld = await db.collection('leaderboard').doc(uid).get();
-      const mins = ld.exists ? ld.data().totalMinutes||0 : 0;
-      document.getElementById('info-modal-total-time').innerText = `${Math.floor(mins/60)} ч ${mins%60} мин`;
-      
-      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
-      const hEl = document.getElementById('info-modal-history');
-      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
-      let h = '';
-      snaps.forEach(doc => {
-        const m = doc.data(); const isP1 = m.p1Uid === uid;
-        const myS = isP1?m.p1Score:m.p2Score; const opS = isP1?m.p2Score:m.p1Score;
-        const opN = isP1?m.p2Name:m.p1Name; const isWin = myS>opS;
-        h += `<div style="background: rgba(11,17,32,0.5); padding: 8px; border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;">
-                <div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div>
-                <div style="color:${isWin?'var(--accent-green)':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div>
-              </div>`;
-      });
-      hEl.innerHTML = h;
-    } catch(e){}
-  }
-  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
-
-  function sendAdminBroadcast() {
-    if(!isSuperAdmin()) return;
-    const t = document.getElementById('admin-broadcast-text').value.trim();
-    if(!t) return;
-    // alert("✅ Отправлено"); // Placeholder for gateway logic
-    document.getElementById('admin-broadcast-text').value = '';
-  }
-  function openAnnouncementModal(loc) {
-    if(!isSuperAdmin()) return;
-    document.getElementById('announcement-target-loc').value = loc;
-    document.getElementById('announcement-textarea').value = announcementsData[loc] || '';
-    document.getElementById('announcement-modal').style.display = 'flex';
-  }
-  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
-  async function saveAnnouncement() {
-    const loc = document.getElementById('announcement-target-loc').value;
-    const txt = document.getElementById('announcement-textarea').value.trim();
-    await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true });
-    closeAnnouncementModal();
-  }
-
-  // ==== ФУНКЦИЯ ОТРИСОВКИ RENDER ALL ====
+  // ================= ФУНКЦИЯ ОТРИСОВКИ RENDER ALL =================
   function renderAll() {
     const myUid = getVerifiedUserId();
     const now = Date.now();
@@ -1061,39 +1365,35 @@
       }
     });
 
-    // Check reminder modal
     if (currentUserActiveLoc && currentUserActivePlayer) {
       const elap = Date.now() - (currentUserActivePlayer.time||Date.now());
-      if (elap >= ((currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS)-REMIND_BEFORE_MS) && elap < (currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS)) {
+      const lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
+      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) {
         document.getElementById('extend-modal').style.display = 'flex';
+        if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); }
+      } else {
+        document.getElementById('extend-modal').style.display = 'none';
       }
+    } else {
+      document.getElementById('extend-modal').style.display = 'none';
+      hasTriggeredPush = false;
     }
   }
 
-  // Firebase Init & Start Listeners
-  const firebaseConfig = {
-    apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
-    authDomain: "tt-chmz.firebaseapp.com",
-    projectId: "tt-chmz",
-    storageBucket: "tt-chmz.firebasestorage.app",
-    messagingSenderId: "763705864834",
-    appId: "1:763705864834:web:d9035408eaf3e31d0efa9b"
-  };
-  
-  if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
-  const db = firebase.firestore();
-
+  // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile();
     listenRatings();
     listenLeaderboard();
+    listenPendingMatches();
+    loadParkWeather();
     
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => {
         const data = doc.data() || {};
         locationsData[loc].plans = data.plans || [];
         locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p);
-        if (typeof renderAll === 'function') renderAll();
+        renderAll();
       });
     });
 
@@ -1109,13 +1409,9 @@
       });
     });
 
-    // Загрузка погоды
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&timezone=auto')
-      .then(r => r.json()).then(data => {
-        const t = Math.round(data.current.temperature_2m);
-        const wEl = document.getElementById('weather-park');
-        if (wEl) wEl.innerHTML = `<div class="weather-badge"><span>🌡️ ${t}°C, ветер ${Math.round(data.current.wind_speed_10m)} м/с</span></div>`;
-      }).catch(() => {});
+    setInterval(renderAll, 30000); 
+    setInterval(monitorSessions, 60000); 
+    setInterval(loadParkWeather, 600000); // Обновление погоды каждые 10 минут
   });
 </script>
 </body>
