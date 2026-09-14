@@ -50,7 +50,7 @@
       max-width: 440px;
       display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: 12px;
       padding-bottom: 40px;
     }
 
@@ -96,116 +96,87 @@
       margin-top: 2px;
     }
 
-    .header-actions-top {
-      display: flex;
-      gap: 6px;
-      flex-shrink: 0;
-    }
-
-    .btn-top-action {
+    .btn-app-qr-large {
       background: #334155;
       color: #f8fafc;
       border: 1px solid var(--card-border);
-      padding: 6px 8px;
-      border-radius: 10px;
-      font-size: 11px;
-      font-weight: 600;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
-      flex-direction: column;
       align-items: center;
-      gap: 2px;
-      transition: background 0.2s;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.2s, transform 0.2s;
+      padding: 0;
+      overflow: hidden;
     }
-    .btn-top-action:hover {
+    .btn-app-qr-large:hover {
       background: #475569;
+      transform: scale(1.05);
     }
 
-    .icon-img-top {
-      width: 18px;
-      height: 18px;
+    .icon-img-large {
+      width: 28px;
+      height: 28px;
       object-fit: contain;
+      background: transparent;
     }
 
-    /* Блок сообществ (Telegram и МАКС в одну строку с иконками QR) */
-    .social-links-card {
-      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
-      border: 1px solid var(--card-border);
-      border-radius: 16px;
-      padding: 14px 16px;
+    .social-links-minimal {
       display: flex;
-      flex-direction: column;
-      gap: 10px;
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-    }
-
-    .social-grid-row {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
-    .social-card-item {
-      background: #0f172a;
+    .social-pill {
+      flex: 1;
+      background: var(--card-bg);
       border: 1px solid var(--card-border);
       border-radius: 12px;
-      padding: 10px;
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-      align-items: center;
-    }
-
-    .social-btns-subrow {
-      display: flex;
-      gap: 4px;
-      width: 100%;
-    }
-
-    .btn-social {
-      flex: 1;
-      border: none;
-      padding: 8px 6px;
-      border-radius: 8px;
-      font-size: 12px;
-      font-weight: 600;
-      cursor: pointer;
+      padding: 6px 10px;
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 4px;
+      justify-content: space-between;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .social-pill-left {
+      display: flex;
+      align-items: center;
+      gap: 6px;
       text-decoration: none;
-      transition: opacity 0.2s;
-      white-space: nowrap;
-    }
-    .btn-social:hover {
-      opacity: 0.9;
-    }
-    .btn-tg { background: #0ea5e9; color: #fff; }
-    .btn-max { background: #8b5cf6; color: #fff; }
-
-    .btn-action-mini {
-      background: #334155;
-      color: #f8fafc;
-      border: 1px solid var(--card-border);
-      padding: 8px 8px;
-      border-radius: 8px;
-      font-size: 11px;
+      font-size: 13px;
       font-weight: 600;
+      color: #fff;
+    }
+
+    .btn-qr-icon-only {
+      background: #334155;
+      border: 1px solid var(--card-border);
+      color: #f8fafc;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: background 0.2s;
+      transition: background 0.2s, transform 0.2s;
+      padding: 0;
+      overflow: hidden;
+      flex-shrink: 0;
     }
-    .btn-action-mini:hover {
+    .btn-qr-icon-only:hover {
       background: #475569;
+      transform: scale(1.05);
     }
 
-    .icon-img {
-      width: 16px;
-      height: 16px;
+    .icon-img-mini {
+      width: 20px;
+      height: 20px;
       object-fit: contain;
+      background: transparent;
     }
 
     .auth-banner {
@@ -271,7 +242,6 @@
       text-align: center;
     }
 
-    /* Блок профиля */
     .profile-card {
       background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
       border: 1px solid var(--card-border);
@@ -385,7 +355,6 @@
       transition: all 0.2s ease;
     }
 
-    /* Админ-панель рассылки */
     .admin-panel-card {
       display: none;
       background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%);
@@ -874,7 +843,7 @@
 
 <div class="container">
 
-  <!-- Шапка клуба с кнопкой QR-кода приложения (App.png) справа -->
+  <!-- Шапка клуба с большой круглой кнопкой QR приложения (App.png) справа под высоту блока -->
   <div class="club-header">
     <div class="club-header-left">
       <img src="logo.png" alt="ЧМЗ" class="club-logo" onerror="this.style.display='none'">
@@ -883,45 +852,33 @@
         <p>Радар столов, клубный рейтинг и статистика</p>
       </div>
     </div>
-    <div class="header-actions-top">
-      <button class="btn-top-action" onclick="copyCurrentLink()" title="Скопировать ссылку">
-        <span>📋</span>
-        <span>Ссылка</span>
-      </button>
-      <button class="btn-top-action" onclick="openQrModal('app')" title="QR-код приложения">
-        <img src="App.png" alt="QR" class="icon-img-top" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-        <span style="display: none;">📱</span>
-        <span>QR-код</span>
-      </button>
-    </div>
+    <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
+      <img src="App.png" alt="App QR" class="icon-img-large" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+      <span style="display: none; font-size: 18px;">📱</span>
+    </button>
   </div>
 
-  <!-- Блок сообществ (Telegram и МАКС в одну строку с иконками TG.png и Max.png) -->
-  <div class="social-links-card">
-    <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);">💬 Наши сообщества:</div>
-    <div class="social-grid-row">
-      <!-- Telegram карточка -->
-      <div class="social-card-item">
-        <a href="https://t.me/ttchmz" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram</a>
-        <div class="social-btns-subrow">
-          <button class="btn-action-mini" style="flex:1;" onclick="copyLink('https://t.me/ttchmz')" title="Скопировать ссылку">📋</button>
-          <button class="btn-action-mini" style="flex:2;" onclick="openQrModal('tg')">
-            <img src="TG.png" alt="QR" class="icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-            <span style="display: none;">📷</span> QR-код
-          </button>
-        </div>
-      </div>
-      <!-- МАКС карточка -->
-      <div class="social-card-item">
-        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС</a>
-        <div class="social-btns-subrow">
-          <button class="btn-action-mini" style="flex:1;" onclick="copyLink('https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E')" title="Скопировать ссылку">📋</button>
-          <button class="btn-action-mini" style="flex:2;" onclick="openQrModal('max')">
-            <img src="Max.png" alt="QR" class="icon-img" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-            <span style="display: none;">📷</span> QR-код
-          </button>
-        </div>
-      </div>
+  <!-- Минималистичный блок сообществ: Telegram и МАКС в одну строку со своими круглыми прозрачными QR-иконками (TG.png и Max.png) -->
+  <div class="social-links-minimal">
+    <!-- Telegram -->
+    <div class="social-pill">
+      <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left">
+        <span>✈️</span> Telegram
+      </a>
+      <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram">
+        <img src="TG.png" alt="TG" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <span style="display: none; font-size: 11px;">📷</span>
+      </button>
+    </div>
+    <!-- МАКС -->
+    <div class="social-pill">
+      <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left">
+        <span>💬</span> МАКС
+      </a>
+      <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС">
+        <img src="Max.png" alt="Max" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <span style="display: none; font-size: 11px;">📷</span>
+      </button>
     </div>
   </div>
 
@@ -1087,7 +1044,7 @@
 
 </div>
 
-<!-- Модальное окно с QR-кодами -->
+<!-- Модальное окно с QR-кодами и функцией копирования ссылки -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -1289,23 +1246,6 @@
   function toggleCard(loc) {
     const cardEl = document.getElementById('card-' + loc);
     cardEl.classList.toggle('expanded');
-  }
-
-  function copyCurrentLink() {
-    const url = window.location.href;
-    navigator.clipboard.writeText(url).then(() => {
-      alert("📋 Ссылка на приложение скопирована в буфер обмена!");
-    }).catch(err => {
-      console.error('Ошибка копирования:', err);
-    });
-  }
-
-  function copyLink(url) {
-    navigator.clipboard.writeText(url).then(() => {
-      alert("📋 Ссылка скопирована в буфер обмена!");
-    }).catch(err => {
-      console.error('Ошибка копирования:', err);
-    });
   }
 
   function copyModalUrl() {
