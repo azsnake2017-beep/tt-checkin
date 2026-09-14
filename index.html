@@ -318,11 +318,9 @@
 
   <!-- ДК Восток -->
   <div class="card" id="card-vostok">
+    <div class="card-title">🏛 ДК «Восток»</div>
+    <div class="card-desc">ул. Сталеваров, 5а</div>
     <div class="card-top" onclick="toggleCard('vostok')">
-      <div>
-        <div class="card-title">🏛 ДК «Восток»</div>
-        <div class="card-desc">ул. Сталеваров, 5а</div>
-      </div>
       <span class="counter" id="badge-vostok">0 игроков</span>
     </div>
     <div class="card-body-collapse">
@@ -412,7 +410,8 @@
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
-    <div style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
+    <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
+      <!-- Тут динамически появится строка с UID если смотрит Админ -->
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--text-muted);">Не указан</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
@@ -507,6 +506,9 @@
   const DEFAULT_LIMIT_MS = 120 * 60 * 1000;
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
   const ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; 
+  
+  // Уникальные идентификаторы Администраторов
+  const ADMIN_UIDS = ['tg_153650895', 'tg_azsnake'];
 
   let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
   let currentUserProfile = { uid: null, name: "Гость" };
@@ -609,13 +611,12 @@
     return directions[index % 8];
   }
 
-  function getCustomBadge(name) {
-    if (!name) return '';
-    const lower = name.toLowerCase();
-    if (lower.includes('валера штиль')) return '<span class="platform-badge badge-teacher">Учитель 🎓</span>';
-    if (lower.includes('владислав')) return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
-    if (lower.includes('ivan plaxin')) return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
-    if (lower.includes('félix lebrun') || lower.includes('felix lebrun')) return '<span class="platform-badge badge-bot">Бот 🤖</span>';
+  function getCustomBadge(uid) {
+    if (!uid) return '';
+    if (uid === 'google_XUE0DYY6WoMfkI3TmG7o2HqPUEm1') return '<span class="platform-badge badge-teacher">Учитель 🎓</span>';
+    if (uid === 'tg_750209461') return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
+    if (uid === 'tg_6126323287') return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
+    if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') return '<span class="platform-badge badge-bot">Бот 🤖</span>';
     return '';
   }
 
@@ -724,7 +725,7 @@
     const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
     if (tgUser && tgUser.username?.toLowerCase() === 'azsnake') return true;
     const myUid = getVerifiedUserId();
-    return myUid === 'tg_azsnake' || currentUserProfile.name?.toLowerCase().includes('сергей колчин') || currentUserProfile.name?.toLowerCase().includes('azsnake');
+    return ADMIN_UIDS.includes(myUid);
   }
 
   window.onTelegramAuth = async function(user) {
@@ -839,7 +840,7 @@
   function updateProfileDisplay() {
     const isGoogle = currentUserProfile.uid?.startsWith('google_');
     const adminTag = isSuperAdmin() ? `<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>` : '';
-    const customBadge = getCustomBadge(currentUserProfile.name);
+    const customBadge = getCustomBadge(currentUserProfile.uid);
     let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
 
@@ -1190,22 +1191,30 @@
       if(!d.exists) { closeUserInfoModal(); return; }
       const u = d.data();
       
-      const isAdminProfile = uid === 'tg_azsnake' || (u.name && (u.name.toLowerCase().includes('сергей колчин') || u.name.toLowerCase().includes('azsnake')));
-      const adminTag = isAdminProfile ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
-      const customBadge = getCustomBadge(u.name);
+      const isProfileAdmin = ADMIN_UIDS.includes(uid);
+      const adminTag = isProfileAdmin ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+      const customBadge = getCustomBadge(uid);
       
       document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
       
-      document.getElementById('info-modal-elo').innerText = u.elo||1000;
-      document.getElementById('info-modal-rttf').innerText = u.rttf||"Не указан";
-      document.getElementById('info-modal-status').innerText = getPlayerStatus(u.elo||1000);
-      document.getElementById('info-modal-matches').innerText = u.matches||0;
-      const winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
-      document.getElementById('info-modal-winloss').innerText = `${u.wins||0}В - ${u.losses||0}П (${winrate}%)`;
+      let uidHtml = '';
+      if (isSuperAdmin()) {
+        uidHtml = `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);"><span style="color: var(--text-muted);">UID (Только Админ):</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>`;
+      }
       
       const ld = await db.collection('leaderboard').doc(uid).get();
       const mins = ld.exists ? ld.data().totalMinutes||0 : 0;
-      document.getElementById('info-modal-total-time').innerText = formatMinutes(mins);
+      const winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
+
+      document.getElementById('info-modal-content-area').innerHTML = `
+        ${uidHtml}
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span style="font-weight: 700; color: var(--accent-purple);">${u.elo||1000}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span style="font-weight: 600; color: var(--accent-green);">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>
+      `;
       
       const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
       const hEl = document.getElementById('info-modal-history');
@@ -1267,9 +1276,9 @@
         const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0;
         const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
         
-        const isAdmin = doc.id === 'tg_azsnake' || (d.name && (d.name.toLowerCase().includes('сергей колчин') || d.name.toLowerCase().includes('azsnake')));
+        const isAdmin = ADMIN_UIDS.includes(doc.id);
         const adminBadgeHTML = isAdmin ? '<span class="platform-badge badge-admin" style="margin-left: 4px;">Админ ⭐</span>' : '';
-        const customBadge = getCustomBadge(d.name);
+        const customBadge = getCustomBadge(doc.id);
         let rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : '';
         
         html += `
@@ -1308,9 +1317,9 @@
         const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
         const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
         
-        const isAdmin = doc.id === 'tg_azsnake' || (d.name && (d.name.toLowerCase().includes('сергей колчин') || d.name.toLowerCase().includes('azsnake')));
+        const isAdmin = ADMIN_UIDS.includes(doc.id);
         const adminBadgeHTML = isAdmin ? '<span class="platform-badge badge-admin" style="margin-left: 4px;">Админ ⭐</span>' : '';
-        const customBadge = getCustomBadge(d.name);
+        const customBadge = getCustomBadge(doc.id);
         
         html += `
           <div class="leader-row">
