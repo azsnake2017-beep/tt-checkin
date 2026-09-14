@@ -100,13 +100,13 @@
       box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
     }
 
-    .social-buttons-row {
-      display: flex;
+    .social-buttons-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
       gap: 8px;
     }
 
     .btn-social {
-      flex: 1;
       border: none;
       padding: 10px;
       border-radius: 10px;
@@ -125,7 +125,31 @@
     }
     .btn-tg { background: #0ea5e9; color: #fff; }
     .btn-max { background: #8b5cf6; color: #fff; }
-    .btn-qr { background: #334155; color: #f8fafc; border: 1px solid var(--card-border); }
+
+    .qr-buttons-row {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-qr {
+      flex: 1;
+      background: #334155;
+      color: #f8fafc;
+      border: 1px solid var(--card-border);
+      padding: 8px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: background 0.2s;
+    }
+    .btn-qr:hover {
+      background: #475569;
+    }
 
     .auth-banner {
       display: none;
@@ -805,10 +829,14 @@
   <!-- Блок ссылок на чаты и QR-коды -->
   <div class="social-links-card">
     <div style="font-size: 13px; font-weight: 700; color: var(--text-muted);">💬 Наши сообщества:</div>
-    <div class="social-buttons-row">
-      <a href="https://t.me/your_telegram_chat" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram чат</a>
-      <a href="https://max.ru/your_max_chat" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС чат</a>
-      <button class="btn-social btn-qr" onclick="openQrModal()"><span>📷</span> QR-код</button>
+    <div class="social-buttons-grid">
+      <a href="https://t.me/ttchmz" target="_blank" class="btn-social btn-tg"><span>✈️</span> Telegram чат</a>
+      <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="btn-social btn-max"><span>💬</span> МАКС чат</a>
+    </div>
+    <div class="qr-buttons-row">
+      <button class="btn-qr" onclick="openQrModal('tg')"><span>📷</span> QR Telegram</button>
+      <button class="btn-qr" onclick="openQrModal('max')"><span>📷</span> QR МАКС</button>
+      <button class="btn-qr" onclick="openQrModal('app')"><span>📱</span> QR Приложения</button>
     </div>
   </div>
 
@@ -978,14 +1006,13 @@
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
-      <h3 style="font-size: 16px; color: var(--accent-sky);">📷 Поделиться клубом</h3>
+      <h3 style="font-size: 16px; color: var(--accent-sky);" id="qr-modal-title">📷 QR-код</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
-    <p style="font-size: 13px; color: var(--text-muted);">
-      Покажите этот QR-код друзьям, чтобы они могли присоединиться к нашему приложению и чату:
+    <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">
+      Покажите этот QR-код друзьям для быстрого доступа:
     </p>
     <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;">
-      <!-- Генерация QR-кода приложения через публичный API (ссылка на текущую страницу) -->
       <img id="qr-code-img" src="" alt="QR Code" style="width: 180px; height: 180px; display: block;" />
     </div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
@@ -1151,6 +1178,9 @@
   // ================= НАСТРОЙКИ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
+  
+  const TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
+  const MAX_CHAT_URL = "https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E";
 
   const LOCATION_NAMES = {
     park: "в Парке им. Тищенко 🌳",
@@ -1172,13 +1202,29 @@
     cardEl.classList.toggle('expanded');
   }
 
-  function openQrModal() {
-    const currentUrl = window.location.href;
+  function openQrModal(type) {
+    let targetUrl = window.location.href;
+    let title = "QR-код приложения";
+    let desc = "Покажите этот QR-код друзьям для доступа к приложению:";
+
+    if (type === 'tg') {
+      targetUrl = TELEGRAM_CHAT_URL;
+      title = "QR-код Telegram чата";
+      desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:";
+    } else if (type === 'max') {
+      targetUrl = MAX_CHAT_URL;
+      title = "QR-код МАКС чата";
+      desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:";
+    }
+
+    document.getElementById('qr-modal-title').innerText = "📷 " + title;
+    document.getElementById('qr-modal-desc').innerText = desc;
+
     const qrImg = document.getElementById('qr-code-img');
     const urlText = document.getElementById('qr-url-text');
     
-    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(currentUrl)}`;
-    urlText.innerText = currentUrl;
+    qrImg.src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
+    urlText.innerText = targetUrl;
     document.getElementById('qr-modal').style.display = 'flex';
   }
 
