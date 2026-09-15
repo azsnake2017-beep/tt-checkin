@@ -178,6 +178,22 @@
     .rating-card { border: 1px solid rgba(168, 85, 247, 0.4); }
     .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    
+    /* === КЛАСС ДЛЯ ПРОКРУТКИ СПИСКОВ РЕЙТИНГА === */
+    .scrollable-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 480px; /* Высота примерно на 10 игроков */
+      overflow-y: auto;
+      padding-right: 4px;
+      overscroll-behavior: contain; /* Предотвращает скроллинг всей страницы на мобилках */
+    }
+    /* Стилизация скроллбара */
+    .scrollable-list::-webkit-scrollbar { width: 4px; }
+    .scrollable-list::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); border-radius: 4px; }
+    .scrollable-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+
     .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); font-size: 13px; }
     .leader-left { display: flex; align-items: center; gap: 8px; }
     .leader-rank { font-weight: 700; width: 22px; color: var(--text-muted); }
@@ -348,7 +364,8 @@
     <div class="card-block-title" style="color: var(--accent-purple);">
       <span>⚔️</span><span>Клубный рейтинг игроков</span>
     </div>
-    <div id="rating-list" style="display: flex; flex-direction: column; gap: 6px;">
+    <!-- ДОБАВЛЕН КЛАСС scrollable-list -->
+    <div id="rating-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
     </div>
   </div>
@@ -357,7 +374,8 @@
     <div class="card-block-title" style="color: var(--accent-gold);">
       <span>🥇</span><span>Зал славы (Топ по часам)</span>
     </div>
-    <div id="leaderboard-list" style="display: flex; flex-direction: column; gap: 6px;">
+    <!-- ДОБАВЛЕН КЛАСС scrollable-list -->
+    <div id="leaderboard-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
     </div>
   </div>
@@ -1263,7 +1281,7 @@
 
   // ================= РЕЙТИНГИ =================
   function listenRatings() {
-    db.collection('users').orderBy('elo', 'desc').limit(30).onSnapshot(snap => {
+    db.collection('users').orderBy('elo', 'desc').limit(100).onSnapshot(snap => {
       const listEl = document.getElementById('rating-list');
       allRegisteredUsers = [];
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
@@ -1308,7 +1326,7 @@
   }
 
   function listenLeaderboard() {
-    db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(15).onSnapshot(snap => {
+    db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(100).onSnapshot(snap => {
       const listEl = document.getElementById('leaderboard-list');
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
       let html = '', rank = 1;
