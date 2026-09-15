@@ -179,17 +179,15 @@
     .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     
-    /* === КЛАСС ДЛЯ ПРОКРУТКИ СПИСКОВ РЕЙТИНГА === */
     .scrollable-list {
       display: flex;
       flex-direction: column;
       gap: 6px;
-      max-height: 480px; /* Высота примерно на 10 игроков */
+      max-height: 480px; 
       overflow-y: auto;
       padding-right: 4px;
-      overscroll-behavior: contain; /* Предотвращает скроллинг всей страницы на мобилках */
+      overscroll-behavior: contain;
     }
-    /* Стилизация скроллбара */
     .scrollable-list::-webkit-scrollbar { width: 4px; }
     .scrollable-list::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); border-radius: 4px; }
     .scrollable-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
@@ -364,7 +362,6 @@
     <div class="card-block-title" style="color: var(--accent-purple);">
       <span>⚔️</span><span>Клубный рейтинг игроков</span>
     </div>
-    <!-- ДОБАВЛЕН КЛАСС scrollable-list -->
     <div id="rating-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
     </div>
@@ -374,7 +371,6 @@
     <div class="card-block-title" style="color: var(--accent-gold);">
       <span>🥇</span><span>Зал славы (Топ по часам)</span>
     </div>
-    <!-- ДОБАВЛЕН КЛАСС scrollable-list -->
     <div id="leaderboard-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
     </div>
@@ -431,7 +427,6 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
     <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
-      <!-- Тут динамически появится строка с UID если смотрит Админ -->
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--text-muted);">Не указан</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
@@ -791,6 +786,15 @@
       const snap = await Promise.race([ref.get(), timeoutPromise]);
       if (!snap.exists) {
         await ref.set(userData);
+        
+        // --- НОВОЕ УВЕДОМЛЕНИЕ О РЕГИСТРАЦИИ В ЧАТ ---
+        try {
+          const allUsers = await db.collection('users').get();
+          const totalCount = allUsers.size;
+          sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении настольного тенниса ЧМЗ зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${totalCount}</b> человек!\n\n🏓 Заходите в приложение, отмечайтесь у столов и находите соперников для игры!`);
+        } catch(e) { console.error("Ошибка подсчета юзеров:", e); }
+        // ----------------------------------------------
+        
       } else {
         userData = snap.data();
       }
@@ -1100,15 +1104,25 @@
       b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`);
     });
   }
+  
   async function submitMatchProposal() {
     const uid = getVerifiedUserId();
-    const oppUid = document.getElementById('match-opponent-select').value;
+    const selectEl = document.getElementById('match-opponent-select');
+    const oppUid = selectEl.value;
+    
     if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
+    
+    const oppName = selectEl.options[selectEl.selectedIndex].text; 
+    
     closeMatchModal();
     try {
       await db.collection('pending_matches').add({
-        proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: "Соперник",
-        scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
+        proposerUid: uid, 
+        proposerName: currentUserProfile.name, 
+        opponentUid: oppUid, 
+        opponentName: oppName, 
+        scoreProposer: parseInt(document.getElementById('match-my-score').value), 
+        scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
         timestamp: Date.now()
       });
       customAlert("✅ Запрос отправлен!");
