@@ -53,9 +53,10 @@
     
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
     
-    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; min-height: 100%; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
-    .main-view { display: none; flex-direction: column; gap: 12px; animation: fadeInView 0.25s ease; }
+    /* Добавлен flex-grow: 1 чтобы профиль мог растягиваться на весь экран */
+    .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; animation: fadeInView 0.25s ease; }
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
@@ -91,7 +92,7 @@
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
     
-    .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; }
+    .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; flex-shrink: 0; }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
     .user-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -100,11 +101,12 @@
     .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
-    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ */
-    .profile-logo-container { display: flex; justify-content: center; align-items: center; margin-top: 8px; width: 100%; }
+    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ С ГИБКОЙ ПОДСТРОЙКОЙ */
+    .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
     .profile-large-logo { 
       width: 100%; 
-      height: auto; 
+      height: auto;
+      max-height: 32vh; 
       aspect-ratio: 1 / 1; 
       border-radius: 50%; 
       object-fit: contain; 
@@ -114,16 +116,12 @@
     .profile-large-logo:hover { transform: scale(1.02); }
 
     .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
-    .badge-tg { background: rgba(56, 189, 248, 0.2); color: #0284c7; }
-    .badge-google { background: rgba(16, 185, 129, 0.2); color: #059669; }
     .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
     .badge-teacher { background: rgba(16, 185, 129, 0.2); color: #059669; margin-left: 4px; }
     .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #9333ea; margin-left: 4px; }
     .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #0284c7; margin-left: 4px; }
     .badge-bot { background: rgba(148, 163, 184, 0.2); color: #64748b; margin-left: 4px; }
     .badge-coach { background: rgba(59, 130, 246, 0.2); color: #2563eb; margin-left: 4px; }
-    :root[data-theme="dark"] .badge-tg { color: #38bdf8; }
-    :root[data-theme="dark"] .badge-google { color: #10b981; }
     :root[data-theme="dark"] .badge-admin { color: #f59e0b; }
     :root[data-theme="dark"] .badge-teacher { color: #10b981; }
     :root[data-theme="dark"] .badge-temshik { color: #d8b4fe; }
@@ -315,11 +313,10 @@
       </div>
     </div>
     
-    <!-- БОЛЬШОЙ ЛОГОТИП КЛУБА ПОД ПРОФИЛЕМ (На всю ширину без подводки) -->
+    <!-- БОЛЬШОЙ ЛОГОТИП КЛУБА ПОД ПРОФИЛЕМ -->
     <div class="profile-logo-container">
       <img src="logo.webp" alt="Логотип ЧМЗ" class="profile-large-logo" onerror="this.style.display='none'">
     </div>
-
   </div>
 
   <!-- ЭКРАН 2: РАДАР -->
@@ -879,16 +876,22 @@
   }
 
   function updateProfileDisplay() {
-    const isGoogle = currentUserProfile.uid?.startsWith('google_');
     const adminTag = isSuperAdmin() ? `<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>` : '';
     const customBadge = getCustomBadge(currentUserProfile.uid);
-    let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
 
     const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
 
-    document.getElementById('user-name-container').innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag} ${customBadge}`;
-    document.getElementById('user-score-container').innerHTML = `<div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span></div>`;
+    document.getElementById('user-name-container').innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${adminTag} ${customBadge}`;
+    
+    document.getElementById('user-score-container').innerHTML = `
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <div style="display: flex; flex-direction: column; align-items: flex-end;">
+          <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span>
+          <span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>
+        </div>
+        <button class="btn-info" onclick="showUserInfoModal('${currentUserProfile.uid}')">i</button>
+      </div>`;
     
     const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : '';
     document.getElementById('user-stats-container').innerHTML = `
@@ -1157,7 +1160,20 @@
         const d = doc.data(); if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_')) return;
         const hours = (d.totalMinutes / 60).toFixed(1), rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
         const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id);
-        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div></div><span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span></div>`;
+        
+        html += `
+          <div class="leader-row">
+            <div class="leader-left">
+              <span class="leader-rank ${rankClass}">${medal}</span>
+              <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;">
+                <b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span>
+              <button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button>
+            </div>
+          </div>`;
         rank++;
       });
       listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
