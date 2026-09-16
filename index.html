@@ -451,8 +451,7 @@
 </div>
 
 <script>
-  // ================= ЭКРАНИРОВАНИЕ XSS =================
-  // Жестко экранирует любые символы кавычек, чтобы они не ломали вызовы функций onclick
+  // ================= ЭКРАНИРОВАНИЕ XSS И КАВЫЧЕК =================
   function escapeJS(str) {
     if (!str) return '';
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
@@ -555,10 +554,19 @@
       else { navigator.clipboard.writeText(t + ': ' + currentModalUrl).then(function() { customAlert("📋 Ссылка скопирована!"); }); } 
   }
   function openQrModal(type) {
-    var url = window.location.href, t = "QR-код приложения", d = "Покажите этот QR-код друзьям для быстрого доступа:";
+    var url = "https://azsnake2017-beep.github.io/tt-checkin/";
+    var t = "QR-код приложения";
+    var d = "Покажите этот QR-код друзьям для быстрого доступа:";
+    
     if (type === 'tg') { url = TELEGRAM_CHAT_URL; t = "QR-код Telegram чата"; d = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
     else if (type === 'max') { url = MAX_CHAT_URL; t = "QR-код МАКС чата"; d = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
-    currentModalUrl = url; document.getElementById('qr-modal-title').innerText = "📷 " + t; document.getElementById('qr-modal-desc').innerText = d; document.getElementById('qr-url-text').innerText = url; document.getElementById('qr-code-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(url); document.getElementById('qr-modal').style.display = 'flex';
+    
+    currentModalUrl = url; 
+    document.getElementById('qr-modal-title').innerText = "📷 " + t; 
+    document.getElementById('qr-modal-desc').innerText = d; 
+    document.getElementById('qr-url-text').innerText = url; 
+    document.getElementById('qr-code-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(url); 
+    document.getElementById('qr-modal').style.display = 'flex';
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
   function getPlayerStatus(elo) {
@@ -1162,60 +1170,6 @@
       archiveEl.innerHTML = archiveHtml || '<span class="empty-note">Архив пуст</span>';
     });
   }
-
-  // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
-  function showUserInfoModal(uid) {
-    if(!uid) return;
-    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
-    document.getElementById('user-info-modal').style.display = 'flex';
-    db.collection('users').doc(uid).get().then(function(d) {
-      if(!d.exists) { closeUserInfoModal(); return; }
-      var u = d.data();
-      var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
-      var customBadge = getCustomBadge(uid);
-      document.getElementById('info-modal-title').innerHTML = '👤 ' + cleanHtml(u.name||"Игрок") + ' ' + adminTag + ' ' + customBadge;
-      
-      var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
-      
-      db.collection('leaderboard').doc(uid).get().then(function(ld) {
-        var mins = ld.exists ? ld.data().totalMinutes||0 : 0;
-        var winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
-        var deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + u.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + u.lastEloDelta + ') 📉</span>') : '';
-        var streakText = (u.winStreak !== undefined && u.winStreak >= 3) ? '<span class="streak-fire">🔥' + u.winStreak + ' побед</span>' : '';
-
-        var mContainer = document.getElementById('info-modal-medals');
-        var m = u.medals || {gold:0, silver:0, bronze:0};
-        if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-          mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
-          mContainer.style.display = 'flex';
-        } else { mContainer.style.display = 'none'; }
-
-        document.getElementById('info-modal-content-area').innerHTML = uidHtml + '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + (u.elo !== undefined ? u.elo : 1000) + '</span>' + deltaHtml + '</div></div><div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf||"Не указан") + '</span></div><div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + getPlayerStatus(u.elo !== undefined ? u.elo : 1000) + '</span></div><div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">' + (u.matches||0) + '</span></div><div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + (u.wins||0) + 'В - ' + (u.losses||0) + 'П (' + winrate + '%)</span>' + streakText + '</div></div><div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>';
-        
-        var invContainer = document.getElementById('info-modal-inventory');
-        if (u.blade || u.rubberL || u.rubberR) {
-          var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-          if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-          if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-          if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-          invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-        } else { invContainer.style.display = 'none'; }
-      }).catch(function(){});
-
-      db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get().then(function(snaps) {
-        var hEl = document.getElementById('info-modal-history');
-        if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
-        var h = '';
-        snaps.forEach(function(mDoc) {
-          var m = mDoc.data(); var isP1 = m.p1Uid === uid; var myS = isP1 ? m.p1Score : m.p2Score; var opS = isP1 ? m.p2Score : m.p1Score; var opN = isP1 ? m.p2Name : m.p1Name; var isWin = myS > opS;
-          var dateStr = new Date(m.timestamp).toLocaleDateString();
-          h += '<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>' + cleanHtml(opN) + '</b></div><div style="color:var(--text-muted);font-size:10px;">' + dateStr + '</div></div><div style="color:' + (isWin?'#059669':'#f87171') + '; font-weight:bold;">' + myS + ' : ' + opS + '</div></div>';
-        });
-        hEl.innerHTML = h;
-      }).catch(function(){});
-    }).catch(function(){});
-  }
-  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
   // ================= ПОГОДА И СЕССИИ =================
   function loadParkWeather() {
