@@ -3,6 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <!-- Окрашиваем статус-бар смартфона в цвет фона приложения -->
+  <meta name="theme-color" content="#0b1120">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
   <!-- Telegram WebApp SDK -->
@@ -29,24 +31,32 @@
       --accent-purple: #a855f7;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { 
+      box-sizing: border-box; 
+      margin: 0; 
+      padding: 0; 
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+      /* Убираем синее/серое выделение при тапе на смартфонах */
+      -webkit-tap-highlight-color: transparent; 
+    }
+    
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
     
     /* Отступ для нижнего свайп-бара на iPhone */
-    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
+    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: max(80px, env(safe-area-inset-bottom)); }
 
-    .club-header {
-      display: flex; align-items: center; justify-content: space-between; gap: 10px;
-      background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3);
-    }
+    .club-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
     .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
     .club-header-text h1 { font-size: 14px; font-weight: 700; line-height: 1.2; color: #f8fafc; }
     .club-header-text p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-    /* Анимация прожатия всех кнопок */
-    .btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only { transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease; }
-    .btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active { transform: scale(0.95); }
+    /* Анимация прожатия всех кнопок и запрет выделения текста */
+    .btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only, .badge-admin-btn { 
+      transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease; 
+      user-select: none; 
+    }
+    .btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active, .badge-admin-btn:active { transform: scale(0.95); }
 
     .btn-app-qr-large { background: #334155; color: #f8fafc; border: 1px solid var(--card-border); width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; overflow: hidden; }
     .btn-app-qr-large:hover { background: #475569; transform: scale(1.05); }
@@ -54,7 +64,7 @@
 
     .social-links-minimal { display: flex; gap: 8px; }
     .social-pill { flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
-    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; transition: opacity 0.2s; }
+    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; transition: opacity 0.2s; user-select: none; }
     .social-pill-left:hover { opacity: 0.9; }
     .pill-tg { background: #0ea5e9; }
     .pill-max { background: #8b5cf6; }
@@ -67,7 +77,7 @@
     .auth-banner h3 { font-size: 15px; color: #f8fafc; }
     .auth-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
-    .btn-auth-provider { width: 100%; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-auth-provider { width: 100%; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; }
     .vpn-hint { font-size: 11px; color: #cbd5e1; background: rgba(15, 23, 42, 0.8); border: 1px dashed rgba(56, 189, 248, 0.4); padding: 8px 10px; border-radius: 8px; text-align: center; }
 
     .profile-card { background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
@@ -79,11 +89,10 @@
     .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
-    .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; }
+    .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
     .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
     .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
     .badge-admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; margin-left: 4px; }
-    
     .badge-teacher { background: rgba(16, 185, 129, 0.2); color: #10b981; margin-left: 4px; }
     .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; margin-left: 4px; }
     .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #38bdf8; margin-left: 4px; }
@@ -91,7 +100,6 @@
     .badge-coach { background: rgba(59, 130, 246, 0.2); color: #60a5fa; margin-left: 4px; }
 
     .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); flex-shrink: 0; margin-left: 4px; }
-    .badge-admin-btn:active { transform: scale(0.95); }
 
     .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none; }
     .btn-edit { background: #334155; color: #cbd5e1; }
@@ -116,12 +124,12 @@
     .event-badge { display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #d8b4fe; margin-top: 6px; }
     .btn-admin-edit-announcement { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fde68a; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; width: fit-content; margin-top: 4px; display: none; }
 
-    .counter { background: rgba(225, 29, 72, 0.15); color: #fda4af; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
+    .counter { background: rgba(225, 29, 72, 0.15); color: #fda4af; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; user-select: none; }
     .counter.has-players { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
 
-    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; color: var(--text-muted); margin-top: 4px; }
+    .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; color: var(--text-muted); margin-top: 4px; user-select: none; }
     .player-list { background: rgba(11, 17, 32, 0.6); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
-    .empty-note { font-size: 13px; color: var(--text-muted); text-align: center; padding: 6px 0; }
+    .empty-note { font-size: 13px; color: var(--text-muted); text-align: center; padding: 6px 0; user-select: none; }
     .player-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(51, 65, 85, 0.3); }
     .player-row:last-child { border-bottom: none; }
     .player-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
@@ -134,19 +142,21 @@
     .btn-plan { background: #1e293b; border: 1px solid #3b82f6; color: #93c5fd; }
     .btn-leave { background: #334155; color: #cbd5e1; }
 
-    .tabs-container { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); }
+    /* Прилипающие вкладки с красивым размытием фона */
+    .tabs-container { 
+      display: flex; gap: 8px; background: rgba(15, 23, 42, 0.85); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); 
+      position: sticky; top: 10px; z-index: 100; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
     .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
     .tab-btn.active { background: #334155; color: #ffffff; }
 
     .leaderboard-card, .rating-card { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .rating-card { border: 1px solid rgba(168, 85, 247, 0.4); }
     .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
-    .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; }
     
-    .scrollable-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; overscroll-behavior: contain; }
-    .scrollable-list::-webkit-scrollbar { width: 4px; }
-    .scrollable-list::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); border-radius: 4px; }
-    .scrollable-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
+    /* Убрали ловушку скролла (удалили max-height и overflow-y) */
+    .scrollable-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 20px; }
 
     .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); font-size: 13px; }
     .leader-left { display: flex; align-items: center; gap: 8px; }
@@ -158,12 +168,15 @@
 
     .btn-info { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-sky); width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 999; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 999; }
     .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; }
     .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .btn-opt { background: #0f172a; border: 1px solid var(--card-border); color: #cbd5e1; padding: 12px 4px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600; }
     
-    .input-time, .input-select, .textarea-announcement, .input-name { background: #0b1120; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-size: 14px; outline: none; width: 100%; }
+    /* ШРИФТ 16px ОБЯЗАТЕЛЕН для iOS, чтобы избежать авто-зума при вводе */
+    .input-time, .input-select, .textarea-announcement, .input-name { 
+      background: #0b1120; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-size: 16px; outline: none; width: 100%; 
+    }
     
     /* Стилизованный ровный селект */
     .input-select {
@@ -173,12 +186,43 @@
     }
     
     .textarea-announcement { resize: vertical; min-height: 90px; }
-    .input-name { text-align: center; font-size: 15px; padding: 12px 14px; }
+    .input-name { text-align: center; padding: 12px 14px; }
     .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .score-btn { background: #0f172a; border: 1px solid var(--card-border); color: #f8fafc; padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
     .score-btn.active { border-color: var(--accent-purple); background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+
+    /* Плавающая кнопка возврата наверх */
+    .btn-scroll-top {
+      position: fixed;
+      bottom: max(20px, env(safe-area-inset-bottom));
+      right: 20px;
+      background: var(--primary);
+      color: white;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      border: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+      cursor: pointer;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transform: translateY(20px);
+      transition: opacity 0.3s ease, transform 0.3s ease;
+    }
+    .btn-scroll-top.visible {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(0);
+    }
+    .btn-scroll-top:active {
+      transform: translateY(0) scale(0.9);
+    }
   </style>
 </head>
 <body>
@@ -308,6 +352,7 @@
     </div>
   </div>
 
+  <!-- ПРИЛИПАЮЩИЕ ВКЛАДКИ -->
   <div class="tabs-container">
     <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Клубный рейтинг</button>
     <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
@@ -317,6 +362,7 @@
     <div class="card-block-title" style="color: var(--accent-purple);">
       <span>⚔️</span><span>Клубный рейтинг игроков</span>
     </div>
+    <!-- Убран внутренний скролл -->
     <div id="rating-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
     </div>
@@ -326,12 +372,20 @@
     <div class="card-block-title" style="color: var(--accent-gold);">
       <span>🥇</span><span>Зал славы (Топ по часам)</span>
     </div>
+    <!-- Убран внутренний скролл -->
     <div id="leaderboard-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
     </div>
   </div>
 
 </div>
+
+<!-- Плавающая кнопка возврата наверх -->
+<button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
 
 <!-- КАСТОМНОЕ УВЕДОМЛЕНИЕ ВМЕСТО ALERT() -->
 <div class="modal-overlay" id="custom-alert-modal">
@@ -594,6 +648,21 @@
     }
     return '';
   }
+
+  // ================= КНОПКА СКРОЛЛА НАВЕРХ =================
+  function scrollToTop() {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
+  document.addEventListener('scroll', () => {
+    const btn = document.getElementById('btn-scroll-top');
+    if (!btn) return;
+    if (window.scrollY > 350) {
+      btn.classList.add('visible');
+    } else {
+      btn.classList.remove('visible');
+    }
+  });
 
   // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ И АНТИСПАМ =================
   function canSendTgAlert(actionType) {
