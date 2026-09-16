@@ -827,8 +827,24 @@
       try {
         const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
         const snap = await Promise.race([db.collection('users').doc(savedId).get(), timeoutPromise]);
+        
         if (snap.exists) {
-          currentUserProfile = snap.data();
+          let data = snap.data();
+          
+          // 🏥 АВТО-ЛЕЧЕНИЕ БАЗЫ ДАННЫХ: проверяем, хватает ли полей при загрузке
+          if (data.isVerified === undefined || data.elo === undefined) {
+            data.isVerified = true;
+            data.elo = data.elo !== undefined ? data.elo : 1000;
+            data.matches = data.matches || 0;
+            data.wins = data.wins || 0;
+            data.losses = data.losses || 0;
+            data.uid = savedId;
+            data.platform = savedId.startsWith('google_') ? 'google' : 'tg';
+            // Тихо отправляем правильные данные обратно в базу
+            db.collection('users').doc(savedId).set(data, { merge: true }); 
+          }
+          
+          currentUserProfile = data;
           updateProfileDisplay();
           subscribeToUserLeaderboard(savedId);
           if (banner) banner.style.display = 'none';
@@ -917,6 +933,7 @@
     document.getElementById('name-modal').style.display = 'flex';
   }
   function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
+  
   async function saveCustomNameWithCheck() {
     const uid = getVerifiedUserId();
     if (!uid) return;
@@ -930,14 +947,39 @@
       if (rttfVal !== null) updateData.rttf = rttfVal;
       else updateData.rttf = firebase.firestore.FieldValue.delete();
       
+      // 🛡️ БРОНЯ: Перед сохранением имени проверяем РЕАЛЬНОЕ состояние профиля в базе
+      const doc = await db.collection('users').doc(uid).get();
+      const data = doc.exists ? doc.data() : {};
+
+      // Если профиля в базе вообще нет (баг из-за плохого интернета) ИЛИ он сломан
+      if (!doc.exists || data.isVerified === undefined || data.elo === undefined) {
+        updateData.isVerified = true;
+        updateData.elo = data.elo !== undefined ? data.elo : 1000;
+        updateData.matches = data.matches || 0;
+        updateData.wins = data.wins || 0;
+        updateData.losses = data.losses || 0;
+        updateData.uid = uid;
+        updateData.platform = uid.startsWith('google_') ? 'google' : 'tg';
+        updateData.createdAt = data.createdAt || Date.now();
+      }
+      
       await db.collection('users').doc(uid).set(updateData, { merge: true });
+      
+      // Обновляем локальные данные приложения
       currentUserProfile.name = val;
       currentUserProfile.rttf = rttfVal;
+      if (updateData.isVerified) {
+        currentUserProfile = { ...currentUserProfile, ...updateData };
+      }
+      
       localStorage.setItem('tt_name', val);
       updateProfileDisplay();
       hideNameModal();
       renderAll();
-    } catch (e) {}
+    } catch (e) {
+      console.error("Ошибка при сохранении профиля:", e);
+      customAlert("Не удалось сохранить профиль. Проверьте интернет-соединение.");
+    }
   }
 
   // ================= ФУНКЦИИ ЧЕКИНА И БРОНИРОВАНИЯ =================
