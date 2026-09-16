@@ -703,18 +703,15 @@
     return '';
   }
 
-  // ================= ФУНКЦИЯ ПОИСКА ОБОРУДОВАНИЯ =================
+  // ================= ПОИСК ОБОРУДОВАНИЯ В GOOGLE =================
   function openExternalLink(url) {
-    if (window.Telegram?.WebApp?.openLink) {
-      window.Telegram.WebApp.openLink(url);
-    } else {
-      window.open(url, '_blank');
-    }
+    if (window.Telegram?.WebApp?.openLink) { window.Telegram.WebApp.openLink(url); } 
+    else { window.open(url, '_blank'); }
   }
 
-  function getInventoryRowHtml(icon, label, value) {
+  function getInventoryRowHtml(icon, label, value, searchPrefix) {
     if (!value) return '';
-    const query = encodeURIComponent(value + ' настольный теннис');
+    const query = encodeURIComponent(searchPrefix + ' ' + value);
     const url = `https://www.google.com/search?q=${query}`;
     return `
       <div class="inventory-item">
@@ -941,10 +938,10 @@
     const invContainer = document.getElementById('user-inventory-container');
     if (invContainer) {
       if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
-        let invHtml = '';
-        if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade);
-        if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL);
-        if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR);
+        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px;">Ракетка:</div>`;
+        if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
+        if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
+        if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
         
         invContainer.innerHTML = invHtml;
         invContainer.className = 'inventory-box';
@@ -1200,10 +1197,10 @@
       
       const invContainer = document.getElementById('info-modal-inventory');
       if (u.blade || u.rubberL || u.rubberR) {
-        let invHtml = '';
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade);
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL);
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR);
+        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px;">Ракетка:</div>`;
+        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
         
         invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
       } else { invContainer.style.display = 'none'; }
