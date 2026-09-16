@@ -3,8 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-  <!-- Окрашиваем статус-бар смартфона в цвет фона приложения -->
-  <meta name="theme-color" content="#0b1120">
+  <meta name="theme-color" content="#0b1120" id="meta-theme-color">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
   <!-- Telegram WebApp SDK -->
@@ -29,85 +28,105 @@
       --accent-sky: #38bdf8;
       --accent-gold: #fbbf24;
       --accent-purple: #a855f7;
+      
+      --row-bg: rgba(15, 23, 42, 0.6);
+      --list-bg: rgba(11, 17, 32, 0.6);
+      --input-bg: #0b1120;
+      --bottom-nav-bg: rgba(30, 41, 59, 0.95);
     }
 
-    * { 
-      box-sizing: border-box; 
-      margin: 0; 
-      padding: 0; 
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-      /* Убираем синее/серое выделение при тапе на смартфонах */
-      -webkit-tap-highlight-color: transparent; 
+    /* СВЕТЛАЯ ТЕМА */
+    :root[data-theme="light"] {
+      --bg: #f1f5f9;
+      --card-bg: #ffffff;
+      --card-border: #cbd5e1;
+      --text: #0f172a;
+      --text-muted: #64748b;
+      
+      --row-bg: #f8fafc;
+      --list-bg: #f8fafc;
+      --input-bg: #ffffff;
+      --bottom-nav-bg: rgba(255, 255, 255, 0.95);
     }
-    
-    body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
-    
-    /* Отступ для нижнего свайп-бара на iPhone */
-    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
 
-    .club-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
+    
+    body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
+    
+    /* Отступ снизу увеличен для нижней панели навигации */
+    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
+
+    /* Экраны (Views) */
+    .main-view { display: none; flex-direction: column; gap: 12px; animation: fadeInView 0.25s ease; }
+    .main-view.active { display: flex; }
+    @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .club-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
     .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
-    .club-header-text h1 { font-size: 14px; font-weight: 700; line-height: 1.2; color: #f8fafc; }
+    .club-header-text h1 { font-size: 14px; font-weight: 700; line-height: 1.2; color: var(--text); }
     .club-header-text p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-    /* Анимация прожатия всех кнопок и запрет выделения текста */
-    .btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only, .badge-admin-btn { 
-      transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease; 
-      user-select: none; 
-    }
-    .btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active, .badge-admin-btn:active { transform: scale(0.95); }
+    .btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only, .badge-admin-btn, .btn-theme-toggle { transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease; user-select: none; }
+    .btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active, .badge-admin-btn:active, .btn-theme-toggle:active { transform: scale(0.95); }
 
-    .btn-app-qr-large { background: #334155; color: #f8fafc; border: 1px solid var(--card-border); width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; overflow: hidden; }
-    .btn-app-qr-large:hover { background: #475569; transform: scale(1.05); }
-    .icon-img-large { width: 28px; height: 28px; object-fit: contain; background: transparent; }
+    .btn-theme-toggle { background: transparent; border: 1px solid var(--card-border); color: var(--text); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .btn-app-qr-large { background: var(--card-border); color: var(--text); border: 1px solid var(--card-border); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; overflow: hidden; }
+    .icon-img-large { width: 22px; height: 22px; object-fit: contain; background: transparent; }
+
+    .header-actions { display: flex; gap: 8px; align-items: center; }
 
     .social-links-minimal { display: flex; gap: 8px; }
-    .social-pill { flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
-    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; transition: opacity 0.2s; user-select: none; }
-    .social-pill-left:hover { opacity: 0.9; }
+    .social-pill { flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
+    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; user-select: none; }
     .pill-tg { background: #0ea5e9; }
     .pill-max { background: #8b5cf6; }
 
-    .btn-qr-icon-only { background: #334155; border: 1px solid var(--card-border); color: #f8fafc; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; overflow: hidden; flex-shrink: 0; margin-left: 6px; }
-    .btn-qr-icon-only:hover { background: #475569; transform: scale(1.05); }
-    .icon-img-mini { width: 20px; height: 20px; object-fit: contain; background: transparent; }
+    .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
+    .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    .auth-banner { display: none; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); border: 1px solid var(--accent-sky); border-radius: 16px; padding: 16px; text-align: center; flex-direction: column; align-items: center; gap: 10px; }
-    .auth-banner h3 { font-size: 15px; color: #f8fafc; }
+    .auth-banner { display: none; background: var(--row-bg); border: 1px solid var(--accent-sky); border-radius: 16px; padding: 16px; text-align: center; flex-direction: column; align-items: center; gap: 10px; }
+    .auth-banner h3 { font-size: 15px; color: var(--text); }
     .auth-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
-    .btn-auth-provider { width: 100%; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; }
-    .vpn-hint { font-size: 11px; color: #cbd5e1; background: rgba(15, 23, 42, 0.8); border: 1px dashed rgba(56, 189, 248, 0.4); padding: 8px 10px; border-radius: 8px; text-align: center; }
-
-    .profile-card { background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
+    .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
+    
+    .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
     .user-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
     #user-score-container { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
     
-    .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid rgba(51, 65, 85, 0.4); padding-top: 8px; }
+    .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
     .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
-    .badge-tg { background: rgba(56, 189, 248, 0.2); color: #38bdf8; }
-    .badge-google { background: rgba(16, 185, 129, 0.2); color: #10b981; }
-    .badge-admin { background: rgba(245, 158, 11, 0.2); color: #f59e0b; margin-left: 4px; }
-    .badge-teacher { background: rgba(16, 185, 129, 0.2); color: #10b981; margin-left: 4px; }
-    .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; margin-left: 4px; }
-    .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #38bdf8; margin-left: 4px; }
-    .badge-bot { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; margin-left: 4px; }
-    .badge-coach { background: rgba(59, 130, 246, 0.2); color: #60a5fa; margin-left: 4px; }
+    .badge-tg { background: rgba(56, 189, 248, 0.2); color: #0284c7; }
+    .badge-google { background: rgba(16, 185, 129, 0.2); color: #059669; }
+    .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
+    .badge-teacher { background: rgba(16, 185, 129, 0.2); color: #059669; margin-left: 4px; }
+    .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #9333ea; margin-left: 4px; }
+    .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #0284c7; margin-left: 4px; }
+    .badge-bot { background: rgba(148, 163, 184, 0.2); color: #64748b; margin-left: 4px; }
+    .badge-coach { background: rgba(59, 130, 246, 0.2); color: #2563eb; margin-left: 4px; }
+    :root[data-theme="dark"] .badge-tg { color: #38bdf8; }
+    :root[data-theme="dark"] .badge-google { color: #10b981; }
+    :root[data-theme="dark"] .badge-admin { color: #f59e0b; }
+    :root[data-theme="dark"] .badge-teacher { color: #10b981; }
+    :root[data-theme="dark"] .badge-temshik { color: #d8b4fe; }
+    :root[data-theme="dark"] .badge-hockey { color: #38bdf8; }
+    :root[data-theme="dark"] .badge-bot { color: #cbd5e1; }
+    :root[data-theme="dark"] .badge-coach { color: #60a5fa; }
 
-    .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); flex-shrink: 0; margin-left: 4px; }
+    .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 4px; }
 
     .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none; }
-    .btn-edit { background: #334155; color: #cbd5e1; }
-    .btn-logout { background: rgba(225, 29, 72, 0.15); border: 1px solid rgba(225, 29, 72, 0.3); color: #fda4af; }
+    .btn-edit { background: var(--card-border); color: var(--text); }
+    .btn-logout { background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary); }
 
-    .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+    .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;}
 
-    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+    .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
     .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
     .card-title::after { content: ' ▼'; font-size: 10px; color: var(--text-muted); transition: transform 0.2s ease; }
@@ -120,242 +139,290 @@
     .card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
     .weather-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
-    .weather-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: var(--accent-sky); width: fit-content; }
-    .event-badge { display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #d8b4fe; margin-top: 6px; }
-    .btn-admin-edit-announcement { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fde68a; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; width: fit-content; margin-top: 4px; display: none; }
+    .weather-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: #0284c7; width: fit-content; }
+    :root[data-theme="dark"] .weather-badge { color: var(--accent-sky); }
+    
+    .event-badge { display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #9333ea; margin-top: 6px; }
+    :root[data-theme="dark"] .event-badge { color: #d8b4fe; }
 
-    .counter { background: rgba(225, 29, 72, 0.15); color: #fda4af; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; user-select: none; }
-    .counter.has-players { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
+    .btn-admin-edit-announcement { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #d97706; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; width: fit-content; margin-top: 4px; display: none; }
+    :root[data-theme="dark"] .btn-admin-edit-announcement { color: #fde68a; }
+
+    .counter { background: rgba(225, 29, 72, 0.1); color: var(--primary); padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; user-select: none; }
+    .counter.has-players { background: rgba(16, 185, 129, 0.15); color: #059669; }
+    :root[data-theme="dark"] .counter.has-players { color: var(--accent-green); }
 
     .section-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.6px; font-weight: 700; color: var(--text-muted); margin-top: 4px; user-select: none; }
-    .player-list { background: rgba(11, 17, 32, 0.6); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
+    .player-list { background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 8px 12px; display: flex; flex-direction: column; gap: 6px; }
     .empty-note { font-size: 13px; color: var(--text-muted); text-align: center; padding: 6px 0; user-select: none; }
-    .player-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid rgba(51, 65, 85, 0.3); }
+    .player-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--card-border); }
     .player-row:last-child { border-bottom: none; }
     .player-name { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 500; }
     .player-time-box { text-align: right; font-size: 12px; color: var(--text-muted); display: flex; flex-direction: column; gap: 2px; }
-    .time-badge { color: var(--accent-green); font-weight: 600; }
-    .time-badge-plan { color: var(--accent-amber); font-weight: 600; }
+    .time-badge { color: #059669; font-weight: 600; }
+    :root[data-theme="dark"] .time-badge { color: var(--accent-green); }
+    .time-badge-plan { color: #d97706; font-weight: 600; }
+    :root[data-theme="dark"] .time-badge-plan { color: var(--accent-amber); }
 
     .btn { width: 100%; border: none; padding: 12px; border-radius: 12px; font-size: 14px; font-weight: 600; cursor: pointer; text-align: center; }
     .btn-join { background: var(--primary); color: #ffffff; }
-    .btn-plan { background: #1e293b; border: 1px solid #3b82f6; color: #93c5fd; }
-    .btn-leave { background: #334155; color: #cbd5e1; }
+    .btn-plan { background: var(--list-bg); border: 1px solid #3b82f6; color: #2563eb; }
+    :root[data-theme="dark"] .btn-plan { color: #93c5fd; }
+    .btn-leave { background: var(--card-border); color: var(--text); }
 
-    /* Обычные вкладки (без прилипания поверх рейтинга) */
-    .tabs-container { 
-      display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); 
-    }
+    .tabs-container { display: flex; gap: 8px; background: var(--card-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 8px; }
     .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
-    .tab-btn.active { background: #334155; color: #ffffff; }
+    .tab-btn.active { background: var(--card-border); color: var(--text); }
 
-    .leaderboard-card, .rating-card { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
-    .rating-card { border: 1px solid rgba(168, 85, 247, 0.4); }
-    .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
+    .rating-card, .leaderboard-card { background: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--card-border); }
+    
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; }
     
-    /* Убран внутренний скролл, чтобы прокручивалась вся страница */
-    .scrollable-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 20px; }
+    .scrollable-list { display: flex; flex-direction: column; gap: 6px; }
 
-    .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); font-size: 13px; }
+    .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: var(--row-bg); font-size: 13px; }
     .leader-left { display: flex; align-items: center; gap: 8px; }
     .leader-rank { font-weight: 700; width: 22px; color: var(--text-muted); }
     .leader-rank-1 { color: #f59e0b; } .leader-rank-2 { color: #94a3b8; } .leader-rank-3 { color: #b45309; }
-    .leader-score { font-weight: 700; color: var(--accent-sky); }
-    .rating-score { font-weight: 700; color: var(--accent-purple); }
+    .leader-score { font-weight: 700; color: #0284c7; }
+    :root[data-theme="dark"] .leader-score { color: var(--accent-sky); }
+    .rating-score { font-weight: 700; color: #9333ea; }
+    :root[data-theme="dark"] .rating-score { color: var(--accent-purple); }
+    
     .player-status-tag { font-size: 11px; color: var(--text-muted); display: block; }
 
-    .btn-info { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-sky); width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+    :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
 
-    .modal-overlay { position: fixed; inset: 0; background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 999; }
-    .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; }
+    /* BOTTOM NAVIGATION */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0; left: 0; width: 100%;
+      background: var(--bottom-nav-bg);
+      backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--card-border);
+      display: flex; justify-content: space-around; align-items: center;
+      padding-bottom: env(safe-area-inset-bottom);
+      z-index: 1000;
+      box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+    }
+    .nav-item {
+      flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0;
+      color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; user-select: none;
+    }
+    .nav-item.active { color: var(--primary); }
+    .nav-icon { font-size: 22px; margin-bottom: 4px; }
+    .nav-item:active { transform: scale(0.9); }
+
+    /* Плавающая кнопка возврата наверх (поднята над навигацией) */
+    .btn-scroll-top { position: fixed; bottom: calc(75px + env(safe-area-inset-bottom)); right: 20px; background: var(--primary); color: white; width: 44px; height: 44px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 999; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease; }
+    .btn-scroll-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .btn-scroll-top:active { transform: translateY(0) scale(0.9); }
+
+    /* Модалки */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1001; }
+    .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; color: var(--text); }
     .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .btn-opt { background: #0f172a; border: 1px solid var(--card-border); color: #cbd5e1; padding: 12px 4px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600; }
+    .btn-opt { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 12px 4px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600; }
     
-    /* ШРИФТ 16px ОБЯЗАТЕЛЕН для iOS, чтобы избежать авто-зума при вводе */
-    .input-time, .input-select, .textarea-announcement, .input-name { 
-      background: #0b1120; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-size: 16px; outline: none; width: 100%; 
-    }
-    
-    /* Стилизованный ровный селект */
-    .input-select {
-      -webkit-appearance: none; appearance: none;
-      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px;
-    }
-    
+    .input-time, .input-select, .textarea-announcement, .input-name { background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px; border-radius: 10px; font-size: 16px; outline: none; width: 100%; }
+    .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
     .textarea-announcement { resize: vertical; min-height: 90px; }
     .input-name { text-align: center; padding: 12px 14px; }
     .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-    .score-btn { background: #0f172a; border: 1px solid var(--card-border); color: #f8fafc; padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
-    .score-btn.active { border-color: var(--accent-purple); background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
+    .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
+    .score-btn.active { border-color: var(--accent-purple); background: rgba(168, 85, 247, 0.15); color: #9333ea; }
+    :root[data-theme="dark"] .score-btn.active { color: var(--accent-purple); }
   </style>
 </head>
-<body>
+<body data-theme="dark">
 
 <div class="container">
 
-  <!-- Шапка клуба -->
+  <!-- Шапка клуба (всегда видна сверху) -->
   <div class="club-header">
     <div class="club-header-left">
       <img src="logo.webp" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
       <div class="club-header-text">
-        <h1>Клуб любителей настольного тенниса ЧМЗ</h1>
-        <p>Радар столов, клубный рейтинг и статистика</p>
+        <h1>Настольный теннис ЧМЗ</h1>
+        <p>Радар, рейтинг, статистика</p>
       </div>
     </div>
-    <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
-      <img src="App.webp" alt="App QR" class="icon-img-large" width="28" height="28" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-      <span style="display: none; font-size: 18px;">📱</span>
+    <div class="header-actions">
+      <!-- Кнопка переключения темы -->
+      <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему">☀️</button>
+      <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
+        <img src="App.webp" alt="App QR" class="icon-img-large" width="22" height="22" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+        <span style="display: none; font-size: 18px;">📱</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 1: РАДАР (Активен по умолчанию) -->
+  <div id="view-radar" class="main-view active">
+    <!-- Парк Тищенко -->
+    <div class="card expanded" id="card-park">
+      <div class="card-top" onclick="toggleCard('park')">
+        <div>
+          <div class="card-title">🌳 Парк им. Тищенко</div>
+          <div class="card-desc">Столы на свежем воздухе</div>
+        </div>
+        <span class="counter" id="badge-park">0 игроков</span>
+      </div>
+      <div class="card-body-collapse">
+        <div class="weather-container" id="weather-park">
+          <div class="weather-badge"><span>Загрузка погоды...</span></div>
+        </div>
+        <div class="event-badge" id="announcement-box-park" style="display: none;"><span id="announcement-text-park"></span></div>
+        <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
+        <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+        <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
+        <div class="section-label">Собираются прийти:</div>
+        <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
+        <div class="action-group" id="btn-container-park">
+          <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
+          <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ДК Восток -->
+    <div class="card expanded" id="card-vostok">
+      <div class="card-top" onclick="toggleCard('vostok')">
+        <div>
+          <div class="card-title">🏛 ДК «Восток»</div>
+          <div class="card-desc">ул. Сталеваров, 5а</div>
+        </div>
+        <span class="counter" id="badge-vostok">0 игроков</span>
+      </div>
+      <div class="card-body-collapse">
+        <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
+        <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
+        <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+        <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
+        <div class="section-label">Собираются прийти:</div>
+        <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
+        <div class="action-group" id="btn-container-vostok">
+          <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
+          <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 2: РЕЙТИНГИ -->
+  <div id="view-ratings" class="main-view">
+    <div class="tabs-container">
+      <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
+      <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ по часам</button>
+    </div>
+
+    <div class="rating-card" id="view-rating-content">
+      <div class="card-block-title" style="color: var(--accent-purple);">
+        <span>⚔️</span><span>Клубный рейтинг игроков</span>
+      </div>
+      <div id="rating-list" class="scrollable-list">
+        <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
+      </div>
+    </div>
+
+    <div class="leaderboard-card" id="view-time-content" style="display: none;">
+      <div class="card-block-title" style="color: var(--accent-gold);">
+        <span>🥇</span><span>Зал славы (Тренировки)</span>
+      </div>
+      <div id="leaderboard-list" class="scrollable-list">
+        <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 3: ПРОФИЛЬ И АВТОРИЗАЦИЯ -->
+  <div id="view-profile" class="main-view">
+    
+    <!-- Соцсети -->
+    <div class="social-links-minimal">
+      <div class="social-pill">
+        <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg"><span>✈️</span> Telegram</a>
+        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram"><img src="TG.webp" alt="TG" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span style="display: none;">📷</span></button>
+      </div>
+      <div class="social-pill">
+        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max"><span>💬</span> МАКС</a>
+        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС"><img src="Max.webp" alt="Max" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span style="display: none;">📷</span></button>
+      </div>
+    </div>
+
+    <div class="auth-banner" id="web-auth-banner">
+      <h3>🔐 Подтвердите профиль игрока</h3>
+      <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
+      <div class="auth-methods-box">
+        <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
+        <button class="btn-auth-provider" onclick="loginWithGoogle()">
+          <span>🌐</span> Войти через Google
+        </button>
+      </div>
+      <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
+    </div>
+
+    <div class="profile-card">
+      <div class="profile-top-row">
+        <div class="profile-user-main" id="user-name-container">
+          <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
+        </div>
+        <div id="user-score-container"></div>
+      </div>
+      <div class="profile-stats-row" id="user-stats-container">
+        <span class="player-status-tag">Статус: —</span>
+        <span class="player-status-tag">0В - 0П (0%)</span>
+      </div>
+      <div class="profile-actions-row">
+        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
+        <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
+      </div>
+    </div>
+
+    <button class="btn-match-quick" onclick="handleMatchClick()">
+      <span>⚔️</span><span>Записать результат матча</span>
     </button>
+    
+    <div id="pending-matches-container"></div>
   </div>
 
-  <!-- Блок сообществ -->
-  <div class="social-links-minimal">
-    <div class="social-pill">
-      <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg">
-        <span>✈️</span> Telegram
-      </a>
-      <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram">
-        <img src="TG.webp" alt="TG" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-        <span style="display: none; font-size: 11px;">📷</span>
-      </button>
-    </div>
-    <div class="social-pill">
-      <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max">
-        <span>💬</span> МАКС
-      </a>
-      <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС">
-        <img src="Max.webp" alt="Max" class="icon-img-mini" width="20" height="20" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-        <span style="display: none; font-size: 11px;">📷</span>
-      </button>
-    </div>
-  </div>
+</div> <!-- Конец .container -->
 
-  <!-- Плашка авторизации -->
-  <div class="auth-banner" id="web-auth-banner">
-    <h3>🔐 Подтвердите профиль игрока</h3>
-    <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
-    <div class="auth-methods-box">
-      <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
-      <button class="btn-auth-provider" style="background: #ffffff; color: #1e293b; border: 1px solid #334155;" onclick="loginWithGoogle()">
-        <span>🌐</span> Войти через Google
-      </button>
-    </div>
-    <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
-  </div>
-
-  <!-- Блок профиля -->
-  <div class="profile-card">
-    <div class="profile-top-row">
-      <div class="profile-user-main" id="user-name-container">
-        <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
-      </div>
-      <div id="user-score-container"></div>
-    </div>
-    <div class="profile-stats-row" id="user-stats-container">
-      <span class="player-status-tag">Статус: —</span>
-      <span class="player-status-tag">0В - 0П (0%)</span>
-    </div>
-    <div class="profile-actions-row">
-      <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
-      <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
-    </div>
-  </div>
-
-  <button class="btn-match-quick" onclick="handleMatchClick()">
-    <span>⚔️</span><span>Записать результат матча</span>
-  </button>
-  
-  <div id="pending-matches-container"></div>
-
-  <!-- Парк Тищенко -->
-  <div class="card" id="card-park">
-    <div class="card-top" onclick="toggleCard('park')">
-      <div>
-        <div class="card-title">🌳 Парк им. Тищенко</div>
-        <div class="card-desc">Столы на свежем воздухе</div>
-      </div>
-      <span class="counter" id="badge-park">0 игроков</span>
-    </div>
-    <div class="card-body-collapse">
-      <div class="weather-container" id="weather-park">
-        <div class="weather-badge"><span>Загрузка погоды...</span></div>
-      </div>
-      <div class="event-badge" id="announcement-box-park" style="display: none;"><span id="announcement-text-park"></span></div>
-      <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
-      <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-      <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
-      <div class="section-label">Собираются прийти:</div>
-      <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
-      <div class="action-group" id="btn-container-park">
-        <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
-        <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ДК Восток -->
-  <div class="card" id="card-vostok">
-    <div class="card-top" onclick="toggleCard('vostok')">
-      <div>
-        <div class="card-title">🏛 ДК «Восток»</div>
-        <div class="card-desc">ул. Сталеваров, 5а</div>
-      </div>
-      <span class="counter" id="badge-vostok">0 игроков</span>
-    </div>
-    <div class="card-body-collapse">
-      <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
-      <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
-      <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-      <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
-      <div class="section-label">Собираются прийти:</div>
-      <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
-      <div class="action-group" id="btn-container-vostok">
-        <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
-        <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
-      </div>
-    </div>
-  </div>
-
-  <!-- ВКЛАДКИ (без прилипания) -->
-  <div class="tabs-container">
-    <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Клубный рейтинг</button>
-    <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
-  </div>
-
-  <div class="rating-card" id="view-rating">
-    <div class="card-block-title" style="color: var(--accent-purple);">
-      <span>⚔️</span><span>Клубный рейтинг игроков</span>
-    </div>
-    <div id="rating-list" class="scrollable-list">
-      <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
-    </div>
-  </div>
-
-  <div class="leaderboard-card" id="view-time" style="display: none;">
-    <div class="card-block-title" style="color: var(--accent-gold);">
-      <span>🥇</span><span>Зал славы (Топ по часам)</span>
-    </div>
-    <div id="leaderboard-list" class="scrollable-list">
-      <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
-    </div>
-  </div>
-
+<!-- BOTTOM NAVIGATION -->
+<div class="bottom-nav">
+  <a class="nav-item active" id="nav-radar" onclick="switchNavTab('radar')">
+    <span class="nav-icon">📍</span>
+    <span>Радар</span>
+  </a>
+  <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')">
+    <span class="nav-icon">🏆</span>
+    <span>Рейтинг</span>
+  </a>
+  <a class="nav-item" id="nav-profile" onclick="switchNavTab('profile')">
+    <span class="nav-icon">👤</span>
+    <span>Профиль</span>
+  </a>
 </div>
 
-<!-- КАСТОМНОЕ УВЕДОМЛЕНИЕ ВМЕСТО ALERT() -->
+<!-- Плавающая кнопка возврата наверх -->
+<button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()">
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+    <polyline points="18 15 12 9 6 15"></polyline>
+  </svg>
+</button>
+
+<!-- МОДАЛЬНЫЕ ОКНА (КАК БЫЛИ) -->
 <div class="modal-overlay" id="custom-alert-modal">
   <div class="modal-box" style="border-color: var(--accent-sky); padding: 24px;">
-    <h3 style="font-size: 16px; color: #f8fafc; margin-bottom: 8px;">Клуб любителей настольного тенниса ЧМЗ</h3>
+    <h3 style="font-size: 16px; margin-bottom: 8px;">Клуб ЧМЗ</h3>
     <p id="custom-alert-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p>
     <button class="btn btn-join" onclick="closeCustomAlert()">ОК</button>
   </div>
 </div>
 
-<!-- Модальное окно Админки -->
 <div class="modal-overlay" id="admin-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 10px;">
@@ -368,7 +435,6 @@
   </div>
 </div>
 
-<!-- Модальное окно с QR-кодами -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -387,42 +453,40 @@
   </div>
 </div>
 
-<!-- Модальные окна Информации -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
-    <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: rgba(15, 23, 42, 0.6); padding: 12px; border-radius: 12px;">
+    <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;">
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--text-muted);">Не указан</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span id="info-modal-matches" style="font-weight: 600;">0</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span id="info-modal-winloss" style="font-weight: 600; color: var(--accent-green);">0В - 0П</span></div>
+      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span id="info-modal-winloss" style="font-weight: 600; color: #059669;">0В - 0П</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-gold);">0 мин</span></div>
     </div>
     <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
     <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
-    <button class="btn btn-join" style="background: #334155; margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
+    <button class="btn btn-leave" style="margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
   </div>
 </div>
 
-<!-- Модальное окно анонсов -->
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
-    <h3 style="font-size: 18px; color: #fde68a;">📢 Анонс</h3>
+    <h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс</h3>
     <textarea id="announcement-textarea" class="textarea-announcement"></textarea>
     <input type="hidden" id="announcement-target-loc" value="" />
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить</button>
-    <button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.15); border: 1px solid rgba(225, 29, 72, 0.3); color: #fda4af;" onclick="deleteAnnouncement()">Удалить анонс</button>
+    <button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary);" onclick="deleteAnnouncement()">Удалить анонс</button>
     <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
-    <h3 style="font-size: 18px; color: #d8b4fe;">⚔️ Запись матча</h3>
+    <h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3>
     <select id="match-opponent-select" class="input-select"></select>
     <div class="score-picker">
       <button class="score-btn" onclick="selectScore(3, 0)">3 : 0</button>
@@ -441,13 +505,13 @@
 
 <div class="modal-overlay" id="extend-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
-    <h3 style="font-size: 18px; color: #fde68a;">⏰ Время у стола</h3>
+    <h3 style="font-size: 18px; color: var(--accent-amber);">⏰ Время у стола</h3>
     <div class="modal-options-grid">
       <button class="btn-opt" onclick="extendSession(30)">+30 мин</button>
       <button class="btn-opt" onclick="extendSession(60)">+1 час</button>
       <button class="btn-opt" onclick="extendSession(120)">+2 часа</button>
     </div>
-    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c;" onclick="confirmLeaveFromModal()">👋 Уйти</button>
+    <button class="btn btn-leave" style="margin-top: 4px; background: #be123c; color: white;" onclick="confirmLeaveFromModal()">👋 Уйти</button>
   </div>
 </div>
 
@@ -481,7 +545,44 @@
 </div>
 
 <script>
-  // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ И КОНСТАНТ =================
+  // ================= ТЕМА И НАВИГАЦИЯ (НОВЫЙ БЛОК) =================
+  function initTheme() {
+    const savedTheme = localStorage.getItem('tt_theme') || 'dark';
+    document.documentElement.setAttribute('data-theme', savedTheme);
+    updateThemeIcon(savedTheme);
+  }
+
+  function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('tt_theme', newTheme);
+    updateThemeIcon(newTheme);
+  }
+
+  function updateThemeIcon(theme) {
+    const btn = document.getElementById('btn-theme');
+    if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
+    const metaTheme = document.getElementById('meta-theme-color');
+    if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9');
+  }
+
+  function switchNavTab(tabId) {
+    // Скрываем все экраны
+    document.querySelectorAll('.main-view').forEach(view => view.classList.remove('active'));
+    // Убираем выделение со всех кнопок навигации
+    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    
+    // Показываем нужный экран и выделяем кнопку
+    document.getElementById(`view-${tabId}`).classList.add('active');
+    document.getElementById(`nav-${tabId}`).classList.add('active');
+    window.scrollTo(0, 0); // Прокручиваем наверх при смене вкладки
+  }
+
+  // Вызываем инициализацию темы сразу
+  initTheme();
+
+  // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
   const TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
@@ -492,7 +593,6 @@
   const REMIND_BEFORE_MS = 15 * 60 * 1000;
   const ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; 
   
-  // Уникальные идентификаторы Администраторов
   const ADMIN_UIDS = ['tg_153650895', 'tg_azsnake'];
 
   let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
@@ -520,33 +620,22 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   const db = firebase.firestore();
 
-  // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ И КАСТОМНЫЙ ALERT =================
+  // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =================
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
     document.getElementById('custom-alert-modal').style.display = 'flex';
   }
-  function closeCustomAlert() {
-    document.getElementById('custom-alert-modal').style.display = 'none';
-  }
+  function closeCustomAlert() { document.getElementById('custom-alert-modal').style.display = 'none'; }
 
-  function cleanHtml(str) {
-    if (!str) return '';
-    return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  }
+  function cleanHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''; }
 
   function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-  
   function formatMinutes(mins) {
     if (!mins) return '0 мин';
     if (mins < 60) return `${mins} мин`;
     return `${Math.floor(mins / 60)} ч ${mins % 60} мин`;
   }
-
-  function formatDuration(ts) {
-    const mins = Math.floor((Date.now() - ts) / 60000);
-    return formatMinutes(mins);
-  }
-  
+  function formatDuration(ts) { return formatMinutes(Math.floor((Date.now() - ts) / 60000)); }
   function formatUntil(ts) {
     const diff = ts - Date.now();
     if (diff <= 0) return 'скоро';
@@ -573,27 +662,22 @@
   function switchTab(tab) {
     const tabRating = document.getElementById('tab-btn-rating');
     const tabTime = document.getElementById('tab-btn-time');
-    const viewRating = document.getElementById('view-rating');
-    const viewTime = document.getElementById('view-time');
+    const viewRating = document.getElementById('view-rating-content');
+    const viewTime = document.getElementById('view-time-content');
 
     if (tab === 'rating') {
-      tabRating.classList.add('active');
-      tabTime.classList.remove('active');
-      viewRating.style.display = 'flex';
-      viewTime.style.display = 'none';
+      tabRating.classList.add('active'); tabTime.classList.remove('active');
+      viewRating.style.display = 'flex'; viewTime.style.display = 'none';
     } else {
-      tabTime.classList.add('active');
-      tabRating.classList.remove('active');
-      viewTime.style.display = 'flex';
-      viewRating.style.display = 'none';
+      tabTime.classList.add('active'); tabRating.classList.remove('active');
+      viewTime.style.display = 'flex'; viewRating.style.display = 'none';
     }
   }
 
   function getWindDirection(degrees) {
     if (degrees === undefined || degrees === null) return "";
     const directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
-    const index = Math.round((degrees % 360) / 45);
-    return directions[index % 8];
+    return directions[Math.round((degrees % 360) / 45) % 8];
   }
 
   function getCustomBadge(uid) {
@@ -602,20 +686,22 @@
     if (uid === 'tg_750209461') return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
     if (uid === 'tg_6126323287') return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
     if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') return '<span class="platform-badge badge-bot">Бот 🤖</span>';
-    if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') {
-      return '<span class="platform-badge badge-coach">Тренер 📋</span>';
-    }
+    if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') return '<span class="platform-badge badge-coach">Тренер 📋</span>';
     return '';
   }
 
-  // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ И АНТИСПАМ =================
+  // ================= КНОПКА СКРОЛЛА НАВЕРХ =================
+  function scrollToTop() { window.scrollTo({ top: 0, behavior: 'smooth' }); }
+  document.addEventListener('scroll', () => {
+    const btn = document.getElementById('btn-scroll-top');
+    if (btn) btn.classList.toggle('visible', window.scrollY > 350);
+  });
+
+  // ================= УВЕДОМЛЕНИЯ =================
   function canSendTgAlert(actionType) {
     const now = Date.now();
     const lastTime = localStorage.getItem('tt_last_alert_' + actionType);
-    if (lastTime && (now - parseInt(lastTime)) < ANTI_SPAM_COOLDOWN) {
-      console.log(`[Антиспам] Уведомление отклонено.`);
-      return false;
-    }
+    if (lastTime && (now - parseInt(lastTime)) < ANTI_SPAM_COOLDOWN) return false;
     localStorage.setItem('tt_last_alert_' + actionType, now.toString());
     return true;
   }
@@ -624,10 +710,7 @@
     if (!GOOGLE_GATEWAY_URL) return;
     try {
       let f = document.getElementById('tg_sink_frame');
-      if (!f) {
-        f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none';
-        document.body.appendChild(f);
-      }
+      if (!f) { f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none'; document.body.appendChild(f); }
       const form = document.createElement('form');
       form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
       const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
@@ -640,25 +723,19 @@
     if ('Notification' in window && Notification.permission === 'granted') {
       try { new Notification(title, { body: body, icon: 'logo.webp', badge: 'logo.webp', vibrate: [200, 100, 200] }); } catch (e) {}
     }
-    if (window.Telegram?.WebApp?.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
-    }
+    if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning');
   }
 
-  // ================= ФУНКЦИИ QR-КОДОВ =================
+  // ================= QR-КОДЫ =================
   async function shareModalUrl() {
     if (!currentModalUrl) return;
     const shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
-    if (navigator.share) {
-      try { await navigator.share({ title: 'Клуб любителей настольного тенниса ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {}
-    } else {
-      navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => customAlert("📋 Ссылка скопирована!"));
-    }
+    if (navigator.share) { try { await navigator.share({ title: 'Клуб ЧМЗ', text: shareText, url: currentModalUrl }); } catch (err) {} } 
+    else { navigator.clipboard.writeText(`${shareText}: ${currentModalUrl}`).then(() => customAlert("📋 Ссылка скопирована!")); }
   }
 
   function openQrModal(type) {
-    let targetUrl = window.location.href, title = "QR-код приложения";
-    let desc = "Покажите этот QR-код друзьям для быстрого доступа:";
+    let targetUrl = window.location.href, title = "QR-код приложения", desc = "Покажите этот QR-код друзьям для быстрого доступа:";
     if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
     else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
 
@@ -669,32 +746,17 @@
     document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(targetUrl)}`;
     document.getElementById('qr-modal').style.display = 'flex';
   }
-
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
-  // ================= ФУНКЦИИ ПРОФИЛЯ И АВТОРИЗАЦИИ =================
+  // ================= ПРОФИЛЬ =================
   function getPlayerStatus(elo) {
-    if (elo <= 1000) return "Новичок 🟢";
-    if (elo <= 1200) return "Ученик 📘";
-    if (elo <= 1400) return "Любитель 👟";
-    if (elo <= 1600) return "Игрок основы 🏃‍♂️";
-    if (elo <= 1800) return "Третий разряд 🥉";
-    if (elo <= 2000) return "Второй разряд 🥈";
-    if (elo <= 2200) return "Первый разряд 🥇";
-    if (elo <= 2400) return "КМС 🏅";
-    if (elo <= 2600) return "Мастер спорта 🏆";
-    if (elo <= 2800) return "Элитный игрок ⭐";
-    if (elo <= 3000) return "Мастер атаки 🔥";
-    if (elo <= 3200) return "Гроссмейстер ♟️";
-    if (elo <= 3400) return "Чемпион клуба 👑";
-    if (elo <= 3600) return "Гранд-мастер 🎖️";
-    if (elo <= 3800) return "Снайпер 🎯";
-    if (elo <= 4000) return "Легенда клуба 🏛️";
-    if (elo <= 4200) return "Премьер-лига 📈";
-    if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
-    if (elo <= 4600) return "Властелин стола 👑🏓";
-    if (elo <= 4800) return "Феномен 🌠";
-    return "Легенда спорта 🌟🏆";
+    if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
+    if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
+    if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆";
+    if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️";
+    if (elo <= 3400) return "Чемпион клуба 👑"; if (elo <= 3600) return "Гранд-мастер 🎖️"; if (elo <= 3800) return "Снайпер 🎯";
+    if (elo <= 4000) return "Легенда клуба 🏛️"; if (elo <= 4200) return "Премьер-лига 📈"; if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
+    if (elo <= 4600) return "Властелин стола 👑🏓"; if (elo <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
   }
 
   function isUserVerified() {
@@ -710,35 +772,28 @@
   }
 
   function isSuperAdmin() {
-    const tgUser = window.Telegram?.WebApp?.initDataUnsafe?.user;
-    if (tgUser && tgUser.username?.toLowerCase() === 'azsnake') return true;
-    const myUid = getVerifiedUserId();
-    return ADMIN_UIDS.includes(myUid);
+    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.username?.toLowerCase() === 'azsnake') return true;
+    return ADMIN_UIDS.includes(getVerifiedUserId());
   }
 
   window.onTelegramAuth = async function(user) {
-    const uid = 'tg_' + user.id;
-    localStorage.setItem('tt_member_id', uid);
+    const uid = 'tg_' + user.id; localStorage.setItem('tt_member_id', uid);
     await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg');
   };
 
   async function loginWithGoogle() {
     try {
-      const provider = new firebase.auth.GoogleAuthProvider();
-      const res = await firebase.auth().signInWithPopup(provider);
+      const res = await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider());
       if (res && res.user) {
-        const u = res.user;
-        const uid = 'google_' + u.uid;
-        localStorage.setItem('tt_member_id', uid);
-        await syncUserProfile(uid, u.displayName || u.email.split('@')[0], 'google');
+        const uid = 'google_' + res.user.uid; localStorage.setItem('tt_member_id', uid);
+        await syncUserProfile(uid, res.user.displayName || res.user.email.split('@')[0], 'google');
       }
     } catch (e) { customAlert("Ошибка входа: " + e.message); }
   }
 
   async function logoutProfile() {
     try { await firebase.auth().signOut(); } catch (e) {}
-    localStorage.removeItem('tt_member_id');
-    localStorage.removeItem('tt_name');
+    localStorage.removeItem('tt_member_id'); localStorage.removeItem('tt_name');
     window.location.reload();
   }
 
@@ -753,82 +808,47 @@
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
     let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
-    
     try {
-      const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
-      const snap = await Promise.race([ref.get(), timeoutPromise]);
+      const snap = await Promise.race([ref.get(), new Promise((_, r) => setTimeout(() => r(new Error()), 2000))]);
       if (!snap.exists) {
         await ref.set(userData);
-        
-        // --- НОВОЕ УВЕДОМЛЕНИЕ О РЕГИСТРАЦИИ В ЧАТ ---
-        try {
-          const allUsers = await db.collection('users').get();
-          const totalCount = allUsers.size;
-          sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении настольного тенниса ЧМЗ зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${totalCount}</b> человек!\n\n🏓 Заходите в приложение, отмечайтесь у столов и находите соперников для игры!`);
-        } catch(e) { console.error("Ошибка подсчета юзеров:", e); }
-        
-      } else {
-        userData = snap.data();
-      }
+        try { const sz = (await db.collection('users').get()).size; sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${sz}</b> человек!`); } catch(e) {}
+      } else { userData = snap.data(); }
     } catch (e) {}
-    
     currentUserProfile = userData;
-    const banner = document.getElementById('web-auth-banner');
-    if (banner) banner.style.display = 'none';
-    
-    subscribeToUserLeaderboard(uid);
-    
-    updateProfileDisplay();
-    localStorage.setItem('tt_name', currentUserProfile.name);
-    renderAll();
+    const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
+    subscribeToUserLeaderboard(uid); updateProfileDisplay();
+    localStorage.setItem('tt_name', currentUserProfile.name); renderAll();
   }
 
   async function initUserProfile() {
     const banner = document.getElementById('web-auth-banner');
-    
     if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       if (banner) banner.style.display = 'none';
       const u = window.Telegram.WebApp.initDataUnsafe.user;
-      await syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
-      return;
+      return syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
     }
-    
     const savedId = localStorage.getItem('tt_member_id');
     if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
       try {
-        const timeoutPromise = new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 2000));
-        const snap = await Promise.race([db.collection('users').doc(savedId).get(), timeoutPromise]);
-        
+        const snap = await Promise.race([db.collection('users').doc(savedId).get(), new Promise((_, r) => setTimeout(() => r(new Error()), 2000))]);
         if (snap.exists) {
           let data = snap.data();
-          
-          // 🏥 АВТО-ЛЕЧЕНИЕ БАЗЫ ДАННЫХ
           if (data.isVerified === undefined || data.elo === undefined) {
-            data.isVerified = true;
-            data.elo = data.elo !== undefined ? data.elo : 1000;
-            data.matches = data.matches || 0;
-            data.wins = data.wins || 0;
-            data.losses = data.losses || 0;
-            data.uid = savedId;
-            data.platform = savedId.startsWith('google_') ? 'google' : 'tg';
+            data.isVerified = true; data.elo = data.elo !== undefined ? data.elo : 1000;
+            data.matches = data.matches || 0; data.wins = data.wins || 0; data.losses = data.losses || 0;
+            data.uid = savedId; data.platform = savedId.startsWith('google_') ? 'google' : 'tg';
             db.collection('users').doc(savedId).set(data, { merge: true }); 
           }
-          
-          currentUserProfile = data;
-          updateProfileDisplay();
-          subscribeToUserLeaderboard(savedId);
-          if (banner) banner.style.display = 'none';
-          renderAll();
-          return;
+          currentUserProfile = data; updateProfileDisplay(); subscribeToUserLeaderboard(savedId);
+          if (banner) banner.style.display = 'none'; renderAll(); return;
         }
       } catch (e) {}
     }
     
     currentUserProfile = { uid: null, name: "Гость" };
-    const nameEl = document.getElementById('user-name-container');
-    if (nameEl) nameEl.innerHTML = '<span>Вы: <b style="color: #94a3b8;">Не авторизован</b></span>';
-    const statsEl = document.getElementById('user-stats-container');
-    if (statsEl) statsEl.innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
+    document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: var(--text-muted);">Не авторизован</b></span>';
+    document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
     
     if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
       if (banner) banner.style.display = 'flex';
@@ -838,10 +858,8 @@
         const script = document.createElement('script');
         script.src = "https://telegram.org/js/telegram-widget.js?22";
         script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
-        script.setAttribute('data-size', 'large');
-        script.setAttribute('data-radius', '10');
-        script.setAttribute('data-onauth', 'onTelegramAuth(user)');
-        script.setAttribute('data-request-access', 'write');
+        script.setAttribute('data-size', 'large'); script.setAttribute('data-radius', '10');
+        script.setAttribute('data-onauth', 'onTelegramAuth(user)'); script.setAttribute('data-request-access', 'write');
         container.appendChild(script);
       }
     }
@@ -855,25 +873,16 @@
     let badgeHtml = isGoogle ? '<span class="platform-badge badge-google">Google</span>' : '<span class="platform-badge badge-tg">TG</span>';
     const elo = currentUserProfile.elo || 1000;
 
-    const banner = document.getElementById('web-auth-banner');
-    if (banner) banner.style.display = 'none';
+    const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
 
-    const nameEl = document.getElementById('user-name-container');
-    if (nameEl) nameEl.innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag} ${customBadge}`;
+    document.getElementById('user-name-container').innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${badgeHtml} ${adminTag} ${customBadge}`;
+    document.getElementById('user-score-container').innerHTML = `<div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span></div>`;
     
-    const scoreEl = document.getElementById('user-score-container');
-    if (scoreEl) scoreEl.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: flex-end;">
-        <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span>
-        <span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>
-      </div>`;
-    
-    const statsEl = document.getElementById('user-stats-container');
     const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : '';
-    if (statsEl) statsEl.innerHTML = `
+    document.getElementById('user-stats-container').innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 4px;">
         <span class="player-status-tag">${getPlayerStatus(elo)} ${rttfText ? ' • ' + rttfText : ''}</span>
-        <span class="player-status-tag" style="color: var(--accent-sky);">⏱ За столом: ${formatMinutes(currentUserProfile.totalMinutes || 0)}</span>
+        <span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ${formatMinutes(currentUserProfile.totalMinutes || 0)}</span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
         <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>
@@ -881,486 +890,246 @@
       </div>
     `;
 
-    const editBtn = document.getElementById('btn-edit-profile');
-    if (editBtn) editBtn.style.display = 'block';
-    const logoutBtn = document.getElementById('btn-logout');
-    if (logoutBtn) logoutBtn.style.display = 'block';
+    document.getElementById('btn-edit-profile').style.display = 'block';
+    document.getElementById('btn-logout').style.display = 'block';
   }
 
-  function openAdminMenu() {
-    document.getElementById('admin-modal').style.display = 'flex';
-  }
-  function closeAdminMenu() {
-    document.getElementById('admin-modal').style.display = 'none';
-  }
-
-  // ================= ФУНКЦИИ РЕДАКТИРОВАНИЯ ИМЕНИ И РТТФ =================
-  function handleEditProfileClick() { if (isUserVerified()) showNameModal(); }
-  function showNameModal() {
-    document.getElementById('name-input').value = currentUserProfile.name || '';
-    document.getElementById('rttf-input').value = currentUserProfile.rttf || '';
-    document.getElementById('name-error-box').style.display = 'none';
-    document.getElementById('name-modal').style.display = 'flex';
-  }
+  // ================= РЕДАКТИРОВАНИЕ ПРОФИЛЯ =================
+  function handleEditProfileClick() { if (isUserVerified()) { document.getElementById('name-input').value = currentUserProfile.name || ''; document.getElementById('rttf-input').value = currentUserProfile.rttf || ''; document.getElementById('name-error-box').style.display = 'none'; document.getElementById('name-modal').style.display = 'flex'; } }
   function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
   
   async function saveCustomNameWithCheck() {
-    const uid = getVerifiedUserId();
-    if (!uid) return;
+    const uid = getVerifiedUserId(); if (!uid) return;
     const val = document.getElementById('name-input').value.trim();
-    const rttfRaw = document.getElementById('rttf-input').value.trim();
-    const rttfVal = rttfRaw ? parseInt(rttfRaw) : null;
-    
+    const rttfVal = document.getElementById('rttf-input').value.trim() ? parseInt(document.getElementById('rttf-input').value.trim()) : null;
     if (val.length < 2) return;
-
-    // 🛡️ ЗАЩИТА РТТФ: Жесткая валидация
-    if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) {
-      customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
-      return;
-    }
+    if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) return customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
     
     try {
       const updateData = { name: val };
-      if (rttfVal !== null) updateData.rttf = rttfVal;
-      else updateData.rttf = firebase.firestore.FieldValue.delete();
+      if (rttfVal !== null) updateData.rttf = rttfVal; else updateData.rttf = firebase.firestore.FieldValue.delete();
       
-      // 🛡️ БРОНЯ: Перед сохранением имени проверяем РЕАЛЬНОЕ состояние профиля в базе
-      const doc = await db.collection('users').doc(uid).get();
-      const data = doc.exists ? doc.data() : {};
-
+      const doc = await db.collection('users').doc(uid).get(); const data = doc.exists ? doc.data() : {};
       if (!doc.exists || data.isVerified === undefined || data.elo === undefined) {
-        updateData.isVerified = true;
-        updateData.elo = data.elo !== undefined ? data.elo : 1000;
-        updateData.matches = data.matches || 0;
-        updateData.wins = data.wins || 0;
-        updateData.losses = data.losses || 0;
-        updateData.uid = uid;
-        updateData.platform = uid.startsWith('google_') ? 'google' : 'tg';
-        updateData.createdAt = data.createdAt || Date.now();
+        updateData.isVerified = true; updateData.elo = data.elo !== undefined ? data.elo : 1000; updateData.matches = data.matches || 0; updateData.wins = data.wins || 0; updateData.losses = data.losses || 0; updateData.uid = uid; updateData.platform = uid.startsWith('google_') ? 'google' : 'tg'; updateData.createdAt = data.createdAt || Date.now();
       }
-      
       await db.collection('users').doc(uid).set(updateData, { merge: true });
-      
-      currentUserProfile.name = val;
-      currentUserProfile.rttf = rttfVal;
-      if (updateData.isVerified) {
-        currentUserProfile = { ...currentUserProfile, ...updateData };
-      }
-      
-      localStorage.setItem('tt_name', val);
-      updateProfileDisplay();
-      hideNameModal();
-      renderAll();
-    } catch (e) {
-      console.error("Ошибка при сохранении профиля:", e);
-      customAlert("Не удалось сохранить профиль. Проверьте интернет-соединение.");
-    }
+      currentUserProfile.name = val; currentUserProfile.rttf = rttfVal;
+      if (updateData.isVerified) currentUserProfile = { ...currentUserProfile, ...updateData };
+      localStorage.setItem('tt_name', val); updateProfileDisplay(); hideNameModal(); renderAll();
+    } catch (e) { customAlert("Не удалось сохранить профиль."); }
   }
 
-  // ================= ФУНКЦИИ ЧЕКИНА И БРОНИРОВАНИЯ =================
+  // ================= ЧЕКИН И БРОНЬ =================
   function handleCheckInClick(loc) { if (isUserVerified()) checkIn(loc); }
   function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
   function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
   
   async function checkIn(loc) {
-    const uid = getVerifiedUserId();
-    if (!uid) return;
-    if ('Notification' in window && Notification.permission === 'default') { Notification.requestPermission(); }
-    const now = Date.now();
-    const otherLoc = loc === 'park' ? 'vostok' : 'park';
-    let finalList = [];
-    
+    const uid = getVerifiedUserId(); if (!uid) return;
+    if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    const now = Date.now(), otherLoc = loc === 'park' ? 'vostok' : 'park'; let finalList = [];
     try {
       await db.runTransaction(async t => {
-        const tDoc = await t.get(db.collection('locations').doc(loc));
-        const oDoc = await t.get(db.collection('locations').doc(otherLoc));
-        let tP = tDoc.exists ? tDoc.data().players || [] : [];
-        let oP = oDoc.exists ? oDoc.data().players || [] : [];
-        let tPl = tDoc.exists ? tDoc.data().plans || [] : [];
-        
+        const tDoc = await t.get(db.collection('locations').doc(loc)), oDoc = await t.get(db.collection('locations').doc(otherLoc));
+        let tP = tDoc.exists ? tDoc.data().players || [] : [], oP = oDoc.exists ? oDoc.data().players || [] : [], tPl = tDoc.exists ? tDoc.data().plans || [] : [];
         if (tP.find(p => (p.uid || p) === uid)) return;
-        
-        tP = tP.filter(p => (p.uid || p) !== uid);
-        oP = oP.filter(p => (p.uid || p) !== uid);
-        tPl = tPl.filter(p => (p.uid || p) !== uid);
-        
-        tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS });
-        finalList = tP;
-        
-        t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true });
-        t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
+        tP = tP.filter(p => (p.uid || p) !== uid); oP = oP.filter(p => (p.uid || p) !== uid); tPl = tPl.filter(p => (p.uid || p) !== uid);
+        tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS }); finalList = tP;
+        t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
       });
-
       hasTriggeredPush = false;
-      if (canSendTgAlert('status_change')) {
-        const quoteBlock = buildBlockquoteList(finalList, "Сейчас за столом");
-        sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${quoteBlock}\n\nКто составит компанию?`);
-      }
+      if (canSendTgAlert('status_change')) sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${buildBlockquoteList(finalList, "Сейчас за столом")}\n\nКто составит компанию?`);
     } catch(e) {}
   }
 
   async function leave(loc) {
-    const uid = getVerifiedUserId();
-    if (!uid) return;
-    let spentMins = 0;
-    let spentStr = "";
-    let finalList = [];
+    const uid = getVerifiedUserId(); if (!uid) return;
+    let spentMins = 0, spentStr = "", finalList = [];
     try {
       await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc));
-        if (!d.exists) return;
+        const d = await t.get(db.collection('locations').doc(loc)); if (!d.exists) return;
         let p = d.data().players || [];
-        
         const cPlayer = p.find(pl => (pl.uid || pl) === uid);
-        if (cPlayer && cPlayer.time) {
-          spentMins = Math.floor((Date.now() - cPlayer.time) / 60000);
-          spentStr = formatDuration(cPlayer.time);
-        }
-        
-        p = p.filter(pl => (pl.uid || pl) !== uid);
-        finalList = p;
+        if (cPlayer && cPlayer.time) { spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); spentStr = formatDuration(cPlayer.time); }
+        p = p.filter(pl => (pl.uid || pl) !== uid); finalList = p;
         t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
       });
-      
       if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
-      document.getElementById('extend-modal').style.display = 'none';
-      hasTriggeredPush = false;
-
-      if (canSendTgAlert('status_change')) {
-        const timeInfo = spentStr ? ` (время тренировки: <code>${spentStr}</code>)` : "";
-        let quoteBlock = finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>";
-        sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${timeInfo}.${quoteBlock}`);
-      }
+      document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
+      if (canSendTgAlert('status_change')) sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${spentStr ? ` (время: <code>${spentStr}</code>)` : ""}.${finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`);
     } catch(e) {}
   }
 
   function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
 
   async function extendSession(addMins) {
-    const uid = getVerifiedUserId();
-    if (!uid || !currentUserActiveLoc) return;
+    const uid = getVerifiedUserId(); if (!uid || !currentUserActiveLoc) return;
     try {
       await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(currentUserActiveLoc));
-        if(!d.exists) return;
-        let p = d.data().players || [];
-        p = p.map(pl => {
-          if ((pl.uid||pl) === uid) return { ...pl, maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) };
-          return pl;
-        });
+        const d = await t.get(db.collection('locations').doc(currentUserActiveLoc)); if(!d.exists) return;
+        let p = (d.data().players || []).map(pl => ((pl.uid||pl) === uid) ? { ...pl, maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) } : pl);
         t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
       });
-      hasTriggeredPush = false;
-      document.getElementById('extend-modal').style.display = 'none';
+      hasTriggeredPush = false; document.getElementById('extend-modal').style.display = 'none';
     } catch(e) {}
   }
 
   async function submitQuickPlan(m) { await applyPlan(Date.now() + m * 60000); }
-  
   async function submitExactPlan() {
-    const val = document.getElementById('exact-time-input').value;
-    if(!val) return;
-    const [h, m] = val.split(':').map(Number);
-    const d = new Date(); d.setHours(h, m, 0, 0);
-    if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1);
-    await applyPlan(d.getTime());
+    const val = document.getElementById('exact-time-input').value; if(!val) return;
+    const [h, m] = val.split(':').map(Number), d = new Date(); d.setHours(h, m, 0, 0);
+    if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); await applyPlan(d.getTime());
   }
-  
   async function applyPlan(ts) {
-    const uid = getVerifiedUserId();
-    if(!uid) return;
-    const loc = activePlanningLoc;
-    closePlanModal();
+    const uid = getVerifiedUserId(), loc = activePlanningLoc; if(!uid) return; closePlanModal();
     try {
       await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc));
-        let pl = d.exists ? d.data().plans || [] : [];
-        pl = pl.filter(p => (p.uid||p) !== uid);
-        pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid });
-        t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
+        const d = await t.get(db.collection('locations').doc(loc)); let pl = (d.exists ? d.data().plans || [] : []).filter(p => (p.uid||p) !== uid);
+        pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid }); t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
       });
-      
-      if (canSendTgAlert('status_change')) {
-        let textLabel = formatUntil(ts);
-        sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${textLabel}</b>!\n\nКто готов составить пару?`);
-      }
+      if (canSendTgAlert('status_change')) sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${formatUntil(ts)}</b>!\n\nКто готов составить пару?`);
     } catch(e) {}
   }
-  
   async function cancelPlan(loc) {
-    const uid = getVerifiedUserId();
-    if(!uid) return;
+    const uid = getVerifiedUserId(); if(!uid) return;
     try {
       await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc));
-        if(!d.exists) return;
-        let pl = d.data().plans || [];
-        pl = pl.filter(p => (p.uid||p) !== uid);
-        t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
+        const d = await t.get(db.collection('locations').doc(loc)); if(!d.exists) return;
+        t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(p => (p.uid||p) !== uid) }, { merge: true });
       });
     } catch(e) {}
   }
 
-  // ================= ФУНКЦИИ МАТЧЕЙ =================
-  function handleMatchClick() { if (isUserVerified()) openMatchModal(); }
-  function openMatchModal() {
+  // ================= МАТЧИ =================
+  function handleMatchClick() { if (isUserVerified()) {
     const uid = getVerifiedUserId();
-    if (!currentUserActiveLoc || !uid) { customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!"); return; }
-    const sel = document.getElementById('match-opponent-select');
-    sel.innerHTML = '';
+    if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
+    const sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
     const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
-    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; }
-    else { opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; }); }
-    selectScore(3,0);
-    document.getElementById('match-modal').style.display = 'flex';
-  }
+    if (opps.length === 0) sel.innerHTML = '<option value="">(нет других игроков)</option>';
+    else opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; });
+    selectScore(3,0); document.getElementById('match-modal').style.display = 'flex';
+  }}
   function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
   function selectScore(my, opp) {
-    document.getElementById('match-my-score').value = my;
-    document.getElementById('match-opp-score').value = opp;
-    document.querySelectorAll('.score-btn').forEach(b => {
-      b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`);
-    });
+    document.getElementById('match-my-score').value = my; document.getElementById('match-opp-score').value = opp;
+    document.querySelectorAll('.score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`));
   }
   
   async function submitMatchProposal() {
-    const uid = getVerifiedUserId();
-    const selectEl = document.getElementById('match-opponent-select');
-    const oppUid = selectEl.value;
-    
+    const uid = getVerifiedUserId(), sel = document.getElementById('match-opponent-select'), oppUid = sel.value;
     if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
-    
-    const oppName = selectEl.options[selectEl.selectedIndex].text; 
-    
     closeMatchModal();
     try {
-      await db.collection('pending_matches').add({
-        proposerUid: uid, 
-        proposerName: currentUserProfile.name, 
-        opponentUid: oppUid, 
-        opponentName: oppName, 
-        scoreProposer: parseInt(document.getElementById('match-my-score').value), 
-        scoreOpponent: parseInt(document.getElementById('match-opp-score').value),
-        timestamp: Date.now()
-      });
+      await db.collection('pending_matches').add({ proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: sel.options[sel.selectedIndex].text, scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value), timestamp: Date.now() });
       customAlert("✅ Запрос отправлен!");
     } catch(e){}
   }
 
   function listenPendingMatches() {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
-
+    const myUid = getVerifiedUserId(); if (!myUid) return;
     db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(snap => {
-      const container = document.getElementById('pending-matches-container');
-      if (snap.empty) { container.innerHTML = ''; return; }
+      const c = document.getElementById('pending-matches-container');
+      if (snap.empty) { c.innerHTML = ''; return; }
       let html = '';
-      snap.forEach(doc => {
-        const m = doc.data();
-        html += `
-          <div style="background: rgba(168, 85, 247, 0.15); border: 1px solid var(--accent-purple); padding: 12px 14px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">
-            <div style="font-size: 13px; font-weight: 600; color: #d8b4fe;">⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b></div>
-            <div style="font-size: 13px;">Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}</div>
-            <div style="display: flex; gap: 8px; margin-top: 4px;">
-              <button class="btn btn-join" style="background: var(--accent-green); padding: 8px;" onclick="confirmMatch('${doc.id}')">Подтвердить</button>
-              <button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${doc.id}')">Отклонить</button>
-            </div>
-          </div>
-        `;
-      });
-      container.innerHTML = html;
+      snap.forEach(doc => { const m = doc.data(); html += `<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b></div><div style="font-size: 13px;">Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch('${doc.id}')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${doc.id}')">Отклонить</button></div></div>`; });
+      c.innerHTML = html;
     });
   }
 
-  function calculateElo(ratingA, ratingB, actualScoreA, k = 32) {
-    const expectedScoreA = 1 / (1 + Math.pow(10, (ratingB - ratingA) / 400));
-    return Math.round(k * (actualScoreA - expectedScoreA));
-  }
+  function calculateElo(ratingA, ratingB, actualScoreA, k = 32) { return Math.round(k * (actualScoreA - (1 / (1 + Math.pow(10, (ratingB - ratingA) / 400))))); }
 
   async function confirmMatch(matchId) {
-    const myUid = getVerifiedUserId();
-    if (!myUid) return;
+    const myUid = getVerifiedUserId(); if (!myUid) return;
     try {
-      const matchRef = db.collection('pending_matches').doc(matchId);
-      const matchDoc = await matchRef.get();
-      if (!matchDoc.exists) return;
-
-      const m = matchDoc.data();
-      const pRef = db.collection('users').doc(m.proposerUid);
-      const oRef = db.collection('users').doc(m.opponentUid);
-
-      let myDelta = 0, newPElo = 1000, newOElo = 1000;
-
+      const matchRef = db.collection('pending_matches').doc(matchId); const matchDoc = await matchRef.get(); if (!matchDoc.exists) return;
+      const m = matchDoc.data(), pRef = db.collection('users').doc(m.proposerUid), oRef = db.collection('users').doc(m.opponentUid);
+      let newPElo = 1000, newOElo = 1000;
       await db.runTransaction(async (t) => {
-        const pDoc = await t.get(pRef);
-        const oDoc = await t.get(oRef);
-        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0 };
-        const oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0 };
-
-        const isPWin = m.scoreProposer > m.scoreOpponent;
-        myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
-
-        newPElo = Math.max(100, (pData.elo || 1000) + myDelta);
-        newOElo = Math.max(100, (oData.elo || 1000) - myDelta);
-
+        const pDoc = await t.get(pRef), oDoc = await t.get(oRef);
+        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0 }, oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0 };
+        const isPWin = m.scoreProposer > m.scoreOpponent, myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
+        newPElo = Math.max(100, (pData.elo || 1000) + myDelta); newOElo = Math.max(100, (oData.elo || 1000) - myDelta);
         t.set(pRef, { elo: newPElo, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
         t.set(oRef, { elo: newOElo, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
       });
-
-      await db.collection('matches_history').add({
-        p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer,
-        p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent,
-        participants: [m.proposerUid, m.opponentUid], timestamp: Date.now()
-      });
-
+      await db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
       await matchRef.delete();
-      sendTelegramAlert(`🏆 <b>Рейтинговый матч подтверждён и зачтён!</b>\n\n🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ${cleanHtml(m.proposerName)}: ${newPElo}\n• ${cleanHtml(m.opponentName)}: ${newOElo}</blockquote>`);
+      sendTelegramAlert(`🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ${cleanHtml(m.proposerName)}: ${newPElo}\n• ${cleanHtml(m.opponentName)}: ${newOElo}</blockquote>`);
     } catch(e) {}
   }
-
-  async function rejectMatch(matchId) {
-    try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {}
-  }
-
+  async function rejectMatch(matchId) { try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {} }
   async function recordTrainingTime(uid, name, durationMinutes) {
     if (!uid || durationMinutes <= 0) return;
     try {
       const userRef = db.collection('leaderboard').doc(uid);
       await db.runTransaction(async (t) => {
-        const doc = await t.get(userRef);
-        const data = doc.data() || { name: name, totalMinutes: 0, sessions: 0 };
+        const doc = await t.get(userRef); const data = doc.data() || { name: name, totalMinutes: 0, sessions: 0 };
         t.set(userRef, { name: name, uid: uid, totalMinutes: (data.totalMinutes || 0) + durationMinutes, sessions: (data.sessions || 0) + 1, lastPlayed: Date.now() }, { merge: true });
       });
     } catch(e) {}
   }
 
-  // ================= ФУНКЦИИ ПРОСМОТРА ПРОФИЛЯ (INFO) =================
+  // ================= АДМИН ПАНЕЛЬ И АНОНСЫ =================
+  function openAdminMenu() { document.getElementById('admin-modal').style.display = 'flex'; }
+  function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
+  function sendAdminBroadcast() {
+    if(!isSuperAdmin()) return; const t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
+    sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
+  }
+  function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
+  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
+  async function saveAnnouncement() { const loc = document.getElementById('announcement-target-loc').value, txt = document.getElementById('announcement-textarea').value.trim(); await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true }); closeAnnouncementModal(); if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`); }
+  async function deleteAnnouncement() { if(!isSuperAdmin()) return; const loc = document.getElementById('announcement-target-loc').value; await db.collection('settings').doc('announcements').set({ [loc]: "" }, { merge: true }); closeAnnouncementModal(); customAlert("✅ Анонс удален"); }
+
+  // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
   async function showUserInfoModal(uid) {
-    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка...";
-    document.getElementById('user-info-modal').style.display = 'flex';
+    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; document.getElementById('user-info-modal').style.display = 'flex';
     try {
-      const d = await db.collection('users').doc(uid).get();
-      if(!d.exists) { closeUserInfoModal(); return; }
-      const u = d.data();
-      
-      const isProfileAdmin = ADMIN_UIDS.includes(uid);
-      const adminTag = isProfileAdmin ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
-      const customBadge = getCustomBadge(uid);
-      
+      const d = await db.collection('users').doc(uid).get(); if(!d.exists) { closeUserInfoModal(); return; }
+      const u = d.data(), adminTag = ADMIN_UIDS.includes(uid) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '', customBadge = getCustomBadge(uid);
       document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
       
-      let uidHtml = '';
-      if (isSuperAdmin()) {
-        uidHtml = `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid rgba(255,255,255,0.1);"><span style="color: var(--text-muted);">UID (Только Админ):</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>`;
-      }
-      
-      const ld = await db.collection('leaderboard').doc(uid).get();
-      const mins = ld.exists ? ld.data().totalMinutes||0 : 0;
-      const winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
+      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID (Только Админ):</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>` : '';
+      const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
 
-      document.getElementById('info-modal-content-area').innerHTML = `
-        ${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span style="font-weight: 700; color: var(--accent-purple);">${u.elo||1000}</span></div>
+      document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span style="font-weight: 600; color: var(--accent-green);">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>
-      `;
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
       
       const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
       const hEl = document.getElementById('info-modal-history');
       if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
       let h = '';
       snaps.forEach(doc => {
-        const m = doc.data(); const isP1 = m.p1Uid === uid;
-        const myS = isP1?m.p1Score:m.p2Score; const opS = isP1?m.p2Score:m.p1Score;
-        const opN = isP1?m.p2Name:m.p1Name; const isWin = myS>opS;
-        h += `<div style="background: rgba(11,17,32,0.5); padding: 8px; border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;">
-                <div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div>
-                <div style="color:${isWin?'var(--accent-green)':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div>
-              </div>`;
+        const m = doc.data(), isP1 = m.p1Uid === uid, myS = isP1?m.p1Score:m.p2Score, opS = isP1?m.p2Score:m.p1Score, opN = isP1?m.p2Name:m.p1Name, isWin = myS>opS;
+        h += `<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div><div style="color:${isWin?'#059669':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div></div>`;
       });
       hEl.innerHTML = h;
     } catch(e){}
   }
   function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
-  // ================= АДМИН ПАНЕЛЬ =================
-  function sendAdminBroadcast() {
-    if(!isSuperAdmin()) return;
-    const t = document.getElementById('admin-broadcast-text').value.trim();
-    if(!t) return;
-    sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`);
-    document.getElementById('admin-broadcast-text').value = '';
-    closeAdminMenu();
-    customAlert("✅ Отправлено");
-  }
-  function openAnnouncementModal(loc) {
-    if(!isSuperAdmin()) return;
-    document.getElementById('announcement-target-loc').value = loc;
-    document.getElementById('announcement-textarea').value = announcementsData[loc] || '';
-    document.getElementById('announcement-modal').style.display = 'flex';
-  }
-  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
-  
-  async function saveAnnouncement() {
-    const loc = document.getElementById('announcement-target-loc').value;
-    const txt = document.getElementById('announcement-textarea').value.trim();
-    await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true });
-    closeAnnouncementModal();
-    if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`);
-  }
-
-  // Тихое удаление анонса
-  async function deleteAnnouncement() {
-    if(!isSuperAdmin()) return;
-    const loc = document.getElementById('announcement-target-loc').value;
-    await db.collection('settings').doc('announcements').set({ [loc]: "" }, { merge: true });
-    closeAnnouncementModal();
-    customAlert("✅ Анонс успешно удален");
-  }
-
   // ================= РЕЙТИНГИ =================
   function listenRatings() {
     db.collection('users').orderBy('elo', 'desc').limit(100).onSnapshot(snap => {
-      const listEl = document.getElementById('rating-list');
-      allRegisteredUsers = [];
+      const listEl = document.getElementById('rating-list'); allRegisteredUsers = [];
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
       let html = '', rank = 1, myUid = getVerifiedUserId();
       snap.forEach(doc => {
-        const d = doc.data();
-        if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_') && !d.isVerified) return;
+        const d = doc.data(); if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_') && !d.isVerified) return;
         allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
         if (doc.id === myUid) { currentUserProfile = { ...currentUserProfile, ...d }; updateProfileDisplay(); }
-        const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
-        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
-        const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0;
-        const winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+        const rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+        const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0, winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+        const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id), rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : '';
         
-        const isAdmin = ADMIN_UIDS.includes(doc.id);
-        const adminBadgeHTML = isAdmin ? '<span class="platform-badge badge-admin" style="margin-left: 4px;">Админ ⭐</span>' : '';
-        const customBadge = getCustomBadge(doc.id);
-        let rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : '';
-        
-        html += `
-          <div class="leader-row">
-            <div class="leader-left">
-              <span class="leader-rank ${rankClass}">${medal}</span>
-              <div>
-                 <div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div>
-                 <div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}</div>
-              </div>
-            </div>
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">
-                <span class="rating-score">${d.elo || 1000}</span>
-                <span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span>
-              </div>
-              <button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button>
-            </div>
-          </div>
-        `;
+        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><span class="rating-score">${d.elo || 1000}</span><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button></div></div>`;
         rank++;
       });
       listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
@@ -1373,245 +1142,98 @@
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
       let html = '', rank = 1;
       snap.forEach(doc => {
-        const d = doc.data();
-        if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_')) return;
-        const hours = (d.totalMinutes / 60).toFixed(1);
-        const rankClass = rank <= 3 ? `leader-rank-${rank}` : '';
-        const medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
-        
-        const isAdmin = ADMIN_UIDS.includes(doc.id);
-        const adminBadgeHTML = isAdmin ? '<span class="platform-badge badge-admin" style="margin-left: 4px;">Админ ⭐</span>' : '';
-        const customBadge = getCustomBadge(doc.id);
-        
-        html += `
-          <div class="leader-row">
-            <div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div></div>
-            <span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span>
-          </div>
-        `;
+        const d = doc.data(); if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_')) return;
+        const hours = (d.totalMinutes / 60).toFixed(1), rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
+        const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id);
+        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div></div><span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span></div>`;
         rank++;
       });
       listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
     });
   }
 
-  // ================= ФУНКЦИИ ПОГОДЫ =================
+  // ================= ПОГОДА И СЕССИИ =================
   async function loadParkWeather() {
-    const container = document.getElementById('weather-park');
-    if (!container) return;
+    const container = document.getElementById('weather-park'); if (!container) return;
     try {
-      const res = await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto');
-      const data = await res.json();
-
-      const currTemp = Math.round(data.current.temperature_2m);
-      const currCode = data.current.weather_code;
-      const windSpeed = Math.round(data.current.wind_speed_10m);
-      const windDirDeg = data.current.wind_direction_10m;
-      const windDirStr = getWindDirection(windDirDeg);
-
-      const tomorrowMax = Math.round(data.daily.temperature_2m_max[1]);
-      const tomorrowMin = Math.round(data.daily.temperature_2m_min[1]);
-      const tomorrowCode = data.daily.weather_code[1];
-
-      let currStatus = "☀️ Ясно";
-      if (currCode >= 1 && currCode <= 3) currStatus = "⛅️ Облачно";
-      if (currCode >= 51 && currCode <= 67) currStatus = "🌧 Дождь";
-      if (currCode >= 71 && currCode <= 77) currStatus = "❄️ Снег";
-      if (currCode >= 80 && currCode <= 82) currStatus = "🌧 Ливень";
-
-      let tomorrowStatus = "☀️ Завтра: ясно";
-      if (tomorrowCode >= 1 && tomorrowCode <= 3) tomorrowStatus = "⛅️ Завтра: облачно";
-      if (tomorrowCode >= 51 && tomorrowCode <= 67) tomorrowStatus = "🌧 Завтра: дождь";
-      if (tomorrowCode >= 71 && tomorrowCode <= 77) tomorrowStatus = "❄️ Завтра: снег";
-      if (tomorrowCode >= 80 && tomorrowCode <= 82) tomorrowStatus = "🌧 Завтра: ливень";
-
-      let html = `
-        <div class="weather-badge">
-          <span>${currStatus}, ${currTemp}°C • ветер ${windSpeed} м/с (${windDirStr})</span>
-        </div>
-        <div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #d8b4fe;">
-          <span>${tomorrowStatus}, от ${tomorrowMin}° до ${tomorrowMax}°C</span>
-        </div>
-      `;
-      container.innerHTML = html;
-
-      if (currCode >= 51 && currCode <= 82) {
-        container.children[0].style.borderColor = "#f87171";
-        container.children[0].style.color = "#f87171";
-      }
-    } catch (e) {
-      container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`;
-    }
+      const data = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')).json();
+      const c = data.current, d = data.daily;
+      const getW = code => { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
+      container.innerHTML = `<div class="weather-badge"><span>${getW(c.weather_code)}, ${Math.round(c.temperature_2m)}°C • ветер ${Math.round(c.wind_speed_10m)} м/с (${getWindDirection(c.wind_direction_10m)})</span></div><div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ${getW(d.weather_code[1]).split(' ')[1].toLowerCase()}, от ${Math.round(d.temperature_2m_min[1])}° до ${Math.round(d.temperature_2m_max[1])}°C</span></div>`;
+    } catch (e) { container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`; }
   }
 
-  // ================= ФУНКЦИЯ МОНИТОРИНГА СЕССИЙ =================
   async function monitorSessions() {
     const now = Date.now();
     for (const loc of ['park', 'vostok']) {
       try {
-        let leftPlayers = [];
-        let remainingList = [];
+        let leftPlayers = [], remainingList = [];
         await db.runTransaction(async (t) => {
-          const doc = await t.get(db.collection('locations').doc(loc));
-          if (!doc.exists) return;
-          let players = doc.data().players || [];
-          let plans = doc.data().plans || [];
-          let changed = false;
-
-          const activePlayers = [];
+          const doc = await t.get(db.collection('locations').doc(loc)); if (!doc.exists) return;
+          let players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [];
           for (const p of players) {
-            const pTime = p.time || now;
-            const elapsed = now - pTime;
-            const limit = p.maxLimitMs || DEFAULT_LIMIT_MS;
-
-            if (elapsed >= limit) {
-              changed = true;
-              recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000));
-              leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(pTime) });
-            } else { activePlayers.push(p); }
+            const elapsed = now - (p.time || now);
+            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { changed = true; recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000)); leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(p.time || now) }); } 
+            else { activePlayers.push(p); }
           }
-          const activePlans = plans.filter(pl => {
-            if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; }
-            return true;
-          });
-
-          if (changed) {
-            t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true });
-            remainingList = activePlayers;
-          }
+          const activePlans = plans.filter(pl => { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
+          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); remainingList = activePlayers; }
         });
-
-        if (leftPlayers.length > 0) {
-          const quoteBlock = remainingList.length > 0 ? buildBlockquoteList(remainingList, "Остались у столов") : "\n\n<i>(столы освободились)</i>";
-          for (const lp of leftPlayers) {
-            sendTelegramAlert(`👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]} (время: <code>${lp.durationStr}</code>).${quoteBlock}`);
-          }
-        }
+        if (leftPlayers.length > 0) { for (const lp of leftPlayers) { sendTelegramAlert(`👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]} (время: <code>${lp.durationStr}</code>).${remainingList.length > 0 ? buildBlockquoteList(remainingList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`); } }
       } catch(e) {}
     }
   }
 
-  // ================= ФУНКЦИЯ ОТРИСОВКИ RENDER ALL =================
   function renderAll() {
-    const myUid = getVerifiedUserId();
-    const now = Date.now();
-    currentUserActiveLoc = null;
-    currentUserActivePlayer = null;
+    const myUid = getVerifiedUserId(), now = Date.now();
+    currentUserActiveLoc = null; currentUserActivePlayer = null;
 
     ['park', 'vostok'].forEach(loc => {
-      const { players } = locationsData[loc] || { players: [] };
-      const plans = (locationsData[loc]?.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
-
+      const { players } = locationsData[loc] || { players: [] }, plans = (locationsData[loc]?.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
       const badge = document.getElementById('badge-' + loc);
-      if(badge) {
-        badge.innerText = `${players.length} ${getPlayersCountSuffix(players.length)}`;
-        badge.className = players.length > 0 ? 'counter has-players' : 'counter';
-      }
+      if(badge) { badge.innerText = `${players.length} ${getPlayersCountSuffix(players.length)}`; badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
 
       const listEl = document.getElementById('list-' + loc);
       if(listEl) {
-        if (players.length === 0) {
-          listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>';
-        } else {
-          listEl.innerHTML = players.map(item => `
-            <div class="player-row">
-              <div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="player-time-box">
-                  <span>с ${formatTime(item.time || Date.now())}</span>
-                  <span class="time-badge">${formatDuration(item.time || Date.now())}</span>
-                </div>
-                ${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}
-              </div>
-            </div>
-          `).join('');
-        }
+        if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
+        else { listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div>${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}</div></div>`).join(''); }
       }
 
       const planListEl = document.getElementById('plan-list-' + loc);
       if(planListEl) {
-        if (plans.length === 0) {
-          planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>';
-        } else {
-          planListEl.innerHTML = plans.map(p => `
-            <div class="player-row">
-              <div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div>
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <div class="player-time-box">
-                  <span>к ${formatTime(p.planTime)}</span>
-                  <span class="time-badge-plan">${formatUntil(p.planTime)}</span>
-                </div>
-                ${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}
-              </div>
-            </div>
-          `).join('');
-        }
+        if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
+        else { planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div>${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}</div></div>`).join(''); }
       }
 
-      const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
-      const isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
-      const btnBox = document.getElementById('btn-container-' + loc);
-
+      const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null, isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null, btnBox = document.getElementById('btn-container-' + loc);
       if(btnBox) {
-        if (activePlayerObj) {
-          currentUserActiveLoc = loc;
-          currentUserActivePlayer = activePlayerObj;
-          btnBox.innerHTML = `<div style="font-size: 11px; color: var(--accent-green); text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`;
-        } else if (isUserOpened) {
-          btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`;
-        } else {
-          btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`;
-        }
+        if (activePlayerObj) { currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; btnBox.innerHTML = `<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`; } 
+        else if (isUserOpened) { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`; } 
+        else { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`; }
       }
     });
 
     if (currentUserActiveLoc && currentUserActivePlayer) {
-      const elap = Date.now() - (currentUserActivePlayer.time||Date.now());
-      const lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
-      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) {
-        document.getElementById('extend-modal').style.display = 'flex';
-        if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); }
-      } else {
-        document.getElementById('extend-modal').style.display = 'none';
-      }
-    } else {
-      document.getElementById('extend-modal').style.display = 'none';
-      hasTriggeredPush = false;
-    }
+      const elap = Date.now() - (currentUserActivePlayer.time||Date.now()), lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
+      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { document.getElementById('extend-modal').style.display = 'flex'; if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } } 
+      else { document.getElementById('extend-modal').style.display = 'none'; }
+    } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
   }
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile();
-    listenRatings();
-    listenLeaderboard();
-    listenPendingMatches();
-    loadParkWeather();
-    
+    initUserProfile(); listenRatings(); listenLeaderboard(); listenPendingMatches(); loadParkWeather();
     ['park', 'vostok'].forEach(loc => {
-      db.collection('locations').doc(loc).onSnapshot(doc => {
-        const data = doc.data() || {};
-        locationsData[loc].plans = data.plans || [];
-        locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p);
-        renderAll();
-      });
+      db.collection('locations').doc(loc).onSnapshot(doc => { const data = doc.data() || {}; locationsData[loc].plans = data.plans || []; locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p); renderAll(); });
     });
-
     db.collection('settings').doc('announcements').onSnapshot(doc => {
       announcementsData = doc.data() || {park:"", vostok:""};
       ['park','vostok'].forEach(loc => {
-        const b = document.getElementById('announcement-box-'+loc);
-        const t = document.getElementById('announcement-text-'+loc);
-        if(b && t) {
-          if(announcementsData[loc]) { t.innerHTML=cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display='flex'; }
-          else { b.style.display='none'; }
-        }
+        const b = document.getElementById('announcement-box-'+loc), t = document.getElementById('announcement-text-'+loc);
+        if(b && t) { if(announcementsData[loc]) { t.innerHTML=cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display='flex'; } else { b.style.display='none'; } }
       });
     });
-
-    setInterval(renderAll, 30000); 
-    setInterval(monitorSessions, 60000); 
-    setInterval(loadParkWeather, 600000); 
+    setInterval(renderAll, 30000); setInterval(monitorSessions, 60000); setInterval(loadParkWeather, 600000); 
   });
 </script>
 </body>
