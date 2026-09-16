@@ -124,7 +124,7 @@
     .btn-edit { background: var(--card-border); color: var(--text); }
     .btn-logout { background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary); }
 
-    .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;}
+    .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
@@ -270,7 +270,7 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации теперь глобальная (видна сразу, если не авторизован) -->
+  <!-- Плашка авторизации глобальная -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
@@ -283,8 +283,28 @@
     <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
   </div>
 
-  <!-- ЭКРАН 1: РАДАР (Активен по умолчанию) -->
-  <div id="view-radar" class="main-view active">
+  <!-- ЭКРАН 1: ПРОФИЛЬ (Теперь первый и активен по умолчанию) -->
+  <div id="view-profile" class="main-view active">
+    <div class="profile-card">
+      <div class="profile-top-row">
+        <div class="profile-user-main" id="user-name-container">
+          <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
+        </div>
+        <div id="user-score-container"></div>
+      </div>
+      <div class="profile-stats-row" id="user-stats-container">
+        <span class="player-status-tag">Статус: —</span>
+        <span class="player-status-tag">0В - 0П (0%)</span>
+      </div>
+      <div class="profile-actions-row">
+        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
+        <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ЭКРАН 2: РАДАР -->
+  <div id="view-radar" class="main-view">
     <!-- Парк Тищенко -->
     <div class="card expanded" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
@@ -335,8 +355,14 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 2: РЕЙТИНГИ -->
+  <!-- ЭКРАН 3: РЕЙТИНГИ (с переехавшей кнопкой матчей) -->
   <div id="view-ratings" class="main-view">
+    
+    <button class="btn-match-quick" onclick="handleMatchClick()" style="margin-top: 0;">
+      <span>⚔️</span><span>Записать результат матча</span>
+    </button>
+    <div id="pending-matches-container"></div>
+
     <div class="tabs-container">
       <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
       <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ по часам</button>
@@ -361,47 +387,21 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 3: ПРОФИЛЬ -->
-  <div id="view-profile" class="main-view">
-    <div class="profile-card">
-      <div class="profile-top-row">
-        <div class="profile-user-main" id="user-name-container">
-          <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
-        </div>
-        <div id="user-score-container"></div>
-      </div>
-      <div class="profile-stats-row" id="user-stats-container">
-        <span class="player-status-tag">Статус: —</span>
-        <span class="player-status-tag">0В - 0П (0%)</span>
-      </div>
-      <div class="profile-actions-row">
-        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
-        <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
-      </div>
-    </div>
-
-    <button class="btn-match-quick" onclick="handleMatchClick()">
-      <span>⚔️</span><span>Записать результат матча</span>
-    </button>
-    
-    <div id="pending-matches-container"></div>
-  </div>
-
 </div> <!-- Конец .container -->
 
 <!-- BOTTOM NAVIGATION -->
 <div class="bottom-nav">
-  <a class="nav-item active" id="nav-radar" onclick="switchNavTab('radar')">
+  <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')">
+    <span class="nav-icon">👤</span>
+    <span>Профиль</span>
+  </a>
+  <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')">
     <span class="nav-icon">📍</span>
     <span>Радар</span>
   </a>
   <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')">
     <span class="nav-icon">🏆</span>
     <span>Рейтинг</span>
-  </a>
-  <a class="nav-item" id="nav-profile" onclick="switchNavTab('profile')">
-    <span class="nav-icon">👤</span>
-    <span>Профиль</span>
   </a>
 </div>
 
