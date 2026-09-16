@@ -32,7 +32,7 @@
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ШАПКА */
-    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); }
+    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
     .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
     .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
@@ -373,14 +373,14 @@
   </div>
 </div>
 
-<!-- ТУРНИР: СОЗДАНИЕ -->
+<!-- ТУРНИР: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ -->
 <div class="modal-overlay" id="tournament-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
-    <h3 style="font-size: 18px; color: var(--accent-amber);">🏆 Новый турнир</h3>
+    <h3 style="font-size: 18px; color: var(--accent-amber);">🏆 Турнир</h3>
     <input type="text" id="tour-title" class="input-name" placeholder="Название (напр. Осенний кубок)" />
     <input type="date" id="tour-date" class="input-name" />
     <textarea id="tour-desc" class="textarea-announcement" placeholder="Описание, взносы, условия..."></textarea>
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
+    <button id="btn-save-tour" class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
     <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
   </div>
 </div>
@@ -472,6 +472,7 @@
   let currentUserProfile = { uid: null, name: "Гость", medals: { gold:0, silver:0, bronze:0 }, tournamentsPlayed: 0 };
   let activePlanningLoc = null, currentUserActiveLoc = null, currentUserActivePlayer = null, hasTriggeredPush = false;
   let allRegisteredUsers = [], announcementsData = { park: "", vostok: "" }, currentModalUrl = "", currentUserLeaderboardUnsubscribe = null;
+  let currentEditingTourId = null;
 
   // ================= FIREBASE =================
   const firebaseConfig = { apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY", authDomain: "tt-chmz.firebaseapp.com", projectId: "tt-chmz", storageBucket: "tt-chmz.firebasestorage.app", messagingSenderId: "763705864834", appId: "1:763705864834:web:d9035408eaf3e31d0efa9b" };
@@ -805,15 +806,59 @@
   async function rejectMatch(matchId) { try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {} }
 
   // ================= ТУРНИРНЫЙ ДВИЖОК =================
-  function openTournamentModal() { if (!isSuperAdmin()) return; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; document.getElementById('tournament-modal').style.display = 'flex'; }
-  function closeTournamentModal() { document.getElementById('tournament-modal').style.display = 'none'; }
-  async function saveTournament() {
-    if (!isSuperAdmin()) return; const title = document.getElementById('tour-title').value.trim(), dateVal = document.getElementById('tour-date').value, desc = document.getElementById('tour-desc').value.trim();
-    if (!title) return customAlert('Введите название турнира');
-    let dateStr = ''; if (dateVal) { const d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
-    try { await db.collection('tournaments').add({ title, dateStr, desc, status: 'registration', likes: [], dislikes: [], participants: [], groups: {A:[], B:[]}, matches: [], playoffs: {}, results: null, createdAt: Date.now() }); closeTournamentModal(); customAlert('✅ Турнир успешно добавлен'); } catch(e) {}
+  function openTournamentModal(tourId = null) { 
+    if (!isSuperAdmin()) return; 
+    currentEditingTourId = tourId;
+    const btn = document.getElementById('btn-save-tour');
+    
+    if (tourId) {
+      btn.innerText = 'Сохранить изменения';
+      db.collection('tournaments').doc(tourId).get().then(doc => {
+        if (doc.exists) {
+          const d = doc.data();
+          document.getElementById('tour-title').value = d.title || '';
+          document.getElementById('tour-date').value = d.rawDate || '';
+          document.getElementById('tour-desc').value = d.desc || '';
+        }
+      });
+    } else {
+      btn.innerText = 'Создать';
+      document.getElementById('tour-title').value = ''; 
+      document.getElementById('tour-date').value = ''; 
+      document.getElementById('tour-desc').value = ''; 
+    }
+    document.getElementById('tournament-modal').style.display = 'flex'; 
   }
-  async function deleteTournament(id) { if (!isSuperAdmin()) return; if (window.Telegram?.WebApp?.showConfirm) { window.Telegram.WebApp.showConfirm('Удалить этот турнир?', async (ok) => { if (ok) await db.collection('tournaments').doc(id).delete(); }); } else { if (confirm('Удалить этот турнир?')) await db.collection('tournaments').doc(id).delete(); } }
+  function closeTournamentModal() { document.getElementById('tournament-modal').style.display = 'none'; }
+  
+  async function saveTournament() {
+    if (!isSuperAdmin()) return; 
+    const title = document.getElementById('tour-title').value.trim();
+    const dateVal = document.getElementById('tour-date').value; 
+    const desc = document.getElementById('tour-desc').value.trim();
+    if (!title) return customAlert('Введите название турнира');
+    
+    let dateStr = ''; 
+    if (dateVal) { const d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
+    
+    try { 
+      if (currentEditingTourId) {
+        await db.collection('tournaments').doc(currentEditingTourId).update({ title, dateStr, rawDate: dateVal, desc }); 
+        customAlert('✅ Турнир обновлен');
+      } else {
+        await db.collection('tournaments').add({ title, dateStr, rawDate: dateVal, desc, status: 'registration', likes: [], dislikes: [], participants: [], groups: {A:[], B:[]}, matches: [], playoffs: {}, results: null, createdAt: Date.now() }); 
+        customAlert('✅ Турнир успешно создан');
+      }
+      closeTournamentModal(); 
+    } catch(e) { customAlert('Ошибка сохранения: ' + e.message); }
+  }
+
+  async function deleteTournament(id) { 
+    if (!isSuperAdmin()) return; 
+    const doDelete = async () => { try { await db.collection('tournaments').doc(id).delete(); customAlert("✅ Турнир удален"); } catch(e) { customAlert("❌ Ошибка удаления: " + e.message); } };
+    if (window.Telegram?.WebApp?.showConfirm) { window.Telegram.WebApp.showConfirm('Удалить этот турнир навсегда?', (ok) => { if (ok) doDelete(); }); } 
+    else { if (confirm('Удалить этот турнир навсегда?')) doDelete(); } 
+  }
   
   async function toggleTourReaction(id, type) {
     const uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы ставить реакции!');
@@ -938,7 +983,6 @@
       const parts = data.participants || [];
       const batch = db.batch();
       
-      // Update participants
       for (const p of parts) {
         const uRef = db.collection('users').doc(p.uid);
         const uDoc = await uRef.get();
@@ -984,11 +1028,10 @@
         let mIdx = matches.findIndex(m => m.id === matchId); if (mIdx === -1 || matches[mIdx].score1 !== null) return;
         
         let match = matches[mIdx];
-        if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; // Only participants or admin
+        if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
 
         match.score1 = s1; match.score2 = s2;
         
-        // Elo update
         const p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
         const p1Doc = await t.get(p1Ref), p2Doc = await t.get(p2Ref);
         let p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
@@ -1002,7 +1045,6 @@
         t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
         t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
         
-        // Group points update
         if (match.stage === 'group') {
           let groups = data.groups;
           let grp = groups[match.group];
@@ -1062,7 +1104,13 @@
       snap.forEach(doc => {
         const d = doc.data(), id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
         const isLiked = myUid && likes.includes(myUid), isDisliked = myUid && dislikes.includes(myUid), isPart = myUid && parts.some(p => p.uid === myUid);
-        let adminBtn = isAdmin ? `<button class="btn-leave" style="padding: 4px 8px; font-size: 11px; margin-top: 8px; width: auto;" onclick="deleteTournament('${id}')">🗑 Удалить</button>` : '';
+        
+        let adminBtn = isAdmin ? `
+          <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
+            <button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal('${id}')">✏️ Изменить</button>
+            <button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px;" onclick="deleteTournament('${id}')">🗑 Удалить</button>
+          </div>
+        ` : '';
 
         if (d.status === 'completed') {
           const res = d.results || {};
