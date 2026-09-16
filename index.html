@@ -1,3 +1,15 @@
+Отличная мысль! Это сделает профили игроков не просто статичной карточкой, а настоящей базой знаний. Увидел крутую ракетку у соперника — нажал `[i]` — и сразу почитал характеристики.
+
+Я сделал следующее:
+
+1. Немного перестроил дизайн блока инвентаря: теперь каждая позиция (Основание, Накладка L, Накладка R) идет с аккуратным пунктирным разделителем.
+2. Справа от названия добавил маленькую кнопку `[i]`.
+3. Написал умную функцию, которая формирует поисковый запрос (берет название вашей накладки, подклеивает к нему слова «настольный теннис» для точности и открывает Google).
+4. Учел особенности Telegram: если вы открыли приложение внутри ТГ, ссылка откроется через встроенный браузер Telegram без глюков, а если через обычный браузер — просто в новой вкладке.
+
+Вот обновленный `index.html`:
+
+```html
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -106,7 +118,9 @@
 
     /* ИНВЕНТАРЬ */
     .inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
-    .inventory-item { display: flex; align-items: center; gap: 6px; }
+    .inventory-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; border-bottom: 1px dashed var(--card-border); padding-bottom: 6px; }
+    .inventory-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .inventory-item-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .inventory-value { color: var(--text); font-weight: 600; margin-left: 2px; }
 
     /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ */
@@ -289,7 +303,7 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации -->
+  <!-- Плашка авторизации глобальная -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
@@ -316,6 +330,7 @@
         <span class="player-status-tag">0В - 0П (0%)</span>
       </div>
       
+      <!-- Блок Инвентаря -->
       <div id="user-inventory-container" style="display: none;"></div>
 
       <div class="profile-actions-row">
@@ -460,12 +475,7 @@
     <div id="info-modal-inventory" style="display: none;"></div>
 
     <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;">
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--text-muted);">Не указан</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">Новичок</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span id="info-modal-matches" style="font-weight: 600;">0</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span id="info-modal-winloss" style="font-weight: 600; color: #059669;">0В - 0П</span></div>
-      <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span id="info-modal-total-time" style="font-weight: 600; color: var(--accent-gold);">0 мин</span></div>
+      <!-- Заполняется динамически -->
     </div>
     <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
     <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
@@ -541,10 +551,10 @@
     <input type="text" id="blade-input" class="input-name" placeholder="Например: Yinhe Y-4" maxlength="35" style="font-size: 14px;" />
     
     <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка L:</div>
-    <input type="text" id="rubber-l-input" class="input-name" placeholder="Например: Stiga Mantra" maxlength="35" style="font-size: 14px;" />
+    <input type="text" id="rubber-l-input" class="input-name" placeholder="Например: Stiga Mantra S" maxlength="35" style="font-size: 14px;" />
 
     <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка R:</div>
-    <input type="text" id="rubber-r-input" class="input-name" placeholder="Например: Mercury II" maxlength="35" style="font-size: 14px;" />
+    <input type="text" id="rubber-r-input" class="input-name" placeholder="Например: Mercury II Soft" maxlength="35" style="font-size: 14px;" />
 
     <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Рейтинг РТТФ:</div>
     <input type="number" id="rttf-input" class="input-name" placeholder="Например: 150" min="0" max="4000" />
@@ -586,7 +596,6 @@
     if(viewEl) viewEl.classList.add('active');
     if(navEl) navEl.classList.add('active');
     window.scrollTo(0, 0); 
-    // Запоминаем открытую вкладку
     localStorage.setItem('tt_active_tab', tabId);
   }
 
@@ -596,7 +605,6 @@
   }
 
   initTheme();
-  // Восстанавливаем вкладку при загрузке
   initNavTab();
 
   // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ =================
@@ -705,6 +713,30 @@
     if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') return '<span class="platform-badge badge-bot">Бот 🤖</span>';
     if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') return '<span class="platform-badge badge-coach">Тренер 📋</span>';
     return '';
+  }
+
+  // ================= ФУНКЦИЯ ПОИСКА ОБОРУДОВАНИЯ =================
+  function openExternalLink(url) {
+    if (window.Telegram?.WebApp?.openLink) {
+      window.Telegram.WebApp.openLink(url);
+    } else {
+      window.open(url, '_blank');
+    }
+  }
+
+  function getInventoryRowHtml(icon, label, value) {
+    if (!value) return '';
+    const query = encodeURIComponent(value + ' настольный теннис');
+    const url = `https://www.google.com/search?q=${query}`;
+    return `
+      <div class="inventory-item">
+        <div class="inventory-item-left">
+          <span>${icon}</span> 
+          <span style="color: var(--text-muted);">${label}</span> 
+          <span class="inventory-value">${cleanHtml(value)}</span>
+        </div>
+        <button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink('${url}')">i</button>
+      </div>`;
   }
 
   // ================= КНОПКА СКРОЛЛА НАВЕРХ =================
@@ -922,9 +954,10 @@
     if (invContainer) {
       if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
         let invHtml = '';
-        if (currentUserProfile.blade) invHtml += `<div class="inventory-item"><span>🏓</span> <span style="color: var(--text-muted);">Основание:</span> <span class="inventory-value">${cleanHtml(currentUserProfile.blade)}</span></div>`;
-        if (currentUserProfile.rubberL) invHtml += `<div class="inventory-item"><span>🔴</span> <span style="color: var(--text-muted);">Накладка L:</span> <span class="inventory-value">${cleanHtml(currentUserProfile.rubberL)}</span></div>`;
-        if (currentUserProfile.rubberR) invHtml += `<div class="inventory-item"><span>⚫</span> <span style="color: var(--text-muted);">Накладка R:</span> <span class="inventory-value">${cleanHtml(currentUserProfile.rubberR)}</span></div>`;
+        if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade);
+        if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL);
+        if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR);
+        
         invContainer.innerHTML = invHtml;
         invContainer.className = 'inventory-box';
         invContainer.style.display = 'flex';
@@ -1180,9 +1213,10 @@
       const invContainer = document.getElementById('info-modal-inventory');
       if (u.blade || u.rubberL || u.rubberR) {
         let invHtml = '';
-        if (u.blade) invHtml += `<div class="inventory-item"><span>🏓</span> <span style="color: var(--text-muted);">Основание:</span> <span class="inventory-value">${cleanHtml(u.blade)}</span></div>`;
-        if (u.rubberL) invHtml += `<div class="inventory-item"><span>🔴</span> <span style="color: var(--text-muted);">Накладка L:</span> <span class="inventory-value">${cleanHtml(u.rubberL)}</span></div>`;
-        if (u.rubberR) invHtml += `<div class="inventory-item"><span>⚫</span> <span style="color: var(--text-muted);">Накладка R:</span> <span class="inventory-value">${cleanHtml(u.rubberR)}</span></div>`;
+        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade);
+        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL);
+        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR);
+        
         invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
       } else { invContainer.style.display = 'none'; }
 
@@ -1338,3 +1372,5 @@
 </script>
 </body>
 </html>
+
+```
