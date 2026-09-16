@@ -16,54 +16,25 @@
 
   <style>
     :root {
-      --primary: #e11d48;
-      --primary-hover: #be123c;
-      --bg: #0b1120;
-      --card-bg: #1e293b;
-      --card-border: #334155;
-      --text: #f8fafc;
-      --text-muted: #94a3b8;
-      --accent-green: #10b981;
-      --accent-amber: #f59e0b;
-      --accent-sky: #38bdf8;
-      --accent-gold: #fbbf24;
-      --accent-purple: #a855f7;
-      --accent-red: #f43f5e;
-      
-      --row-bg: rgba(15, 23, 42, 0.6);
-      --list-bg: rgba(11, 17, 32, 0.6);
-      --input-bg: #0b1120;
-      --bottom-nav-bg: rgba(30, 41, 59, 0.95);
-      --logo-shadow: rgba(0, 0, 0, 0.5);
+      --primary: #e11d48; --primary-hover: #be123c; --bg: #0b1120; --card-bg: #1e293b; --card-border: #334155;
+      --text: #f8fafc; --text-muted: #94a3b8; --accent-green: #10b981; --accent-amber: #f59e0b;
+      --accent-sky: #38bdf8; --accent-gold: #fbbf24; --accent-purple: #a855f7; --accent-red: #f43f5e;
+      --row-bg: rgba(15, 23, 42, 0.6); --list-bg: rgba(11, 17, 32, 0.6); --input-bg: #0b1120;
+      --bottom-nav-bg: rgba(30, 41, 59, 0.95); --logo-shadow: rgba(0, 0, 0, 0.5);
     }
-
-    /* СВЕТЛАЯ ТЕМА */
     :root[data-theme="light"] {
-      --bg: #f1f5f9;
-      --card-bg: #ffffff;
-      --card-border: #cbd5e1;
-      --text: #0f172a;
-      --text-muted: #64748b;
-      
-      --row-bg: #f8fafc;
-      --list-bg: #f8fafc;
-      --input-bg: #ffffff;
-      --bottom-nav-bg: rgba(255, 255, 255, 0.95);
+      --bg: #f1f5f9; --card-bg: #ffffff; --card-border: #cbd5e1; --text: #0f172a; --text-muted: #64748b;
+      --row-bg: #f8fafc; --list-bg: #f8fafc; --input-bg: #ffffff; --bottom-nav-bg: rgba(255, 255, 255, 0.95);
       --logo-shadow: rgba(0, 0, 0, 0.15);
     }
-
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-    
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
-    
     .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; min-height: 100%; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
-
-    /* Экраны */
     .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; animation: fadeInView 0.25s ease; }
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ЕДИНЫЙ БЛОК ШАПКИ И СОЦСЕТЕЙ */
+    /* ШАПКА */
     .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
     .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
@@ -104,24 +75,18 @@
     .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
-    /* ИНВЕНТАРЬ */
+    /* МЕДАЛИ И ИНВЕНТАРЬ */
+    .medals-box { display: flex; gap: 10px; justify-content: center; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 8px; border-radius: 8px; margin-top: 4px; }
+    .medal-item { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; }
     .inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
     .inventory-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; border-bottom: 1px dashed var(--card-border); padding-bottom: 6px; }
     .inventory-item:last-child { border-bottom: none; padding-bottom: 0; }
     .inventory-item-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .inventory-value { color: var(--text); font-weight: 600; margin-left: 2px; }
 
-    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ */
+    /* ЛОГОТИП */
     .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
-    .profile-large-logo { 
-      width: 100%; 
-      height: auto;
-      max-height: 35vh; 
-      object-fit: contain; 
-      background: transparent; 
-      filter: drop-shadow(0 10px 20px var(--logo-shadow)); 
-      transition: transform 0.3s ease, filter 0.3s ease;
-    }
+    .profile-large-logo { width: 100%; height: auto; max-height: 35vh; object-fit: contain; background: transparent; filter: drop-shadow(0 10px 20px var(--logo-shadow)); transition: transform 0.3s ease, filter 0.3s ease; }
     .profile-large-logo:hover { transform: scale(1.02); }
 
     .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
@@ -216,6 +181,18 @@
 
     .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
+
+    /* СТИЛИ ДЛЯ ТУРНИРОВ */
+    .tour-group-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; background: var(--list-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); }
+    .tour-group-table th, .tour-group-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--card-border); }
+    .tour-group-table th { background: var(--row-bg); color: var(--text-muted); font-weight: 600; }
+    .tour-group-table td:first-child { text-align: left; font-weight: 600; }
+    .tour-match-row { display: flex; align-items: center; justify-content: space-between; padding: 8px; background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 8px; font-size: 12px; margin-bottom: 6px; }
+    .tour-match-names { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+    .tour-score-badge { font-weight: 700; background: var(--row-bg); padding: 4px 8px; border-radius: 6px; margin-left: 8px; }
+    .tour-badge-winner { color: #059669; } :root[data-theme="dark"] .tour-badge-winner { color: var(--accent-green); }
+    .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
+    .clickable-name:active { opacity: 0.6; }
 
     /* BOTTOM NAVIGATION */
     .bottom-nav {
@@ -318,6 +295,9 @@
         <span class="player-status-tag">0В - 0П (0%)</span>
       </div>
       
+      <!-- Медали -->
+      <div id="user-medals-container" class="medals-box" style="display:none;"></div>
+      
       <!-- Блок Инвентаря -->
       <div id="user-inventory-container" style="display: none;"></div>
 
@@ -403,6 +383,20 @@
     </div>
   </div>
 
+  <!-- ЭКРАН 4: ТУРНИРЫ -->
+  <div id="view-tournaments" class="main-view">
+    <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+        <h2 style="font-size: 18px; color: var(--accent-amber);">🏆 Активные турниры</h2>
+        <button id="btn-add-tournament" class="badge-admin-btn" style="display:none; padding: 6px 12px; font-size: 12px; margin: 0;" onclick="openTournamentModal()">+ Добавить</button>
+      </div>
+      <div id="tournaments-list-active" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      
+      <h2 style="font-size: 16px; color: var(--text-muted); margin-top: 16px;">📂 Архив турниров</h2>
+      <div id="tournaments-list-archive" style="display: flex; flex-direction: column; gap: 12px;"></div>
+    </div>
+  </div>
+
 </div>
 
 <!-- BOTTOM NAVIGATION -->
@@ -410,6 +404,7 @@
   <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></a>
   <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')"><span class="nav-icon">📍</span><span>Радар</span></a>
   <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')"><span class="nav-icon">🏆</span><span>Рейтинг</span></a>
+  <a class="nav-item" id="nav-tournaments" onclick="switchNavTab('tournaments')"><span class="nav-icon">⚔️</span><span>Турниры</span></a>
 </div>
 
 <button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()">
@@ -459,12 +454,9 @@
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
-    
+    <div id="info-modal-medals" class="medals-box" style="display:none; margin-top:0;"></div>
     <div id="info-modal-inventory" style="display: none;"></div>
-
-    <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;">
-      <!-- Заполняется динамически -->
-    </div>
+    <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;"></div>
     <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
     <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
     <button class="btn btn-leave" style="margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
@@ -553,7 +545,46 @@
   </div>
 </div>
 
+<!-- ТУРНИР: СОЗДАНИЕ -->
+<div class="modal-overlay" id="tournament-modal">
+  <div class="modal-box" style="border-color: var(--accent-amber);">
+    <h3 style="font-size: 18px; color: var(--accent-amber);">🏆 Новый турнир</h3>
+    <input type="text" id="tour-title" class="input-name" placeholder="Название (напр. Осенний кубок)" />
+    <input type="date" id="tour-date" class="input-name" />
+    <textarea id="tour-desc" class="textarea-announcement" placeholder="Описание, взносы, условия..."></textarea>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
+    <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
+  </div>
+</div>
+
+<!-- ТУРНИР: ВВОД СЧЕТА МАТЧА -->
+<div class="modal-overlay" id="tour-match-modal">
+  <div class="modal-box" style="border-color: var(--accent-amber);">
+    <h3 style="font-size: 16px; color: var(--accent-amber);">Внести счет матча</h3>
+    <div style="font-size: 13px; margin-bottom: 8px;" id="tour-match-players-label"></div>
+    <div class="score-picker">
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 0)">3 : 0</button>
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 1)">3 : 1</button>
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>
+    </div>
+    <input type="hidden" id="tour-match-id-val" />
+    <input type="hidden" id="tour-id-val" />
+    <input type="hidden" id="tour-match-s1" />
+    <input type="hidden" id="tour-match-s2" />
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; margin-top: 8px;" onclick="submitTourMatchScore()">Сохранить результат</button>
+    <button class="btn-cancel-modal" onclick="closeTourMatchModal()">Отмена</button>
+  </div>
+</div>
+
 <script>
+  // ================= ЭКРАНИРОВАНИЕ XSS =================
+  function escapeJS(str) {
+    return str ? String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;') : '';
+  }
+
   // ================= ТЕМА И НАВИГАЦИЯ =================
   function initTheme() {
     const savedTheme = localStorage.getItem('tt_theme') || 'dark';
@@ -619,6 +650,7 @@
   let announcementsData = { park: "", vostok: "" };
   let currentModalUrl = "";
   let currentUserLeaderboardUnsubscribe = null;
+  let currentEditingTourId = null;
 
   // ================= ИНИЦИАЛИЗАЦИЯ FIREBASE =================
   const firebaseConfig = {
@@ -769,7 +801,9 @@
   }
 
   function openQrModal(type) {
-    let targetUrl = window.location.href, title = "QR-код приложения", desc = "Покажите этот QR-код друзьям для быстрого доступа:";
+    let targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
+    let title = "QR-код приложения";
+    let desc = "Покажите этот QR-код друзьям для быстрого доступа:";
     if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
     else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
 
@@ -782,7 +816,7 @@
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
-  // ================= ПРОФИЛЬ =================
+  // ================= ПРОФИЛЬ И АВТОРИЗАЦИЯ =================
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
     if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
@@ -841,13 +875,13 @@
 
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
-    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, isVerified: true, createdAt: Date.now() };
+    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, isVerified: true, createdAt: Date.now() };
     try {
       const snap = await Promise.race([ref.get(), new Promise((_, r) => setTimeout(() => r(new Error()), 2000))]);
       if (!snap.exists) {
         await ref.set(userData);
         try { const sz = (await db.collection('users').get()).size; sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${sz}</b> человек!`); } catch(e) {}
-      } else { userData = snap.data(); }
+      } else { userData = { ...userData, ...snap.data() }; }
     } catch (e) {}
     currentUserProfile = userData;
     const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
@@ -906,7 +940,6 @@
     const elo = currentUserProfile.elo || 1000;
 
     const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
-
     document.getElementById('user-name-container').innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${adminTag} ${customBadge}`;
     
     const deltaHtml = currentUserProfile.lastEloDelta ? (currentUserProfile.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${currentUserProfile.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${currentUserProfile.lastEloDelta}) 📉</span>`) : '';
@@ -917,7 +950,7 @@
           <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span>
           <div><span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>${deltaHtml}</div>
         </div>
-        <button class="btn-info" onclick="showUserInfoModal('${currentUserProfile.uid}')">i</button>
+        <button class="btn-info" onclick="showUserInfoModal('${escapeJS(currentUserProfile.uid)}')">i</button>
       </div>`;
     
     const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : '';
@@ -934,25 +967,33 @@
       </div>
     `;
 
+    // Медали
+    const mContainer = document.getElementById('user-medals-container');
+    const m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
+    if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
+      mContainer.innerHTML = `
+        <div class="medal-item">🏆 ${currentUserProfile.tournamentsPlayed || 0}</div>
+        <div class="medal-item">🥇 ${m.gold || 0}</div>
+        <div class="medal-item">🥈 ${m.silver || 0}</div>
+        <div class="medal-item">🥉 ${m.bronze || 0}</div>
+      `;
+      mContainer.style.display = 'flex';
+    } else { mContainer.style.display = 'none'; }
+
     // Инвентарь
     const invContainer = document.getElementById('user-inventory-container');
     if (invContainer) {
       if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
-        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px;">Ракетка:</div>`;
+        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
         if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
         if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
         if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
-        
-        invContainer.innerHTML = invHtml;
-        invContainer.className = 'inventory-box';
-        invContainer.style.display = 'flex';
-      } else {
-        invContainer.style.display = 'none';
-      }
+        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
+      } else { invContainer.style.display = 'none'; }
     }
 
-    document.getElementById('btn-edit-profile').style.display = 'block';
-    document.getElementById('btn-logout').style.display = 'block';
+    const btnAddTour = document.getElementById('btn-add-tournament'); if (btnAddTour) btnAddTour.style.display = isSuperAdmin() ? 'block' : 'none';
+    document.getElementById('btn-edit-profile').style.display = 'block'; document.getElementById('btn-logout').style.display = 'block';
   }
 
   // ================= РЕДАКТИРОВАНИЕ ПРОФИЛЯ =================
@@ -971,15 +1012,9 @@
   
   async function saveCustomNameWithCheck() {
     const uid = getVerifiedUserId(); if (!uid) return;
-    const val = document.getElementById('name-input').value.trim();
-    const bladeVal = document.getElementById('blade-input').value.trim();
-    const rubberLVal = document.getElementById('rubber-l-input').value.trim();
-    const rubberRVal = document.getElementById('rubber-r-input').value.trim();
+    const val = document.getElementById('name-input').value.trim(), bladeVal = document.getElementById('blade-input').value.trim(), rubberLVal = document.getElementById('rubber-l-input').value.trim(), rubberRVal = document.getElementById('rubber-r-input').value.trim();
     const rttfVal = document.getElementById('rttf-input').value.trim() ? parseInt(document.getElementById('rttf-input').value.trim()) : null;
-    
-    if (val.length < 2) return;
-    if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) return customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
-    
+    if (val.length < 2) return; if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) return customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
     try {
       const updateData = { name: val };
       if (bladeVal) updateData.blade = bladeVal; else updateData.blade = firebase.firestore.FieldValue.delete();
@@ -989,15 +1024,10 @@
       
       const doc = await db.collection('users').doc(uid).get(); const data = doc.exists ? doc.data() : {};
       if (!doc.exists || data.isVerified === undefined || data.elo === undefined) {
-        updateData.isVerified = true; updateData.elo = data.elo !== undefined ? data.elo : 1000; updateData.matches = data.matches || 0; updateData.wins = data.wins || 0; updateData.losses = data.losses || 0; updateData.uid = uid; updateData.platform = uid.startsWith('google_') ? 'google' : 'tg'; updateData.createdAt = data.createdAt || Date.now();
+        updateData.isVerified = true; updateData.elo = data.elo ?? 1000; updateData.matches = data.matches || 0; updateData.wins = data.wins || 0; updateData.losses = data.losses || 0; updateData.uid = uid; updateData.platform = uid.startsWith('google_') ? 'google' : 'tg'; updateData.createdAt = data.createdAt || Date.now();
       }
       await db.collection('users').doc(uid).set(updateData, { merge: true });
-      currentUserProfile.name = val; 
-      currentUserProfile.blade = bladeVal || null; 
-      currentUserProfile.rubberL = rubberLVal || null; 
-      currentUserProfile.rubberR = rubberRVal || null; 
-      currentUserProfile.rttf = rttfVal;
-      
+      currentUserProfile.name = val; currentUserProfile.blade = bladeVal || null; currentUserProfile.rubberL = rubberLVal || null; currentUserProfile.rubberR = rubberRVal || null; currentUserProfile.rttf = rttfVal;
       if (updateData.isVerified) currentUserProfile = { ...currentUserProfile, ...updateData };
       localStorage.setItem('tt_name', val); updateProfileDisplay(); hideNameModal(); renderAll();
     } catch (e) { customAlert("Не удалось сохранить профиль."); }
@@ -1021,24 +1051,20 @@
         tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS }); finalList = tP;
         t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
       });
-      hasTriggeredPush = false;
-      if (canSendTgAlert('status_change')) sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${buildBlockquoteList(finalList, "Сейчас за столом")}\n\nКто составит компанию?`);
+      hasTriggeredPush = false; if (canSendTgAlert('status_change')) sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${buildBlockquoteList(finalList, "Сейчас за столом")}\n\nКто составит компанию?`);
     } catch(e) {}
   }
 
   async function leave(loc) {
-    const uid = getVerifiedUserId(); if (!uid) return;
-    let spentMins = 0, spentStr = "", finalList = [];
+    const uid = getVerifiedUserId(); if (!uid) return; let spentMins = 0, spentStr = "", finalList = [];
     try {
       await db.runTransaction(async t => {
         const d = await t.get(db.collection('locations').doc(loc)); if (!d.exists) return;
-        let p = d.data().players || [];
-        const cPlayer = p.find(pl => (pl.uid || pl) === uid);
+        let p = d.data().players || []; const cPlayer = p.find(pl => (pl.uid || pl) === uid);
         if (cPlayer && cPlayer.time) { spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); spentStr = formatDuration(cPlayer.time); }
         p = p.filter(pl => (pl.uid || pl) !== uid); finalList = p;
         t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
       });
-      if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
       document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
       if (canSendTgAlert('status_change')) sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${spentStr ? ` (время: <code>${spentStr}</code>)` : ""}.${finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`);
     } catch(e) {}
@@ -1059,11 +1085,7 @@
   }
 
   async function submitQuickPlan(m) { await applyPlan(Date.now() + m * 60000); }
-  async function submitExactPlan() {
-    const val = document.getElementById('exact-time-input').value; if(!val) return;
-    const [h, m] = val.split(':').map(Number), d = new Date(); d.setHours(h, m, 0, 0);
-    if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); await applyPlan(d.getTime());
-  }
+  async function submitExactPlan() { const val = document.getElementById('exact-time-input').value; if(!val) return; const [h, m] = val.split(':').map(Number), d = new Date(); d.setHours(h, m, 0, 0); if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); await applyPlan(d.getTime()); }
   async function applyPlan(ts) {
     const uid = getVerifiedUserId(), loc = activePlanningLoc; if(!uid) return; closePlanModal();
     try {
@@ -1074,92 +1096,7 @@
       if (canSendTgAlert('status_change')) sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${formatUntil(ts)}</b>!\n\nКто готов составить пару?`);
     } catch(e) {}
   }
-  async function cancelPlan(loc) {
-    const uid = getVerifiedUserId(); if(!uid) return;
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc)); if(!d.exists) return;
-        t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(p => (p.uid||p) !== uid) }, { merge: true });
-      });
-    } catch(e) {}
-  }
-
-  // ================= МАТЧИ И РЕЙТИНГ (С УЧЕТОМ СЕРИЙ И ДЕЛЬТЫ) =================
-  function handleMatchClick() { if (isUserVerified()) {
-    const uid = getVerifiedUserId();
-    if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
-    const sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
-    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
-    if (opps.length === 0) sel.innerHTML = '<option value="">(нет других игроков)</option>';
-    else opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; });
-    selectScore(3,0); document.getElementById('match-modal').style.display = 'flex';
-  }}
-  function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
-  function selectScore(my, opp) {
-    document.getElementById('match-my-score').value = my; document.getElementById('match-opp-score').value = opp;
-    document.querySelectorAll('.score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`));
-  }
-  
-  async function submitMatchProposal() {
-    const uid = getVerifiedUserId(), sel = document.getElementById('match-opponent-select'), oppUid = sel.value;
-    if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
-    closeMatchModal();
-    try {
-      await db.collection('pending_matches').add({ proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: sel.options[sel.selectedIndex].text, scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value), timestamp: Date.now() });
-      customAlert("✅ Запрос отправлен!");
-    } catch(e){}
-  }
-
-  function listenPendingMatches() {
-    const myUid = getVerifiedUserId(); if (!myUid) return;
-    db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(snap => {
-      const c = document.getElementById('pending-matches-container');
-      if (snap.empty) { c.innerHTML = ''; return; }
-      let html = '';
-      snap.forEach(doc => { const m = doc.data(); html += `<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b></div><div style="font-size: 13px;">Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch('${doc.id}')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${doc.id}')">Отклонить</button></div></div>`; });
-      c.innerHTML = html;
-    });
-  }
-
-  function calculateElo(ratingA, ratingB, actualScoreA, k = 32) { return Math.round(k * (actualScoreA - (1 / (1 + Math.pow(10, (ratingB - ratingA) / 400))))); }
-
-  async function confirmMatch(matchId) {
-    const myUid = getVerifiedUserId(); if (!myUid) return;
-    try {
-      const matchRef = db.collection('pending_matches').doc(matchId); const matchDoc = await matchRef.get(); if (!matchDoc.exists) return;
-      const m = matchDoc.data(), pRef = db.collection('users').doc(m.proposerUid), oRef = db.collection('users').doc(m.opponentUid);
-      let newPElo = 1000, newOElo = 1000;
-      await db.runTransaction(async (t) => {
-        const pDoc = await t.get(pRef), oDoc = await t.get(oRef);
-        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 }, oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
-        
-        const isPWin = m.scoreProposer > m.scoreOpponent;
-        const myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
-        newPElo = Math.max(100, (pData.elo || 1000) + myDelta); newOElo = Math.max(100, (oData.elo || 1000) - myDelta);
-        
-        // Логика серий (Streaks)
-        const pWinStreak = isPWin ? ((pData.winStreak > 0 ? pData.winStreak : 0) + 1) : 0;
-        const oWinStreak = isPWin ? 0 : ((oData.winStreak > 0 ? oData.winStreak : 0) + 1);
-
-        t.set(pRef, { elo: newPElo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: pWinStreak, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
-        t.set(oRef, { elo: newOElo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: oWinStreak, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
-      });
-      await db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
-      await matchRef.delete();
-      sendTelegramAlert(`🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ${cleanHtml(m.proposerName)}: ${newPElo}\n• ${cleanHtml(m.opponentName)}: ${newOElo}</blockquote>`);
-    } catch(e) {}
-  }
-  async function rejectMatch(matchId) { try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {} }
-  async function recordTrainingTime(uid, name, durationMinutes) {
-    if (!uid || durationMinutes <= 0) return;
-    try {
-      const userRef = db.collection('leaderboard').doc(uid);
-      await db.runTransaction(async (t) => {
-        const doc = await t.get(userRef); const data = doc.data() || { name: name, totalMinutes: 0, sessions: 0 };
-        t.set(userRef, { name: name, uid: uid, totalMinutes: (data.totalMinutes || 0) + durationMinutes, sessions: (data.sessions || 0) + 1, lastPlayed: Date.now() }, { merge: true });
-      });
-    } catch(e) {}
-  }
+  async function cancelPlan(loc) { const uid = getVerifiedUserId(); if(!uid) return; try { await db.runTransaction(async t => { const d = await t.get(db.collection('locations').doc(loc)); if(!d.exists) return; t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(p => (p.uid||p) !== uid) }, { merge: true }); }); } catch(e) {} }
 
   // ================= АДМИН ПАНЕЛЬ И АНОНСЫ =================
   function openAdminMenu() { document.getElementById('admin-modal').style.display = 'flex'; }
@@ -1181,11 +1118,17 @@
       const u = d.data(), adminTag = ADMIN_UIDS.includes(uid) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '', customBadge = getCustomBadge(uid);
       document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
       
-      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID (Только Админ):</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>` : '';
+      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>` : '';
       const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
       
       const deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${u.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${u.lastEloDelta}) 📉</span>`) : '';
       const streakText = (u.winStreak && u.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${u.winStreak} побед</span>` : '';
+
+      const mContainer = document.getElementById('info-modal-medals');
+      const m = u.medals || {gold:0, silver:0, bronze:0};
+      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
+        mContainer.innerHTML = `<div class="medal-item">🏆 ${u.tournamentsPlayed || 0}</div><div class="medal-item">🥇 ${m.gold || 0}</div><div class="medal-item">🥈 ${m.silver || 0}</div><div class="medal-item">🥉 ${m.bronze || 0}</div>`; mContainer.style.display = 'flex';
+      } else { mContainer.style.display = 'none'; }
 
       document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
@@ -1197,11 +1140,10 @@
       
       const invContainer = document.getElementById('info-modal-inventory');
       if (u.blade || u.rubberL || u.rubberR) {
-        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px;">Ракетка:</div>`;
+        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
         if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
         if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
         if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        
         invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
       } else { invContainer.style.display = 'none'; }
 
@@ -1218,14 +1160,80 @@
   }
   function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
-  // ================= РЕЙТИНГИ =================
+  // ================= МАТЧИ И РЕЙТИНГ =================
+  function handleMatchClick() { if (isUserVerified()) {
+    const uid = getVerifiedUserId();
+    if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
+    const sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
+    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
+    if (opps.length === 0) sel.innerHTML = '<option value="">(нет других игроков)</option>';
+    else opps.forEach(p => { sel.innerHTML += `<option value="${escapeJS(p.uid||p)}">${cleanHtml(p.name)}</option>`; });
+    selectScore(3,0); document.getElementById('match-modal').style.display = 'flex';
+  }}
+  function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
+  function selectScore(my, opp) {
+    document.getElementById('match-my-score').value = my; document.getElementById('match-opp-score').value = opp;
+    document.querySelectorAll('.reg-score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`));
+  }
+  
+  async function submitMatchProposal() {
+    const uid = getVerifiedUserId(), sel = document.getElementById('match-opponent-select'), oppUid = sel.value;
+    if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
+    closeMatchModal();
+    try {
+      await db.collection('pending_matches').add({ proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: sel.options[sel.selectedIndex].text, scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value), timestamp: Date.now() });
+      customAlert("✅ Запрос отправлен!");
+    } catch(e){}
+  }
+
+  function listenPendingMatches() {
+    const myUid = getVerifiedUserId(); if (!myUid) return;
+    db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(snap => {
+      const c = document.getElementById('pending-matches-container');
+      if (snap.empty) { c.innerHTML = ''; return; }
+      let html = '';
+      snap.forEach(doc => { const m = doc.data(); html += `<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b></div><div style="font-size: 13px;">Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch('${escapeJS(doc.id)}')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${escapeJS(doc.id)}')">Отклонить</button></div></div>`; });
+      c.innerHTML = html;
+    });
+  }
+
+  function calculateElo(ratingA, ratingB, actualScoreA, k = 32) { return Math.round(k * (actualScoreA - (1 / (1 + Math.pow(10, (ratingB - ratingA) / 400))))); }
+
+  async function confirmMatch(matchId) {
+    const myUid = getVerifiedUserId(); if (!myUid) return;
+    try {
+      const matchRef = db.collection('pending_matches').doc(matchId); const matchDoc = await matchRef.get(); if (!matchDoc.exists) return;
+      const m = matchDoc.data(), pRef = db.collection('users').doc(m.proposerUid), oRef = db.collection('users').doc(m.opponentUid);
+      let newPElo = 1000, newOElo = 1000;
+      await db.runTransaction(async (t) => {
+        const pDoc = await t.get(pRef), oDoc = await t.get(oRef);
+        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 }, oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+        
+        const isPWin = m.scoreProposer > m.scoreOpponent;
+        const myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
+        newPElo = Math.max(100, (pData.elo || 1000) + myDelta); newOElo = Math.max(100, (oData.elo || 1000) - myDelta);
+        
+        const pWinStreak = isPWin ? ((pData.winStreak > 0 ? pData.winStreak : 0) + 1) : 0;
+        const oWinStreak = isPWin ? 0 : ((oData.winStreak > 0 ? oData.winStreak : 0) + 1);
+
+        t.set(pRef, { elo: newPElo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: pWinStreak, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        t.set(oRef, { elo: newOElo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: oWinStreak, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+      });
+      await db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
+      await matchRef.delete();
+      sendTelegramAlert(`🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ${cleanHtml(m.proposerName)}: ${newPElo}\n• ${cleanHtml(m.opponentName)}: ${newOElo}</blockquote>`);
+    } catch(e) {}
+  }
+  async function rejectMatch(matchId) { try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {} }
+
   function listenRatings() {
     db.collection('users').orderBy('elo', 'desc').limit(100).onSnapshot(snap => {
       const listEl = document.getElementById('rating-list'); allRegisteredUsers = [];
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
       let html = '', rank = 1, myUid = getVerifiedUserId();
       snap.forEach(doc => {
-        const d = doc.data(); if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_') && !d.isVerified) return;
+        const d = doc.data(); 
+        if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_') && !d.isVerified) return;
         allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
         if (doc.id === myUid) { currentUserProfile = { ...currentUserProfile, ...d }; updateProfileDisplay(); }
         const rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
@@ -1235,7 +1243,7 @@
         const streakHtml = (d.winStreak && d.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${d.winStreak}</span>` : '';
         const deltaHtml = d.lastEloDelta ? (d.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${d.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${d.lastEloDelta}) 📉</span>`) : '';
 
-        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}${streakHtml}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">${d.elo || 1000}</span>${deltaHtml}</div><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button></div></div>`;
+        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}${streakHtml}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">${d.elo || 1000}</span>${deltaHtml}</div><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${escapeJS(doc.id)}')">i</button></div></div>`;
         rank++;
       });
       listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
@@ -1262,12 +1270,347 @@
             </div>
             <div style="display: flex; align-items: center; gap: 8px;">
               <span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span>
-              <button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button>
+              <button class="btn-info" onclick="showUserInfoModal('${escapeJS(doc.id)}')">i</button>
             </div>
           </div>`;
         rank++;
       });
       listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
+    });
+  }
+
+  // ================= ТУРНИРНЫЙ ДВИЖОК =================
+  function openTournamentModal() { if (!isSuperAdmin()) return; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; document.getElementById('tournament-modal').style.display = 'flex'; }
+  function closeTournamentModal() { document.getElementById('tournament-modal').style.display = 'none'; }
+  
+  async function saveTournament() {
+    if (!isSuperAdmin()) return; const title = document.getElementById('tour-title').value.trim(), dateVal = document.getElementById('tour-date').value, desc = document.getElementById('tour-desc').value.trim();
+    if (!title) return customAlert('Введите название турнира');
+    let dateStr = ''; if (dateVal) { const d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
+    try { await db.collection('tournaments').add({ title, dateStr, desc, status: 'registration', likes: [], dislikes: [], participants: [], groups: {A:[], B:[]}, matches: [], playoffs: {}, results: null, createdAt: Date.now() }); closeTournamentModal(); customAlert('✅ Турнир успешно добавлен'); } catch(e) {}
+  }
+  async function deleteTournament(id) { if (!isSuperAdmin()) return; if (window.Telegram?.WebApp?.showConfirm) { window.Telegram.WebApp.showConfirm('Удалить этот турнир?', async (ok) => { if (ok) await db.collection('tournaments').doc(id).delete(); }); } else { if (confirm('Удалить этот турнир?')) await db.collection('tournaments').doc(id).delete(); } }
+  
+  async function joinTournament(id, title) {
+    const uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы участвовать!');
+    const ref = db.collection('tournaments').doc(id);
+    try {
+      let joined = false;
+      await db.runTransaction(async t => {
+          const doc = await t.get(ref); if (!doc.exists || doc.data().status !== 'registration') return;
+          let parts = doc.data().participants || [];
+          if (!parts.some(p => p.uid === uid)) { parts.push({uid, name: currentUserProfile.name, elo: currentUserProfile.elo || 1000}); t.update(ref, { participants: parts }); joined = true; }
+      });
+      if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert(`🏆 Игрок <b>${cleanHtml(currentUserProfile.name)}</b> зарегистрировался на турнир <b>${title}</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!`); }
+    } catch(e) {}
+  }
+  async function leaveTournament(id) {
+    const uid = getVerifiedUserId(); if (!uid) return;
+    const ref = db.collection('tournaments').doc(id);
+    try { await db.runTransaction(async t => { const doc = await t.get(ref); if (!doc.exists || doc.data().status !== 'registration') return; let parts = doc.data().participants || []; parts = parts.filter(p => p.uid !== uid); t.update(ref, { participants: parts }); }); } catch(e) {}
+  }
+
+  function generateId() { return Math.random().toString(36).substr(2, 9); }
+  async function startTournament(id, type) {
+    if (!isSuperAdmin()) return;
+    const ref = db.collection('tournaments').doc(id);
+    try {
+      const doc = await ref.get(); if (!doc.exists) return;
+      const data = doc.data(); let parts = data.participants || [];
+      if (parts.length < 4) return customAlert('Для турнира нужно минимум 4 участника!');
+      
+      let grpA = [], grpB = [];
+      if (type === 'smart') {
+        let sorted = [...parts].sort((a,b) => b.elo - a.elo);
+        sorted.forEach((p, idx) => {
+          if ((idx % 4) === 0 || (idx % 4) === 3) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
+          else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
+        });
+      } else {
+        let shuffled = [...parts].sort(() => 0.5 - Math.random());
+        shuffled.forEach((p, idx) => {
+          if (idx < shuffled.length / 2) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
+          else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
+        });
+      }
+
+      let matches = [];
+      const makeMatches = (gPlayers, gName) => {
+        for(let i=0; i<gPlayers.length; i++) {
+          for(let j=i+1; j<gPlayers.length; j++) {
+            matches.push({ id: generateId(), group: gName, p1Uid: gPlayers[i].uid, p1Name: gPlayers[i].name, p2Uid: gPlayers[j].uid, p2Name: gPlayers[j].name, score1: null, score2: null, stage: 'group' });
+          }
+        }
+      };
+      makeMatches(grpA, 'A'); makeMatches(grpB, 'B');
+      await ref.update({ status: 'active', groups: { A: grpA, B: grpB }, matches: matches });
+    } catch(e) {}
+  }
+
+  async function generatePlayoffs(id) {
+    if (!isSuperAdmin()) return;
+    const ref = db.collection('tournaments').doc(id);
+    try {
+      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
+      const a = [...(data.groups.A || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
+      const b = [...(data.groups.B || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
+      
+      let matches = data.matches || [];
+      matches.push({ id: 'semi1', stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, title: 'Полуфинал 1' });
+      matches.push({ id: 'semi2', stage: 'semi', p1Uid: b[0].uid, p1Name: b[0].name, p2Uid: a[1].uid, p2Name: a[1].name, score1: null, score2: null, title: 'Полуфинал 2' });
+      
+      await ref.update({ status: 'playoffs', matches: matches, playoffs: { a1: a[0], a2: a[1], b1: b[0], b2: b[1] } });
+    } catch(e) {}
+  }
+
+  async function generateFinals(id) {
+    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
+    try {
+      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
+      const semis = data.matches.filter(m => m.stage === 'semi');
+      if (semis.some(m => m.score1 === null)) return;
+      
+      const w1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p1Uid, name: semis[0].p1Name} : {uid: semis[0].p2Uid, name: semis[0].p2Name};
+      const l1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p2Uid, name: semis[0].p2Name} : {uid: semis[0].p1Uid, name: semis[0].p1Name};
+      const w2 = semis[1].score1 > semis[1].score2 ? {uid: semis[1].p1Uid, name: semis[1].p1Name} : {uid: semis[1].p2Uid, name: semis[1].p2Name};
+      const l2 = semis[1].score1 > semis[1].score2 ? {uid: semis[1].p2Uid, name: semis[1].p2Name} : {uid: semis[1].p1Uid, name: semis[1].p1Name};
+
+      let matches = data.matches || [];
+      matches.push({ id: 'third', stage: 'final', p1Uid: l1.uid, p1Name: l1.name, p2Uid: l2.uid, p2Name: l2.name, score1: null, score2: null, title: 'Матч за 3-е место' });
+      matches.push({ id: 'first', stage: 'final', p1Uid: w1.uid, p1Name: w1.name, p2Uid: w2.uid, p2Name: w2.name, score1: null, score2: null, title: 'ФИНАЛ' });
+
+      await ref.update({ status: 'finals', matches: matches });
+    } catch(e) {}
+  }
+
+  async function completeTournament(id) {
+    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
+    try {
+      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
+      const firstM = data.matches.find(m => m.id === 'first');
+      const thirdM = data.matches.find(m => m.id === 'third');
+      if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) return customAlert("Завершите финалы!");
+
+      const gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
+      const slv = firstM.score1 > firstM.score2 ? {uid: firstM.p2Uid, name: firstM.p2Name} : {uid: firstM.p1Uid, name: firstM.p1Name};
+      const brn = thirdM.score1 > thirdM.score2 ? {uid: thirdM.p1Uid, name: thirdM.p1Name} : {uid: thirdM.p2Uid, name: thirdM.p2Name};
+
+      const parts = data.participants || [];
+      const batch = db.batch();
+      
+      for (const p of parts) {
+        const uRef = db.collection('users').doc(p.uid);
+        const uDoc = await uRef.get();
+        if (uDoc.exists) {
+          let uData = uDoc.data();
+          let m = uData.medals || {gold:0, silver:0, bronze:0};
+          if (p.uid === gld.uid) m.gold++;
+          if (p.uid === slv.uid) m.silver++;
+          if (p.uid === brn.uid) m.bronze++;
+          batch.update(uRef, { tournamentsPlayed: (uData.tournamentsPlayed||0) + 1, medals: m });
+        }
+      }
+      
+      batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
+      await batch.commit();
+      sendTelegramAlert(`🏆 <b>Турнир «${cleanHtml(data.title)}» завершен!</b>\n\n🥇 <b>1 место:</b> ${cleanHtml(gld.name)}\n🥈 <b>2 место:</b> ${cleanHtml(slv.name)}\n🥉 <b>3 место:</b> ${cleanHtml(brn.name)}\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.`);
+    } catch(e) {}
+  }
+
+  function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
+    document.getElementById('tour-match-id-val').value = matchId;
+    document.getElementById('tour-id-val').value = tourId;
+    document.getElementById('tour-match-players-label').innerText = `${p1Name} ПРОТИВ ${p2Name}`;
+    selectTourScore(3, 0);
+    document.getElementById('tour-match-modal').style.display = 'flex';
+  }
+  function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
+  function selectTourScore(s1, s2) { document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; document.querySelectorAll('.tour-score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${s1}:${s2}`)); }
+  
+  async function submitTourMatchScore() {
+    const s1 = parseInt(document.getElementById('tour-match-s1').value), s2 = parseInt(document.getElementById('tour-match-s2').value);
+    const tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value;
+    const uid = getVerifiedUserId();
+    closeTourMatchModal();
+    
+    try {
+      await db.runTransaction(async t => {
+        const ref = db.collection('tournaments').doc(tourId);
+        const doc = await t.get(ref); if (!doc.exists) return;
+        let data = doc.data(); let matches = data.matches || [];
+        let mIdx = matches.findIndex(m => m.id === matchId); if (mIdx === -1 || matches[mIdx].score1 !== null) return;
+        
+        let match = matches[mIdx];
+        if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return;
+
+        match.score1 = s1; match.score2 = s2;
+        
+        const p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
+        const p1Doc = await t.get(p1Ref), p2Doc = await t.get(p2Ref);
+        let p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+        let p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+        
+        const isPWin = s1 > s2;
+        const myDelta = calculateElo(p1Data.elo || 1000, p2Data.elo || 1000, isPWin ? 1 : 0);
+        let newP1Elo = Math.max(100, (p1Data.elo || 1000) + myDelta), newP2Elo = Math.max(100, (p2Data.elo || 1000) - myDelta);
+        const p1S = isPWin ? ((p1Data.winStreak||0)+1) : 0, p2S = isPWin ? 0 : ((p2Data.winStreak||0)+1);
+
+        t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
+        t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
+        
+        if (match.stage === 'group') {
+          let groups = data.groups;
+          let grp = groups[match.group];
+          let pl1 = grp.find(p => p.uid === match.p1Uid), pl2 = grp.find(p => p.uid === match.p2Uid);
+          if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+          t.update(ref, { matches: matches, groups: groups });
+        } else {
+          t.update(ref, { matches: matches });
+        }
+      });
+      const tourDoc = await db.collection('tournaments').doc(tourId).get();
+      const updatedMatch = tourDoc.data().matches.find(m => m.id === matchId);
+      await db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
+    } catch(e){}
+  }
+
+  function renderMatchList(matches, tourId, titleFilter) {
+    if (!matches || matches.length === 0) return '';
+    return matches.map(m => {
+      let isDone = m.score1 !== null;
+      let badge = isDone ? `<span class="tour-score-badge">${m.score1} : ${m.score2}</span>` : `<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal('${escapeJS(tourId)}', '${escapeJS(m.id)}', '${escapeJS(cleanHtml(m.p1Name))}', '${escapeJS(cleanHtml(m.p2Name))}')">Указать счет</button>`;
+      let n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
+      let n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
+      return `
+        <div class="tour-match-row">
+          <div class="tour-match-names">
+            ${titleFilter ? `<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">${m.title}</div>` : ''}
+            <span class="${n1C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p1Uid)}')">${cleanHtml(m.p1Name)}</span>
+            <span class="${n2C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p2Uid)}')">${cleanHtml(m.p2Name)}</span>
+          </div>
+          ${badge}
+        </div>
+      `;
+    }).join('');
+  }
+
+  function renderGroupTable(groupPlayers, groupName) {
+    if (!groupPlayers || groupPlayers.length === 0) return '';
+    let sorted = [...groupPlayers].sort((a,b) => b.w - a.w || b.pts - a.pts);
+    let rows = sorted.map((p, i) => `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span></td><td>${p.w}</td><td>${p.l}</td><td>${p.pts}</td></tr>`).join('');
+    return `
+      <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div>
+      <table class="tour-group-table">
+        <tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>
+        ${rows}
+      </table>
+    `;
+  }
+
+  function listenTournaments() {
+    db.collection('tournaments').orderBy('createdAt', 'desc').onSnapshot(snap => {
+      const activeEl = document.getElementById('tournaments-list-active');
+      const archiveEl = document.getElementById('tournaments-list-archive');
+      
+      let activeHtml = '', archiveHtml = '';
+      const myUid = getVerifiedUserId(), isAdmin = isSuperAdmin();
+
+      snap.forEach(doc => {
+        try {
+          const d = doc.data(), id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
+          const isLiked = myUid && likes.includes(myUid), isDisliked = myUid && dislikes.includes(myUid), isPart = myUid && parts.some(p => p.uid === myUid);
+          let adminBtn = isAdmin ? `<button class="btn-leave" style="padding: 4px 8px; font-size: 11px; margin-top: 8px; width: auto;" onclick="deleteTournament('${escapeJS(id)}')">🗑 Удалить</button>` : '';
+
+          if (d.status === 'completed') {
+            const res = d.results || {};
+            archiveHtml += `
+              <div class="card" style="border-color: var(--card-border); opacity: 0.85;">
+                <div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">${cleanHtml(d.title)}</div>
+                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">${d.dateStr || ''}</div>
+                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+                  <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.gold?.uid)}')">${cleanHtml(res.gold?.name)}</span></div>
+                  <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.silver?.uid)}')">${cleanHtml(res.silver?.name)}</span></div>
+                  <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.bronze?.uid)}')">${cleanHtml(res.bronze?.name)}</span></div>
+                </div>
+                ${adminBtn}
+              </div>
+            `;
+            return;
+          }
+
+          let content = '', buttonsHtml = '';
+
+          if (d.status === 'registration') {
+            let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
+            content = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (${parts.length}):</b> ${pList}</div>`;
+            
+            if (myUid) {
+              buttonsHtml += isPart 
+                ? `<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament('${escapeJS(id)}')">Отказаться</button>`
+                : `<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament('${escapeJS(id)}', '${escapeJS(cleanHtml(d.title))}')">🏆 Участвовать</button>`;
+            }
+            if (isAdmin) {
+              buttonsHtml += `</div><div style="display: flex; gap: 8px; margin-top: 8px;">
+                <button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${escapeJS(id)}', 'random')">🎲 Случайная</button>
+                <button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${escapeJS(id)}', 'smart')">🧠 Умная (по Эло)</button>`;
+            }
+          } 
+          else if (d.status === 'active') {
+            content += renderGroupTable(d.groups?.A, 'A');
+            content += renderGroupTable(d.groups?.B, 'B');
+            content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>`;
+            content += renderMatchList((d.matches||[]).filter(m => m.group === 'A'), id, false);
+            content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>`;
+            content += renderMatchList((d.matches||[]).filter(m => m.group === 'B'), id, false);
+
+            if (isAdmin && !(d.matches||[]).filter(m => m.stage==='group').some(m => m.score1 === null)) {
+              buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px;" onclick="generatePlayoffs('${escapeJS(id)}')">Сформировать Плей-офф</button><div>`;
+            }
+          }
+          else if (d.status === 'playoffs') {
+            content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>`;
+            content += renderMatchList((d.matches||[]).filter(m => m.stage === 'semi'), id, true);
+            if (isAdmin && !(d.matches||[]).filter(m => m.stage==='semi').some(m => m.score1 === null)) {
+              buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px;" onclick="generateFinals('${escapeJS(id)}')">Создать Финалы</button><div>`;
+            }
+          }
+          else if (d.status === 'finals') {
+            content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>`;
+            content += renderMatchList((d.matches||[]).filter(m => m.stage === 'final'), id, true);
+            if (isAdmin && !(d.matches||[]).filter(m => m.stage==='final').some(m => m.score1 === null)) {
+              buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px;" onclick="completeTournament('${escapeJS(id)}')">Завершить турнир</button><div>`;
+            }
+          }
+
+          activeHtml += `
+            <div class="card" style="border-color: var(--accent-amber);">
+              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                <div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">${cleanHtml(d.title)}</div>
+                <div style="font-size: 12px; color: var(--text-muted);">${d.dateStr || ''}</div>
+              </div>
+              ${d.desc ? `<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">${cleanHtml(d.desc)}</div>` : ''}
+              ${content}
+              <div style="display: flex; gap: 8px; margin-top: 12px;">
+                <button class="score-btn ${isLiked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'like')">👍 ${likes.length}</button>
+                <button class="score-btn ${isDisliked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'dislike')">👎 ${dislikes.length}</button>
+                ${buttonsHtml}
+              </div>
+              ${adminBtn}
+            </div>
+          `;
+        } catch (err) {
+          if (isAdmin) {
+            activeHtml += `
+              <div class="card" style="border-color: #ef4444; border-width: 2px;">
+                <div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Поврежденный турнир</div>
+                <div style="font-size: 11px; color: var(--text-muted);">База данных не смогла прочитать этот турнир. Нажмите кнопку, чтобы удалить его.</div>
+                <button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament('${escapeJS(doc.id)}')">🗑 Принудительно удалить</button>
+              </div>`;
+          }
+        }
+      });
+      if(activeEl) activeEl.innerHTML = activeHtml || '<span class="empty-note">Пока нет активных турниров</span>';
+      if(archiveEl) archiveEl.innerHTML = archiveHtml || '<span class="empty-note">Архив пуст</span>';
     });
   }
 
@@ -1287,12 +1630,12 @@
     for (const loc of ['park', 'vostok']) {
       try {
         let leftPlayers = [], remainingList = [];
-        await db.runTransaction(async (t) => {
+        await db.runTransaction(async t => {
           const doc = await t.get(db.collection('locations').doc(loc)); if (!doc.exists) return;
           let players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [];
           for (const p of players) {
             const elapsed = now - (p.time || now);
-            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { changed = true; recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000)); leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(p.time || now) }); } 
+            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { changed = true; leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(p.time || now) }); } 
             else { activePlayers.push(p); }
           }
           const activePlans = plans.filter(pl => { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
@@ -1315,13 +1658,13 @@
       const listEl = document.getElementById('list-' + loc);
       if(listEl) {
         if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
-        else { listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div>${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}</div></div>`).join(''); }
+        else { listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal('${escapeJS(item.uid)}')">${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div>${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${escapeJS(item.uid)}')">i</button>` : ''}</div></div>`).join(''); }
       }
 
       const planListEl = document.getElementById('plan-list-' + loc);
       if(planListEl) {
         if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
-        else { planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div>${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}</div></div>`).join(''); }
+        else { planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div>${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${escapeJS(p.uid)}')">i</button>` : ''}</div></div>`).join(''); }
       }
 
       const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null, isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null, btnBox = document.getElementById('btn-container-' + loc);
@@ -1341,7 +1684,7 @@
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile(); listenRatings(); listenLeaderboard(); listenPendingMatches(); loadParkWeather();
+    initUserProfile(); listenRatings(); listenLeaderboard(); listenTournaments(); listenPendingMatches(); loadParkWeather();
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => { const data = doc.data() || {}; locationsData[loc].plans = data.plans || []; locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p); renderAll(); });
     });
