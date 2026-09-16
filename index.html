@@ -62,7 +62,7 @@
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
     
-    /* ПРОФИЛЬ */
+    /* ПРОФИЛЬ И КАРТОЧКИ */
     .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; flex-shrink: 0; }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
@@ -908,7 +908,7 @@
       if (!snap.exists) {
         await ref.set(userData);
         try { const sz = (await db.collection('users').get()).size; sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${sz}</b> человек!`); } catch(e) {}
-      } else { userData = { ...userData, ...snap.data() }; }
+      } else { Object.assign(userData, snap.data()); }
     } catch (e) {}
     currentUserProfile = userData;
     const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
@@ -1067,6 +1067,24 @@
   function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
   function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
   
+  async function recordTrainingTime(uid, name, durationMinutes) {
+    if (!uid || durationMinutes <= 0) return;
+    try {
+      const userRef = db.collection('leaderboard').doc(uid);
+      await db.runTransaction(async t => {
+        const doc = await t.get(userRef);
+        const data = doc.exists ? doc.data() : { name: name, totalMinutes: 0, sessions: 0 };
+        t.set(userRef, {
+          name: name,
+          uid: uid,
+          totalMinutes: (data.totalMinutes || 0) + durationMinutes,
+          sessions: (data.sessions || 0) + 1,
+          lastPlayed: Date.now()
+        }, { merge: true });
+      });
+    } catch(e) {}
+  }
+
   async function checkIn(loc) {
     const uid = getVerifiedUserId(); if (!uid) return;
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
@@ -1091,10 +1109,16 @@
         const d = await t.get(db.collection('locations').doc(loc)); if (!d.exists) return;
         let p = d.data().players || []; const cPlayerArr = p.filter(pl => (pl.uid || pl) === uid);
         const cPlayer = cPlayerArr.length > 0 ? cPlayerArr[0] : null;
-        if (cPlayer && cPlayer.time) { spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); spentStr = formatDuration(cPlayer.time); }
+        if (cPlayer && cPlayer.time) { 
+            spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); 
+            let limitMins = Math.floor((cPlayer.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
+            if (spentMins > limitMins) spentMins = limitMins;
+            spentStr = formatDuration(cPlayer.time); 
+        }
         p = p.filter(pl => (pl.uid || pl) !== uid); finalList = p;
         t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
       });
+      if (spentMins > 0) await recordTrainingTime(uid, currentUserProfile.name, spentMins);
       document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
       if (canSendTgAlert('status_change')) sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${spentStr ? ` (время: <code>${spentStr}</code>)` : ""}.${finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`);
     } catch(e) {}
@@ -1162,9 +1186,9 @@
       } else { mContainer.style.display = 'none'; }
 
       document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo !== undefined ? u.elo : 1000}</span>${deltaHtml}</div></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo !== undefined ? u.elo : 1000)}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
@@ -1337,8 +1361,8 @@
     if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
     try {
       const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const a = [...(data.groups.A || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
-      const b = [...(data.groups.B || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
+      const a = [...(data.groups.A || [])].sort((a,b) => (b.w||0) - (a.w||0) || (b.pts||0) - (a.pts||0));
+      const b = [...(data.groups.B || [])].sort((a,b) => (b.w||0) - (a.w||0) || (b.pts||0) - (a.pts||0));
       if (a.length < 2 || b.length < 2) return customAlert("Недостаточно игроков в группах для плей-офф!");
 
       let matches = data.matches || [];
@@ -1454,7 +1478,14 @@
       let n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
       let n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
       let titleHtml = titleFilter ? `<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">${m.title}</div>` : '';
-      return `<div class="tour-match-row"><div class="tour-match-names">${titleHtml}<span class="${n1C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p1Uid)}')">${cleanHtml(m.p1Name)}</span><span class="${n2C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p2Uid)}')">${cleanHtml(m.p2Name)}</span></div>${badge}</div>`;
+      return `<div class="tour-match-row">
+          <div class="tour-match-names">
+            ${titleHtml}
+            <span class="${n1C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p1Uid)}')">${cleanHtml(m.p1Name)}</span>
+            <span class="${n2C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p2Uid)}')">${cleanHtml(m.p2Name)}</span>
+          </div>
+          ${badge}
+        </div>`;
     }).join('');
   }
 
@@ -1462,7 +1493,8 @@
     if (!groupPlayers || groupPlayers.length === 0 || !Array.isArray(groupPlayers)) return '';
     let sorted = [...groupPlayers].sort((a,b) => (b.w || 0) - (a.w || 0) || (b.pts || 0) - (a.pts || 0));
     let rows = sorted.map((p, i) => `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span></td><td>${p.w||0}</td><td>${p.l||0}</td><td>${p.pts||0}</td></tr>`).join('');
-    return `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div><table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>${rows}</table>`;
+    return `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div>
+      <table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>${rows}</table>`;
   }
 
   function listenTournaments() {
@@ -1499,7 +1531,7 @@
               let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
               content = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (${parts.length}):</b> ${pList}</div>`;
               if (myUid) { buttonsHtml += isPart ? `<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament('${escapeJS(id)}')">Отказаться</button>` : `<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament('${escapeJS(id)}', '${escapeJS(cleanHtml(d.title))}')">🏆 Участвовать</button>`; }
-              if (isAdmin) { buttonsHtml += `</div><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${escapeJS(id)}', 'random')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${escapeJS(id)}', 'smart')">🧠 Умная (по Эло)</button>`; }
+              if (isAdmin) { buttonsHtml += `</div><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${escapeJS(id)}', 'random')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${escapeJS(id)}', 'smart')">🧠 Умная (по Эло)</button></div>`; }
             } 
             else if (d.status === 'active') {
               content += renderGroupTable(d.groups?.A, 'A'); content += renderGroupTable(d.groups?.B, 'B');
@@ -1629,7 +1661,14 @@
           let players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [];
           for (const p of players) {
             const elapsed = now - (p.time || now);
-            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { changed = true; recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000)); leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(p.time || now) }); } 
+            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
+                changed = true; 
+                let limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
+                let actualMins = Math.floor(elapsed / 60000);
+                let recordedMins = actualMins > limitMins ? limitMins : actualMins;
+                recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
+                leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
+            } 
             else { activePlayers.push(p); }
           }
           const activePlans = plans.filter(pl => { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
