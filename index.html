@@ -32,7 +32,7 @@
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
     /* ШАПКА */
-    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
+    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); }
     .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
     .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
@@ -106,6 +106,7 @@
     .btn-logout { background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary); }
     .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;}
 
+    /* КАРТОЧКИ И АНИМАЦИИ */
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
     .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
@@ -169,7 +170,10 @@
     .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
 
-    /* СТИЛИ ДЛЯ ТУРНИРОВ */
+    /* КЛИКАБЕЛЬНЫЕ ИМЕНА И СТИЛИ ДЛЯ ТУРНИРОВ */
+    .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
+    .clickable-name:active { opacity: 0.6; }
+
     .tour-group-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; background: var(--list-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); }
     .tour-group-table th, .tour-group-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--card-border); }
     .tour-group-table th { background: var(--row-bg); color: var(--text-muted); font-weight: 600; }
@@ -178,8 +182,6 @@
     .tour-match-names { display: flex; flex-direction: column; gap: 4px; flex: 1; }
     .tour-score-badge { font-weight: 700; background: var(--row-bg); padding: 4px 8px; border-radius: 6px; margin-left: 8px; }
     .tour-badge-winner { color: #059669; } :root[data-theme="dark"] .tour-badge-winner { color: var(--accent-green); }
-    .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
-    .clickable-name:active { opacity: 0.6; }
 
     .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--bottom-nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center; padding-bottom: env(safe-area-inset-bottom); z-index: 1000; box-shadow: 0 -4px 10px rgba(0,0,0,0.05); }
     .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; user-select: none; }
@@ -354,7 +356,19 @@
 </div>
 <button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></button>
 
-<!-- МОДАЛКИ (СТАНДАРТНЫЕ) -->
+<!-- МОДАЛКА КАСТОМНОГО ПОДТВЕРЖДЕНИЯ -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box" style="border-color: var(--accent-red); padding: 24px;">
+    <h3 style="font-size: 18px; margin-bottom: 8px; color: var(--accent-red);">Внимание</h3>
+    <p id="confirm-modal-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-join" style="background: var(--accent-red); flex: 1;" onclick="executeConfirm()">Да, удалить</button>
+      <button class="btn btn-leave" style="flex: 1;" onclick="closeConfirmModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- ПРОЧИЕ МОДАЛКИ (СТАНДАРТНЫЕ) -->
 <div class="modal-overlay" id="custom-alert-modal"><div class="modal-box" style="border-color: var(--accent-sky); padding: 24px;"><h3 style="font-size: 16px; margin-bottom: 8px;">Клуб ЧМЗ</h3><p id="custom-alert-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p><button class="btn btn-join" onclick="closeCustomAlert()">ОК</button></div></div>
 <div class="modal-overlay" id="admin-modal"><div class="modal-box" style="border-color: var(--accent-amber);"><div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 10px;"><h3 style="font-size: 16px; color: var(--accent-amber);">⚙️ Панель администратора</h3><button class="btn-cancel-modal" style="margin-top:0;" onclick="closeAdminMenu()">✕</button></div><textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea><button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button><button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button></div></div>
 <div class="modal-overlay" id="qr-modal"><div class="modal-box" style="border-color: var(--accent-sky);"><div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;"><h3 style="font-size: 16px; color: var(--accent-sky);" id="qr-modal-title">📷 QR-код</h3><button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button></div><p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям:</p><div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;"><img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" /></div><div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button><button class="btn btn-join" style="background: var(--primary); flex: 1;" onclick="closeQrModal()">Готово</button></div></div></div>
@@ -434,76 +448,79 @@
 </div>
 
 <script>
-  // ================= ЭКРАНИРОВАНИЕ XSS =================
+  // ================= ЭКРАНИРОВАНИЕ XSS И КАВЫЧЕК =================
   function escapeJS(str) {
     if (!str) return '';
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
   }
 
+  // ================= КАСТОМНОЕ ПОДТВЕРЖДЕНИЕ =================
+  var confirmActionCallback = null;
+  function openConfirmModal(msg, action) { document.getElementById('confirm-modal-text').innerText = msg; confirmActionCallback = action; document.getElementById('confirm-modal').style.display = 'flex'; }
+  function closeConfirmModal() { document.getElementById('confirm-modal').style.display = 'none'; confirmActionCallback = null; }
+  function executeConfirm() { if (confirmActionCallback) { confirmActionCallback(); } closeConfirmModal(); }
+
   // ================= ТЕМА И НАВИГАЦИЯ =================
-  function initTheme() {
-    const savedTheme = localStorage.getItem('tt_theme') || 'dark';
-    document.documentElement.setAttribute('data-theme', savedTheme);
-    updateThemeIcon(savedTheme);
+  function initTheme() { var savedTheme = localStorage.getItem('tt_theme') || 'dark'; document.documentElement.setAttribute('data-theme', savedTheme); updateThemeIcon(savedTheme); }
+  function toggleTheme() { var newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark'; document.documentElement.setAttribute('data-theme', newTheme); localStorage.setItem('tt_theme', newTheme); updateThemeIcon(newTheme); }
+  function updateThemeIcon(theme) { var btn = document.getElementById('btn-theme'); if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙'; var metaTheme = document.getElementById('meta-theme-color'); if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9'); }
+  function switchNavTab(tabId) { 
+      var views = document.querySelectorAll('.main-view'); for(var i=0; i<views.length; i++) views[i].classList.remove('active');
+      var items = document.querySelectorAll('.nav-item'); for(var j=0; j<items.length; j++) items[j].classList.remove('active');
+      var viewEl = document.getElementById('view-' + tabId); var navEl = document.getElementById('nav-' + tabId);
+      if(viewEl) viewEl.classList.add('active'); if(navEl) navEl.classList.add('active');
+      window.scrollTo(0, 0); localStorage.setItem('tt_active_tab', tabId); 
   }
-  function toggleTheme() {
-    const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-    document.documentElement.setAttribute('data-theme', newTheme);
-    localStorage.setItem('tt_theme', newTheme);
-    updateThemeIcon(newTheme);
-  }
-  function updateThemeIcon(theme) {
-    const btn = document.getElementById('btn-theme'); if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
-    const metaTheme = document.getElementById('meta-theme-color'); if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9');
-  }
-  function switchNavTab(tabId) {
-    document.querySelectorAll('.main-view').forEach(view => view.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    const viewEl = document.getElementById(`view-${tabId}`); const navEl = document.getElementById(`nav-${tabId}`);
-    if(viewEl) viewEl.classList.add('active'); if(navEl) navEl.classList.add('active');
-    window.scrollTo(0, 0); localStorage.setItem('tt_active_tab', tabId);
-  }
-  function initNavTab() { switchNavTab(localStorage.getItem('tt_active_tab') || 'profile'); }
+  function initNavTab() { var defaultTab = localStorage.getItem('tt_active_tab') || 'profile'; switchNavTab(defaultTab); }
 
   initTheme(); initNavTab();
 
   // ================= ПЕРЕМЕННЫЕ =================
-  const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
-  const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
-  const TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
-  const MAX_CHAT_URL = "https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E";
-  const LOCATION_NAMES = { park: "в Парке им. Тищенко 🌳", vostok: "в ДК «Восток» 🏛" };
-  const DEFAULT_LIMIT_MS = 120 * 60 * 1000, REMIND_BEFORE_MS = 15 * 60 * 1000, ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; 
-  const ADMIN_UIDS = ['tg_153650895', 'tg_azsnake'];
+  var GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
+  var TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
+  var TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
+  var MAX_CHAT_URL = "https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E";
+  var LOCATION_NAMES = { park: "в Парке им. Тищенко 🌳", vostok: "в ДК «Восток» 🏛" };
+  var DEFAULT_LIMIT_MS = 120 * 60 * 1000;
+  var REMIND_BEFORE_MS = 15 * 60 * 1000;
+  var ANTI_SPAM_COOLDOWN = 5 * 60 * 1000; 
+  var ADMIN_UIDS = ['tg_153650895', 'tg_azsnake'];
 
-  let locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
-  let currentUserProfile = { uid: null, name: "Гость", medals: { gold:0, silver:0, bronze:0 }, tournamentsPlayed: 0 };
-  let activePlanningLoc = null, currentUserActiveLoc = null, currentUserActivePlayer = null, hasTriggeredPush = false;
-  let allRegisteredUsers = [], announcementsData = { park: "", vostok: "" }, currentModalUrl = "", currentUserLeaderboardUnsubscribe = null, currentEditingTourId = null;
+  var locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
+  var currentUserProfile = { uid: null, name: "Гость", medals: { gold:0, silver:0, bronze:0 }, tournamentsPlayed: 0 };
+  var activePlanningLoc = null;
+  var currentUserActiveLoc = null;
+  var currentUserActivePlayer = null;
+  var hasTriggeredPush = false;
+  var allRegisteredUsers = [];
+  var announcementsData = { park: "", vostok: "" };
+  var currentModalUrl = "";
+  var currentUserLeaderboardUnsubscribe = null;
+  var currentEditingTourId = null;
 
   // ================= FIREBASE =================
-  const firebaseConfig = { apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY", authDomain: "tt-chmz.firebaseapp.com", projectId: "tt-chmz", storageBucket: "tt-chmz.firebasestorage.app", messagingSenderId: "763705864834", appId: "1:763705864834:web:d9035408eaf3e31d0efa9b" };
-  if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-  const db = firebase.firestore();
+  var firebaseConfig = { apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY", authDomain: "tt-chmz.firebaseapp.com", projectId: "tt-chmz", storageBucket: "tt-chmz.firebasestorage.app", messagingSenderId: "763705864834", appId: "1:763705864834:web:d9035408eaf3e31d0efa9b" };
+  if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
+  var db = firebase.firestore();
 
   // ================= УТИЛИТЫ =================
   function customAlert(msg) { document.getElementById('custom-alert-text').innerText = msg; document.getElementById('custom-alert-modal').style.display = 'flex'; }
   function closeCustomAlert() { document.getElementById('custom-alert-modal').style.display = 'none'; }
   function cleanHtml(str) { return str ? String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') : ''; }
   function formatTime(ts) { return new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }); }
-  function formatMinutes(mins) { if (!mins) return '0 мин'; if (mins < 60) return `${mins} мин`; return `${Math.floor(mins / 60)} ч ${mins % 60} мин`; }
+  function formatMinutes(mins) { if (!mins) return '0 мин'; if (mins < 60) return mins + ' мин'; return Math.floor(mins / 60) + ' ч ' + (mins % 60) + ' мин'; }
   function formatDuration(ts) { return formatMinutes(Math.floor((Date.now() - ts) / 60000)); }
-  function formatUntil(ts) { const diff = ts - Date.now(); if (diff <= 0) return 'скоро'; const mins = Math.ceil(diff / 60000); if (mins < 60) return `через ~${mins} мин`; return `через ${Math.floor(mins / 60)} ч ${mins % 60} мин`; }
-  function getPlayersCountSuffix(count) { const m10 = count % 10, m100 = count % 100; if (m100 >= 11 && m100 <= 19) return `игроков`; if (m10 === 1) return `игрок`; if (m10 >= 2 && m10 <= 4) return `игрока`; return `игроков`; }
-  function buildBlockquoteList(list, title) { if (!list || list.length === 0) return ""; return `\n\n<blockquote>👥 <b>${title} (${list.length} ${getPlayersCountSuffix(list.length)}):</b>\n` + list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n") + `</blockquote>`; }
+  function formatUntil(ts) { var diff = ts - Date.now(); if (diff <= 0) return 'скоро'; var mins = Math.ceil(diff / 60000); if (mins < 60) return 'через ~' + mins + ' мин'; return 'через ' + Math.floor(mins / 60) + ' ч ' + (mins % 60) + ' мин'; }
+  function getPlayersCountSuffix(count) { var m10 = count % 10, m100 = count % 100; if (m100 >= 11 && m100 <= 19) return 'игроков'; if (m10 === 1) return 'игрок'; if (m10 >= 2 && m10 <= 4) return 'игрока'; return 'игроков'; }
+  function buildBlockquoteList(list, title) { if (!list || list.length === 0) return ""; var items = []; for(var i=0; i<list.length; i++) items.push('• ' + cleanHtml(list[i].name || list[i])); return '\n\n<blockquote>👥 <b>' + title + ' (' + list.length + ' ' + getPlayersCountSuffix(list.length) + '):</b>\n' + items.join('\n') + '</blockquote>'; }
   function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
   function switchTab(tab) {
-    const rBtn = document.getElementById('tab-btn-rating'), tBtn = document.getElementById('tab-btn-time');
-    const rView = document.getElementById('view-rating-content'), tView = document.getElementById('view-time-content');
+    var rBtn = document.getElementById('tab-btn-rating'), tBtn = document.getElementById('tab-btn-time');
+    var rView = document.getElementById('view-rating-content'), tView = document.getElementById('view-time-content');
     if (tab === 'rating') { rBtn.classList.add('active'); tBtn.classList.remove('active'); rView.style.display = 'flex'; tView.style.display = 'none'; } 
     else { tBtn.classList.add('active'); rBtn.classList.remove('active'); tView.style.display = 'flex'; rView.style.display = 'none'; }
   }
-  function getWindDirection(deg) { if (deg === undefined || deg === null) return ""; return ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"][Math.round((deg % 360) / 45) % 8]; }
+  function getWindDirection(deg) { if (deg === undefined || deg === null) return ""; var dirs = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"]; return dirs[Math.round((deg % 360) / 45) % 8]; }
   function getCustomBadge(uid) {
     if (!uid) return '';
     if (uid === 'google_XUE0DYY6WoMfkI3TmG7o2HqPUEm1') return '<span class="platform-badge badge-teacher">Учитель 🎓</span>';
@@ -513,153 +530,192 @@
     if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') return '<span class="platform-badge badge-coach">Тренер 📋</span>';
     return '';
   }
-  function openExternalLink(url) { if (window.Telegram?.WebApp?.openLink) { window.Telegram.WebApp.openLink(url); } else { window.open(url, '_blank'); } }
+  function openExternalLink(url) { if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) { window.Telegram.WebApp.openLink(url); } else { window.open(url, '_blank'); } }
   function getInventoryRowHtml(icon, label, value, searchPrefix) {
-    if (!value) return '';
-    const query = encodeURIComponent(searchPrefix + ' ' + value);
-    const url = `https://www.google.com/search?q=${query}`;
-    return `<div class="inventory-item"><div class="inventory-item-left"><span>${icon}</span> <span style="color: var(--text-muted);">${label}</span> <span class="inventory-value">${cleanHtml(value)}</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink('${url}')">i</button></div>`;
+    if (!value) return ''; var query = encodeURIComponent(searchPrefix + ' ' + value); var url = 'https://www.google.com/search?q=' + query;
+    return '<div class="inventory-item"><div class="inventory-item-left"><span>'+icon+'</span> <span style="color: var(--text-muted);">'+label+'</span> <span class="inventory-value">'+cleanHtml(value)+'</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink(\''+url+'\')">i</button></div>';
   }
-  function calculateElo(rA, rB, scoreA, k = 32) { return Math.round(k * (scoreA - (1 / (1 + Math.pow(10, (rB - rA) / 400))))); }
-  function canSendTgAlert(type) { const n = Date.now(), l = localStorage.getItem('tt_last_alert_' + type); if (l && (n - parseInt(l)) < ANTI_SPAM_COOLDOWN) return false; localStorage.setItem('tt_last_alert_' + type, n.toString()); return true; }
+  function calculateElo(rA, rB, scoreA, k) { if (!k) k = 32; return Math.round(k * (scoreA - (1 / (1 + Math.pow(10, (rB - rA) / 400))))); }
+  function canSendTgAlert(type) { var n = Date.now(), l = localStorage.getItem('tt_last_alert_' + type); if (l && (n - parseInt(l)) < ANTI_SPAM_COOLDOWN) return false; localStorage.setItem('tt_last_alert_' + type, n.toString()); return true; }
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
     try {
-      let f = document.getElementById('tg_sink_frame'); if (!f) { f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none'; document.body.appendChild(f); }
-      const form = document.createElement('form'); form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
-      const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
+      var f = document.getElementById('tg_sink_frame'); 
+      if (!f) { f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none'; document.body.appendChild(f); }
+      var form = document.createElement('form'); form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
+      var input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
       form.appendChild(input); document.body.appendChild(form); form.submit();
-      setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
+      setTimeout(function() { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
     } catch (e) {}
   }
-  function sendDevicePushNotification(title, body) { if ('Notification' in window && Notification.permission === 'granted') { try { new Notification(title, { body: body, icon: 'logo.webp', badge: 'logo.webp', vibrate: [200, 100, 200] }); } catch (e) {} } if (window.Telegram?.WebApp?.HapticFeedback) window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning'); }
-  async function shareModalUrl() { if (!currentModalUrl) return; const t = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ"; if (navigator.share) { try { await navigator.share({ title: 'Клуб ЧМЗ', text: t, url: currentModalUrl }); } catch (err) {} } else { navigator.clipboard.writeText(`${t}: ${currentModalUrl}`).then(() => customAlert("📋 Ссылка скопирована!")); } }
+  function sendDevicePushNotification(title, body) { 
+      if ('Notification' in window && Notification.permission === 'granted') { try { new Notification(title, { body: body, icon: 'logo.webp', badge: 'logo.webp', vibrate: [200, 100, 200] }); } catch (e) {} } 
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback && window.Telegram.WebApp.HapticFeedback.notificationOccurred) { window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning'); }
+  }
+  function shareModalUrl() { 
+      if (!currentModalUrl) return; var t = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ"; 
+      if (navigator.share) { navigator.share({ title: 'Клуб ЧМЗ', text: t, url: currentModalUrl }).catch(function(){}); } 
+      else { navigator.clipboard.writeText(t + ': ' + currentModalUrl).then(function() { customAlert("📋 Ссылка скопирована!"); }); } 
+  }
   function openQrModal(type) {
-    let url = "https://azsnake2017-beep.github.io/tt-checkin/";
-    let t = "QR-код приложения";
-    let d = "Покажите этот QR-код друзьям для быстрого доступа:";
+    var url = "https://azsnake2017-beep.github.io/tt-checkin/";
+    var t = "QR-код приложения";
+    var d = "Покажите этот QR-код друзьям для быстрого доступа:";
+    
     if (type === 'tg') { url = TELEGRAM_CHAT_URL; t = "QR-код Telegram чата"; d = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
     else if (type === 'max') { url = MAX_CHAT_URL; t = "QR-код МАКС чата"; d = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
-    currentModalUrl = url; document.getElementById('qr-modal-title').innerText = "📷 " + t; document.getElementById('qr-modal-desc').innerText = d; document.getElementById('qr-url-text').innerText = url; document.getElementById('qr-code-img').src = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(url)}`; document.getElementById('qr-modal').style.display = 'flex';
+    
+    currentModalUrl = url; 
+    document.getElementById('qr-modal-title').innerText = "📷 " + t; 
+    document.getElementById('qr-modal-desc').innerText = d; 
+    document.getElementById('qr-url-text').innerText = url; 
+    document.getElementById('qr-code-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(url); 
+    document.getElementById('qr-modal').style.display = 'flex';
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟"; if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈"; if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆"; if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️"; return "Легенда клуба 🏛️";
   }
-  function isUserVerified() { return !!(window.Telegram?.WebApp?.initDataUnsafe?.user?.id || localStorage.getItem('tt_member_id')?.match(/^(tg|google)_/)); }
-  function getVerifiedUserId() { return window.Telegram?.WebApp?.initDataUnsafe?.user?.id ? 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id : localStorage.getItem('tt_member_id'); }
-  function isSuperAdmin() { return window.Telegram?.WebApp?.initDataUnsafe?.user?.username?.toLowerCase() === 'azsnake' || ADMIN_UIDS.includes(getVerifiedUserId()); }
-
-  // ================= ПРОФИЛЬ =================
-  window.onTelegramAuth = async function(user) { const uid = 'tg_' + user.id; localStorage.setItem('tt_member_id', uid); await syncUserProfile(uid, (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок", 'tg'); };
-  async function loginWithGoogle() { try { const res = await firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()); if (res && res.user) { const uid = 'google_' + res.user.uid; localStorage.setItem('tt_member_id', uid); await syncUserProfile(uid, res.user.displayName || res.user.email.split('@')[0], 'google'); } } catch (e) { customAlert("Ошибка входа: " + e.message); } }
-  async function logoutProfile() { try { await firebase.auth().signOut(); } catch (e) {} localStorage.removeItem('tt_member_id'); localStorage.removeItem('tt_name'); window.location.reload(); }
-  function subscribeToUserLeaderboard(uid) { if (currentUserLeaderboardUnsubscribe) currentUserLeaderboardUnsubscribe(); currentUserLeaderboardUnsubscribe = db.collection('leaderboard').doc(uid).onSnapshot(doc => { currentUserProfile.totalMinutes = doc.exists ? (doc.data().totalMinutes || 0) : 0; updateProfileDisplay(); }); }
-
-  async function syncUserProfile(uid, name, platform) {
-    const ref = db.collection('users').doc(uid);
-    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, isVerified: true, createdAt: Date.now() };
-    try {
-      const snap = await Promise.race([ref.get(), new Promise((_, r) => setTimeout(() => r(new Error()), 2000))]);
-      if (!snap.exists) { await ref.set(userData); try { const sz = (await db.collection('users').get()).size; sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${sz}</b> человек!`); } catch(e) {} } 
-      else { Object.assign(userData, snap.data()); }
-    } catch (e) {}
-    currentUserProfile = userData;
-    const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
-    subscribeToUserLeaderboard(uid); updateProfileDisplay(); localStorage.setItem('tt_name', currentUserProfile.name); renderAll();
+  function isUserVerified() { 
+      var tgUser = null;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+          tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+      }
+      var tgId = tgUser ? tgUser.id : null; 
+      var localId = localStorage.getItem('tt_member_id');
+      var localMatch = false;
+      if (localId && (localId.indexOf('tg_') === 0 || localId.indexOf('google_') === 0)) { localMatch = true; }
+      return !!(tgId || localMatch);
+  }
+  function getVerifiedUserId() { 
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+          if (window.Telegram.WebApp.initDataUnsafe.user.id) { return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id; }
+      }
+      return localStorage.getItem('tt_member_id'); 
+  }
+  function isSuperAdmin() { 
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+          if (window.Telegram.WebApp.initDataUnsafe.user.username && window.Telegram.WebApp.initDataUnsafe.user.username.toLowerCase() === 'azsnake') {
+              return true;
+          }
+      }
+      var uid = getVerifiedUserId(); return uid ? (ADMIN_UIDS.indexOf(uid) !== -1) : false;
   }
 
-  async function initUserProfile() {
-    const banner = document.getElementById('web-auth-banner');
-    if (window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      if (banner) banner.style.display = 'none';
-      const u = window.Telegram.WebApp.initDataUnsafe.user; return syncUserProfile('tg_' + u.id, (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок", 'tg');
+  // ================= ПРОФИЛЬ =================
+  window.onTelegramAuth = function(user) { var uid = 'tg_' + user.id; localStorage.setItem('tt_member_id', uid); var name = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок"; syncUserProfile(uid, name, 'tg'); };
+  
+  function loginWithGoogle() { 
+      firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function(res) {
+          if (res && res.user) { var uid = 'google_' + res.user.uid; localStorage.setItem('tt_member_id', uid); var name = res.user.displayName || res.user.email.split('@')[0]; syncUserProfile(uid, name, 'google'); }
+      }).catch(function(e) { customAlert("Ошибка входа: " + e.message); });
+  }
+  
+  function logoutProfile() { firebase.auth().signOut().then(function(){}).catch(function(){}); localStorage.removeItem('tt_member_id'); localStorage.removeItem('tt_name'); window.location.reload(); }
+  
+  function subscribeToUserLeaderboard(uid) { 
+      if (currentUserLeaderboardUnsubscribe) currentUserLeaderboardUnsubscribe(); 
+      currentUserLeaderboardUnsubscribe = db.collection('leaderboard').doc(uid).onSnapshot(function(doc) { currentUserProfile.totalMinutes = doc.exists ? (doc.data().totalMinutes || 0) : 0; updateProfileDisplay(); }); 
+  }
+
+  function syncUserProfile(uid, name, platform) {
+    var ref = db.collection('users').doc(uid);
+    var userData = { uid: uid, name: name, platform: platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, isVerified: true, createdAt: Date.now() };
+    
+    ref.get().then(function(snap) {
+        if (!snap.exists) { 
+            ref.set(userData).then(function() {
+                db.collection('users').get().then(function(usersSnap) { sendTelegramAlert("🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>" + cleanHtml(name) + "</b>\n\n📈 Теперь нас в рейтинге: <b>" + usersSnap.size + "</b> человек!"); }).catch(function(){});
+            });
+        } else { 
+            var snapData = snap.data();
+            for (var key in snapData) { userData[key] = snapData[key]; } 
+        }
+        finishSync(uid, userData);
+    }).catch(function(e) { finishSync(uid, userData); });
+  }
+  
+  function finishSync(uid, userData) {
+      currentUserProfile = userData;
+      var banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
+      subscribeToUserLeaderboard(uid); updateProfileDisplay(); localStorage.setItem('tt_name', currentUserProfile.name); renderAll();
+  }
+
+  function initUserProfile() {
+    var banner = document.getElementById('web-auth-banner');
+    var tgUser = null;
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        tgUser = window.Telegram.WebApp.initDataUnsafe.user;
     }
-    const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && savedId.match(/^(tg|google)_/)) {
-      try {
-        const snap = await Promise.race([db.collection('users').doc(savedId).get(), new Promise((_, r) => setTimeout(() => r(new Error()), 2000))]);
+    
+    if (tgUser && tgUser.id) {
+      if (banner) banner.style.display = 'none';
+      var name = (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')).trim() || tgUser.username || "Игрок";
+      syncUserProfile('tg_' + tgUser.id, name, 'tg');
+      return;
+    }
+    
+    var savedId = localStorage.getItem('tt_member_id');
+    if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
+      db.collection('users').doc(savedId).get().then(function(snap) {
         if (snap.exists) {
-          let data = snap.data();
+          var data = snap.data();
           if (data.isVerified === undefined || data.elo === undefined || data.medals === undefined) {
-            data.isVerified = true; data.elo = data.elo !== undefined ? data.elo : 1000; data.matches = data.matches || 0; data.wins = data.wins || 0; data.losses = data.losses || 0; data.tournamentsPlayed = data.tournamentsPlayed || 0; data.medals = data.medals || {gold:0, silver:0, bronze:0}; data.uid = savedId; data.platform = savedId.startsWith('google_') ? 'google' : 'tg';
+            data.isVerified = true; data.elo = data.elo !== undefined ? data.elo : 1000; data.matches = data.matches || 0; data.wins = data.wins || 0; data.losses = data.losses || 0; data.tournamentsPlayed = data.tournamentsPlayed || 0; data.medals = data.medals || {gold:0, silver:0, bronze:0}; data.uid = savedId; data.platform = savedId.indexOf('google_') === 0 ? 'google' : 'tg';
             db.collection('users').doc(savedId).set(data, { merge: true }); 
           }
           currentUserProfile = data; updateProfileDisplay(); subscribeToUserLeaderboard(savedId);
-          if (banner) banner.style.display = 'none'; renderAll(); return;
-        }
-      } catch (e) {}
+          if (banner) banner.style.display = 'none'; renderAll();
+        } else { showGuest(banner, tgUser); }
+      }).catch(function(e) { showGuest(banner, tgUser); });
+      return;
     }
-    
-    currentUserProfile = { uid: null, name: "Гость" };
-    document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: var(--text-muted);">Не авторизован</b></span>';
-    document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
-    
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id && banner) {
-      banner.style.display = 'flex';
-      const container = document.getElementById('telegram-login-container');
-      if (container) {
-        container.innerHTML = '';
-        const script = document.createElement('script'); script.src = "https://telegram.org/js/telegram-widget.js?22"; script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME); script.setAttribute('data-size', 'large'); script.setAttribute('data-radius', '10'); script.setAttribute('data-onauth', 'onTelegramAuth(user)'); script.setAttribute('data-request-access', 'write'); container.appendChild(script);
+    showGuest(banner, tgUser);
+  }
+  
+  function showGuest(banner, tgUser) {
+      currentUserProfile = { uid: null, name: "Гость" };
+      document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: var(--text-muted);">Не авторизован</b></span>';
+      document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
+      if (!tgUser && banner) {
+          banner.style.display = 'flex';
+          var container = document.getElementById('telegram-login-container');
+          if (container) { container.innerHTML = ''; var script = document.createElement('script'); script.src = "https://telegram.org/js/telegram-widget.js?22"; script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME); script.setAttribute('data-size', 'large'); script.setAttribute('data-radius', '10'); script.setAttribute('data-onauth', 'onTelegramAuth(user)'); script.setAttribute('data-request-access', 'write'); container.appendChild(script); }
       }
-    }
-    renderAll();
+      renderAll();
   }
 
   function updateProfileDisplay() {
-    const adminTag = isSuperAdmin() ? `<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>` : '';
-    const customBadge = getCustomBadge(currentUserProfile.uid);
-    const elo = currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000;
+    var adminTag = isSuperAdmin() ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
+    var customBadge = getCustomBadge(currentUserProfile.uid);
+    var elo = currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000;
 
-    const banner = document.getElementById('web-auth-banner'); if (banner && isUserVerified()) banner.style.display = 'none';
-    document.getElementById('user-name-container').innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${adminTag} ${customBadge}`;
+    var banner = document.getElementById('web-auth-banner'); if (banner && isUserVerified()) banner.style.display = 'none';
     
-    const deltaHtml = currentUserProfile.lastEloDelta ? (currentUserProfile.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${currentUserProfile.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${currentUserProfile.lastEloDelta}) 📉</span>`) : '';
+    document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge;
+    var deltaHtml = currentUserProfile.lastEloDelta ? (currentUserProfile.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + currentUserProfile.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + currentUserProfile.lastEloDelta + ') 📉</span>') : '';
 
-    document.getElementById('user-score-container').innerHTML = `
-      <div style="display: flex; align-items: center; gap: 12px;">
-        <div style="display: flex; flex-direction: column; align-items: flex-end;">
-          <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span>
-          <div><span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>${deltaHtml}</div>
-        </div>
-        <button class="btn-info" onclick="showUserInfoModal('${escapeJS(currentUserProfile.uid)}')">i</button>
-      </div>`;
+    document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 12px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button></div>';
     
-    const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : '';
-    const streakText = (currentUserProfile.winStreak !== undefined && currentUserProfile.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${currentUserProfile.winStreak} побед подряд</span>` : '';
-    const winrate = currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0;
+    var rttfText = currentUserProfile.rttf ? ' • РТТФ: ' + currentUserProfile.rttf : '';
+    var streakText = (currentUserProfile.winStreak !== undefined && currentUserProfile.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + currentUserProfile.winStreak + ' побед подряд</span>' : '';
+    var winrate = currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0;
     
-    document.getElementById('user-stats-container').innerHTML = `
-      <div style="display: flex; flex-direction: column; gap: 4px;">
-        <span class="player-status-tag">${getPlayerStatus(elo)} ${rttfText ? ' • ' + rttfText : ''}</span>
-        <span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ${formatMinutes(currentUserProfile.totalMinutes || 0)}</span>
-      </div>
-      <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
-        <div><span class="player-status-tag" style="display: inline;">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>${streakText}</div>
-        <span class="player-status-tag">(${winrate}%)</span>
-      </div>
-    `;
+    document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(currentUserProfile.totalMinutes || 0) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + (currentUserProfile.wins || 0) + 'В - ' + (currentUserProfile.losses || 0) + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
 
-    // Медали
-    const mContainer = document.getElementById('user-medals-container');
+    var mContainer = document.getElementById('user-medals-container');
     if (mContainer) {
-      const m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
+      var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
       if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
-        mContainer.innerHTML = `
-          <div class="medal-item">🏆 ${currentUserProfile.tournamentsPlayed || 0}</div>
-          <div class="medal-item">🥇 ${m.gold || 0}</div>
-          <div class="medal-item">🥈 ${m.silver || 0}</div>
-          <div class="medal-item">🥉 ${m.bronze || 0}</div>
-        `;
+        mContainer.innerHTML = '<div class="medal-item">🏆 ' + (currentUserProfile.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>';
         mContainer.style.display = 'flex';
       } else { mContainer.style.display = 'none'; }
     }
 
-    // Инвентарь
-    const invContainer = document.getElementById('user-inventory-container');
+    var invContainer = document.getElementById('user-inventory-container');
     if (invContainer) {
       if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
-        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
+        var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
         if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
         if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
         if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
@@ -667,7 +723,7 @@
       } else { invContainer.style.display = 'none'; }
     }
 
-    const btnAddTour = document.getElementById('btn-add-tournament'); if (btnAddTour) btnAddTour.style.display = isSuperAdmin() ? 'block' : 'none';
+    var btnAddTour = document.getElementById('btn-add-tournament'); if (btnAddTour) { btnAddTour.style.display = isSuperAdmin() ? 'block' : 'none'; }
     if (isUserVerified()) { document.getElementById('btn-edit-profile').style.display = 'block'; document.getElementById('btn-logout').style.display = 'block'; }
   }
 
@@ -684,425 +740,455 @@
     } 
   }
   function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
-  async function saveCustomNameWithCheck() {
-    const uid = getVerifiedUserId(); if (!uid) return;
-    const val = document.getElementById('name-input').value.trim(), bladeVal = document.getElementById('blade-input').value.trim(), rubberLVal = document.getElementById('rubber-l-input').value.trim(), rubberRVal = document.getElementById('rubber-r-input').value.trim();
-    const rttfRaw = document.getElementById('rttf-input').value.trim();
-    const rttfVal = rttfRaw ? parseInt(rttfRaw) : null;
+  function saveCustomNameWithCheck() {
+    var uid = getVerifiedUserId(); if (!uid) return;
+    var val = document.getElementById('name-input').value.trim();
+    var bladeVal = document.getElementById('blade-input').value.trim();
+    var rubberLVal = document.getElementById('rubber-l-input').value.trim();
+    var rubberRVal = document.getElementById('rubber-r-input').value.trim();
+    var rttfRaw = document.getElementById('rttf-input').value.trim();
+    var rttfVal = rttfRaw ? parseInt(rttfRaw) : null;
     if (val.length < 2) return; if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) return customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
-    try {
-      const updateData = { name: val };
-      if (bladeVal) updateData.blade = bladeVal; else updateData.blade = firebase.firestore.FieldValue.delete();
-      if (rubberLVal) updateData.rubberL = rubberLVal; else updateData.rubberL = firebase.firestore.FieldValue.delete();
-      if (rubberRVal) updateData.rubberR = rubberRVal; else updateData.rubberR = firebase.firestore.FieldValue.delete();
-      if (rttfVal !== null) updateData.rttf = rttfVal; else updateData.rttf = firebase.firestore.FieldValue.delete();
+    
+    var updateData = { name: val };
+    if (bladeVal) updateData.blade = bladeVal; else updateData.blade = firebase.firestore.FieldValue.delete();
+    if (rubberLVal) updateData.rubberL = rubberLVal; else updateData.rubberL = firebase.firestore.FieldValue.delete();
+    if (rubberRVal) updateData.rubberR = rubberRVal; else updateData.rubberR = firebase.firestore.FieldValue.delete();
+    if (rttfVal !== null) updateData.rttf = rttfVal; else updateData.rttf = firebase.firestore.FieldValue.delete();
       
-      const doc = await db.collection('users').doc(uid).get(); const data = doc.exists ? doc.data() : {};
+    db.collection('users').doc(uid).get().then(function(doc) {
+      var data = doc.exists ? doc.data() : {};
       if (!doc.exists || data.isVerified === undefined || data.elo === undefined) {
         updateData.isVerified = true; updateData.elo = data.elo !== undefined ? data.elo : 1000; updateData.matches = data.matches || 0; updateData.wins = data.wins || 0; updateData.losses = data.losses || 0; updateData.uid = uid; updateData.platform = uid.indexOf('google_') === 0 ? 'google' : 'tg'; updateData.createdAt = data.createdAt || Date.now();
       }
-      await db.collection('users').doc(uid).set(updateData, { merge: true });
-      currentUserProfile.name = val; currentUserProfile.blade = bladeVal || null; currentUserProfile.rubberL = rubberLVal || null; currentUserProfile.rubberR = rubberRVal || null; currentUserProfile.rttf = rttfVal;
-      if (updateData.isVerified) { for (let k in updateData) { currentUserProfile[k] = updateData[k]; } }
-      localStorage.setItem('tt_name', val); updateProfileDisplay(); hideNameModal(); renderAll();
-    } catch (e) { customAlert("Не удалось сохранить профиль."); }
+      db.collection('users').doc(uid).set(updateData, { merge: true }).then(function() {
+          currentUserProfile.name = val; currentUserProfile.blade = bladeVal || null; currentUserProfile.rubberL = rubberLVal || null; currentUserProfile.rubberR = rubberRVal || null; currentUserProfile.rttf = rttfVal;
+          if (updateData.isVerified) { for (var k in updateData) { currentUserProfile[k] = updateData[k]; } }
+          localStorage.setItem('tt_name', val); updateProfileDisplay(); hideNameModal(); renderAll();
+      });
+    }).catch(function(e) { customAlert("Не удалось сохранить профиль."); });
   }
 
   // ================= ЧЕКИН =================
   function handleCheckInClick(loc) { if (isUserVerified()) checkIn(loc); }
   function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
   function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
-  async function checkIn(loc) {
-    const uid = getVerifiedUserId(); if (!uid) return; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-    const now = Date.now(), otherLoc = loc === 'park' ? 'vostok' : 'park'; let finalList = [];
-    try {
-      await db.runTransaction(async t => {
-        const tDoc = await t.get(db.collection('locations').doc(loc)), oDoc = await t.get(db.collection('locations').doc(otherLoc));
-        let tP = tDoc.exists ? tDoc.data().players || [] : [], oP = oDoc.exists ? oDoc.data().players || [] : [], tPl = tDoc.exists ? tDoc.data().plans || [] : [];
-        if (tP.some(p => (p.uid || p) === uid)) return;
-        tP = tP.filter(p => (p.uid || p) !== uid); oP = oP.filter(p => (p.uid || p) !== uid); tPl = tPl.filter(p => (p.uid || p) !== uid);
-        tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS }); finalList = tP;
-        t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
-      });
-      hasTriggeredPush = false; if (canSendTgAlert('status_change')) sendTelegramAlert(`🏓 игрок <b>${cleanHtml(currentUserProfile.name)}</b> уже у стола ${LOCATION_NAMES[loc]}!${buildBlockquoteList(finalList, "Сейчас за столом")}\n\nКто составит компанию?`);
-    } catch(e) {}
+  
+  function checkIn(loc) {
+    var uid = getVerifiedUserId(); if (!uid) return; if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
+    var now = Date.now(), otherLoc = loc === 'park' ? 'vostok' : 'park'; var finalList = [];
+    db.runTransaction(function(t) {
+        return Promise.all([t.get(db.collection('locations').doc(loc)), t.get(db.collection('locations').doc(otherLoc))]).then(function(docs) {
+            var tDoc = docs[0], oDoc = docs[1];
+            var tP = tDoc.exists ? tDoc.data().players || [] : []; var oP = oDoc.exists ? oDoc.data().players || [] : []; var tPl = tDoc.exists ? tDoc.data().plans || [] : [];
+            var isAlreadyIn = false; for(var i=0; i<tP.length; i++) { if((tP[i].uid || tP[i]) === uid) isAlreadyIn = true; } if (isAlreadyIn) return;
+            var filterFn = function(p) { return (p.uid || p) !== uid; }; tP = tP.filter(filterFn); oP = oP.filter(filterFn); tPl = tPl.filter(filterFn);
+            tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS }); finalList = tP;
+            t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
+        });
+    }).then(function() { hasTriggeredPush = false; if (canSendTgAlert('status_change')) sendTelegramAlert("🏓 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> уже у стола " + LOCATION_NAMES[loc] + "!" + buildBlockquoteList(finalList, "Сейчас за столом") + "\n\nКто составит компанию?"); }).catch(function(){});
   }
-  async function leave(loc) {
-    const uid = getVerifiedUserId(); if (!uid) return; let spentMins = 0, spentStr = "", finalList = [];
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc)); if (!d.exists) return;
-        let p = d.data().players || []; const cPlayerArr = p.filter(pl => (pl.uid || pl) === uid);
-        const cPlayer = cPlayerArr.length > 0 ? cPlayerArr[0] : null;
-        if (cPlayer && cPlayer.time) { spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); spentStr = formatDuration(cPlayer.time); }
-        p = p.filter(pl => (pl.uid || pl) !== uid); finalList = p;
-        t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
-      });
-      if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
-      document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
-      if (canSendTgAlert('status_change')) sendTelegramAlert(`👋 игрок <b>${cleanHtml(currentUserProfile.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]}${spentStr ? ` (время: <code>${spentStr}</code>)` : ""}.${finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`);
-    } catch(e) {}
+  
+  function leave(loc) {
+    var uid = getVerifiedUserId(); if (!uid) return; var spentMins = 0, spentStr = "", finalList = [];
+    db.runTransaction(function(t) {
+        return t.get(db.collection('locations').doc(loc)).then(function(doc) {
+            if (!doc.exists) return; var p = doc.data().players || []; var cPlayer = null;
+            for(var i=0; i<p.length; i++) { if((p[i].uid || p[i]) === uid) cPlayer = p[i]; }
+            if (cPlayer && cPlayer.time) { spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); spentStr = formatDuration(cPlayer.time); }
+            p = p.filter(function(pl) { return (pl.uid || pl) !== uid }); finalList = p;
+            t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
+        });
+    }).then(function() {
+        if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
+        document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
+        if (canSendTgAlert('status_change')) sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> закончил тренировку и покинул стол " + LOCATION_NAMES[loc] + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
+    }).catch(function(){});
   }
+  
   function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
-  async function extendSession(addMins) {
-    const uid = getVerifiedUserId(); if (!uid || !currentUserActiveLoc) return;
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(currentUserActiveLoc)); if(!d.exists) return;
-        let p = (d.data().players || []).map(pl => ((pl.uid||pl) === uid) ? Object.assign({}, pl, { maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) }) : pl);
-        t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
-      });
-      hasTriggeredPush = false; document.getElementById('extend-modal').style.display = 'none';
-    } catch(e) {}
+  
+  function extendSession(addMins) {
+    var uid = getVerifiedUserId(); if (!uid || !currentUserActiveLoc) return;
+    db.runTransaction(function(t) {
+        return t.get(db.collection('locations').doc(currentUserActiveLoc)).then(function(doc) {
+            if(!doc.exists) return;
+            var p = (doc.data().players || []).map(function(pl) { 
+                if ((pl.uid||pl) === uid) { var newLimit = (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000); pl.maxLimitMs = newLimit; return pl; } return pl;
+            });
+            t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
+        });
+    }).then(function() { hasTriggeredPush = false; document.getElementById('extend-modal').style.display = 'none'; }).catch(function(){});
   }
-  async function submitQuickPlan(m) { await applyPlan(Date.now() + m * 60000); }
-  async function submitExactPlan() { const val = document.getElementById('exact-time-input').value; if(!val) return; const parts = val.split(':'); const d = new Date(); d.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0); if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); await applyPlan(d.getTime()); }
-  async function applyPlan(ts) {
-    const uid = getVerifiedUserId(), loc = activePlanningLoc; if(!uid || !loc) return; closePlanModal();
-    try {
-      await db.runTransaction(async t => {
-        const d = await t.get(db.collection('locations').doc(loc)); let pl = (d.exists ? d.data().plans || [] : []).filter(p => (p.uid||p) !== uid);
-        pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid }); t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
-      });
-      if (canSendTgAlert('status_change')) sendTelegramAlert(`⏳ игрок <b>${cleanHtml(currentUserProfile.name)}</b> планирует быть у стола ${LOCATION_NAMES[loc]} <b>${formatUntil(ts)}</b>!\n\nКто готов составить пару?`);
-    } catch(e) {}
+  
+  function submitQuickPlan(m) { applyPlan(Date.now() + m * 60000); }
+  function submitExactPlan() { var val = document.getElementById('exact-time-input').value; if(!val) return; var parts = val.split(':'); var d = new Date(); d.setHours(parseInt(parts[0], 10), parseInt(parts[1], 10), 0, 0); if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); applyPlan(d.getTime()); }
+  function applyPlan(ts) {
+    var uid = getVerifiedUserId(); var loc = activePlanningLoc; if(!uid || !loc) return; closePlanModal();
+    db.runTransaction(function(t) {
+        return t.get(db.collection('locations').doc(loc)).then(function(d) {
+            var pl = (d.exists ? d.data().plans || [] : []).filter(function(p) { return (p.uid||p) !== uid });
+            pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid }); t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
+        });
+    }).then(function() { if (canSendTgAlert('status_change')) sendTelegramAlert("⏳ игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> планирует быть у стола " + LOCATION_NAMES[loc] + " <b>" + formatUntil(ts) + "</b>!\n\nКто готов составить пару?"); }).catch(function(){});
   }
-  async function cancelPlan(loc) { const uid = getVerifiedUserId(); if(!uid) return; try { await db.runTransaction(async t => { const d = await t.get(db.collection('locations').doc(loc)); if(!d.exists) return; t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(p => (p.uid||p) !== uid) }, { merge: true }); }); } catch(e) {} }
+  function cancelPlan(loc) { var uid = getVerifiedUserId(); if(!uid) return; db.runTransaction(function(t) { return t.get(db.collection('locations').doc(loc)).then(function(d) { if(!d.exists) return; t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(function(p) { return (p.uid||p) !== uid }) }, { merge: true }); }); }).catch(function(){}); }
 
   // ================= РЕГУЛЯРНЫЕ МАТЧИ =================
   function handleMatchClick() {
-    if (!isUserVerified()) return; const uid = getVerifiedUserId(); if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
-    const sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
-    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
-    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; } else { opps.forEach(p => { sel.innerHTML += `<option value="${escapeJS(p.uid||p)}">${cleanHtml(p.name)}</option>`; }); }
+    if (!isUserVerified()) return; var uid = getVerifiedUserId(); if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
+    var sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
+    var opps = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []).filter(function(p) { return (p.uid||p) !== uid });
+    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; } else { for(var i=0; i<opps.length; i++) { sel.innerHTML += '<option value="' + escapeJS(opps[i].uid||opps[i]) + '">' + cleanHtml(opps[i].name) + '</option>'; } }
     selectScore(3,0); document.getElementById('match-modal').style.display = 'flex';
   }
   function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
-  function selectScore(my, opp) { document.getElementById('match-my-score').value = my; document.getElementById('match-opp-score').value = opp; document.querySelectorAll('.reg-score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`)); }
-  async function submitMatchProposal() {
-    const uid = getVerifiedUserId(), sel = document.getElementById('match-opponent-select'), oppUid = sel.value;
+  function selectScore(my, opp) { document.getElementById('match-my-score').value = my; document.getElementById('match-opp-score').value = opp; var btns = document.querySelectorAll('.reg-score-btn'); for(var i=0; i<btns.length; i++) { var isActive = btns[i].innerText.replace(/\s+/g,'') === (my + ":" + opp); if(isActive) btns[i].classList.add('active'); else btns[i].classList.remove('active'); } }
+  function submitMatchProposal() {
+    var uid = getVerifiedUserId(), sel = document.getElementById('match-opponent-select'), oppUid = sel.value;
     if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
     closeMatchModal();
-    try { await db.collection('pending_matches').add({ proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: sel.options[sel.selectedIndex].text, scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value), timestamp: Date.now() }); customAlert("✅ Запрос отправлен!"); } catch(e){}
+    db.collection('pending_matches').add({ proposerUid: uid, proposerName: currentUserProfile.name, opponentUid: oppUid, opponentName: sel.options[sel.selectedIndex].text, scoreProposer: parseInt(document.getElementById('match-my-score').value), scoreOpponent: parseInt(document.getElementById('match-opp-score').value), timestamp: Date.now() }).then(function() { customAlert("✅ Запрос отправлен!"); }).catch(function(){});
   }
   function listenPendingMatches() {
-    const myUid = getVerifiedUserId(); if (!myUid) return;
-    db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(snap => {
-      try {
-        const c = document.getElementById('pending-matches-container'); if (snap.empty) { c.innerHTML = ''; return; }
-        let html = '';
-        snap.forEach(doc => { const m = doc.data(); html += `<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>${cleanHtml(m.proposerName)}</b></div><div style="font-size: 13px;">Счёт: Вы <b>${m.scoreOpponent} : ${m.scoreProposer}</b> ${cleanHtml(m.proposerName)}</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch('${escapeJS(doc.id)}')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch('${escapeJS(doc.id)}')">Отклонить</button></div></div>`; });
-        c.innerHTML = html;
-      } catch(e) {}
+    var myUid = getVerifiedUserId(); if (!myUid) return;
+    db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(function(snap) {
+      var c = document.getElementById('pending-matches-container'); if (snap.empty) { c.innerHTML = ''; return; }
+      var html = '';
+      snap.forEach(function(doc) { var m = doc.data(); html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>'+cleanHtml(m.proposerName)+'</b></div><div style="font-size: 13px;">Счёт: Вы <b>'+m.scoreOpponent+' : '+m.scoreProposer+'</b> '+cleanHtml(m.proposerName)+'</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\''+escapeJS(doc.id)+'\')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\''+escapeJS(doc.id)+'\')">Отклонить</button></div></div>'; });
+      c.innerHTML = html;
     });
   }
 
-  async function confirmMatch(matchId) {
-    const myUid = getVerifiedUserId(); if (!myUid) return;
-    try {
-      const matchRef = db.collection('pending_matches').doc(matchId); const matchDoc = await matchRef.get(); if (!matchDoc.exists) return;
-      const m = matchDoc.data(), pRef = db.collection('users').doc(m.proposerUid), oRef = db.collection('users').doc(m.opponentUid);
-      let newPElo = 1000, newOElo = 1000;
-      await db.runTransaction(async (t) => {
-        const pDoc = await t.get(pRef), oDoc = await t.get(oRef);
-        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 }, oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
-        const isPWin = m.scoreProposer > m.scoreOpponent; const pElo = pData.elo !== undefined ? pData.elo : 1000; const oElo = oData.elo !== undefined ? oData.elo : 1000;
-        const myDelta = calculateElo(pElo, oElo, isPWin ? 1 : 0);
-        newPElo = Math.max(100, pElo + myDelta); newOElo = Math.max(100, oElo - myDelta);
-        const pWinStreak = isPWin ? ((pData.winStreak || 0) + 1) : 0, oWinStreak = isPWin ? 0 : ((oData.winStreak || 0) + 1);
-        t.set(pRef, { elo: newPElo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: pWinStreak, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
-        t.set(oRef, { elo: newOElo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: oWinStreak, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
-      });
-      await db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
-      await matchRef.delete(); sendTelegramAlert(`🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>${cleanHtml(m.proposerName)}</b>  <code>${m.scoreProposer} : ${m.scoreOpponent}</code>  <b>${cleanHtml(m.opponentName)}</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ${cleanHtml(m.proposerName)}: ${newPElo}\n• ${cleanHtml(m.opponentName)}: ${newOElo}</blockquote>`);
-    } catch(e) {}
+  function confirmMatch(matchId) {
+    var myUid = getVerifiedUserId(); if (!myUid) return;
+    var matchRef = db.collection('pending_matches').doc(matchId); 
+    matchRef.get().then(function(matchDoc) {
+      if (!matchDoc.exists) return;
+      var m = matchDoc.data(), pRef = db.collection('users').doc(m.proposerUid), oRef = db.collection('users').doc(m.opponentUid);
+      var newPElo = 1000, newOElo = 1000;
+      db.runTransaction(function(t) {
+        return Promise.all([t.get(pRef), t.get(oRef)]).then(function(docs) {
+            var pDoc = docs[0], oDoc = docs[1];
+            var pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+            var oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+            var isPWin = m.scoreProposer > m.scoreOpponent; 
+            var pElo = pData.elo !== undefined ? pData.elo : 1000; var oElo = oData.elo !== undefined ? oData.elo : 1000;
+            var myDelta = calculateElo(pElo, oElo, isPWin ? 1 : 0);
+            newPElo = Math.max(100, pElo + myDelta); newOElo = Math.max(100, oElo - myDelta);
+            var pWinStreak = isPWin ? ((pData.winStreak || 0) + 1) : 0; var oWinStreak = isPWin ? 0 : ((oData.winStreak || 0) + 1);
+            t.set(pRef, { elo: newPElo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: pWinStreak, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+            t.set(oRef, { elo: newOElo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: oWinStreak, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+        });
+      }).then(function() {
+          db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
+          matchRef.delete(); sendTelegramAlert("🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• " + cleanHtml(m.proposerName) + ": " + newPElo + "\n• " + cleanHtml(m.opponentName) + ": " + newOElo + "</blockquote>");
+      }).catch(function(){});
+    });
   }
-  async function rejectMatch(matchId) { try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {} }
+  function rejectMatch(matchId) { db.collection('pending_matches').doc(matchId).delete().then(function() { document.getElementById('pending-matches-container').innerHTML = ''; }).catch(function(){}); }
 
   // ================= ТУРНИРНЫЙ ДВИЖОК =================
-  function openTournamentModal() { if (!isSuperAdmin()) return; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; document.getElementById('tournament-modal').style.display = 'flex'; }
+  function openTournamentModal(tourId) { 
+    if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
+    if (currentEditingTourId) { btn.innerText = 'Сохранить изменения'; db.collection('tournaments').doc(currentEditingTourId).get().then(function(doc) { if (doc.exists) { var d = doc.data(); document.getElementById('tour-title').value = d.title || ''; document.getElementById('tour-date').value = d.rawDate || ''; document.getElementById('tour-desc').value = d.desc || ''; } }); } 
+    else { btn.innerText = 'Создать'; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; }
+    document.getElementById('tournament-modal').style.display = 'flex'; 
+  }
   function closeTournamentModal() { document.getElementById('tournament-modal').style.display = 'none'; }
   
-  async function saveTournament() {
-    if (!isSuperAdmin()) return; const title = document.getElementById('tour-title').value.trim(), dateVal = document.getElementById('tour-date').value, desc = document.getElementById('tour-desc').value.trim();
+  function saveTournament() {
+    if (!isSuperAdmin()) return; 
+    var title = document.getElementById('tour-title').value.trim(), dateVal = document.getElementById('tour-date').value, desc = document.getElementById('tour-desc').value.trim();
     if (!title) return customAlert('Введите название турнира');
-    let dateStr = ''; if (dateVal) { const d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
-    try { await db.collection('tournaments').add({ title, dateStr, desc, status: 'registration', likes: [], dislikes: [], participants: [], groups: {A:[], B:[]}, matches: [], playoffs: {}, results: null, createdAt: Date.now() }); closeTournamentModal(); customAlert('✅ Турнир успешно добавлен'); } catch(e) {}
+    var dateStr = ''; if (dateVal) { var d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
+    
+    var obj = { title: title, dateStr: dateStr, rawDate: dateVal, desc: desc };
+    if (currentEditingTourId) { db.collection('tournaments').doc(currentEditingTourId).update(obj).then(function() { customAlert('✅ Турнир обновлен'); closeTournamentModal(); }).catch(function(){}); } 
+    else { obj.status = 'registration'; obj.likes = []; obj.dislikes = []; obj.participants = []; obj.groups = {A:[], B:[]}; obj.matches = []; obj.playoffs = {}; obj.results = null; obj.createdAt = Date.now(); db.collection('tournaments').add(obj).then(function() { customAlert('✅ Турнир успешно создан'); closeTournamentModal(); }).catch(function(){}); }
   }
 
-  async function deleteTournament(id) { if (!isSuperAdmin()) return; if (window.Telegram?.WebApp?.showConfirm) { window.Telegram.WebApp.showConfirm('Удалить этот турнир?', async (ok) => { if (ok) await db.collection('tournaments').doc(id).delete(); }); } else { if (confirm('Удалить этот турнир?')) await db.collection('tournaments').doc(id).delete(); } }
+  function deleteTournament(id) { 
+    if (!isSuperAdmin()) return; 
+    openConfirmModal('Вы уверены, что хотите навсегда удалить этот турнир?', function() { db.collection('tournaments').doc(id).delete().then(function() { customAlert("✅ Турнир удален"); }).catch(function(){}); });
+  }
   
-  async function toggleTourReaction(id, type) {
-    const uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы ставить реакции!');
-    const ref = db.collection('tournaments').doc(id);
-    try {
-      await db.runTransaction(async t => {
-          const doc = await t.get(ref); if (!doc.exists) return;
-          let data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
-          if (type === 'like') { if (likes.includes(uid)) likes = likes.filter(u => u !== uid); else { likes.push(uid); dislikes = dislikes.filter(u => u !== uid); } } 
-          else { if (dislikes.includes(uid)) dislikes = dislikes.filter(u => u !== uid); else { dislikes.push(uid); likes = likes.filter(u => u !== uid); } }
-          t.update(ref, { likes, dislikes });
-      });
-    } catch(e) {}
+  function toggleTourReaction(id, type) {
+    var uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы ставить реакции!');
+    var ref = db.collection('tournaments').doc(id);
+    db.runTransaction(function(t) {
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
+            if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid }); } } 
+            else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid }); } }
+            t.update(ref, { likes: likes, dislikes: dislikes });
+        });
+    }).catch(function(){});
   }
 
-  async function joinTournament(id, title) {
-    const uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы участвовать!');
-    const ref = db.collection('tournaments').doc(id);
-    try {
-      let joined = false;
-      await db.runTransaction(async t => {
-          const doc = await t.get(ref); if (!doc.exists || doc.data().status !== 'registration') return;
-          let parts = doc.data().participants || [];
-          if (!parts.some(p => p.uid === uid)) { parts.push({uid, name: currentUserProfile.name, elo: currentUserProfile.elo || 1000}); t.update(ref, { participants: parts }); joined = true; }
-      });
-      if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert(`🏆 Игрок <b>${cleanHtml(currentUserProfile.name)}</b> зарегистрировался на турнир <b>${title}</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!`); }
-    } catch(e) {}
+  function joinTournament(id, title) {
+    var uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы участвовать!');
+    var ref = db.collection('tournaments').doc(id); var joined = false;
+    db.runTransaction(function(t) {
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists || doc.data().status !== 'registration') return;
+            var parts = doc.data().participants || []; var isInList = false;
+            for(var i=0; i<parts.length; i++) { if (parts[i].uid === uid) isInList = true; }
+            if (!isInList) { parts.push({uid: uid, name: currentUserProfile.name, elo: currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000}); t.update(ref, { participants: parts }); joined = true; }
+        });
+    }).then(function() { if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert("🏆 Игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> зарегистрировался на турнир <b>" + title + "</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!"); } }).catch(function(){});
   }
-  async function leaveTournament(id) {
-    const uid = getVerifiedUserId(); if (!uid) return;
-    const ref = db.collection('tournaments').doc(id);
-    try { await db.runTransaction(async t => { const doc = await t.get(ref); if (!doc.exists || doc.data().status !== 'registration') return; let parts = doc.data().participants || []; parts = parts.filter(p => p.uid !== uid); t.update(ref, { participants: parts }); }); } catch(e) {}
+  function leaveTournament(id) {
+    var uid = getVerifiedUserId(); if (!uid) return;
+    var ref = db.collection('tournaments').doc(id);
+    db.runTransaction(function(t) { return t.get(ref).then(function(doc) { if (!doc.exists || doc.data().status !== 'registration') return; var parts = doc.data().participants || []; parts = parts.filter(function(p) { return p.uid !== uid }); t.update(ref, { participants: parts }); }); }).catch(function(){});
   }
 
   // --- ЛОГИКА СТАРТА И ПЛЕЙ-ОФФ ---
   function generateId() { return Math.random().toString(36).substr(2, 9); }
-  async function startTournament(id, type) {
-    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
-    try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data(); let parts = data.participants || [];
-      if (parts.length < 4) return customAlert('Для турнира нужно минимум 4 участника!');
-      let grpA = [], grpB = [];
+  function startTournament(id, type) {
+    if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
+    ref.get().then(function(doc) {
+      if (!doc.exists) return; var data = doc.data(); var parts = data.participants || [];
+      if (parts.length < 4) { customAlert('Для турнира нужно минимум 4 участника!'); return; }
+      var grpA = [], grpB = [];
       if (type === 'smart') {
-        let sorted = [...parts].sort((a,b) => b.elo - a.elo);
-        sorted.forEach((p, idx) => { if ((idx % 4) === 0 || (idx % 4) === 3) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0}); else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0}); });
+        var sorted = parts.slice().sort(function(a,b) { return b.elo - a.elo });
+        for(var i=0; i<sorted.length; i++) { if ((i % 4) === 0 || (i % 4) === 3) grpA.push({uid: sorted[i].uid, name: sorted[i].name, pts:0, w:0, l:0}); else grpB.push({uid: sorted[i].uid, name: sorted[i].name, pts:0, w:0, l:0}); }
       } else {
-        let shuffled = [...parts].sort(() => 0.5 - Math.random());
-        shuffled.forEach((p, idx) => { if (idx < shuffled.length / 2) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0}); else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0}); });
+        var shuffled = parts.slice().sort(function() { return 0.5 - Math.random() });
+        for(var j=0; j<shuffled.length; j++) { if (j < shuffled.length / 2) grpA.push({uid: shuffled[j].uid, name: shuffled[j].name, pts:0, w:0, l:0}); else grpB.push({uid: shuffled[j].uid, name: shuffled[j].name, pts:0, w:0, l:0}); }
       }
-
-      let matches = [];
-      const makeMatches = (gPlayers, gName) => {
-        for(let i=0; i<gPlayers.length; i++) {
-          for(let j=i+1; j<gPlayers.length; j++) {
-            matches.push({ id: generateId(), group: gName, p1Uid: gPlayers[i].uid, p1Name: gPlayers[i].name, p2Uid: gPlayers[j].uid, p2Name: gPlayers[j].name, score1: null, score2: null, stage: 'group' });
-          }
-        }
-      };
+      var matches = [];
+      var makeMatches = function(gPlayers, gName) { for(var m1=0; m1<gPlayers.length; m1++) { for(var m2=m1+1; m2<gPlayers.length; m2++) { matches.push({ id: generateId(), group: gName, p1Uid: gPlayers[m1].uid, p1Name: gPlayers[m1].name, p2Uid: gPlayers[m2].uid, p2Name: gPlayers[m2].name, score1: null, score2: null, stage: 'group' }); } } };
       makeMatches(grpA, 'A'); makeMatches(grpB, 'B');
-      await ref.update({ status: 'active', groups: { A: grpA, B: grpB }, matches: matches });
-    } catch(e) {}
+      ref.update({ status: 'active', groups: { A: grpA, B: grpB }, matches: matches });
+    }).catch(function(){});
   }
 
-  async function generatePlayoffs(id) {
-    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
-    try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const a = [...(data.groups.A || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
-      const b = [...(data.groups.B || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
-      let matches = data.matches || [];
+  function generatePlayoffs(id) {
+    if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
+    ref.get().then(function(doc) {
+      if (!doc.exists) return; var data = doc.data();
+      var aRaw = (data.groups && data.groups.A) ? data.groups.A : []; var bRaw = (data.groups && data.groups.B) ? data.groups.B : [];
+      var a = aRaw.slice().sort(function(x,y) { return y.w - x.w || y.pts - x.pts }); var b = bRaw.slice().sort(function(x,y) { return y.w - x.w || y.pts - x.pts });
+      var matches = data.matches || [];
       matches.push({ id: 'semi1', stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, title: 'Полуфинал 1' });
       matches.push({ id: 'semi2', stage: 'semi', p1Uid: b[0].uid, p1Name: b[0].name, p2Uid: a[1].uid, p2Name: a[1].name, score1: null, score2: null, title: 'Полуфинал 2' });
-      await ref.update({ status: 'playoffs', matches: matches, playoffs: { a1: a[0], a2: a[1], b1: b[0], b2: b[1] } });
-    } catch(e) {}
+      ref.update({ status: 'playoffs', matches: matches, playoffs: { a1: a[0], a2: a[1], b1: b[0], b2: b[1] } });
+    }).catch(function(){});
   }
 
-  async function generateFinals(id) {
-    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
-    try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const semis = data.matches.filter(m => m.stage === 'semi');
-      if (semis.some(m => m.score1 === null)) return;
-      const w1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p1Uid, name: semis[0].p1Name} : {uid: semis[0].p2Uid, name: semis[0].p2Name};
-      const l1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p2Uid, name: semis[0].p2Name} : {uid: semis[0].p1Uid, name: semis[0].p1Name};
-      const w2 = semis[1].score1 > semis[1].score2 ? {uid: semis[1].p1Uid, name: semis[1].p1Name} : {uid: semis[1].p2Uid, name: semis[1].p2Name};
-      const l2 = semis[1].score1 > semis[1].score2 ? {uid: semis[1].p2Uid, name: semis[1].p2Name} : {uid: semis[1].p1Uid, name: semis[1].p1Name};
+  function generateFinals(id) {
+    if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
+    ref.get().then(function(doc) {
+      if (!doc.exists) return; var data = doc.data(); var matchesArr = data.matches || [];
+      var semis = matchesArr.filter(function(m) { return m.stage === 'semi' });
+      var isUnfinished = false; for(var i=0; i<semis.length; i++) { if (semis[i].score1 === null) isUnfinished = true; } if (isUnfinished) return;
+      
+      var w1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p1Uid, name: semis[0].p1Name} : {uid: semis[0].p2Uid, name: semis[0].p2Name};
+      var l1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p2Uid, name: semis[0].p2Name} : {uid: semis[0].p1Uid, name: semis[0].p1Name};
+      var w2 = semis[1].score1 > semis[1].score2 ? {uid: semis[1].p1Uid, name: semis[1].p1Name} : {uid: semis[1].p2Uid, name: semis[1].p2Name};
+      var l2 = semis[1].score1 > semis[1].score2 ? {uid: semis[1].p2Uid, name: semis[1].p2Name} : {uid: semis[1].p1Uid, name: semis[1].p1Name};
 
-      let matches = data.matches || [];
+      var matches = data.matches || [];
       matches.push({ id: 'third', stage: 'final', p1Uid: l1.uid, p1Name: l1.name, p2Uid: l2.uid, p2Name: l2.name, score1: null, score2: null, title: 'Матч за 3-е место' });
       matches.push({ id: 'first', stage: 'final', p1Uid: w1.uid, p1Name: w1.name, p2Uid: w2.uid, p2Name: w2.name, score1: null, score2: null, title: 'ФИНАЛ' });
-
-      await ref.update({ status: 'finals', matches: matches });
-    } catch(e) {}
+      ref.update({ status: 'finals', matches: matches });
+    }).catch(function(){});
   }
 
-  async function completeTournament(id) {
-    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
-    try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const firstM = data.matches.find(m => m.id === 'first'); const thirdM = data.matches.find(m => m.id === 'third');
-      if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) return customAlert("Завершите финалы!");
+  function completeTournament(id) {
+    if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
+    ref.get().then(function(doc) {
+      if (!doc.exists) return; var data = doc.data(); var matchesArr = data.matches || [];
+      var firstM = null, thirdM = null;
+      for(var i=0; i<matchesArr.length; i++) { if (matchesArr[i].id === 'first') firstM = matchesArr[i]; if (matchesArr[i].id === 'third') thirdM = matchesArr[i]; }
+      if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) { customAlert("Завершите финалы!"); return; }
 
-      const gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
-      const slv = firstM.score1 > firstM.score2 ? {uid: firstM.p2Uid, name: firstM.p2Name} : {uid: firstM.p1Uid, name: firstM.p1Name};
-      const brn = thirdM.score1 > thirdM.score2 ? {uid: thirdM.p1Uid, name: thirdM.p1Name} : {uid: thirdM.p2Uid, name: thirdM.p2Name};
+      var gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
+      var slv = firstM.score1 > firstM.score2 ? {uid: firstM.p2Uid, name: firstM.p2Name} : {uid: firstM.p1Uid, name: firstM.p1Name};
+      var brn = thirdM.score1 > thirdM.score2 ? {uid: thirdM.p1Uid, name: thirdM.p1Name} : {uid: thirdM.p2Uid, name: thirdM.p2Name};
 
-      const parts = data.participants || []; const batch = db.batch();
-      for (const p of parts) {
-        const uRef = db.collection('users').doc(p.uid); const uDoc = await uRef.get();
-        if (uDoc.exists) {
-          let uData = uDoc.data(); let m = uData.medals || {gold:0, silver:0, bronze:0};
-          if (p.uid === gld.uid) m.gold++; if (p.uid === slv.uid) m.silver++; if (p.uid === brn.uid) m.bronze++;
-          batch.update(uRef, { tournamentsPlayed: (uData.tournamentsPlayed||0) + 1, medals: m });
-        }
+      var parts = data.participants || []; var batch = db.batch();
+      
+      var promises = [];
+      for (var j = 0; j < parts.length; j++) {
+        var p = parts[j];
+        var uRef = db.collection('users').doc(p.uid);
+        promises.push(uRef.get().then((function(puid) {
+            return function(uDoc) {
+                if (uDoc.exists) {
+                    var uData = uDoc.data(); var m = uData.medals || {gold:0, silver:0, bronze:0};
+                    if (puid === gld.uid) m.gold++; if (puid === slv.uid) m.silver++; if (puid === brn.uid) m.bronze++;
+                    batch.update(uRef, { tournamentsPlayed: (uData.tournamentsPlayed||0) + 1, medals: m });
+                }
+            };
+        })(p.uid)));
       }
-      batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
-      await batch.commit();
-
-      sendTelegramAlert(`🏆 <b>Турнир «${cleanHtml(data.title)}» завершен!</b>\n\n🥇 <b>1 место:</b> ${cleanHtml(gld.name)}\n🥈 <b>2 место:</b> ${cleanHtml(slv.name)}\n🥉 <b>3 место:</b> ${cleanHtml(brn.name)}\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.`);
-    } catch(e) {}
+      
+      Promise.all(promises).then(function() {
+          batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
+          batch.commit().then(function() {
+              sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
+          });
+      });
+    }).catch(function(){});
   }
 
   // --- ВВОД СЧЕТА ТУРНИРНОГО МАТЧА ---
   function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
-    document.getElementById('tour-match-id-val').value = matchId; document.getElementById('tour-id-val').value = tourId; document.getElementById('tour-match-players-label').innerText = `${p1Name} ПРОТИВ ${p2Name}`;
+    document.getElementById('tour-match-id-val').value = matchId; document.getElementById('tour-id-val').value = tourId; document.getElementById('tour-match-players-label').innerText = p1Name + ' ПРОТИВ ' + p2Name;
     selectTourScore(3, 0); document.getElementById('tour-match-modal').style.display = 'flex';
   }
   function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
-  function selectTourScore(s1, s2) { document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; document.querySelectorAll('.tour-score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${s1}:${s2}`)); }
+  function selectTourScore(s1, s2) { 
+      document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; 
+      var btns = document.querySelectorAll('.tour-score-btn');
+      for(var i=0; i<btns.length; i++) { if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active'); else btns[i].classList.remove('active'); }
+  }
   
-  async function submitTourMatchScore() {
-    const s1 = parseInt(document.getElementById('tour-match-s1').value), s2 = parseInt(document.getElementById('tour-match-s2').value);
-    const tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value;
-    const uid = getVerifiedUserId(); closeTourMatchModal();
-    try {
-      await db.runTransaction(async t => {
-        const ref = db.collection('tournaments').doc(tourId); const doc = await t.get(ref); if (!doc.exists) return;
-        let data = doc.data(); let matches = data.matches || [];
-        let mIdx = matches.findIndex(m => m.id === matchId); if (mIdx === -1 || matches[mIdx].score1 !== null) return;
-        let match = matches[mIdx];
-        if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
+  function submitTourMatchScore() {
+    var s1 = parseInt(document.getElementById('tour-match-s1').value), s2 = parseInt(document.getElementById('tour-match-s2').value);
+    var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
+    closeTourMatchModal();
+    
+    db.runTransaction(function(t) {
+        var ref = db.collection('tournaments').doc(tourId);
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
+            var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
+            if (mIdx === -1 || matches[mIdx].score1 !== null) return;
+            var match = matches[mIdx];
+            if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
 
-        match.score1 = s1; match.score2 = s2;
-        const p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
-        const p1Doc = await t.get(p1Ref), p2Doc = await t.get(p2Ref);
-        let p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-        let p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-        
-        const isPWin = s1 > s2; const myDelta = calculateElo(p1Data.elo || 1000, p2Data.elo || 1000, isPWin ? 1 : 0);
-        let newP1Elo = Math.max(100, (p1Data.elo || 1000) + myDelta), newP2Elo = Math.max(100, (p2Data.elo || 1000) - myDelta);
-        const p1S = isPWin ? ((p1Data.winStreak > 0 ? p1Data.winStreak : 0) + 1) : 0, p2S = isPWin ? 0 : ((p2Data.winStreak > 0 ? p2Data.winStreak : 0) + 1);
+            match.score1 = s1; match.score2 = s2;
+            var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
+            
+            return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
+                var p1Doc = uDocs[0], p2Doc = uDocs[1];
+                var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                
+                var isPWin = s1 > s2; var p1Elo = p1Data.elo !== undefined ? p1Data.elo : 1000; var p2Elo = p2Data.elo !== undefined ? p2Data.elo : 1000;
+                var myDelta = calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0);
+                var newP1Elo = Math.max(100, p1Elo + myDelta); var newP2Elo = Math.max(100, p2Elo - myDelta);
+                var p1S = isPWin ? ((p1Data.winStreak||0)+1) : 0; var p2S = isPWin ? 0 : ((p2Data.winStreak||0)+1);
 
-        t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
-        t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
-        
-        if (match.stage === 'group') {
-          let groups = data.groups; let grp = groups[match.group];
-          let pl1 = grp.find(p => p.uid === match.p1Uid), pl2 = grp.find(p => p.uid === match.p2Uid);
-          if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
-          t.update(ref, { matches: matches, groups: groups });
-        } else { t.update(ref, { matches: matches }); }
-      });
-      const tourDoc = await db.collection('tournaments').doc(tourId).get();
-      const updatedMatch = tourDoc.data().matches.find(m => m.id === matchId);
-      await db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
-    } catch(e){}
+                t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
+                t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
+                
+                if (match.stage === 'group') {
+                  var groups = data.groups; var grp = groups[match.group];
+                  var pl1 = null, pl2 = null;
+                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
+                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+                  t.update(ref, { matches: matches, groups: groups });
+                } else { t.update(ref, { matches: matches }); }
+            });
+        });
+    }).then(function() {
+        db.collection('tournaments').doc(tourId).get().then(function(d) {
+            var mArr = d.data().matches || []; var updatedMatch = null;
+            for(var x=0; x<mArr.length; x++) { if(mArr[x].id === matchId) updatedMatch = mArr[x]; }
+            if (updatedMatch) db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
+        });
+    }).catch(function(){});
   }
 
   // --- РЕНДЕР ТУРНИРОВ ---
   function renderMatchList(matches, tourId, titleFilter) {
     if (!matches || matches.length === 0) return '';
-    return matches.map(m => {
-      if (!m) return '';
-      let isDone = m.score1 !== null;
-      let badge = isDone ? `<span class="tour-score-badge">${m.score1} : ${m.score2}</span>` : `<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal('${escapeJS(tourId)}', '${escapeJS(m.id)}', '${escapeJS(cleanHtml(m.p1Name))}', '${escapeJS(cleanHtml(m.p2Name))}')">Указать счет</button>`;
-      let n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
-      let n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
-      return `<div class="tour-match-row">
-          <div class="tour-match-names">
-            ${titleFilter ? `<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">${m.title}</div>` : ''}
-            <span class="${n1C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p1Uid)}')">${cleanHtml(m.p1Name)}</span>
-            <span class="${n2C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p2Uid)}')">${cleanHtml(m.p2Name)}</span>
-          </div>
-          ${badge}
-        </div>`;
-    }).join('');
+    var str = '';
+    for(var i=0; i<matches.length; i++) {
+      var m = matches[i]; var isDone = m.score1 !== null;
+      var badge = isDone ? '<span class="tour-score-badge">' + m.score1 + ' : ' + m.score2 + '</span>' : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\')">Указать счет</button>';
+      var n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
+      var n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
+      var titleHtml = titleFilter ? '<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">'+m.title+'</div>' : '';
+      str += '<div class="tour-match-row"><div class="tour-match-names">' + titleHtml + '<span class="'+n1C+' clickable-name" onclick="showUserInfoModal(\''+escapeJS(m.p1Uid)+'\')">' + cleanHtml(m.p1Name) + '</span><span class="'+n2C+' clickable-name" onclick="showUserInfoModal(\''+escapeJS(m.p2Uid)+'\')">' + cleanHtml(m.p2Name) + '</span></div>' + badge + '</div>';
+    }
+    return str;
   }
 
   function renderGroupTable(groupPlayers, groupName) {
-    if (!groupPlayers || groupPlayers.length === 0 || !Array.isArray(groupPlayers)) return '';
-    let sorted = [...groupPlayers].sort((a,b) => (b.w || 0) - (a.w || 0) || (b.pts || 0) - (a.pts || 0));
-    let rows = sorted.map((p, i) => `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span></td><td>${p.w||0}</td><td>${p.l||0}</td><td>${p.pts||0}</td></tr>`).join('');
-    return `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div>
-      <table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>${rows}</table>`;
+    if (!groupPlayers || groupPlayers.length === 0) return '';
+    var sorted = groupPlayers.slice().sort(function(a,b) { return (b.w||0) - (a.w||0) || (b.pts||0) - (a.pts||0) });
+    var rows = '';
+    for(var i=0; i<sorted.length; i++) { var p = sorted[i]; rows += '<tr><td>'+(i+1)+'. <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(p.uid)+'\')">' + cleanHtml(p.name) + '</span></td><td>' + (p.w||0) + '</td><td>' + (p.l||0) + '</td><td>' + (p.pts||0) + '</td></tr>'; }
+    return '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ' + groupName + '</div><table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>' + rows + '</table>';
   }
 
   function listenTournaments() {
-    db.collection('tournaments').orderBy('createdAt', 'desc').onSnapshot(snap => {
-      const activeEl = document.getElementById('tournaments-list-active');
-      const archiveEl = document.getElementById('tournaments-list-archive');
-      let activeHtml = '', archiveHtml = '';
-      const myUid = getVerifiedUserId(), isAdmin = isSuperAdmin();
+    db.collection('tournaments').orderBy('createdAt', 'desc').onSnapshot(function(snap) {
+      var activeEl = document.getElementById('tournaments-list-active');
+      var archiveEl = document.getElementById('tournaments-list-archive');
+      var activeHtml = '', archiveHtml = '';
+      var myUid = getVerifiedUserId(), isAdmin = isSuperAdmin();
 
-      snap.forEach(doc => {
+      snap.forEach(function(doc) {
         try {
-          const d = doc.data(), id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
-          const isLiked = myUid && likes.includes(myUid), isDisliked = myUid && dislikes.includes(myUid), isPart = myUid && parts.some(p => p.uid === myUid);
-          let adminBtn = isAdmin ? `<button class="btn-leave" style="padding: 4px 8px; font-size: 11px; margin-top: 8px; width: auto;" onclick="deleteTournament('${escapeJS(id)}')">🗑 Удалить</button>` : '';
+            var d = doc.data() || {}, id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
+            var isLiked = myUid && likes.indexOf(myUid) !== -1;
+            var isDisliked = myUid && dislikes.indexOf(myUid) !== -1;
+            var isPart = false; for(var i=0; i<parts.length; i++) { if (parts[i].uid === myUid) isPart = true; }
+            
+            var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal(\''+escapeJS(id)+'\')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px;" onclick="deleteTournament(\''+escapeJS(id)+'\')">🗑 Удалить</button></div>' : '';
 
-          if (d.status === 'completed') {
-            const res = d.results || {};
-            archiveHtml += `<div class="card" style="border-color: var(--card-border); opacity: 0.85;">
-                <div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">${cleanHtml(d.title)}</div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">${d.dateStr || ''}</div>
-                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
-                  <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.gold?.uid)}')">${cleanHtml(res.gold?.name)}</span></div>
-                  <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.silver?.uid}')">${cleanHtml(res.silver?.name)}</span></div>
-                  <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.bronze?.uid}')">${cleanHtml(res.bronze?.name)}</span></div>
-                </div>
-                ${adminBtn}
-              </div>`;
-            return;
-          }
+            if (d.status === 'completed') {
+              var res = d.results || {};
+              var goldName = (res.gold && res.gold.name) ? res.gold.name : '';
+              var silverName = (res.silver && res.silver.name) ? res.silver.name : '';
+              var bronzeName = (res.bronze && res.bronze.name) ? res.bronze.name : '';
+              var goldUid = (res.gold && res.gold.uid) ? res.gold.uid : '';
+              var silverUid = (res.silver && res.silver.uid) ? res.silver.uid : '';
+              var bronzeUid = (res.bronze && res.bronze.uid) ? res.bronze.uid : '';
+              
+              archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.85;"><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div><div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;"><div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div><div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(silverUid)+'\')">' + cleanHtml(silverName) + '</span></div><div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(bronzeUid)+'\')">' + cleanHtml(bronzeName) + '</span></div></div>' + adminActionHtml + '</div>';
+              return;
+            }
 
-          let content = '', buttonsHtml = '';
-          if (d.status === 'registration') {
-            let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
-            content = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px;"><b>Участники (${parts.length}):</b> ${pList}</div>`;
-            if (myUid) { buttonsHtml += isPart ? `<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament('${escapeJS(id)}')">Отказаться</button>` : `<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament('${escapeJS(id)}', '${escapeJS(cleanHtml(d.title))}')">🏆 Участвовать</button>`; }
-            if (isAdmin) { buttonsHtml += `</div><div style="display: flex; gap: 8px; margin-top: 8px;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${escapeJS(id)}', 'random')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${escapeJS(id)}', 'smart')">🧠 Умная (по Эло)</button>`; }
-          } 
-          else if (d.status === 'active') {
-            content += renderGroupTable(d.groups?.A, 'A'); content += renderGroupTable(d.groups?.B, 'B');
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.group === 'A'), id, false);
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.group === 'B'), id, false);
-            if (isAdmin && !(d.matches||[]).filter(m => m.stage==='group').some(m => m.score1 === null)) { buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px;" onclick="generatePlayoffs('${escapeJS(id)}')">Сформировать Плей-офф</button><div>`; }
-          }
-          else if (d.status === 'playoffs') {
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.stage === 'semi'), id, true);
-            if (isAdmin && !(d.matches||[]).filter(m => m.stage==='semi').some(m => m.score1 === null)) { buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px;" onclick="generateFinals('${escapeJS(id)}')">Создать Финалы</button><div>`; }
-          }
-          else if (d.status === 'finals') {
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.stage === 'final'), id, true);
-            if (isAdmin && !(d.matches||[]).filter(m => m.stage==='final').some(m => m.score1 === null)) { buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px;" onclick="completeTournament('${escapeJS(id)}')">Завершить турнир</button><div>`; }
-          }
+            var content = '', buttonsHtml = '', actionRowHtml = '';
 
-          activeHtml += `<div class="card" style="border-color: var(--accent-amber);">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">${cleanHtml(d.title)}</div>
-                <div style="font-size: 12px; color: var(--text-muted);">${d.dateStr || ''}</div>
-              </div>
-              ${d.desc ? `<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">${cleanHtml(d.desc)}</div>` : ''}
-              ${content}
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button class="score-btn ${isLiked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'like')">👍 ${likes.length}</button>
-                <button class="score-btn ${isDisliked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'dislike')">👎 ${dislikes.length}</button>
-                ${buttonsHtml}
-              </div>
-              ${adminBtn}
-            </div>`;
-        } catch (err) {
-          if (isAdmin) {
-            activeHtml += `<div class="card" style="border-color: #ef4444; border-width: 2px;">
-                <div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Поврежденный турнир</div>
-                <div style="font-size: 11px; color: var(--text-muted);">База данных не смогла прочитать этот турнир. Нажмите кнопку, чтобы удалить его.</div>
-                <button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament('${escapeJS(doc.id)}')">🗑 Принудительно удалить</button>
-            </div>`;
-          }
+            if (d.status === 'registration') {
+              var pListItems = []; for(var j=0; j<parts.length; j++) { pListItems.push('<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(parts[j].uid)+'\')">' + cleanHtml(parts[j].name) + '</span>'); }
+              var pList = pListItems.length > 0 ? pListItems.join(', ') : 'Пока никто не записался';
+              content = '<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (' + parts.length + '):</b> ' + pList + '</div>';
+              
+              if (myUid) { buttonsHtml += isPart ? '<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament(\''+escapeJS(id)+'\')">Отказаться</button>' : '<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament(\''+escapeJS(id)+'\', \''+escapeJS(cleanHtml(d.title))+'\')">🏆 Участвовать</button>'; }
+              if (isAdmin) { actionRowHtml += '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button></div>'; }
+            } 
+            else if (d.status === 'active') {
+              var groupA = d.groups && d.groups.A ? d.groups.A : []; var groupB = d.groups && d.groups.B ? d.groups.B : [];
+              content += renderGroupTable(groupA, 'A') + renderGroupTable(groupB, 'B');
+              content += '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>';
+              var matchesA = d.matches ? d.matches.filter(function(m) { return m.group === 'A' }) : []; content += renderMatchList(matchesA, id, false);
+              content += '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>';
+              var matchesB = d.matches ? d.matches.filter(function(m) { return m.group === 'B' }) : []; content += renderMatchList(matchesB, id, false);
+
+              var groupMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'group' }) : [];
+              var isUnfinishedGroups = false; for(var k=0; k<groupMatches.length; k++) { if (groupMatches[k].score1 === null) isUnfinishedGroups = true; }
+              if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs(\''+escapeJS(id)+'\')">Сформировать Плей-офф</button>'; }
+            }
+            else if (d.status === 'playoffs') {
+              content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>';
+              var semiMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'semi' }) : []; content += renderMatchList(semiMatches, id, true);
+              var isUnfinishedSemis = false; for(var l=0; l<semiMatches.length; l++) { if (semiMatches[l].score1 === null) isUnfinishedSemis = true; }
+              if (isAdmin && semiMatches.length > 0 && !isUnfinishedSemis) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals(\''+escapeJS(id)+'\')">Создать Финалы</button>'; }
+            }
+            else if (d.status === 'finals') {
+              content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>';
+              var finalMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'final' }) : []; content += renderMatchList(finalMatches, id, true);
+              var isUnfinishedFinals = false; for(var x=0; x<finalMatches.length; x++) { if (finalMatches[x].score1 === null) isUnfinishedFinals = true; }
+              if (isAdmin && finalMatches.length > 0 && !isUnfinishedFinals) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament(\''+escapeJS(id)+'\')">Завершить турнир</button>'; }
+            }
+
+            var dDesc = d.desc ? '<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">' + cleanHtml(d.desc) + '</div>' : '';
+            activeHtml += '<div class="card" style="border-color: var(--accent-amber);"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted);">' + (d.dateStr || '') + '</div></div>' + dDesc + content + '<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="score-btn ' + (isLiked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'like\')">👍 ' + likes.length + '</button><button class="score-btn ' + (isDisliked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'dislike\')">👎 ' + dislikes.length + '</button>' + buttonsHtml + '</div>' + actionRowHtml + adminActionHtml + '</div>';
+        } catch(err) {
+            if (isAdmin) {
+              activeHtml += '<div class="card" style="border-color: #ef4444; border-width: 2px;"><div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Поврежденный турнир</div><div style="font-size: 11px; color: var(--text-muted);">База данных не смогла прочитать этот турнир. Нажмите кнопку, чтобы удалить его.</div><button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament(\''+escapeJS(doc.id)+'\')">🗑 Принудительно удалить</button></div>';
+            }
         }
       });
       activeEl.innerHTML = activeHtml || '<span class="empty-note">Пока нет активных турниров</span>';
@@ -1110,124 +1196,152 @@
     });
   }
 
-  // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
-  async function showUserInfoModal(uid) {
-    if(!uid) return;
-    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; document.getElementById('user-info-modal').style.display = 'flex';
-    try {
-      const d = await db.collection('users').doc(uid).get(); if(!d.exists) { closeUserInfoModal(); return; }
-      const u = d.data(), adminTag = ADMIN_UIDS.includes(uid) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '', customBadge = getCustomBadge(uid);
-      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
-      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${cleanHtml(uid)}</span></div>` : '';
-      const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
-      const deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${u.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${u.lastEloDelta}) 📉</span>`) : '';
-      const streakText = (u.winStreak && u.winStreak >= 3) ? `<span class="streak-fire">🔥${u.winStreak} побед</span>` : '';
-
-      const mContainer = document.getElementById('info-modal-medals');
-      const m = u.medals || {gold:0, silver:0, bronze:0};
-      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-        mContainer.innerHTML = `<div class="medal-item">🏆 ${u.tournamentsPlayed || 0}</div><div class="medal-item">🥇 ${m.gold || 0}</div><div class="medal-item">🥈 ${m.silver || 0}</div><div class="medal-item">🥉 ${m.bronze || 0}</div>`; mContainer.style.display = 'flex';
-      } else { mContainer.style.display = 'none'; }
-
-      document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
-      
-      const invContainer = document.getElementById('info-modal-inventory');
-      if (u.blade || u.rubberL || u.rubberR) {
-        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-      } else { invContainer.style.display = 'none'; }
-
-      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
-      const hEl = document.getElementById('info-modal-history');
-      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
-      let h = '';
-      snaps.forEach(doc => {
-        const m = doc.data(), isP1 = m.p1Uid === uid, myS = isP1?m.p1Score:m.p2Score, opS = isP1?m.p2Score:m.p1Score, opN = isP1?m.p2Name:m.p1Name, isWin = myS>opS;
-        h += `<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div><div style="color:${isWin?'#059669':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div></div>`;
-      });
-      hEl.innerHTML = h;
-    } catch(e){}
-  }
-  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
-
-  // ================= РЕЙТИНГИ И СТАРТ =================
-  function listenRatings() { 
-    db.collection('users').orderBy('elo', 'desc').limit(100).onSnapshot(snap => { 
-      const listEl = document.getElementById('rating-list'); allRegisteredUsers = []; 
-      if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; } 
-      let html = '', rank = 1, myUid = getVerifiedUserId(); 
-      snap.forEach(doc => { 
-        try {
-          const d = doc.data(); 
-          if (!doc.id.match(/^(tg|google)_/) && !d.isVerified) return; 
-          allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 }); 
-          if (doc.id === myUid) { currentUserProfile = { ...currentUserProfile, ...d }; updateProfileDisplay(); } 
-          const rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`; 
-          const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0, winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0; 
-          const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id), rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : ''; 
-          const streakHtml = (d.winStreak && d.winStreak >= 3) ? `<span class="streak-fire">🔥${d.winStreak}</span>` : ''; 
-          const deltaHtml = d.lastEloDelta ? (d.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${d.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${d.lastEloDelta}) 📉</span>`) : ''; 
-          html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}${streakHtml}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">${d.elo || 1000}</span>${deltaHtml}</div><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${escapeJS(doc.id)}')">i</button></div></div>`; 
-          rank++; 
-        } catch(e) {}
-      }); 
-      listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>'; 
-    }); 
-  }
-
-  function listenLeaderboard() { 
-    db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(100).onSnapshot(snap => { 
-      const listEl = document.getElementById('leaderboard-list'); 
-      if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; } 
-      let html = '', rank = 1; 
-      snap.forEach(doc => { 
-        try {
-          const d = doc.data(); 
-          if (!doc.id.match(/^(tg|google)_/)) return; 
-          const hours = (d.totalMinutes / 60).toFixed(1), rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`; 
-          const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id); 
-          html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span><button class="btn-info" onclick="showUserInfoModal('${escapeJS(doc.id)}')">i</button></div></div>`; 
-          rank++; 
-        } catch(e) {}
-      }); 
-      listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>'; 
-    }); 
-  }
-
-  async function loadParkWeather() { const container = document.getElementById('weather-park'); if (!container) return; try { const data = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')).json(); const c = data.current, d = data.daily; const getW = code => { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; }; container.innerHTML = `<div class="weather-badge"><span>${getW(c.weather_code)}, ${Math.round(c.temperature_2m)}°C • ветер ${Math.round(c.wind_speed_10m)} м/с (${getWindDirection(c.wind_direction_10m)})</span></div><div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ${getW(d.weather_code[1]).split(' ')[1].toLowerCase()}, от ${Math.round(d.temperature_2m_min[1])}° до ${Math.round(d.temperature_2m_max[1])}°C</span></div>`; } catch (e) { container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`; } }
-  
-  // Рендер Радара
-  function renderAll() {
-    const myUid = getVerifiedUserId(), now = Date.now(); currentUserActiveLoc = null; currentUserActivePlayer = null;
-    ['park', 'vostok'].forEach(loc => {
+  // ================= ПОГОДА И СЕССИИ =================
+  function loadParkWeather() {
+    var container = document.getElementById('weather-park'); if (!container) return;
+    fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')
+    .then(function(res) { return res.json(); }).then(function(data) {
       try {
-        const { players } = locationsData[loc] || { players: [] }, plans = (locationsData[loc]?.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
-        const badge = document.getElementById('badge-' + loc); if(badge) { badge.innerText = `${players.length} ${getPlayersCountSuffix(players.length)}`; badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
-        const listEl = document.getElementById('list-' + loc);
-        if(listEl) { if (players.length === 0) listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; else listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal('${escapeJS(item.uid)}')">${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div>${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${escapeJS(item.uid)}')">i</button>` : ''}</div></div>`).join(''); }
-        const planListEl = document.getElementById('plan-list-' + loc);
-        if(planListEl) { if (plans.length === 0) planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; else planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div>${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${escapeJS(p.uid)}')">i</button>` : ''}</div></div>`).join(''); }
-        const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null, isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null, btnBox = document.getElementById('btn-container-' + loc);
-        if(btnBox) { if (activePlayerObj) { currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; btnBox.innerHTML = `<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`; } else if (isUserOpened) { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`; } else { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`; } }
-      } catch(e) {}
-    });
-    if (currentUserActiveLoc && currentUserActivePlayer) { const elap = Date.now() - (currentUserActivePlayer.time||Date.now()), lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS; if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { document.getElementById('extend-modal').style.display = 'flex'; if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } } else { document.getElementById('extend-modal').style.display = 'none'; } } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
+          var c = data.current, d = data.daily;
+          var getW = function(code) { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
+          var tmrStr = '';
+          if (d && d.weather_code && d.weather_code.length > 1 && d.temperature_2m_min && d.temperature_2m_max) {
+              tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
+          }
+          container.innerHTML = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
+      } catch (innerE) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; }
+    }).catch(function(e) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; });
   }
 
-  document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile(); listenRatings(); listenLeaderboard(); listenTournaments(); listenPendingMatches(); loadParkWeather();
-    ['park', 'vostok'].forEach(loc => { db.collection('locations').doc(loc).onSnapshot(doc => { try { const data = doc.data() || {}; locationsData[loc].plans = data.plans || []; locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p); renderAll(); } catch(e){} }); });
-    db.collection('settings').doc('announcements').onSnapshot(doc => { try { announcementsData = doc.data() || {park:"", vostok:""}; ['park','vostok'].forEach(loc => { const b = document.getElementById('announcement-box-'+loc), t = document.getElementById('announcement-text-'+loc); if(b && t) { if(announcementsData[loc]) { t.innerHTML=cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display='flex'; } else { b.style.display='none'; } } }); } catch(e){} });
-    setInterval(renderAll, 30000); setInterval(monitorSessions, 60000); setInterval(loadParkWeather, 600000); 
+  function monitorSessions() {
+    var now = Date.now();
+    ['park', 'vostok'].forEach(function(loc) {
+      db.runTransaction(function(t) {
+        return t.get(db.collection('locations').doc(loc)).then(function(doc) {
+          if (!doc.exists) return null;
+          var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
+          for (var i = 0; i < players.length; i++) {
+            var p = players[i]; var elapsed = now - (p.time || now);
+            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { changed = true; recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000)); leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(p.time || now) }); } 
+            else { activePlayers.push(p); }
+          }
+          var activePlans = plans.filter(function(pl) { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
+          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
+          return null;
+        });
+      }).then(function(res) {
+        if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
+            for (var i = 0; i < res.leftPlayers.length; i++) {
+                var lp = res.leftPlayers[i];
+                sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
+            }
+        }
+      }).catch(function(e){});
+    });
+  }
+
+  function renderAll() {
+    var myUid = getVerifiedUserId(); var now = Date.now();
+    currentUserActiveLoc = null; currentUserActivePlayer = null;
+
+    ['park', 'vostok'].forEach(function(loc) {
+      var rawData = locationsData[loc] || { players: [], plans: [] };
+      var players = (rawData.players || []).filter(function(p) { return (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS) });
+      var plans = (rawData.plans || []).filter(function(p) { return p.planTime && p.planTime + 300000 > now });
+      
+      var badge = document.getElementById('badge-' + loc); 
+      if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
+
+      var listEl = document.getElementById('list-' + loc);
+      if(listEl) {
+        if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
+        else { 
+            var pRows = [];
+            for(var i=0; i<players.length; i++) {
+                var item = players[i];
+                pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(item.uid)+'\')">'+cleanHtml(item.name || 'Игрок')+'</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с '+formatTime(item.time || Date.now())+'</span><span class="time-badge">'+formatDuration(item.time || Date.now())+'</span></div></div></div>');
+            }
+            listEl.innerHTML = pRows.join(''); 
+        }
+      }
+
+      var planListEl = document.getElementById('plan-list-' + loc);
+      if(planListEl) {
+        if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
+        else { 
+            var plRows = [];
+            for(var j=0; j<plans.length; j++) {
+                var p = plans[j];
+                plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(p.uid)+'\')">'+cleanHtml(p.name || 'Игрок')+'</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к '+formatTime(p.planTime)+'</span><span class="time-badge-plan">'+formatUntil(p.planTime)+'</span></div></div></div>');
+            }
+            planListEl.innerHTML = plRows.join(''); 
+        }
+      }
+
+      var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
+      var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
+      var btnBox = document.getElementById('btn-container-' + loc);
+      
+      if(btnBox) {
+        if (activePlayerObj) { 
+            currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
+            btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\''+loc+'\')">👋 Покинуть стол</button>'; 
+        } else if (isUserOpened) { 
+            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\''+loc+'\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\''+loc+'\')">Отменить визит</button>'; 
+        } else { 
+            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\''+loc+'\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\''+loc+'\')">⏳ Буду позже...</button>'; 
+        }
+      }
+    });
+
+    if (currentUserActiveLoc && currentUserActivePlayer) {
+      var elap = Date.now() - (currentUserActivePlayer.time||Date.now());
+      var lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
+      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { 
+          document.getElementById('extend-modal').style.display = 'flex'; 
+          if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
+      } else { document.getElementById('extend-modal').style.display = 'none'; } 
+    } else { 
+        document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; 
+    }
+  }
+
+  // ================= СТАРТ ПРИЛОЖЕНИЯ =================
+  document.addEventListener('DOMContentLoaded', function() {
+    initUserProfile(); 
+    listenRatings(); 
+    listenLeaderboard(); 
+    listenTournaments(); 
+    listenPendingMatches(); 
+    loadParkWeather();
+    
+    setTimeout(monitorSessions, 1000);
+    
+    ['park', 'vostok'].forEach(function(loc) {
+      db.collection('locations').doc(loc).onSnapshot(function(doc) { 
+          var data = doc.data() || {}; 
+          locationsData[loc].plans = data.plans || []; 
+          locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p }); 
+          renderAll(); 
+      });
+    });
+    
+    db.collection('settings').doc('announcements').onSnapshot(function(doc) {
+      announcementsData = doc.data() || {park:"", vostok:""};
+      ['park','vostok'].forEach(function(loc) {
+        var b = document.getElementById('announcement-box-'+loc);
+        var t = document.getElementById('announcement-text-'+loc);
+        if(b && t) { 
+            if(announcementsData[loc]) { 
+                t.innerHTML = cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display = 'flex'; 
+            } else { b.style.display = 'none'; } 
+        }
+      });
+    });
+    
+    setInterval(renderAll, 30000); 
+    setInterval(monitorSessions, 60000); 
+    setInterval(loadParkWeather, 600000); 
   });
 </script>
 </body>
