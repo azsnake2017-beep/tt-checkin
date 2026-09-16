@@ -323,11 +323,11 @@
     </div>
     <div class="rating-card" id="view-rating-content">
       <div class="card-block-title" style="color: var(--accent-purple);"><span>⚔️</span><span>Клубный рейтинг игроков</span></div>
-      <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span></div>
+      <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Загрузка рейтинга...</span></div>
     </div>
     <div class="leaderboard-card" id="view-time-content" style="display: none;">
       <div class="card-block-title" style="color: var(--accent-gold);"><span>🥇</span><span>Зал славы (Тренировки)</span></div>
-      <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span></div>
+      <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Загрузка статистики...</span></div>
     </div>
   </div>
 
@@ -485,11 +485,11 @@
     if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9');
   }
   function switchNavTab(tabId) {
-    document.querySelectorAll('.main-view').forEach(view => view.classList.remove('active'));
-    document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+    document.querySelectorAll('.main-view').forEach(function(view) { view.classList.remove('active'); });
+    document.querySelectorAll('.nav-item').forEach(function(item) { item.classList.remove('active'); });
     
-    const viewEl = document.getElementById(`view-${tabId}`); 
-    const navEl = document.getElementById(`nav-${tabId}`);
+    const viewEl = document.getElementById('view-' + tabId); 
+    const navEl = document.getElementById('nav-' + tabId);
     if(viewEl) { viewEl.classList.add('active'); }
     if(navEl) { navEl.classList.add('active'); }
     
@@ -581,7 +581,7 @@
   }
   function buildBlockquoteList(list, title) { 
       if (!list || list.length === 0) return ""; 
-      return `\n\n<blockquote>👥 <b>${title} (${list.length} ${getPlayersCountSuffix(list.length)}):</b>\n` + list.map(p => `• ${cleanHtml(p.name || p)}`).join("\n") + `</blockquote>`; 
+      return `\n\n<blockquote>👥 <b>${title} (${list.length} ${getPlayersCountSuffix(list.length)}):</b>\n` + list.map(function(p) { return `• ${cleanHtml(p.name || p)}` }).join("\n") + `</blockquote>`; 
   }
   function toggleCard(loc) { 
       document.getElementById('card-' + loc).classList.toggle('expanded'); 
@@ -629,7 +629,8 @@
     const url = `https://www.google.com/search?q=${query}`;
     return `<div class="inventory-item"><div class="inventory-item-left"><span>${icon}</span> <span style="color: var(--text-muted);">${label}</span> <span class="inventory-value">${cleanHtml(value)}</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink('${url}')">i</button></div>`;
   }
-  function calculateElo(rA, rB, scoreA, k = 32) { 
+  function calculateElo(rA, rB, scoreA, k) { 
+      if (!k) k = 32;
       return Math.round(k * (scoreA - (1 / (1 + Math.pow(10, (rB - rA) / 400))))); 
   }
   function canSendTgAlert(type) { 
@@ -665,7 +666,7 @@
       document.body.appendChild(form); 
       form.submit();
       
-      setTimeout(() => { 
+      setTimeout(function() { 
           if (form.parentNode) form.parentNode.removeChild(form); 
       }, 2000);
     } catch (e) {
@@ -690,7 +691,7 @@
               await navigator.share({ title: 'Клуб ЧМЗ', text: t, url: currentModalUrl }); 
           } catch (err) {} 
       } else { 
-          navigator.clipboard.writeText(`${t}: ${currentModalUrl}`).then(() => customAlert("📋 Ссылка скопирована!")); 
+          navigator.clipboard.writeText(`${t}: ${currentModalUrl}`).then(function() { customAlert("📋 Ссылка скопирована!"); }); 
       } 
   }
   function openQrModal(type) {
@@ -755,7 +756,7 @@
           }
       }
       const uid = getVerifiedUserId();
-      return uid ? ADMIN_UIDS.includes(uid) : false;
+      return uid ? (ADMIN_UIDS.indexOf(uid) !== -1) : false;
   }
 
   // ================= ПРОФИЛЬ =================
@@ -800,7 +801,7 @@
     let userData = { uid: uid, name: name, platform: platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, isVerified: true, createdAt: Date.now() };
     
     try {
-      const snap = await Promise.race([ref.get(), new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 2000))]);
+      const snap = await Promise.race([ref.get(), new Promise(function(_, r) { setTimeout(function() { r(new Error('Timeout')) }, 2000); })]);
       if (!snap.exists) { 
           await ref.set(userData); 
           try { 
@@ -841,7 +842,7 @@
     const savedId = localStorage.getItem('tt_member_id');
     if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
       try {
-        const snap = await Promise.race([db.collection('users').doc(savedId).get(), new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 2000))]);
+        const snap = await Promise.race([db.collection('users').doc(savedId).get(), new Promise(function(_, r) { setTimeout(function() { r(new Error('Timeout')) }, 2000); })]);
         if (snap.exists) {
           let data = snap.data();
           if (data.isVerified === undefined || data.elo === undefined || data.medals === undefined) {
@@ -1049,7 +1050,7 @@
     let finalList = [];
     
     try {
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
         const tDoc = await t.get(db.collection('locations').doc(loc));
         const oDoc = await t.get(db.collection('locations').doc(otherLoc));
         
@@ -1057,11 +1058,12 @@
         let oP = oDoc.exists ? oDoc.data().players || [] : [];
         let tPl = tDoc.exists ? tDoc.data().plans || [] : [];
         
-        if (tP.find(p => (p.uid || p) === uid)) return;
+        const isAlreadyIn = tP.filter(function(p) { return (p.uid || p) === uid }).length > 0;
+        if (isAlreadyIn) return;
         
-        tP = tP.filter(p => (p.uid || p) !== uid); 
-        oP = oP.filter(p => (p.uid || p) !== uid); 
-        tPl = tPl.filter(p => (p.uid || p) !== uid);
+        tP = tP.filter(function(p) { return (p.uid || p) !== uid }); 
+        oP = oP.filter(function(p) { return (p.uid || p) !== uid }); 
+        tPl = tPl.filter(function(p) { return (p.uid || p) !== uid });
         
         tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS }); 
         finalList = tP;
@@ -1078,15 +1080,16 @@
     const uid = getVerifiedUserId(); if (!uid) return; 
     let spentMins = 0, spentStr = "", finalList = [];
     try {
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
         const d = await t.get(db.collection('locations').doc(loc)); if (!d.exists) return;
         let p = d.data().players || []; 
-        const cPlayer = p.find(pl => (pl.uid || pl) === uid);
+        const cPlayerArr = p.filter(function(pl) { return (pl.uid || pl) === uid });
+        const cPlayer = cPlayerArr.length > 0 ? cPlayerArr[0] : null;
         if (cPlayer && cPlayer.time) { 
             spentMins = Math.floor((Date.now() - cPlayer.time) / 60000); 
             spentStr = formatDuration(cPlayer.time); 
         }
-        p = p.filter(pl => (pl.uid || pl) !== uid); 
+        p = p.filter(function(pl) { return (pl.uid || pl) !== uid }); 
         finalList = p;
         t.set(db.collection('locations').doc(loc), { players: p }, { merge: true });
       });
@@ -1102,9 +1105,14 @@
   async function extendSession(addMins) {
     const uid = getVerifiedUserId(); if (!uid || !currentUserActiveLoc) return;
     try {
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
         const d = await t.get(db.collection('locations').doc(currentUserActiveLoc)); if(!d.exists) return;
-        let p = (d.data().players || []).map(pl => ((pl.uid||pl) === uid) ? Object.assign({}, pl, { maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) }) : pl);
+        let p = (d.data().players || []).map(function(pl) { 
+            if ((pl.uid||pl) === uid) {
+                return Object.assign({}, pl, { maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) });
+            }
+            return pl;
+        });
         t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
       });
       hasTriggeredPush = false; 
@@ -1130,9 +1138,9 @@
     if(!uid || !loc) return; 
     closePlanModal();
     try {
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
         const d = await t.get(db.collection('locations').doc(loc)); 
-        let pl = (d.exists ? d.data().plans || [] : []).filter(p => (p.uid||p) !== uid);
+        let pl = (d.exists ? d.data().plans || [] : []).filter(function(p) { return (p.uid||p) !== uid });
         pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid }); 
         t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
       });
@@ -1142,10 +1150,10 @@
   async function cancelPlan(loc) { 
       const uid = getVerifiedUserId(); if(!uid) return; 
       try { 
-          await db.runTransaction(async t => { 
+          await db.runTransaction(async function(t) { 
               const d = await t.get(db.collection('locations').doc(loc)); 
               if(!d.exists) return; 
-              t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(p => (p.uid||p) !== uid) }, { merge: true }); 
+              t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(function(p) { return (p.uid||p) !== uid }) }, { merge: true }); 
           }); 
       } catch(e) {} 
   }
@@ -1157,11 +1165,11 @@
     if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
     const sel = document.getElementById('match-opponent-select'); 
     sel.innerHTML = '';
-    const opps = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []).filter(p => (p.uid||p) !== uid);
+    const opps = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []).filter(function(p) { return (p.uid||p) !== uid });
     if (opps.length === 0) {
         sel.innerHTML = '<option value="">(нет других игроков)</option>';
     } else {
-        opps.forEach(p => { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; });
+        opps.forEach(function(p) { sel.innerHTML += `<option value="${p.uid||p}">${cleanHtml(p.name)}</option>`; });
     }
     selectScore(3,0); 
     document.getElementById('match-modal').style.display = 'flex';
@@ -1170,7 +1178,9 @@
   function selectScore(my, opp) { 
       document.getElementById('match-my-score').value = my; 
       document.getElementById('match-opp-score').value = opp; 
-      document.querySelectorAll('.reg-score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${my}:${opp}`)); 
+      document.querySelectorAll('.reg-score-btn').forEach(function(b) { 
+          b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === (my + ":" + opp)); 
+      }); 
   }
   async function submitMatchProposal() {
     const uid = getVerifiedUserId();
@@ -1210,7 +1220,7 @@
       
       let newPElo = 1000, newOElo = 1000;
       
-      await db.runTransaction(async (t) => {
+      await db.runTransaction(async function(t) {
         const pDoc = await t.get(pRef), oDoc = await t.get(oRef);
         const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
         const oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
@@ -1251,7 +1261,7 @@
     
     if (currentEditingTourId) {
       btn.innerText = 'Сохранить изменения';
-      db.collection('tournaments').doc(currentEditingTourId).get().then(doc => {
+      db.collection('tournaments').doc(currentEditingTourId).get().then(function(doc) {
         if (doc.exists) {
           const d = doc.data();
           document.getElementById('tour-title').value = d.title || '';
@@ -1296,7 +1306,7 @@
 
   function deleteTournament(id) { 
     if (!isSuperAdmin()) return; 
-    openConfirmModal('Вы уверены, что хотите навсегда удалить этот турнир?', async () => {
+    openConfirmModal('Вы уверены, что хотите навсегда удалить этот турнир?', async function() {
       try { 
           await db.collection('tournaments').doc(id).delete(); 
           customAlert("✅ Турнир удален"); 
@@ -1310,22 +1320,22 @@
     const uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы ставить реакции!');
     const ref = db.collection('tournaments').doc(id);
     try {
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
           const doc = await t.get(ref); if (!doc.exists) return;
           let data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
           if (type === 'like') { 
-              if (likes.includes(uid)) {
-                  likes = likes.filter(u => u !== uid); 
+              if (likes.indexOf(uid) !== -1) {
+                  likes = likes.filter(function(u) { return u !== uid }); 
               } else { 
                   likes.push(uid); 
-                  dislikes = dislikes.filter(u => u !== uid); 
+                  dislikes = dislikes.filter(function(u) { return u !== uid }); 
               } 
           } else { 
-              if (dislikes.includes(uid)) {
-                  dislikes = dislikes.filter(u => u !== uid); 
+              if (dislikes.indexOf(uid) !== -1) {
+                  dislikes = dislikes.filter(function(u) { return u !== uid }); 
               } else { 
                   dislikes.push(uid); 
-                  likes = likes.filter(u => u !== uid); 
+                  likes = likes.filter(function(u) { return u !== uid }); 
               } 
           }
           t.update(ref, { likes: likes, dislikes: dislikes });
@@ -1338,11 +1348,12 @@
     const ref = db.collection('tournaments').doc(id);
     try {
       let joined = false;
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
           const doc = await t.get(ref); 
           if (!doc.exists || doc.data().status !== 'registration') return;
           let parts = doc.data().participants || [];
-          if (!parts.some(p => p.uid === uid)) { 
+          const isInList = parts.filter(function(p) { return p.uid === uid }).length > 0;
+          if (!isInList) { 
               parts.push({uid: uid, name: currentUserProfile.name, elo: currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000}); 
               t.update(ref, { participants: parts }); 
               joined = true; 
@@ -1357,11 +1368,11 @@
     const uid = getVerifiedUserId(); if (!uid) return;
     const ref = db.collection('tournaments').doc(id);
     try { 
-        await db.runTransaction(async t => { 
+        await db.runTransaction(async function(t) { 
             const doc = await t.get(ref); 
             if (!doc.exists || doc.data().status !== 'registration') return; 
             let parts = doc.data().participants || []; 
-            parts = parts.filter(p => p.uid !== uid); 
+            parts = parts.filter(function(p) { return p.uid !== uid }); 
             t.update(ref, { participants: parts }); 
         }); 
     } catch(e) {}
@@ -1379,21 +1390,21 @@
       
       let grpA = [], grpB = [];
       if (type === 'smart') {
-        let sorted = parts.slice().sort((a,b) => b.elo - a.elo);
-        sorted.forEach((p, idx) => {
+        let sorted = parts.slice().sort(function(a,b) { return b.elo - a.elo });
+        sorted.forEach(function(p, idx) {
           if ((idx % 4) === 0 || (idx % 4) === 3) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
           else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
         });
       } else {
-        let shuffled = parts.slice().sort(() => 0.5 - Math.random());
-        shuffled.forEach((p, idx) => {
+        let shuffled = parts.slice().sort(function() { return 0.5 - Math.random() });
+        shuffled.forEach(function(p, idx) {
           if (idx < shuffled.length / 2) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
           else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
         });
       }
 
       let matches = [];
-      const makeMatches = (gPlayers, gName) => {
+      const makeMatches = function(gPlayers, gName) {
         for(let i=0; i<gPlayers.length; i++) {
           for(let j=i+1; j<gPlayers.length; j++) {
             matches.push({ id: generateId(), group: gName, p1Uid: gPlayers[i].uid, p1Name: gPlayers[i].name, p2Uid: gPlayers[j].uid, p2Name: gPlayers[j].name, score1: null, score2: null, stage: 'group' });
@@ -1415,8 +1426,8 @@
       const aRaw = (data.groups && data.groups.A) ? data.groups.A : [];
       const bRaw = (data.groups && data.groups.B) ? data.groups.B : [];
       
-      const a = aRaw.slice().sort((x,y) => y.w - x.w || y.pts - x.pts);
-      const b = bRaw.slice().sort((x,y) => y.w - x.w || y.pts - x.pts);
+      const a = aRaw.slice().sort(function(x,y) { return y.w - x.w || y.pts - x.pts });
+      const b = bRaw.slice().sort(function(x,y) { return y.w - x.w || y.pts - x.pts });
       
       let matches = data.matches || [];
       matches.push({ id: 'semi1', stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, title: 'Полуфинал 1' });
@@ -1432,8 +1443,11 @@
     try {
       const doc = await ref.get(); if (!doc.exists) return; 
       const data = doc.data();
-      const semis = (data.matches || []).filter(m => m.stage === 'semi');
-      if (semis.some(m => m.score1 === null)) return;
+      const matchesArr = data.matches || [];
+      const semis = matchesArr.filter(function(m) { return m.stage === 'semi' });
+      
+      const isUnfinished = semis.filter(function(m) { return m.score1 === null }).length > 0;
+      if (isUnfinished) return;
       
       const w1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p1Uid, name: semis[0].p1Name} : {uid: semis[0].p2Uid, name: semis[0].p2Name};
       const l1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p2Uid, name: semis[0].p2Name} : {uid: semis[0].p1Uid, name: semis[0].p1Name};
@@ -1454,8 +1468,13 @@
     try {
       const doc = await ref.get(); if (!doc.exists) return; 
       const data = doc.data();
-      const firstM = (data.matches || []).find(m => m.id === 'first');
-      const thirdM = (data.matches || []).find(m => m.id === 'third');
+      const matchesArr = data.matches || [];
+      
+      const firstMArr = matchesArr.filter(function(m) { return m.id === 'first' });
+      const thirdMArr = matchesArr.filter(function(m) { return m.id === 'third' });
+      const firstM = firstMArr.length > 0 ? firstMArr[0] : null;
+      const thirdM = thirdMArr.length > 0 ? thirdMArr[0] : null;
+      
       if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) return customAlert("Завершите финалы!");
 
       const gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
@@ -1465,7 +1484,8 @@
       const parts = data.participants || [];
       const batch = db.batch();
       
-      for (const p of parts) {
+      for (let i = 0; i < parts.length; i++) {
+        const p = parts[i];
         const uRef = db.collection('users').doc(p.uid);
         const uDoc = await uRef.get();
         if (uDoc.exists) {
@@ -1489,7 +1509,7 @@
   function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
     document.getElementById('tour-match-id-val').value = matchId;
     document.getElementById('tour-id-val').value = tourId;
-    document.getElementById('tour-match-players-label').innerText = `${p1Name} ПРОТИВ ${p2Name}`;
+    document.getElementById('tour-match-players-label').innerText = p1Name + ' ПРОТИВ ' + p2Name;
     selectTourScore(3, 0);
     document.getElementById('tour-match-modal').style.display = 'flex';
   }
@@ -1497,7 +1517,9 @@
   function selectTourScore(s1, s2) { 
       document.getElementById('tour-match-s1').value = s1; 
       document.getElementById('tour-match-s2').value = s2; 
-      document.querySelectorAll('.tour-score-btn').forEach(b => b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === `${s1}:${s2}`)); 
+      document.querySelectorAll('.tour-score-btn').forEach(function(b) {
+          b.classList.toggle('active', b.innerText.replace(/\s+/g,'') === (s1 + ":" + s2));
+      }); 
   }
   
   async function submitTourMatchScore() {
@@ -1509,11 +1531,17 @@
     closeTourMatchModal();
     
     try {
-      await db.runTransaction(async t => {
+      await db.runTransaction(async function(t) {
         const ref = db.collection('tournaments').doc(tourId);
         const doc = await t.get(ref); if (!doc.exists) return;
-        let data = doc.data(); let matches = data.matches || [];
-        let mIdx = matches.findIndex(m => m.id === matchId); 
+        let data = doc.data(); 
+        let matches = data.matches || [];
+        
+        let mIdx = -1;
+        for (let j = 0; j < matches.length; j++) {
+            if (matches[j].id === matchId) { mIdx = j; break; }
+        }
+        
         if (mIdx === -1 || matches[mIdx].score1 !== null) return;
         
         let match = matches[mIdx];
@@ -1547,15 +1575,27 @@
         if (match.stage === 'group') {
           let groups = data.groups;
           let grp = groups[match.group];
-          let pl1 = grp.find(p => p.uid === match.p1Uid), pl2 = grp.find(p => p.uid === match.p2Uid);
-          if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+          
+          let pl1Arr = grp.filter(function(p) { return p.uid === match.p1Uid });
+          let pl2Arr = grp.filter(function(p) { return p.uid === match.p2Uid });
+          let pl1 = pl1Arr[0];
+          let pl2 = pl2Arr[0];
+          
+          if (isPWin) { 
+              pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; 
+          } else { 
+              pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; 
+          }
           t.update(ref, { matches: matches, groups: groups });
         } else {
           t.update(ref, { matches: matches });
         }
       });
       
-      const updatedMatch = await db.collection('tournaments').doc(tourId).get().then(d => d.data().matches.find(m => m.id === matchId));
+      const tourDoc = await db.collection('tournaments').doc(tourId).get();
+      const updatedMatchArr = tourDoc.data().matches.filter(function(m) { return m.id === matchId });
+      const updatedMatch = updatedMatchArr[0];
+      
       db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
     } catch(e) {
         console.error(e);
@@ -1565,7 +1605,7 @@
   // --- РЕНДЕР ТУРНИРОВ ---
   function renderMatchList(matches, tourId, titleFilter) {
     if (!matches || matches.length === 0) return '';
-    return matches.map(m => {
+    return matches.map(function(m) {
       let isDone = m.score1 !== null;
       let badge = isDone ? `<span class="tour-score-badge">${m.score1} : ${m.score2}</span>` : `<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal('${tourId}', '${m.id}', '${cleanHtml(m.p1Name)}', '${cleanHtml(m.p2Name)}')">Указать счет</button>`;
       let n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
@@ -1585,8 +1625,11 @@
 
   function renderGroupTable(groupPlayers, groupName) {
     if (!groupPlayers || groupPlayers.length === 0) return '';
-    let sorted = groupPlayers.slice().sort((a,b) => b.w - a.w || b.pts - a.pts);
-    let rows = sorted.map((p, i) => `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name)}</span></td><td>${p.w}</td><td>${p.l}</td><td>${p.pts}</td></tr>`).join('');
+    let sorted = groupPlayers.slice().sort(function(a,b) { return b.w - a.w || b.pts - a.pts });
+    let rows = sorted.map(function(p, i) { 
+        return `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name)}</span></td><td>${p.w}</td><td>${p.l}</td><td>${p.pts}</td></tr>`; 
+    }).join('');
+    
     return `
       <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div>
       <table class="tour-group-table">
@@ -1611,9 +1654,10 @@
         const likes = d.likes || [];
         const dislikes = d.dislikes || [];
         const parts = d.participants || [];
-        const isLiked = myUid && likes.includes(myUid);
-        const isDisliked = myUid && dislikes.includes(myUid);
-        const isPart = myUid && parts.some(p => p.uid === myUid);
+        
+        const isLiked = myUid && likes.indexOf(myUid) !== -1;
+        const isDisliked = myUid && dislikes.indexOf(myUid) !== -1;
+        const isPart = myUid && parts.filter(function(p) { return p.uid === myUid }).length > 0;
         
         let adminActionHtml = '';
         if (isAdmin) {
@@ -1641,7 +1685,7 @@
               <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
                 <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${goldUid}')">${cleanHtml(goldName)}</span></div>
                 <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${silverUid}')">${cleanHtml(silverName)}</span></div>
-                <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${bronzeUid}')">${cleanHtml(bronName)}</span></div>
+                <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${bronzeUid}')">${cleanHtml(bronzeName)}</span></div>
               </div>
               ${adminActionHtml}
             </div>
@@ -1654,7 +1698,7 @@
         let actionRowHtml = '';
 
         if (d.status === 'registration') {
-          let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
+          let pList = parts.length > 0 ? parts.map(function(p) { return `<span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name)}</span>` }).join(', ') : 'Пока никто не записался';
           content = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (${parts.length}):</b> ${pList}</div>`;
           
           if (myUid) {
@@ -1672,32 +1716,45 @@
           }
         } 
         else if (d.status === 'active') {
-          const groupA = d.groups ? d.groups.A : [];
-          const groupB = d.groups ? d.groups.B : [];
+          const groupA = d.groups && d.groups.A ? d.groups.A : [];
+          const groupB = d.groups && d.groups.B ? d.groups.B : [];
           content += renderGroupTable(groupA, 'A');
           content += renderGroupTable(groupB, 'B');
+          
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>`;
-          content += renderMatchList((d.matches||[]).filter(m => m.group === 'A'), id, false);
+          const matchesA = d.matches ? d.matches.filter(function(m) { return m.group === 'A' }) : [];
+          content += renderMatchList(matchesA, id, false);
+          
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>`;
-          content += renderMatchList((d.matches||[]).filter(m => m.group === 'B'), id, false);
+          const matchesB = d.matches ? d.matches.filter(function(m) { return m.group === 'B' }) : [];
+          content += renderMatchList(matchesB, id, false);
 
-          if (isAdmin && !(d.matches||[]).filter(m => m.stage==='group').some(m => m.score1 === null)) {
+          const groupMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'group' }) : [];
+          const isUnfinishedGroups = groupMatches.filter(function(m) { return m.score1 === null }).length > 0;
+          
+          if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) {
             actionRowHtml += `<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs('${id}')">Сформировать Плей-офф</button>`;
           }
         }
         else if (d.status === 'playoffs') {
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>`;
-          content += renderMatchList((d.matches||[]).filter(m => m.stage === 'semi'), id, true);
           
-          if (isAdmin && !(d.matches||[]).filter(m => m.stage==='semi').some(m => m.score1 === null)) {
+          const semiMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'semi' }) : [];
+          content += renderMatchList(semiMatches, id, true);
+          
+          const isUnfinishedSemis = semiMatches.filter(function(m) { return m.score1 === null }).length > 0;
+          if (isAdmin && semiMatches.length > 0 && !isUnfinishedSemis) {
             actionRowHtml += `<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals('${id}')">Создать Финалы</button>`;
           }
         }
         else if (d.status === 'finals') {
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>`;
-          content += renderMatchList((d.matches||[]).filter(m => m.stage === 'final'), id, true);
           
-          if (isAdmin && !(d.matches||[]).filter(m => m.stage==='final').some(m => m.score1 === null)) {
+          const finalMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'final' }) : [];
+          content += renderMatchList(finalMatches, id, true);
+          
+          const isUnfinishedFinals = finalMatches.filter(function(m) { return m.score1 === null }).length > 0;
+          if (isAdmin && finalMatches.length > 0 && !isUnfinishedFinals) {
             actionRowHtml += `<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament('${id}')">Завершить турнир</button>`;
           }
         }
@@ -1731,21 +1788,28 @@
     try {
       const data = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')).json();
       const c = data.current, d = data.daily;
-      const getW = code => { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
+      const getW = function(code) { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
       container.innerHTML = `<div class="weather-badge"><span>${getW(c.weather_code)}, ${Math.round(c.temperature_2m)}°C • ветер ${Math.round(c.wind_speed_10m)} м/с (${getWindDirection(c.wind_direction_10m)})</span></div><div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ${getW(d.weather_code[1]).split(' ')[1].toLowerCase()}, от ${Math.round(d.temperature_2m_min[1])}° до ${Math.round(d.temperature_2m_max[1])}°C</span></div>`;
     } catch (e) { container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`; }
   }
 
   async function monitorSessions() {
     const now = Date.now();
-    for (const loc of ['park', 'vostok']) {
+    const locs = ['park', 'vostok'];
+    
+    for (let i = 0; i < locs.length; i++) {
+      const loc = locs[i];
       try {
         let leftPlayers = [], remainingList = [];
-        await db.runTransaction(async (t) => {
+        await db.runTransaction(async function(t) {
           const doc = await t.get(db.collection('locations').doc(loc)); if (!doc.exists) return;
-          let players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [];
+          let players = doc.data().players || [];
+          let plans = doc.data().plans || [];
+          let changed = false;
+          let activePlayers = [];
           
-          for (const p of players) {
+          for (let j = 0; j < players.length; j++) {
+            const p = players[j];
             const elapsed = now - (p.time || now);
             if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
                 changed = true; 
@@ -1756,7 +1820,7 @@
             }
           }
           
-          const activePlans = plans.filter(pl => { 
+          const activePlans = plans.filter(function(pl) { 
               if (!pl.planTime || now > pl.planTime + 300000) { 
                   changed = true; return false; 
               } 
@@ -1770,7 +1834,8 @@
         });
         
         if (leftPlayers.length > 0) { 
-            for (const lp of leftPlayers) { 
+            for (let k = 0; k < leftPlayers.length; k++) {
+                const lp = leftPlayers[k];
                 sendTelegramAlert(`👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]} (время: <code>${lp.durationStr}</code>).${remainingList.length > 0 ? buildBlockquoteList(remainingList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`); 
             } 
         }
@@ -1786,8 +1851,8 @@
 
     ['park', 'vostok'].forEach(loc => {
       const rawData = locationsData[loc] || { players: [], plans: [] };
-      const players = (rawData.players || []).filter(p => (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS));
-      const plans = (rawData.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
+      const players = (rawData.players || []).filter(function(p) { return (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS) });
+      const plans = (rawData.plans || []).filter(function(p) { return p.planTime && p.planTime + 300000 > now });
       
       const badge = document.getElementById('badge-' + loc); 
       if(badge) { 
@@ -1800,7 +1865,7 @@
         if (players.length === 0) { 
             listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; 
         } else { 
-            listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal('${item.uid}')">${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div></div></div>`).join(''); 
+            listEl.innerHTML = players.map(function(item) { return `<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal('${item.uid}')">${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div></div></div>` }).join(''); 
         }
       }
 
@@ -1809,12 +1874,16 @@
         if (plans.length === 0) { 
             planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; 
         } else { 
-            planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div></div></div>`).join(''); 
+            planListEl.innerHTML = plans.map(function(p) { return `<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div></div></div>` }).join(''); 
         }
       }
 
-      const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null;
-      const isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null;
+      const activePlayerObjArr = myUid ? players.filter(function(p) { return (p.uid || p) === myUid }) : [];
+      const activePlayerObj = activePlayerObjArr.length > 0 ? activePlayerObjArr[0] : null;
+      
+      const isUserOpenedArr = myUid ? plans.filter(function(p) { return (p.uid || p) === myUid }) : [];
+      const isUserOpened = isUserOpenedArr.length > 0;
+      
       const btnBox = document.getElementById('btn-container-' + loc);
       
       if(btnBox) {
@@ -1864,7 +1933,7 @@
       db.collection('locations').doc(loc).onSnapshot(doc => { 
           const data = doc.data() || {}; 
           locationsData[loc].plans = data.plans || []; 
-          locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p); 
+          locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p }); 
           renderAll(); 
       });
     });
