@@ -53,15 +53,15 @@
     
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
     
-    /* Отступ снизу увеличен для нижней панели навигации */
     .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
-    /* Экраны (Views) */
     .main-view { display: none; flex-direction: column; gap: 12px; animation: fadeInView 0.25s ease; }
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    .club-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
+    /* ЕДИНЫЙ БЛОК ШАПКИ И СОЦСЕТЕЙ */
+    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
+    .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
     .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
     .club-header-text h1 { font-size: 14px; font-weight: 700; line-height: 1.2; color: var(--text); }
@@ -76,9 +76,9 @@
 
     .header-actions { display: flex; gap: 8px; align-items: center; }
 
-    .social-links-minimal { display: flex; gap: 8px; }
-    .social-pill { flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); }
-    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; user-select: none; }
+    .social-links-minimal { display: flex; gap: 8px; width: 100%; border-top: 1px solid var(--card-border); padding-top: 12px; }
+    .social-pill { flex: 1; background: var(--row-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; }
+    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; user-select: none; }
     .pill-tg { background: #0ea5e9; }
     .pill-max { background: #8b5cf6; }
 
@@ -214,12 +214,10 @@
     .nav-icon { font-size: 22px; margin-bottom: 4px; }
     .nav-item:active { transform: scale(0.9); }
 
-    /* Плавающая кнопка возврата наверх (поднята над навигацией) */
     .btn-scroll-top { position: fixed; bottom: calc(75px + env(safe-area-inset-bottom)); right: 20px; background: var(--primary); color: white; width: 44px; height: 44px; border-radius: 50%; border: none; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0,0,0,0.3); cursor: pointer; z-index: 999; opacity: 0; pointer-events: none; transform: translateY(20px); transition: opacity 0.3s ease, transform 0.3s ease; }
     .btn-scroll-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
     .btn-scroll-top:active { transform: translateY(0) scale(0.9); }
 
-    /* Модалки */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1001; }
     .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; color: var(--text); }
     .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -241,23 +239,48 @@
 
 <div class="container">
 
-  <!-- Шапка клуба (всегда видна сверху) -->
+  <!-- ЕДИНЫЙ БЛОК ШАПКИ (Логотип, тема, QR + Соцсети) -->
   <div class="club-header">
-    <div class="club-header-left">
-      <img src="logo.webp" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
-      <div class="club-header-text">
-        <h1>Настольный теннис ЧМЗ</h1>
-        <p>Радар, рейтинг, статистика</p>
+    <div class="club-header-top">
+      <div class="club-header-left">
+        <img src="logo.webp" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
+        <div class="club-header-text">
+          <h1>Настольный теннис ЧМЗ</h1>
+          <p>Радар, рейтинг, статистика</p>
+        </div>
+      </div>
+      <div class="header-actions">
+        <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему">☀️</button>
+        <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
+          <img src="App.webp" alt="App QR" class="icon-img-large" width="22" height="22" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
+          <span style="display: none; font-size: 18px;">📱</span>
+        </button>
       </div>
     </div>
-    <div class="header-actions">
-      <!-- Кнопка переключения темы -->
-      <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему">☀️</button>
-      <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
-        <img src="App.webp" alt="App QR" class="icon-img-large" width="22" height="22" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" />
-        <span style="display: none; font-size: 18px;">📱</span>
+    
+    <div class="social-links-minimal">
+      <div class="social-pill">
+        <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg"><span>✈️</span> Telegram</a>
+        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram"><img src="TG.webp" alt="TG" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span style="display: none;">📷</span></button>
+      </div>
+      <div class="social-pill">
+        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max"><span>💬</span> МАКС</a>
+        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС"><img src="Max.webp" alt="Max" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span style="display: none;">📷</span></button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Плашка авторизации теперь глобальная (видна сразу, если не авторизован) -->
+  <div class="auth-banner" id="web-auth-banner">
+    <h3>🔐 Подтвердите профиль игрока</h3>
+    <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
+    <div class="auth-methods-box">
+      <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
+      <button class="btn-auth-provider" onclick="loginWithGoogle()">
+        <span>🌐</span> Войти через Google
       </button>
     </div>
+    <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
   </div>
 
   <!-- ЭКРАН 1: РАДАР (Активен по умолчанию) -->
@@ -338,33 +361,8 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 3: ПРОФИЛЬ И АВТОРИЗАЦИЯ -->
+  <!-- ЭКРАН 3: ПРОФИЛЬ -->
   <div id="view-profile" class="main-view">
-    
-    <!-- Соцсети -->
-    <div class="social-links-minimal">
-      <div class="social-pill">
-        <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg"><span>✈️</span> Telegram</a>
-        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram"><img src="TG.webp" alt="TG" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span style="display: none;">📷</span></button>
-      </div>
-      <div class="social-pill">
-        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max"><span>💬</span> МАКС</a>
-        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС"><img src="Max.webp" alt="Max" class="icon-img-mini" onerror="this.style.display='none'; this.nextElementSibling.style.display='inline';" /><span style="display: none;">📷</span></button>
-      </div>
-    </div>
-
-    <div class="auth-banner" id="web-auth-banner">
-      <h3>🔐 Подтвердите профиль игрока</h3>
-      <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
-      <div class="auth-methods-box">
-        <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
-        <button class="btn-auth-provider" onclick="loginWithGoogle()">
-          <span>🌐</span> Войти через Google
-        </button>
-      </div>
-      <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
-    </div>
-
     <div class="profile-card">
       <div class="profile-top-row">
         <div class="profile-user-main" id="user-name-container">
@@ -414,7 +412,7 @@
   </svg>
 </button>
 
-<!-- МОДАЛЬНЫЕ ОКНА (КАК БЫЛИ) -->
+<!-- МОДАЛЬНЫЕ ОКНА -->
 <div class="modal-overlay" id="custom-alert-modal">
   <div class="modal-box" style="border-color: var(--accent-sky); padding: 24px;">
     <h3 style="font-size: 16px; margin-bottom: 8px;">Клуб ЧМЗ</h3>
@@ -447,7 +445,7 @@
     </div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
-      <button class="btn btn-join" style="background: #334155; flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
+      <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
       <button class="btn btn-join" style="background: var(--primary); flex: 1;" onclick="closeQrModal()">Готово</button>
     </div>
   </div>
@@ -545,7 +543,7 @@
 </div>
 
 <script>
-  // ================= ТЕМА И НАВИГАЦИЯ (НОВЫЙ БЛОК) =================
+  // ================= ТЕМА И НАВИГАЦИЯ =================
   function initTheme() {
     const savedTheme = localStorage.getItem('tt_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -568,18 +566,13 @@
   }
 
   function switchNavTab(tabId) {
-    // Скрываем все экраны
     document.querySelectorAll('.main-view').forEach(view => view.classList.remove('active'));
-    // Убираем выделение со всех кнопок навигации
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    
-    // Показываем нужный экран и выделяем кнопку
     document.getElementById(`view-${tabId}`).classList.add('active');
     document.getElementById(`nav-${tabId}`).classList.add('active');
-    window.scrollTo(0, 0); // Прокручиваем наверх при смене вкладки
+    window.scrollTo(0, 0); 
   }
 
-  // Вызываем инициализацию темы сразу
   initTheme();
 
   // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ =================
