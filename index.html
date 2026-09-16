@@ -43,7 +43,7 @@
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
     
     /* Отступ для нижнего свайп-бара на iPhone */
-    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: max(80px, env(safe-area-inset-bottom)); }
+    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
 
     .club-header { display: flex; align-items: center; justify-content: space-between; gap: 10px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 12px 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.3); }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
@@ -142,10 +142,9 @@
     .btn-plan { background: #1e293b; border: 1px solid #3b82f6; color: #93c5fd; }
     .btn-leave { background: #334155; color: #cbd5e1; }
 
-    /* Прилипающие вкладки с красивым размытием фона */
+    /* Обычные вкладки (без прилипания поверх рейтинга) */
     .tabs-container { 
-      display: flex; gap: 8px; background: rgba(15, 23, 42, 0.85); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); 
-      position: sticky; top: 10px; z-index: 100; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); 
     }
     .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
     .tab-btn.active { background: #334155; color: #ffffff; }
@@ -155,7 +154,7 @@
     .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; }
     
-    /* Убран внутренний скролл */
+    /* Убран внутренний скролл, чтобы прокручивалась вся страница */
     .scrollable-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 20px; }
 
     .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); font-size: 13px; }
@@ -192,37 +191,6 @@
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .score-btn { background: #0f172a; border: 1px solid var(--card-border); color: #f8fafc; padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
     .score-btn.active { border-color: var(--accent-purple); background: rgba(168, 85, 247, 0.2); color: var(--accent-purple); }
-
-    /* Плавающая кнопка возврата наверх */
-    .btn-scroll-top {
-      position: fixed;
-      bottom: max(20px, env(safe-area-inset-bottom));
-      right: 20px;
-      background: var(--primary);
-      color: white;
-      width: 44px;
-      height: 44px;
-      border-radius: 50%;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.5);
-      cursor: pointer;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transform: translateY(20px);
-      transition: opacity 0.3s ease, transform 0.3s ease;
-    }
-    .btn-scroll-top.visible {
-      opacity: 1;
-      pointer-events: auto;
-      transform: translateY(0);
-    }
-    .btn-scroll-top:active {
-      transform: translateY(0) scale(0.9);
-    }
   </style>
 </head>
 <body>
@@ -352,7 +320,7 @@
     </div>
   </div>
 
-  <!-- ПРИЛИПАЮЩИЕ ВКЛАДКИ -->
+  <!-- ВКЛАДКИ (без прилипания) -->
   <div class="tabs-container">
     <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Клубный рейтинг</button>
     <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ тренировок</button>
@@ -362,7 +330,6 @@
     <div class="card-block-title" style="color: var(--accent-purple);">
       <span>⚔️</span><span>Клубный рейтинг игроков</span>
     </div>
-    <!-- Убран внутренний скролл -->
     <div id="rating-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
     </div>
@@ -372,20 +339,12 @@
     <div class="card-block-title" style="color: var(--accent-gold);">
       <span>🥇</span><span>Зал славы (Топ по часам)</span>
     </div>
-    <!-- Убран внутренний скролл -->
     <div id="leaderboard-list" class="scrollable-list">
       <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
     </div>
   </div>
 
 </div>
-
-<!-- Плавающая кнопка возврата наверх -->
-<button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="18 15 12 9 6 15"></polyline>
-  </svg>
-</button>
 
 <!-- КАСТОМНОЕ УВЕДОМЛЕНИЕ ВМЕСТО ALERT() -->
 <div class="modal-overlay" id="custom-alert-modal">
@@ -649,21 +608,6 @@
     return '';
   }
 
-  // ================= КНОПКА СКРОЛЛА НАВЕРХ =================
-  function scrollToTop() {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  document.addEventListener('scroll', () => {
-    const btn = document.getElementById('btn-scroll-top');
-    if (!btn) return;
-    if (window.scrollY > 350) {
-      btn.classList.add('visible');
-    } else {
-      btn.classList.remove('visible');
-    }
-  });
-
   // ================= ФУНКЦИИ УВЕДОМЛЕНИЙ И АНТИСПАМ =================
   function canSendTgAlert(actionType) {
     const now = Date.now();
@@ -676,7 +620,6 @@
     return true;
   }
 
-  // ВЕРНУЛ ОРИГИНАЛЬНУЮ И РАБОЧУЮ ФУНКЦИЮ (ГДЕ ИСПОЛЬЗУЕТСЯ IFRAME И GET-ЗАПРОС)
   function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
     try {
