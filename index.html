@@ -62,7 +62,7 @@
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
     
-    /* ПРОФИЛЬ И КАРТОЧКИ */
+    /* ПРОФИЛЬ */
     .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; flex-shrink: 0; }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
@@ -430,7 +430,7 @@
   </div>
 </div>
 
-<!-- Окно кастомного подтверждения (заменило Telegram.showConfirm) -->
+<!-- Окно кастомного подтверждения удаления -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box" style="border-color: var(--accent-red); padding: 24px;">
     <h3 style="font-size: 18px; margin-bottom: 8px; color: var(--accent-red);">Внимание</h3>
@@ -562,7 +562,7 @@
     <input type="text" id="tour-title" class="input-name" placeholder="Название (напр. Осенний кубок)" />
     <input type="date" id="tour-date" class="input-name" />
     <textarea id="tour-desc" class="textarea-announcement" placeholder="Описание, взносы, условия..."></textarea>
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
+    <button id="btn-save-tour" class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
     <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
   </div>
 </div>
@@ -945,8 +945,8 @@
     document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: var(--text-muted);">Не авторизован</b></span>';
     document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
     
-    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id) {
-      if (banner) banner.style.display = 'flex';
+    if (!window.Telegram?.WebApp?.initDataUnsafe?.user?.id && banner) {
+      banner.style.display = 'flex';
       const container = document.getElementById('telegram-login-container');
       if (container) {
         container.innerHTML = '';
@@ -1021,7 +1021,7 @@
     }
 
     const btnAddTour = document.getElementById('btn-add-tournament'); if (btnAddTour) btnAddTour.style.display = isSuperAdmin() ? 'block' : 'none';
-    document.getElementById('btn-edit-profile').style.display = 'block'; document.getElementById('btn-logout').style.display = 'block';
+    if (isUserVerified()) { document.getElementById('btn-edit-profile').style.display = 'block'; document.getElementById('btn-logout').style.display = 'block'; }
   }
 
   // ================= РЕДАКТИРОВАНИЕ ПРОФИЛЯ =================
@@ -1127,6 +1127,69 @@
     } catch(e) {}
   }
   async function cancelPlan(loc) { const uid = getVerifiedUserId(); if(!uid) return; try { await db.runTransaction(async t => { const d = await t.get(db.collection('locations').doc(loc)); if(!d.exists) return; t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(p => (p.uid||p) !== uid) }, { merge: true }); }); } catch(e) {} }
+
+  // ================= АДМИН ПАНЕЛЬ И АНОНСЫ =================
+  function openAdminMenu() { document.getElementById('admin-modal').style.display = 'flex'; }
+  function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
+  function sendAdminBroadcast() {
+    if(!isSuperAdmin()) return; const t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
+    sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
+  }
+  function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
+  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
+  async function saveAnnouncement() { const loc = document.getElementById('announcement-target-loc').value, txt = document.getElementById('announcement-textarea').value.trim(); await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true }); closeAnnouncementModal(); if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`); }
+  async function deleteAnnouncement() { if(!isSuperAdmin()) return; const loc = document.getElementById('announcement-target-loc').value; await db.collection('settings').doc('announcements').set({ [loc]: "" }, { merge: true }); closeAnnouncementModal(); customAlert("✅ Анонс удален"); }
+
+  // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
+  async function showUserInfoModal(uid) {
+    if(!uid) return;
+    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; document.getElementById('user-info-modal').style.display = 'flex';
+    try {
+      const d = await db.collection('users').doc(uid).get(); if(!d.exists) { closeUserInfoModal(); return; }
+      const u = d.data(), adminTag = ADMIN_UIDS.includes(uid) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '', customBadge = getCustomBadge(uid);
+      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
+      
+      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${cleanHtml(uid)}</span></div>` : '';
+      const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
+      
+      const deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${u.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${u.lastEloDelta}) 📉</span>`) : '';
+      const streakText = (u.winStreak && u.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${u.winStreak} побед</span>` : '';
+
+      const mContainer = document.getElementById('info-modal-medals');
+      const m = u.medals || {gold:0, silver:0, bronze:0};
+      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
+        mContainer.innerHTML = `<div class="medal-item">🏆 ${u.tournamentsPlayed || 0}</div><div class="medal-item">🥇 ${m.gold || 0}</div><div class="medal-item">🥈 ${m.silver || 0}</div><div class="medal-item">🥉 ${m.bronze || 0}</div>`; mContainer.style.display = 'flex';
+      } else { mContainer.style.display = 'none'; }
+
+      document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
+      
+      const invContainer = document.getElementById('info-modal-inventory');
+      if (u.blade || u.rubberL || u.rubberR) {
+        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
+        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
+      } else { invContainer.style.display = 'none'; }
+
+      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
+      const hEl = document.getElementById('info-modal-history');
+      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
+      let h = '';
+      snaps.forEach(doc => {
+        const m = doc.data(), isP1 = m.p1Uid === uid, myS = isP1?m.p1Score:m.p2Score, opS = isP1?m.p2Score:m.p1Score, opN = isP1?m.p2Name:m.p1Name, isWin = myS>opS;
+        h += `<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div><div style="color:${isWin?'#059669':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div></div>`;
+      });
+      hEl.innerHTML = h;
+    } catch(e){}
+  }
+  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
   // ================= МАТЧИ И РЕЙТИНГ =================
   function handleMatchClick() {
@@ -1391,14 +1454,7 @@
       let n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
       let n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
       let titleHtml = titleFilter ? `<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">${m.title}</div>` : '';
-      return `<div class="tour-match-row">
-          <div class="tour-match-names">
-            ${titleHtml}
-            <span class="${n1C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p1Uid)}')">${cleanHtml(m.p1Name)}</span>
-            <span class="${n2C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p2Uid)}')">${cleanHtml(m.p2Name)}</span>
-          </div>
-          ${badge}
-        </div>`;
+      return `<div class="tour-match-row"><div class="tour-match-names">${titleHtml}<span class="${n1C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p1Uid)}')">${cleanHtml(m.p1Name)}</span><span class="${n2C} clickable-name" onclick="showUserInfoModal('${escapeJS(m.p2Uid)}')">${cleanHtml(m.p2Name)}</span></div>${badge}</div>`;
     }).join('');
   }
 
@@ -1406,157 +1462,95 @@
     if (!groupPlayers || groupPlayers.length === 0 || !Array.isArray(groupPlayers)) return '';
     let sorted = [...groupPlayers].sort((a,b) => (b.w || 0) - (a.w || 0) || (b.pts || 0) - (a.pts || 0));
     let rows = sorted.map((p, i) => `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span></td><td>${p.w||0}</td><td>${p.l||0}</td><td>${p.pts||0}</td></tr>`).join('');
-    return `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div>
-      <table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>${rows}</table>`;
+    return `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div><table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>${rows}</table>`;
   }
 
   function listenTournaments() {
     db.collection('tournaments').orderBy('createdAt', 'desc').onSnapshot(snap => {
-      const activeEl = document.getElementById('tournaments-list-active');
-      const archiveEl = document.getElementById('tournaments-list-archive');
-      let activeHtml = '', archiveHtml = '';
-      const myUid = getVerifiedUserId(), isAdmin = isSuperAdmin();
+      try {
+        const activeEl = document.getElementById('tournaments-list-active');
+        const archiveEl = document.getElementById('tournaments-list-archive');
+        let activeHtml = '', archiveHtml = '';
+        const myUid = getVerifiedUserId(), isAdmin = isSuperAdmin();
 
-      snap.forEach(doc => {
-        try {
-          const d = doc.data() || {}, id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
-          const isLiked = myUid && likes.includes(myUid), isDisliked = myUid && dislikes.includes(myUid), isPart = myUid && parts.some(p => p.uid === myUid);
-          let adminActionHtml = isAdmin ? `<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal('${escapeJS(id)}')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px; color: #ef4444; border-color: #ef4444;" onclick="deleteTournament('${escapeJS(id)}')">🗑 Удалить</button></div>` : '';
+        snap.forEach(doc => {
+          try {
+            const d = doc.data() || {}, id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
+            const isLiked = myUid && likes.includes(myUid), isDisliked = myUid && dislikes.includes(myUid), isPart = myUid && parts.some(p => p.uid === myUid);
+            let adminActionHtml = isAdmin ? `<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal('${escapeJS(id)}')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px; color: #ef4444; border-color: #ef4444;" onclick="deleteTournament('${escapeJS(id)}')">🗑 Удалить</button></div>` : '';
 
-          if (d.status === 'completed') {
-            const res = d.results || {};
-            archiveHtml += `<div class="card" style="border-color: var(--card-border); opacity: 0.85;">
-                <div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">${cleanHtml(d.title)}</div>
-                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">${d.dateStr || ''}</div>
-                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
-                  <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.gold?.uid)}')">${cleanHtml(res.gold?.name)}</span></div>
-                  <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.silver?.uid)}')">${cleanHtml(res.silver?.name)}</span></div>
-                  <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.bronze?.uid)}')">${cleanHtml(res.bronze?.name)}</span></div>
+            if (d.status === 'completed') {
+              const res = d.results || {};
+              archiveHtml += `<div class="card" style="border-color: var(--card-border); opacity: 0.85;">
+                  <div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">${cleanHtml(d.title)}</div>
+                  <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">${d.dateStr || ''}</div>
+                  <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+                    <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.gold?.uid)}')">${cleanHtml(res.gold?.name)}</span></div>
+                    <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.silver?.uid)}')">${cleanHtml(res.silver?.name)}</span></div>
+                    <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${escapeJS(res.bronze?.uid)}')">${cleanHtml(res.bronze?.name)}</span></div>
+                  </div>
+                  ${adminActionHtml}
+                </div>`;
+              return;
+            }
+
+            let content = '', buttonsHtml = '';
+            if (d.status === 'registration') {
+              let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
+              content = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (${parts.length}):</b> ${pList}</div>`;
+              if (myUid) { buttonsHtml += isPart ? `<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament('${escapeJS(id)}')">Отказаться</button>` : `<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament('${escapeJS(id)}', '${escapeJS(cleanHtml(d.title))}')">🏆 Участвовать</button>`; }
+              if (isAdmin) { buttonsHtml += `</div><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${escapeJS(id)}', 'random')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${escapeJS(id)}', 'smart')">🧠 Умная (по Эло)</button>`; }
+            } 
+            else if (d.status === 'active') {
+              content += renderGroupTable(d.groups?.A, 'A'); content += renderGroupTable(d.groups?.B, 'B');
+              content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>`;
+              content += renderMatchList((d.matches||[]).filter(m => m.group === 'A'), id, false);
+              content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>`;
+              content += renderMatchList((d.matches||[]).filter(m => m.group === 'B'), id, false);
+              if (isAdmin && (d.matches||[]).filter(m => m.stage==='group').length > 0 && !(d.matches||[]).filter(m => m.stage==='group').some(m => m.score1 === null)) { adminActionHtml = `<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs('${escapeJS(id)}')">Сформировать Плей-офф</button>` + adminActionHtml; }
+            }
+            else if (d.status === 'playoffs') {
+              content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>`;
+              content += renderMatchList((d.matches||[]).filter(m => m.stage === 'semi'), id, true);
+              if (isAdmin && (d.matches||[]).filter(m => m.stage==='semi').length > 0 && !(d.matches||[]).filter(m => m.stage==='semi').some(m => m.score1 === null)) { adminActionHtml = `<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals('${escapeJS(id)}')">Создать Финалы</button>` + adminActionHtml; }
+            }
+            else if (d.status === 'finals') {
+              content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>`;
+              content += renderMatchList((d.matches||[]).filter(m => m.stage === 'final'), id, true);
+              if (isAdmin && (d.matches||[]).filter(m => m.stage==='final').length > 0 && !(d.matches||[]).filter(m => m.stage==='final').some(m => m.score1 === null)) { adminActionHtml = `<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament('${escapeJS(id)}')">Завершить турнир</button>` + adminActionHtml; }
+            }
+
+            const dDesc = d.desc ? `<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">${cleanHtml(d.desc)}</div>` : '';
+            activeHtml += `<div class="card" style="border-color: var(--accent-amber);">
+                <div style="display: flex; justify-content: space-between; align-items: flex-start;">
+                  <div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">${cleanHtml(d.title)}</div>
+                  <div style="font-size: 12px; color: var(--text-muted);">${d.dateStr || ''}</div>
+                </div>
+                ${dDesc}${content}
+                <div style="display: flex; gap: 8px; margin-top: 12px;">
+                  <button class="score-btn ${isLiked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'like')">👍 ${likes.length}</button>
+                  <button class="score-btn ${isDisliked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'dislike')">👎 ${dislikes.length}</button>
+                  ${buttonsHtml}
                 </div>
                 ${adminActionHtml}
               </div>`;
-            return;
+          } catch (err) {
+            if (isAdmin) {
+              activeHtml += `<div class="card" style="border-color: #ef4444; border-width: 2px;">
+                  <div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Поврежденный турнир</div>
+                  <div style="font-size: 11px; color: var(--text-muted);">База данных не смогла прочитать этот турнир. Нажмите кнопку, чтобы удалить его.</div>
+                  <button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament('${escapeJS(doc.id)}')">🗑 Принудительно удалить</button>
+              </div>`;
+            }
           }
-
-          let content = '', buttonsHtml = '';
-          if (d.status === 'registration') {
-            let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${escapeJS(p.uid)}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
-            content = `<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (${parts.length}):</b> ${pList}</div>`;
-            if (myUid) { buttonsHtml += isPart ? `<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament('${escapeJS(id)}')">Отказаться</button>` : `<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament('${escapeJS(id)}', '${escapeJS(cleanHtml(d.title))}')">🏆 Участвовать</button>`; }
-            if (isAdmin) { adminActionHtml += `<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${escapeJS(id)}', 'random')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${escapeJS(id)}', 'smart')">🧠 Умная (по Эло)</button></div>`; }
-          } 
-          else if (d.status === 'active') {
-            content += renderGroupTable(d.groups?.A, 'A'); content += renderGroupTable(d.groups?.B, 'B');
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.group === 'A'), id, false);
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.group === 'B'), id, false);
-            if (isAdmin && (d.matches||[]).filter(m => m.stage==='group').length > 0 && !(d.matches||[]).filter(m => m.stage==='group').some(m => m.score1 === null)) { adminActionHtml = `<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs('${escapeJS(id)}')">Сформировать Плей-офф</button>` + adminActionHtml; }
-          }
-          else if (d.status === 'playoffs') {
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.stage === 'semi'), id, true);
-            if (isAdmin && (d.matches||[]).filter(m => m.stage==='semi').length > 0 && !(d.matches||[]).filter(m => m.stage==='semi').some(m => m.score1 === null)) { adminActionHtml = `<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals('${escapeJS(id)}')">Создать Финалы</button>` + adminActionHtml; }
-          }
-          else if (d.status === 'finals') {
-            content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>`;
-            content += renderMatchList((d.matches||[]).filter(m => m.stage === 'final'), id, true);
-            if (isAdmin && (d.matches||[]).filter(m => m.stage==='final').length > 0 && !(d.matches||[]).filter(m => m.stage==='final').some(m => m.score1 === null)) { adminActionHtml = `<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament('${escapeJS(id)}')">Завершить турнир</button>` + adminActionHtml; }
-          }
-
-          const dDesc = d.desc ? `<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">${cleanHtml(d.desc)}</div>` : '';
-          activeHtml += `<div class="card" style="border-color: var(--accent-amber);">
-              <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-                <div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">${cleanHtml(d.title)}</div>
-                <div style="font-size: 12px; color: var(--text-muted);">${d.dateStr || ''}</div>
-              </div>
-              ${dDesc}${content}
-              <div style="display: flex; gap: 8px; margin-top: 12px;">
-                <button class="score-btn ${isLiked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'like')">👍 ${likes.length}</button>
-                <button class="score-btn ${isDisliked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${escapeJS(id)}', 'dislike')">👎 ${dislikes.length}</button>
-                ${buttonsHtml}
-              </div>
-              ${adminActionHtml}
-            </div>`;
-        } catch (err) {
-          if (isAdmin) {
-            activeHtml += `<div class="card" style="border-color: #ef4444; border-width: 2px;">
-                <div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Сбой в данных турнира</div>
-                <div style="font-size: 11px; color: var(--text-muted);">Этот турнир поврежден. Остальная система работает нормально. Нажмите кнопку ниже, чтобы принудительно удалить сбойный турнир из базы.</div>
-                <button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament('${escapeJS(doc.id)}')">🗑 Принудительно удалить</button>
-            </div>`;
-          }
-        }
-      });
-      if(activeEl) activeEl.innerHTML = activeHtml || '<span class="empty-note">Пока нет активных турниров</span>';
-      if(archiveEl) archiveEl.innerHTML = archiveHtml || '<span class="empty-note">Архив пуст</span>';
+        });
+        if(activeEl) activeEl.innerHTML = activeHtml || '<span class="empty-note">Пока нет активных турниров</span>';
+        if(archiveEl) archiveEl.innerHTML = archiveHtml || '<span class="empty-note">Архив пуст</span>';
+      } catch(e) {}
     });
   }
 
-  // ================= АДМИН ПАНЕЛЬ И АНОНСЫ =================
-  function openAdminMenu() { document.getElementById('admin-modal').style.display = 'flex'; }
-  function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
-  function sendAdminBroadcast() {
-    if(!isSuperAdmin()) return; const t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
-    sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
-  }
-  function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
-  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
-  async function saveAnnouncement() { const loc = document.getElementById('announcement-target-loc').value, txt = document.getElementById('announcement-textarea').value.trim(); await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true }); closeAnnouncementModal(); if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`); }
-  async function deleteAnnouncement() { if(!isSuperAdmin()) return; const loc = document.getElementById('announcement-target-loc').value; await db.collection('settings').doc('announcements').set({ [loc]: "" }, { merge: true }); closeAnnouncementModal(); customAlert("✅ Анонс удален"); }
-
-  // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
-  async function showUserInfoModal(uid) {
-    if(!uid) return;
-    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; document.getElementById('user-info-modal').style.display = 'flex';
-    try {
-      const d = await db.collection('users').doc(uid).get(); if(!d.exists) { closeUserInfoModal(); return; }
-      const u = d.data(), adminTag = ADMIN_UIDS.includes(uid) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '', customBadge = getCustomBadge(uid);
-      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
-      
-      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${cleanHtml(uid)}</span></div>` : '';
-      const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
-      
-      const deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${u.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${u.lastEloDelta}) 📉</span>`) : '';
-      const streakText = (u.winStreak && u.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${u.winStreak} побед</span>` : '';
-
-      const mContainer = document.getElementById('info-modal-medals');
-      const m = u.medals || {gold:0, silver:0, bronze:0};
-      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-        mContainer.innerHTML = `<div class="medal-item">🏆 ${u.tournamentsPlayed || 0}</div><div class="medal-item">🥇 ${m.gold || 0}</div><div class="medal-item">🥈 ${m.silver || 0}</div><div class="medal-item">🥉 ${m.bronze || 0}</div>`; mContainer.style.display = 'flex';
-      } else { mContainer.style.display = 'none'; }
-
-      document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
-      
-      const invContainer = document.getElementById('info-modal-inventory');
-      if (u.blade || u.rubberL || u.rubberR) {
-        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-      } else { invContainer.style.display = 'none'; }
-
-      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
-      const hEl = document.getElementById('info-modal-history');
-      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
-      let h = '';
-      snaps.forEach(doc => {
-        const m = doc.data(), isP1 = m.p1Uid === uid, myS = isP1?m.p1Score:m.p2Score, opS = isP1?m.p2Score:m.p1Score, opN = isP1?m.p2Name:m.p1Name, isWin = myS>opS;
-        h += `<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div><div style="color:${isWin?'#059669':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div></div>`;
-      });
-      hEl.innerHTML = h;
-    } catch(e){}
-  }
-  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
-
-  // ================= РЕЙТИНГИ =================
+  // ================= РЕЙТИНГИ И СТАТИСТИКА =================
   function listenRatings() {
     db.collection('users').orderBy('elo', 'desc').limit(100).onSnapshot(snap => {
       const listEl = document.getElementById('rating-list'); allRegisteredUsers = [];
@@ -1565,7 +1559,7 @@
       snap.forEach(doc => {
         try {
           const d = doc.data(); 
-          if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_')) return;
+          if (!doc.id.startsWith('tg_') && !doc.id.startsWith('google_') && !d.isVerified) return;
           allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 });
           if (doc.id === myUid) { currentUserProfile = { ...currentUserProfile, ...d }; updateProfileDisplay(); }
           const rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`;
