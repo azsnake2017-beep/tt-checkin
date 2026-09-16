@@ -512,7 +512,7 @@
 
 <script>
   // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ И КОНСТАНТ =================
-  const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbx7eE6OtYETQSPWd4wqSUlkap6CZGIEcoafYeLTTNTQA1-PizACwhbAtXdM_98hRxf2sQ/exec";
+  const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
   const TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
   const TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
   const MAX_CHAT_URL = "https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E";
@@ -647,20 +647,21 @@
     return true;
   }
 
-  function sendTelegramAlert(text) {
+  async function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
     try {
-      let f = document.getElementById('tg_sink_frame');
-      if (!f) {
-        f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none';
-        document.body.appendChild(f);
-      }
-      const form = document.createElement('form');
-      form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
-      const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
-      form.appendChild(input); document.body.appendChild(form); form.submit();
-      setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
-    } catch (e) {}
+      await fetch(GOOGLE_GATEWAY_URL, {
+        method: "POST",
+        mode: "no-cors",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ message: text })
+      });
+      console.log("Уведомление отправлено через GAS!");
+    } catch (e) {
+      console.error("Ошибка при отправке в Telegram:", e);
+    }
   }
 
   function sendDevicePushNotification(title, body) {
