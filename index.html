@@ -105,11 +105,11 @@
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
     /* ИНВЕНТАРЬ */
-    .inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 4px; }
+    .inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
     .inventory-item { display: flex; align-items: center; gap: 6px; }
-    .inventory-value { color: var(--text); font-weight: 600; }
+    .inventory-value { color: var(--text); font-weight: 600; margin-left: 2px; }
 
-    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ (ПРОЗРАЧНЫЙ С ТЕНЬЮ ПО КОНТУРУ) */
+    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ */
     .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
     .profile-large-logo { 
       width: 100%; 
@@ -117,7 +117,6 @@
       max-height: 35vh; 
       object-fit: contain; 
       background: transparent; 
-      /* Тень падает точно по форме невидимого контура изображения */
       filter: drop-shadow(0 10px 20px var(--logo-shadow)); 
       transition: transform 0.3s ease, filter 0.3s ease;
     }
@@ -259,7 +258,7 @@
 
 <div class="container">
 
-  <!-- ЕДИНЫЙ БЛОК ШАПКИ (Логотип, тема, QR + Соцсети) -->
+  <!-- ЕДИНЫЙ БЛОК ШАПКИ -->
   <div class="club-header">
     <div class="club-header-top">
       <div class="club-header-left">
@@ -290,7 +289,7 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации глобальная -->
+  <!-- Плашка авторизации -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
@@ -317,7 +316,6 @@
         <span class="player-status-tag">0В - 0П (0%)</span>
       </div>
       
-      <!-- Блок Инвентаря (Появляется если заполнен) -->
       <div id="user-inventory-container" style="display: none;"></div>
 
       <div class="profile-actions-row">
@@ -326,7 +324,6 @@
       </div>
     </div>
     
-    <!-- БОЛЬШОЙ ЛОГОТИП КЛУБА ПОД ПРОФИЛЕМ -->
     <div class="profile-logo-container">
       <img src="logo.webp" alt="Логотип ЧМЗ" class="profile-large-logo" onerror="this.style.display='none'">
     </div>
@@ -334,7 +331,6 @@
 
   <!-- ЭКРАН 2: РАДАР -->
   <div id="view-radar" class="main-view">
-    <!-- Парк Тищенко -->
     <div class="card expanded" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
         <div>
@@ -344,9 +340,7 @@
         <span class="counter" id="badge-park">0 игроков</span>
       </div>
       <div class="card-body-collapse">
-        <div class="weather-container" id="weather-park">
-          <div class="weather-badge"><span>Загрузка погоды...</span></div>
-        </div>
+        <div class="weather-container" id="weather-park"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
         <div class="event-badge" id="announcement-box-park" style="display: none;"><span id="announcement-text-park"></span></div>
         <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
         <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
@@ -360,7 +354,6 @@
       </div>
     </div>
 
-    <!-- ДК Восток -->
     <div class="card expanded" id="card-vostok">
       <div class="card-top" onclick="toggleCard('vostok')">
         <div>
@@ -386,7 +379,6 @@
 
   <!-- ЭКРАН 3: РЕЙТИНГИ -->
   <div id="view-ratings" class="main-view">
-    
     <button class="btn-match-quick" onclick="handleMatchClick()" style="margin-top: 0;">
       <span>⚔️</span><span>Записать результат матча</span>
     </button>
@@ -398,47 +390,27 @@
     </div>
 
     <div class="rating-card" id="view-rating-content">
-      <div class="card-block-title" style="color: var(--accent-purple);">
-        <span>⚔️</span><span>Клубный рейтинг игроков</span>
-      </div>
-      <div id="rating-list" class="scrollable-list">
-        <span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span>
-      </div>
+      <div class="card-block-title" style="color: var(--accent-purple);"><span>⚔️</span><span>Клубный рейтинг игроков</span></div>
+      <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span></div>
     </div>
 
     <div class="leaderboard-card" id="view-time-content" style="display: none;">
-      <div class="card-block-title" style="color: var(--accent-gold);">
-        <span>🥇</span><span>Зал славы (Тренировки)</span>
-      </div>
-      <div id="leaderboard-list" class="scrollable-list">
-        <span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span>
-      </div>
+      <div class="card-block-title" style="color: var(--accent-gold);"><span>🥇</span><span>Зал славы (Тренировки)</span></div>
+      <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span></div>
     </div>
   </div>
 
-</div> <!-- Конец .container -->
+</div>
 
 <!-- BOTTOM NAVIGATION -->
 <div class="bottom-nav">
-  <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')">
-    <span class="nav-icon">👤</span>
-    <span>Профиль</span>
-  </a>
-  <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')">
-    <span class="nav-icon">📍</span>
-    <span>Радар</span>
-  </a>
-  <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')">
-    <span class="nav-icon">🏆</span>
-    <span>Рейтинг</span>
-  </a>
+  <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></a>
+  <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')"><span class="nav-icon">📍</span><span>Радар</span></a>
+  <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')"><span class="nav-icon">🏆</span><span>Рейтинг</span></a>
 </div>
 
-<!-- Плавающая кнопка возврата наверх -->
 <button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()">
-  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-    <polyline points="18 15 12 9 6 15"></polyline>
-  </svg>
+  <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg>
 </button>
 
 <!-- МОДАЛЬНЫЕ ОКНА -->
@@ -469,9 +441,7 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
     <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
-    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;">
-      <img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" />
-    </div>
+    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;"><img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" /></div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
       <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
@@ -567,11 +537,14 @@
     <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Имя:</div>
     <input type="text" id="name-input" class="input-name" placeholder="Ваше имя" maxlength="26" />
     
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Основание (Ракетка):</div>
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Основание:</div>
     <input type="text" id="blade-input" class="input-name" placeholder="Например: Yinhe Y-4" maxlength="35" style="font-size: 14px;" />
     
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладки (Красная / Черная):</div>
-    <input type="text" id="rubbers-input" class="input-name" placeholder="Например: Stiga Mantra / Mercury" maxlength="45" style="font-size: 14px;" />
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка L:</div>
+    <input type="text" id="rubber-l-input" class="input-name" placeholder="Например: Stiga Mantra" maxlength="35" style="font-size: 14px;" />
+
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка R:</div>
+    <input type="text" id="rubber-r-input" class="input-name" placeholder="Например: Mercury II" maxlength="35" style="font-size: 14px;" />
 
     <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Рейтинг РТТФ:</div>
     <input type="number" id="rttf-input" class="input-name" placeholder="Например: 150" min="0" max="4000" />
@@ -608,12 +581,23 @@
   function switchNavTab(tabId) {
     document.querySelectorAll('.main-view').forEach(view => view.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    document.getElementById(`view-${tabId}`).classList.add('active');
-    document.getElementById(`nav-${tabId}`).classList.add('active');
+    const viewEl = document.getElementById(`view-${tabId}`);
+    const navEl = document.getElementById(`nav-${tabId}`);
+    if(viewEl) viewEl.classList.add('active');
+    if(navEl) navEl.classList.add('active');
     window.scrollTo(0, 0); 
+    // Запоминаем открытую вкладку
+    localStorage.setItem('tt_active_tab', tabId);
+  }
+
+  function initNavTab() {
+    const savedTab = localStorage.getItem('tt_active_tab') || 'profile';
+    switchNavTab(savedTab);
   }
 
   initTheme();
+  // Восстанавливаем вкладку при загрузке
+  initNavTab();
 
   // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ =================
   const GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
@@ -936,10 +920,11 @@
     // Инвентарь
     const invContainer = document.getElementById('user-inventory-container');
     if (invContainer) {
-      if (currentUserProfile.blade || currentUserProfile.rubbers) {
+      if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
         let invHtml = '';
-        if (currentUserProfile.blade) invHtml += `<div class="inventory-item"><span>🏓</span><span class="inventory-value">${cleanHtml(currentUserProfile.blade)}</span></div>`;
-        if (currentUserProfile.rubbers) invHtml += `<div class="inventory-item"><span>🔴⚫</span><span class="inventory-value">${cleanHtml(currentUserProfile.rubbers)}</span></div>`;
+        if (currentUserProfile.blade) invHtml += `<div class="inventory-item"><span>🏓</span> <span style="color: var(--text-muted);">Основание:</span> <span class="inventory-value">${cleanHtml(currentUserProfile.blade)}</span></div>`;
+        if (currentUserProfile.rubberL) invHtml += `<div class="inventory-item"><span>🔴</span> <span style="color: var(--text-muted);">Накладка L:</span> <span class="inventory-value">${cleanHtml(currentUserProfile.rubberL)}</span></div>`;
+        if (currentUserProfile.rubberR) invHtml += `<div class="inventory-item"><span>⚫</span> <span style="color: var(--text-muted);">Накладка R:</span> <span class="inventory-value">${cleanHtml(currentUserProfile.rubberR)}</span></div>`;
         invContainer.innerHTML = invHtml;
         invContainer.className = 'inventory-box';
         invContainer.style.display = 'flex';
@@ -957,7 +942,8 @@
     if (isUserVerified()) { 
       document.getElementById('name-input').value = currentUserProfile.name || ''; 
       document.getElementById('blade-input').value = currentUserProfile.blade || ''; 
-      document.getElementById('rubbers-input').value = currentUserProfile.rubbers || ''; 
+      document.getElementById('rubber-l-input').value = currentUserProfile.rubberL || ''; 
+      document.getElementById('rubber-r-input').value = currentUserProfile.rubberR || ''; 
       document.getElementById('rttf-input').value = currentUserProfile.rttf || ''; 
       document.getElementById('name-error-box').style.display = 'none'; 
       document.getElementById('name-modal').style.display = 'flex'; 
@@ -969,7 +955,8 @@
     const uid = getVerifiedUserId(); if (!uid) return;
     const val = document.getElementById('name-input').value.trim();
     const bladeVal = document.getElementById('blade-input').value.trim();
-    const rubbersVal = document.getElementById('rubbers-input').value.trim();
+    const rubberLVal = document.getElementById('rubber-l-input').value.trim();
+    const rubberRVal = document.getElementById('rubber-r-input').value.trim();
     const rttfVal = document.getElementById('rttf-input').value.trim() ? parseInt(document.getElementById('rttf-input').value.trim()) : null;
     
     if (val.length < 2) return;
@@ -978,7 +965,8 @@
     try {
       const updateData = { name: val };
       if (bladeVal) updateData.blade = bladeVal; else updateData.blade = firebase.firestore.FieldValue.delete();
-      if (rubbersVal) updateData.rubbers = rubbersVal; else updateData.rubbers = firebase.firestore.FieldValue.delete();
+      if (rubberLVal) updateData.rubberL = rubberLVal; else updateData.rubberL = firebase.firestore.FieldValue.delete();
+      if (rubberRVal) updateData.rubberR = rubberRVal; else updateData.rubberR = firebase.firestore.FieldValue.delete();
       if (rttfVal !== null) updateData.rttf = rttfVal; else updateData.rttf = firebase.firestore.FieldValue.delete();
       
       const doc = await db.collection('users').doc(uid).get(); const data = doc.exists ? doc.data() : {};
@@ -988,7 +976,8 @@
       await db.collection('users').doc(uid).set(updateData, { merge: true });
       currentUserProfile.name = val; 
       currentUserProfile.blade = bladeVal || null; 
-      currentUserProfile.rubbers = rubbersVal || null; 
+      currentUserProfile.rubberL = rubberLVal || null; 
+      currentUserProfile.rubberR = rubberRVal || null; 
       currentUserProfile.rttf = rttfVal;
       
       if (updateData.isVerified) currentUserProfile = { ...currentUserProfile, ...updateData };
@@ -1189,10 +1178,11 @@
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
       
       const invContainer = document.getElementById('info-modal-inventory');
-      if (u.blade || u.rubbers) {
+      if (u.blade || u.rubberL || u.rubberR) {
         let invHtml = '';
-        if (u.blade) invHtml += `<div class="inventory-item"><span>🏓</span><span class="inventory-value">${cleanHtml(u.blade)}</span></div>`;
-        if (u.rubbers) invHtml += `<div class="inventory-item"><span>🔴⚫</span><span class="inventory-value">${cleanHtml(u.rubbers)}</span></div>`;
+        if (u.blade) invHtml += `<div class="inventory-item"><span>🏓</span> <span style="color: var(--text-muted);">Основание:</span> <span class="inventory-value">${cleanHtml(u.blade)}</span></div>`;
+        if (u.rubberL) invHtml += `<div class="inventory-item"><span>🔴</span> <span style="color: var(--text-muted);">Накладка L:</span> <span class="inventory-value">${cleanHtml(u.rubberL)}</span></div>`;
+        if (u.rubberR) invHtml += `<div class="inventory-item"><span>⚫</span> <span style="color: var(--text-muted);">Накладка R:</span> <span class="inventory-value">${cleanHtml(u.rubberR)}</span></div>`;
         invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
       } else { invContainer.style.display = 'none'; }
 
