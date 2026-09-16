@@ -28,11 +28,13 @@
       --accent-sky: #38bdf8;
       --accent-gold: #fbbf24;
       --accent-purple: #a855f7;
+      --accent-red: #f43f5e;
       
       --row-bg: rgba(15, 23, 42, 0.6);
       --list-bg: rgba(11, 17, 32, 0.6);
       --input-bg: #0b1120;
       --bottom-nav-bg: rgba(30, 41, 59, 0.95);
+      --logo-shadow: rgba(0, 0, 0, 0.5);
     }
 
     /* СВЕТЛАЯ ТЕМА */
@@ -47,6 +49,7 @@
       --list-bg: #f8fafc;
       --input-bg: #ffffff;
       --bottom-nav-bg: rgba(255, 255, 255, 0.95);
+      --logo-shadow: rgba(0, 0, 0, 0.15);
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
@@ -55,7 +58,7 @@
     
     .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; min-height: 100%; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
-    /* Добавлен flex-grow: 1 чтобы профиль мог растягиваться на весь экран */
+    /* Экраны */
     .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; animation: fadeInView 0.25s ease; }
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -74,7 +77,6 @@
     .btn-theme-toggle { background: transparent; border: 1px solid var(--card-border); color: var(--text); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
     .btn-app-qr-large { background: var(--card-border); color: var(--text); border: 1px solid var(--card-border); width: 40px; height: 40px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; overflow: hidden; }
     .icon-img-large { width: 22px; height: 22px; object-fit: contain; background: transparent; }
-
     .header-actions { display: flex; gap: 8px; align-items: center; }
 
     .social-links-minimal { display: flex; gap: 8px; width: 100%; border-top: 1px solid var(--card-border); padding-top: 12px; }
@@ -82,16 +84,17 @@
     .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; user-select: none; }
     .pill-tg { background: #0ea5e9; }
     .pill-max { background: #8b5cf6; }
-
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
+    /* АВТОРИЗАЦИЯ */
     .auth-banner { display: none; background: var(--row-bg); border: 1px solid var(--accent-sky); border-radius: 16px; padding: 16px; text-align: center; flex-direction: column; align-items: center; gap: 10px; }
     .auth-banner h3 { font-size: 15px; color: var(--text); }
     .auth-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
     
+    /* ПРОФИЛЬ И КАРТОЧКИ */
     .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; flex-shrink: 0; }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
@@ -101,17 +104,22 @@
     .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
-    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ С ГИБКОЙ ПОДСТРОЙКОЙ */
+    /* ИНВЕНТАРЬ */
+    .inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 11px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 4px; }
+    .inventory-item { display: flex; align-items: center; gap: 6px; }
+    .inventory-value { color: var(--text); font-weight: 600; }
+
+    /* БОЛЬШОЙ ЛОГОТИП В ПРОФИЛЕ (ПРОЗРАЧНЫЙ С ТЕНЬЮ ПО КОНТУРУ) */
     .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
     .profile-large-logo { 
       width: 100%; 
       height: auto;
-      max-height: 32vh; 
-      aspect-ratio: 1 / 1; 
-      border-radius: 50%; 
+      max-height: 35vh; 
       object-fit: contain; 
       background: transparent; 
-      transition: transform 0.3s ease;
+      /* Тень падает точно по форме невидимого контура изображения */
+      filter: drop-shadow(0 10px 20px var(--logo-shadow)); 
+      transition: transform 0.3s ease, filter 0.3s ease;
     }
     .profile-large-logo:hover { transform: scale(1.02); }
 
@@ -186,21 +194,24 @@
     .tab-btn.active { background: var(--card-border); color: var(--text); }
 
     .rating-card, .leaderboard-card { background: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--card-border); }
-    
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; }
-    
     .scrollable-list { display: flex; flex-direction: column; gap: 6px; }
 
     .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: var(--row-bg); font-size: 13px; }
     .leader-left { display: flex; align-items: center; gap: 8px; }
     .leader-rank { font-weight: 700; width: 22px; color: var(--text-muted); }
     .leader-rank-1 { color: #f59e0b; } .leader-rank-2 { color: #94a3b8; } .leader-rank-3 { color: #b45309; }
+    
+    .rating-score { font-weight: 700; color: #9333ea; font-size: 15px; }
+    :root[data-theme="dark"] .rating-score { color: var(--accent-purple); }
     .leader-score { font-weight: 700; color: #0284c7; }
     :root[data-theme="dark"] .leader-score { color: var(--accent-sky); }
-    .rating-score { font-weight: 700; color: #9333ea; }
-    :root[data-theme="dark"] .rating-score { color: var(--accent-purple); }
     
-    .player-status-tag { font-size: 11px; color: var(--text-muted); display: block; }
+    .player-status-tag { font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px; }
+    .streak-fire { font-size: 11px; color: #f59e0b; font-weight: 700; margin-left: 4px; }
+    .elo-delta { font-size: 10px; font-weight: 600; margin-left: 6px; }
+    .elo-up { color: #059669; } :root[data-theme="dark"] .elo-up { color: var(--accent-green); }
+    .elo-down { color: var(--accent-red); }
 
     .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
@@ -217,10 +228,7 @@
       z-index: 1000;
       box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
     }
-    .nav-item {
-      flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0;
-      color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; user-select: none;
-    }
+    .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; user-select: none; }
     .nav-item.active { color: var(--primary); }
     .nav-icon { font-size: 22px; margin-bottom: 4px; }
     .nav-item:active { transform: scale(0.9); }
@@ -229,6 +237,7 @@
     .btn-scroll-top.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
     .btn-scroll-top:active { transform: translateY(0) scale(0.9); }
 
+    /* МОДАЛКИ */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1001; }
     .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; color: var(--text); }
     .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -237,7 +246,7 @@
     .input-time, .input-select, .textarea-announcement, .input-name { background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px; border-radius: 10px; font-size: 16px; outline: none; width: 100%; }
     .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
     .textarea-announcement { resize: vertical; min-height: 90px; }
-    .input-name { text-align: center; padding: 12px 14px; }
+    .input-name { text-align: left; padding: 12px 14px; }
     .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -294,7 +303,7 @@
     <div class="vpn-hint">💡 Если виджет не загружается, воспользуйтесь VPN или войдите через Google.</div>
   </div>
 
-  <!-- ЭКРАН 1: ПРОФИЛЬ (Активен по умолчанию) -->
+  <!-- ЭКРАН 1: ПРОФИЛЬ -->
   <div id="view-profile" class="main-view active">
     <div class="profile-card">
       <div class="profile-top-row">
@@ -307,6 +316,10 @@
         <span class="player-status-tag">Статус: —</span>
         <span class="player-status-tag">0В - 0П (0%)</span>
       </div>
+      
+      <!-- Блок Инвентаря (Появляется если заполнен) -->
+      <div id="user-inventory-container" style="display: none;"></div>
+
       <div class="profile-actions-row">
         <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
         <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
@@ -473,6 +486,9 @@
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
     </div>
+    
+    <div id="info-modal-inventory" style="display: none;"></div>
+
     <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;">
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span id="info-modal-elo" style="font-weight: 700; color: var(--accent-purple);">1000</span></div>
       <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span id="info-modal-rttf" style="font-weight: 600; color: var(--text-muted);">Не указан</span></div>
@@ -548,10 +564,18 @@
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
     <h3>Редактирование профиля</h3>
-    <div style="text-align: left; font-size: 13px; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px;">Имя:</div>
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Имя:</div>
     <input type="text" id="name-input" class="input-name" placeholder="Ваше имя" maxlength="26" />
-    <div style="text-align: left; font-size: 13px; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px;">Рейтинг РТТФ:</div>
+    
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Основание (Ракетка):</div>
+    <input type="text" id="blade-input" class="input-name" placeholder="Например: Yinhe Y-4" maxlength="35" style="font-size: 14px;" />
+    
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладки (Красная / Черная):</div>
+    <input type="text" id="rubbers-input" class="input-name" placeholder="Например: Stiga Mantra / Mercury" maxlength="45" style="font-size: 14px;" />
+
+    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Рейтинг РТТФ:</div>
     <input type="number" id="rttf-input" class="input-name" placeholder="Например: 150" min="0" max="4000" />
+    
     <span class="name-error-msg" id="name-error-box">Занято!</span>
     <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()" style="margin-top: 8px;">Сохранить</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
@@ -816,7 +840,7 @@
 
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
-    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, isVerified: true, createdAt: Date.now() };
+    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, isVerified: true, createdAt: Date.now() };
     try {
       const snap = await Promise.race([ref.get(), new Promise((_, r) => setTimeout(() => r(new Error()), 2000))]);
       if (!snap.exists) {
@@ -884,44 +908,77 @@
 
     document.getElementById('user-name-container').innerHTML = `<span class="user-name-text">Вы: <b>${cleanHtml(currentUserProfile.name)}</b></span> ${adminTag} ${customBadge}`;
     
+    const deltaHtml = currentUserProfile.lastEloDelta ? (currentUserProfile.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${currentUserProfile.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${currentUserProfile.lastEloDelta}) 📉</span>`) : '';
+
     document.getElementById('user-score-container').innerHTML = `
       <div style="display: flex; align-items: center; gap: 12px;">
         <div style="display: flex; flex-direction: column; align-items: flex-end;">
           <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span>
-          <span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>
+          <div><span class="rating-score" style="font-size: 18px; line-height: 1;">${elo}</span>${deltaHtml}</div>
         </div>
         <button class="btn-info" onclick="showUserInfoModal('${currentUserProfile.uid}')">i</button>
       </div>`;
     
     const rttfText = currentUserProfile.rttf ? `РТТФ: ${currentUserProfile.rttf}` : '';
+    const streakText = (currentUserProfile.winStreak && currentUserProfile.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${currentUserProfile.winStreak} побед подряд</span>` : '';
+    
     document.getElementById('user-stats-container').innerHTML = `
       <div style="display: flex; flex-direction: column; gap: 4px;">
         <span class="player-status-tag">${getPlayerStatus(elo)} ${rttfText ? ' • ' + rttfText : ''}</span>
         <span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ${formatMinutes(currentUserProfile.totalMinutes || 0)}</span>
       </div>
       <div style="display: flex; flex-direction: column; gap: 4px; text-align: right;">
-        <span class="player-status-tag">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>
+        <div><span class="player-status-tag" style="display: inline;">${currentUserProfile.wins || 0}В - ${currentUserProfile.losses || 0}П</span>${streakText}</div>
         <span class="player-status-tag">(${currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0}%)</span>
       </div>
     `;
+
+    // Инвентарь
+    const invContainer = document.getElementById('user-inventory-container');
+    if (invContainer) {
+      if (currentUserProfile.blade || currentUserProfile.rubbers) {
+        let invHtml = '';
+        if (currentUserProfile.blade) invHtml += `<div class="inventory-item"><span>🏓</span><span class="inventory-value">${cleanHtml(currentUserProfile.blade)}</span></div>`;
+        if (currentUserProfile.rubbers) invHtml += `<div class="inventory-item"><span>🔴⚫</span><span class="inventory-value">${cleanHtml(currentUserProfile.rubbers)}</span></div>`;
+        invContainer.innerHTML = invHtml;
+        invContainer.className = 'inventory-box';
+        invContainer.style.display = 'flex';
+      } else {
+        invContainer.style.display = 'none';
+      }
+    }
 
     document.getElementById('btn-edit-profile').style.display = 'block';
     document.getElementById('btn-logout').style.display = 'block';
   }
 
   // ================= РЕДАКТИРОВАНИЕ ПРОФИЛЯ =================
-  function handleEditProfileClick() { if (isUserVerified()) { document.getElementById('name-input').value = currentUserProfile.name || ''; document.getElementById('rttf-input').value = currentUserProfile.rttf || ''; document.getElementById('name-error-box').style.display = 'none'; document.getElementById('name-modal').style.display = 'flex'; } }
+  function handleEditProfileClick() { 
+    if (isUserVerified()) { 
+      document.getElementById('name-input').value = currentUserProfile.name || ''; 
+      document.getElementById('blade-input').value = currentUserProfile.blade || ''; 
+      document.getElementById('rubbers-input').value = currentUserProfile.rubbers || ''; 
+      document.getElementById('rttf-input').value = currentUserProfile.rttf || ''; 
+      document.getElementById('name-error-box').style.display = 'none'; 
+      document.getElementById('name-modal').style.display = 'flex'; 
+    } 
+  }
   function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
   
   async function saveCustomNameWithCheck() {
     const uid = getVerifiedUserId(); if (!uid) return;
     const val = document.getElementById('name-input').value.trim();
+    const bladeVal = document.getElementById('blade-input').value.trim();
+    const rubbersVal = document.getElementById('rubbers-input').value.trim();
     const rttfVal = document.getElementById('rttf-input').value.trim() ? parseInt(document.getElementById('rttf-input').value.trim()) : null;
+    
     if (val.length < 2) return;
     if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) return customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
     
     try {
       const updateData = { name: val };
+      if (bladeVal) updateData.blade = bladeVal; else updateData.blade = firebase.firestore.FieldValue.delete();
+      if (rubbersVal) updateData.rubbers = rubbersVal; else updateData.rubbers = firebase.firestore.FieldValue.delete();
       if (rttfVal !== null) updateData.rttf = rttfVal; else updateData.rttf = firebase.firestore.FieldValue.delete();
       
       const doc = await db.collection('users').doc(uid).get(); const data = doc.exists ? doc.data() : {};
@@ -929,7 +986,11 @@
         updateData.isVerified = true; updateData.elo = data.elo !== undefined ? data.elo : 1000; updateData.matches = data.matches || 0; updateData.wins = data.wins || 0; updateData.losses = data.losses || 0; updateData.uid = uid; updateData.platform = uid.startsWith('google_') ? 'google' : 'tg'; updateData.createdAt = data.createdAt || Date.now();
       }
       await db.collection('users').doc(uid).set(updateData, { merge: true });
-      currentUserProfile.name = val; currentUserProfile.rttf = rttfVal;
+      currentUserProfile.name = val; 
+      currentUserProfile.blade = bladeVal || null; 
+      currentUserProfile.rubbers = rubbersVal || null; 
+      currentUserProfile.rttf = rttfVal;
+      
       if (updateData.isVerified) currentUserProfile = { ...currentUserProfile, ...updateData };
       localStorage.setItem('tt_name', val); updateProfileDisplay(); hideNameModal(); renderAll();
     } catch (e) { customAlert("Не удалось сохранить профиль."); }
@@ -1016,7 +1077,7 @@
     } catch(e) {}
   }
 
-  // ================= МАТЧИ =================
+  // ================= МАТЧИ И РЕЙТИНГ (С УЧЕТОМ СЕРИЙ И ДЕЛЬТЫ) =================
   function handleMatchClick() { if (isUserVerified()) {
     const uid = getVerifiedUserId();
     if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
@@ -1063,11 +1124,18 @@
       let newPElo = 1000, newOElo = 1000;
       await db.runTransaction(async (t) => {
         const pDoc = await t.get(pRef), oDoc = await t.get(oRef);
-        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0 }, oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0 };
-        const isPWin = m.scoreProposer > m.scoreOpponent, myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
+        const pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 }, oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+        
+        const isPWin = m.scoreProposer > m.scoreOpponent;
+        const myDelta = calculateElo(pData.elo || 1000, oData.elo || 1000, isPWin ? 1 : 0);
         newPElo = Math.max(100, (pData.elo || 1000) + myDelta); newOElo = Math.max(100, (oData.elo || 1000) - myDelta);
-        t.set(pRef, { elo: newPElo, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
-        t.set(oRef, { elo: newOElo, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+        
+        // Логика серий (Streaks)
+        const pWinStreak = isPWin ? ((pData.winStreak > 0 ? pData.winStreak : 0) + 1) : 0;
+        const oWinStreak = isPWin ? 0 : ((oData.winStreak > 0 ? oData.winStreak : 0) + 1);
+
+        t.set(pRef, { elo: newPElo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: pWinStreak, matches: (pData.matches || 0) + 1, wins: (pData.wins || 0) + (isPWin ? 1 : 0), losses: (pData.losses || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        t.set(oRef, { elo: newOElo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: oWinStreak, matches: (oData.matches || 0) + 1, wins: (oData.wins || 0) + (isPWin ? 0 : 1), losses: (oData.losses || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
       });
       await db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
       await matchRef.delete();
@@ -1108,15 +1176,26 @@
       
       let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID (Только Админ):</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>` : '';
       const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
+      
+      const deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${u.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${u.lastEloDelta}) 📉</span>`) : '';
+      const streakText = (u.winStreak && u.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${u.winStreak} побед</span>` : '';
 
       document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
       
+      const invContainer = document.getElementById('info-modal-inventory');
+      if (u.blade || u.rubbers) {
+        let invHtml = '';
+        if (u.blade) invHtml += `<div class="inventory-item"><span>🏓</span><span class="inventory-value">${cleanHtml(u.blade)}</span></div>`;
+        if (u.rubbers) invHtml += `<div class="inventory-item"><span>🔴⚫</span><span class="inventory-value">${cleanHtml(u.rubbers)}</span></div>`;
+        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
+      } else { invContainer.style.display = 'none'; }
+
       const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
       const hEl = document.getElementById('info-modal-history');
       if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
@@ -1144,7 +1223,10 @@
         const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0, winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
         const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id), rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : '';
         
-        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><span class="rating-score">${d.elo || 1000}</span><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button></div></div>`;
+        const streakHtml = (d.winStreak && d.winStreak >= 3) ? `<span class="streak-fire" title="Серия побед">🔥${d.winStreak}</span>` : '';
+        const deltaHtml = d.lastEloDelta ? (d.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${d.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${d.lastEloDelta}) 📉</span>`) : '';
+
+        html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}${streakHtml}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">${d.elo || 1000}</span>${deltaHtml}</div><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button></div></div>`;
         rank++;
       });
       listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
