@@ -169,7 +169,7 @@
     .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
 
-    /* КЛИКАБЕЛЬНЫЕ ИМЕНА В ТУРНИРЕ И ТАБЛИЦАХ */
+    /* КЛИКАБЕЛЬНЫЕ ИМЕНА */
     .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
     .clickable-name:active { opacity: 0.6; }
 
@@ -423,7 +423,7 @@
   </div>
 </div>
 
-<!-- ПРОЧИЕ МОДАЛКИ -->
+<!-- ПРОЧИЕ МОДАЛКИ (Анонс, Быстрый Матч, Продление, Редактор Профиля) -->
 <div class="modal-overlay" id="announcement-modal"><div class="modal-box" style="border-color: var(--accent-amber);"><h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс</h3><textarea id="announcement-textarea" class="textarea-announcement"></textarea><input type="hidden" id="announcement-target-loc" value="" /><button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить</button><button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary);" onclick="deleteAnnouncement()">Удалить анонс</button><button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button></div></div>
 <div class="modal-overlay" id="match-modal"><div class="modal-box" style="border-color: var(--accent-purple);"><h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3><select id="match-opponent-select" class="input-select"></select><div class="score-picker"><button class="score-btn reg-score-btn" onclick="selectScore(3, 0)">3 : 0</button><button class="score-btn reg-score-btn" onclick="selectScore(3, 1)">3 : 1</button><button class="score-btn reg-score-btn" onclick="selectScore(3, 2)">3 : 2</button><button class="score-btn reg-score-btn" onclick="selectScore(2, 3)">2 : 3</button><button class="score-btn reg-score-btn" onclick="selectScore(1, 3)">1 : 3</button><button class="score-btn reg-score-btn" onclick="selectScore(0, 3)">0 : 3</button></div><input type="hidden" id="match-my-score" value="3" /><input type="hidden" id="match-opp-score" value="0" /><button class="btn btn-join" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" onclick="submitMatchProposal()">Отправить запрос</button><button class="btn-cancel-modal" onclick="closeMatchModal()">Отмена</button></div></div>
 <div class="modal-overlay" id="extend-modal"><div class="modal-box" style="border-color: var(--accent-amber);"><h3 style="font-size: 18px; color: var(--accent-amber);">⏰ Время у стола</h3><div class="modal-options-grid"><button class="btn-opt" onclick="extendSession(30)">+30 мин</button><button class="btn-opt" onclick="extendSession(60)">+1 час</button><button class="btn-opt" onclick="extendSession(120)">+2 часа</button></div><button class="btn btn-leave" style="margin-top: 4px; background: #be123c; color: white;" onclick="confirmLeaveFromModal()">👋 Уйти</button></div></div>
@@ -479,16 +479,22 @@
     updateThemeIcon(newTheme);
   }
   function updateThemeIcon(theme) {
-    const btn = document.getElementById('btn-theme'); if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
-    const metaTheme = document.getElementById('meta-theme-color'); if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9');
+    const btn = document.getElementById('btn-theme'); 
+    if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
+    const metaTheme = document.getElementById('meta-theme-color'); 
+    if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9');
   }
   function switchNavTab(tabId) {
     document.querySelectorAll('.main-view').forEach(view => view.classList.remove('active'));
     document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
-    const viewEl = document.getElementById(`view-${tabId}`); const navEl = document.getElementById(`nav-${tabId}`);
+    
+    const viewEl = document.getElementById(`view-${tabId}`); 
+    const navEl = document.getElementById(`nav-${tabId}`);
     if(viewEl) { viewEl.classList.add('active'); }
     if(navEl) { navEl.classList.add('active'); }
-    window.scrollTo(0, 0); localStorage.setItem('tt_active_tab', tabId);
+    
+    window.scrollTo(0, 0); 
+    localStorage.setItem('tt_active_tab', tabId);
   }
   function initNavTab() { 
       const defaultTab = localStorage.getItem('tt_active_tab') || 'profile';
@@ -611,7 +617,7 @@
     return '';
   }
   function openExternalLink(url) { 
-      if (window.Telegram?.WebApp?.openLink) { 
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) { 
           window.Telegram.WebApp.openLink(url); 
       } else { 
           window.open(url, '_blank'); 
@@ -672,7 +678,7 @@
               new Notification(title, { body: body, icon: 'logo.webp', badge: 'logo.webp', vibrate: [200, 100, 200] }); 
           } catch (e) {} 
       } 
-      if (window.Telegram?.WebApp?.HapticFeedback) {
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback && window.Telegram.WebApp.HapticFeedback.notificationOccurred) {
           window.Telegram.WebApp.HapticFeedback.notificationOccurred('warning'); 
       }
   }
@@ -727,20 +733,21 @@
     return "Легенда клуба 🏛️";
   }
   function isUserVerified() { 
-      const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
+      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user);
+      const tgId = tgUser ? tgUser.id : null;
       const localId = localStorage.getItem('tt_member_id');
-      return !!(tgId || (localId && (localId.startsWith('tg_') || localId.startsWith('google_'))));
+      return !!(tgId || (localId && (localId.indexOf('tg_') === 0 || localId.indexOf('google_') === 0)));
   }
   function getVerifiedUserId() { 
-      const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-      if (tgId) {
-          return 'tg_' + tgId;
+      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user);
+      if (tgUser && tgUser.id) {
+          return 'tg_' + tgUser.id;
       }
       return localStorage.getItem('tt_member_id'); 
   }
   function isSuperAdmin() { 
-      const username = window.Telegram?.WebApp?.initDataUnsafe?.user?.username;
-      if (username && username.toLowerCase() === 'azsnake') return true;
+      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user);
+      if (tgUser && tgUser.username && tgUser.username.toLowerCase() === 'azsnake') return true;
       const uid = getVerifiedUserId();
       return uid ? ADMIN_UIDS.includes(uid) : false;
   }
@@ -784,7 +791,7 @@
 
   async function syncUserProfile(uid, name, platform) {
     const ref = db.collection('users').doc(uid);
-    let userData = { uid, name, platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, isVerified: true, createdAt: Date.now() };
+    let userData = { uid: uid, name: name, platform: platform, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, isVerified: true, createdAt: Date.now() };
     
     try {
       const snap = await Promise.race([ref.get(), new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 2000))]);
@@ -795,7 +802,7 @@
               sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${sz}</b> человек!`); 
           } catch(e) {} 
       } else { 
-          userData = { ...userData, ...snap.data() }; 
+          userData = Object.assign({}, userData, snap.data()); 
       }
     } catch (e) {
         console.error("Sync error", e);
@@ -814,16 +821,15 @@
   async function initUserProfile() {
     const banner = document.getElementById('web-auth-banner');
     
-    const tgId = window.Telegram?.WebApp?.initDataUnsafe?.user?.id;
-    if (tgId) {
+    const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) ? window.Telegram.WebApp.initDataUnsafe.user : null;
+    if (tgUser && tgUser.id) {
       if (banner) banner.style.display = 'none';
-      const u = window.Telegram.WebApp.initDataUnsafe.user; 
-      const name = (u.first_name + (u.last_name ? ' ' + u.last_name : '')).trim() || u.username || "Игрок";
-      return syncUserProfile('tg_' + u.id, name, 'tg');
+      const name = (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')).trim() || tgUser.username || "Игрок";
+      return syncUserProfile('tg_' + tgUser.id, name, 'tg');
     }
     
     const savedId = localStorage.getItem('tt_member_id');
-    if (savedId && (savedId.startsWith('tg_') || savedId.startsWith('google_'))) {
+    if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
       try {
         const snap = await Promise.race([db.collection('users').doc(savedId).get(), new Promise((_, r) => setTimeout(() => r(new Error('Timeout')), 2000))]);
         if (snap.exists) {
@@ -837,7 +843,7 @@
             data.tournamentsPlayed = data.tournamentsPlayed || 0; 
             data.medals = data.medals || {gold:0, silver:0, bronze:0}; 
             data.uid = savedId; 
-            data.platform = savedId.startsWith('google_') ? 'google' : 'tg';
+            data.platform = savedId.indexOf('google_') === 0 ? 'google' : 'tg';
             db.collection('users').doc(savedId).set(data, { merge: true }); 
           }
           currentUserProfile = data; 
@@ -856,7 +862,7 @@
     document.getElementById('user-name-container').innerHTML = '<span>Вы: <b style="color: var(--text-muted);">Не авторизован</b></span>';
     document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">Авторизуйтесь для участия</span><span>—</span>';
     
-    if (!tgId && banner) {
+    if (!tgUser && banner) {
       banner.style.display = 'flex';
       const container = document.getElementById('telegram-login-container');
       if (container) {
@@ -1008,7 +1014,7 @@
       currentUserProfile.rubberR = rubberRVal || null; 
       currentUserProfile.rttf = rttfVal;
       
-      if (updateData.isVerified) currentUserProfile = { ...currentUserProfile, ...updateData };
+      if (updateData.isVerified) currentUserProfile = Object.assign({}, currentUserProfile, updateData);
       localStorage.setItem('tt_name', val); 
       updateProfileDisplay(); 
       hideNameModal(); 
@@ -1088,7 +1094,7 @@
     try {
       await db.runTransaction(async t => {
         const d = await t.get(db.collection('locations').doc(currentUserActiveLoc)); if(!d.exists) return;
-        let p = (d.data().players || []).map(pl => ((pl.uid||pl) === uid) ? { ...pl, maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) } : pl);
+        let p = (d.data().players || []).map(pl => ((pl.uid||pl) === uid) ? Object.assign({}, pl, { maxLimitMs: (pl.maxLimitMs||DEFAULT_LIMIT_MS) + (addMins*60000) }) : pl);
         t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
       });
       hasTriggeredPush = false; 
@@ -1100,9 +1106,11 @@
   async function submitExactPlan() { 
       const val = document.getElementById('exact-time-input').value; 
       if(!val) return; 
-      const [h, m] = val.split(':').map(Number);
+      const parts = val.split(':');
+      const h = parseInt(parts[0], 10);
+      const min = parseInt(parts[1], 10);
       const d = new Date(); 
-      d.setHours(h, m, 0, 0); 
+      d.setHours(h, min, 0, 0); 
       if(d.getTime() <= Date.now()) d.setDate(d.getDate() + 1); 
       await applyPlan(d.getTime()); 
   }
@@ -1139,7 +1147,7 @@
     if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
     const sel = document.getElementById('match-opponent-select'); 
     sel.innerHTML = '';
-    const opps = (locationsData[currentUserActiveLoc]?.players || []).filter(p => (p.uid||p) !== uid);
+    const opps = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []).filter(p => (p.uid||p) !== uid);
     if (opps.length === 0) {
         sel.innerHTML = '<option value="">(нет других игроков)</option>';
     } else {
@@ -1226,14 +1234,14 @@
   }
 
   // ================= ТУРНИРНЫЙ ДВИЖОК =================
-  function openTournamentModal(tourId = null) { 
+  function openTournamentModal(tourId) { 
     if (!isSuperAdmin()) return; 
-    currentEditingTourId = tourId;
+    currentEditingTourId = tourId && typeof tourId === 'string' ? tourId : null;
     const btn = document.getElementById('btn-save-tour');
     
-    if (tourId) {
+    if (currentEditingTourId) {
       btn.innerText = 'Сохранить изменения';
-      db.collection('tournaments').doc(tourId).get().then(doc => {
+      db.collection('tournaments').doc(currentEditingTourId).get().then(doc => {
         if (doc.exists) {
           const d = doc.data();
           document.getElementById('tour-title').value = d.title || '';
@@ -1266,10 +1274,10 @@
     
     try { 
       if (currentEditingTourId) {
-        await db.collection('tournaments').doc(currentEditingTourId).update({ title, dateStr, rawDate: dateVal, desc }); 
+        await db.collection('tournaments').doc(currentEditingTourId).update({ title: title, dateStr: dateStr, rawDate: dateVal, desc: desc }); 
         customAlert('✅ Турнир обновлен');
       } else {
-        await db.collection('tournaments').add({ title, dateStr, rawDate: dateVal, desc, status: 'registration', likes: [], dislikes: [], participants: [], groups: {A:[], B:[]}, matches: [], playoffs: {}, results: null, createdAt: Date.now() }); 
+        await db.collection('tournaments').add({ title: title, dateStr: dateStr, rawDate: dateVal, desc: desc, status: 'registration', likes: [], dislikes: [], participants: [], groups: {A:[], B:[]}, matches: [], playoffs: {}, results: null, createdAt: Date.now() }); 
         customAlert('✅ Турнир успешно создан');
       }
       closeTournamentModal(); 
@@ -1310,7 +1318,7 @@
                   likes = likes.filter(u => u !== uid); 
               } 
           }
-          t.update(ref, { likes, dislikes });
+          t.update(ref, { likes: likes, dislikes: dislikes });
       });
     } catch(e) {}
   }
@@ -1325,7 +1333,7 @@
           if (!doc.exists || doc.data().status !== 'registration') return;
           let parts = doc.data().participants || [];
           if (!parts.some(p => p.uid === uid)) { 
-              parts.push({uid, name: currentUserProfile.name, elo: currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000}); 
+              parts.push({uid: uid, name: currentUserProfile.name, elo: currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000}); 
               t.update(ref, { participants: parts }); 
               joined = true; 
           }
@@ -1361,13 +1369,13 @@
       
       let grpA = [], grpB = [];
       if (type === 'smart') {
-        let sorted = [...parts].sort((a,b) => b.elo - a.elo);
+        let sorted = parts.slice().sort((a,b) => b.elo - a.elo);
         sorted.forEach((p, idx) => {
           if ((idx % 4) === 0 || (idx % 4) === 3) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
           else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
         });
       } else {
-        let shuffled = [...parts].sort(() => 0.5 - Math.random());
+        let shuffled = parts.slice().sort(() => 0.5 - Math.random());
         shuffled.forEach((p, idx) => {
           if (idx < shuffled.length / 2) grpA.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
           else grpB.push({uid: p.uid, name: p.name, pts:0, w:0, l:0});
@@ -1392,9 +1400,13 @@
     if (!isSuperAdmin()) return;
     const ref = db.collection('tournaments').doc(id);
     try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const a = [...(data.groups?.A || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
-      const b = [...(data.groups?.B || [])].sort((a,b) => b.w - a.w || b.pts - a.pts);
+      const doc = await ref.get(); if (!doc.exists) return; 
+      const data = doc.data();
+      const aRaw = (data.groups && data.groups.A) ? data.groups.A : [];
+      const bRaw = (data.groups && data.groups.B) ? data.groups.B : [];
+      
+      const a = aRaw.slice().sort((x,y) => y.w - x.w || y.pts - x.pts);
+      const b = bRaw.slice().sort((x,y) => y.w - x.w || y.pts - x.pts);
       
       let matches = data.matches || [];
       matches.push({ id: 'semi1', stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, title: 'Полуфинал 1' });
@@ -1405,10 +1417,12 @@
   }
 
   async function generateFinals(id) {
-    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
+    if (!isSuperAdmin()) return; 
+    const ref = db.collection('tournaments').doc(id);
     try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const semis = data.matches.filter(m => m.stage === 'semi');
+      const doc = await ref.get(); if (!doc.exists) return; 
+      const data = doc.data();
+      const semis = (data.matches || []).filter(m => m.stage === 'semi');
       if (semis.some(m => m.score1 === null)) return;
       
       const w1 = semis[0].score1 > semis[0].score2 ? {uid: semis[0].p1Uid, name: semis[0].p1Name} : {uid: semis[0].p2Uid, name: semis[0].p2Name};
@@ -1425,11 +1439,13 @@
   }
 
   async function completeTournament(id) {
-    if (!isSuperAdmin()) return; const ref = db.collection('tournaments').doc(id);
+    if (!isSuperAdmin()) return; 
+    const ref = db.collection('tournaments').doc(id);
     try {
-      const doc = await ref.get(); if (!doc.exists) return; const data = doc.data();
-      const firstM = data.matches.find(m => m.id === 'first');
-      const thirdM = data.matches.find(m => m.id === 'third');
+      const doc = await ref.get(); if (!doc.exists) return; 
+      const data = doc.data();
+      const firstM = (data.matches || []).find(m => m.id === 'first');
+      const thirdM = (data.matches || []).find(m => m.id === 'third');
       if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) return customAlert("Завершите финалы!");
 
       const gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
@@ -1559,7 +1575,7 @@
 
   function renderGroupTable(groupPlayers, groupName) {
     if (!groupPlayers || groupPlayers.length === 0) return '';
-    let sorted = [...groupPlayers].sort((a,b) => b.w - a.w || b.pts - a.pts);
+    let sorted = groupPlayers.slice().sort((a,b) => b.w - a.w || b.pts - a.pts);
     let rows = sorted.map((p, i) => `<tr><td>${i+1}. <span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name)}</span></td><td>${p.w}</td><td>${p.l}</td><td>${p.pts}</td></tr>`).join('');
     return `
       <div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ${groupName}</div>
@@ -1591,14 +1607,21 @@
 
         if (d.status === 'completed') {
           const res = d.results || {};
+          const goldName = (res.gold && res.gold.name) ? res.gold.name : '';
+          const silverName = (res.silver && res.silver.name) ? res.silver.name : '';
+          const bronzeName = (res.bronze && res.bronze.name) ? res.bronze.name : '';
+          const goldUid = (res.gold && res.gold.uid) ? res.gold.uid : '';
+          const silverUid = (res.silver && res.silver.uid) ? res.silver.uid : '';
+          const bronzeUid = (res.bronze && res.bronze.uid) ? res.bronze.uid : '';
+          
           archiveHtml += `
             <div class="card" style="border-color: var(--card-border); opacity: 0.85;">
               <div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">${cleanHtml(d.title)}</div>
               <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">${d.dateStr || ''}</div>
               <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
-                <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${res.gold?.uid}')">${cleanHtml(res.gold?.name)}</span></div>
-                <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${res.silver?.uid}')">${cleanHtml(res.silver?.name)}</span></div>
-                <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${res.bronze?.uid}')">${cleanHtml(res.bronze?.name)}</span></div>
+                <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${goldUid}')">${cleanHtml(goldName)}</span></div>
+                <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${silverUid}')">${cleanHtml(silverName)}</span></div>
+                <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${bronzeUid}')">${cleanHtml(bronzeName)}</span></div>
               </div>
               ${adminBtn}
             </div>
@@ -1624,8 +1647,10 @@
           }
         } 
         else if (d.status === 'active') {
-          content += renderGroupTable(d.groups?.A, 'A');
-          content += renderGroupTable(d.groups?.B, 'B');
+          const groupA = d.groups ? d.groups.A : [];
+          const groupB = d.groups ? d.groups.B : [];
+          content += renderGroupTable(groupA, 'A');
+          content += renderGroupTable(groupB, 'B');
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>`;
           content += renderMatchList((d.matches||[]).filter(m => m.group === 'A'), id, false);
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>`;
@@ -1732,7 +1757,6 @@
     currentUserActivePlayer = null;
 
     ['park', 'vostok'].forEach(loc => {
-      // Фильтруем просроченных игроков ЛОКАЛЬНО сразу же при рендере, чтобы они не моргали до обновления в БД
       const rawData = locationsData[loc] || { players: [], plans: [] };
       const players = (rawData.players || []).filter(p => (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS));
       const plans = (rawData.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
@@ -1806,7 +1830,6 @@
     
     loadParkWeather();
     
-    // Мгновенная проверка и очистка просроченных сессий при запуске приложения
     setTimeout(monitorSessions, 1000);
     
     ['park', 'vostok'].forEach(loc => {
