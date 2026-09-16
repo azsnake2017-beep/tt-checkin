@@ -27,8 +27,6 @@
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; }
     .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; min-height: 100%; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
-    
-    /* Экраны с анимацией */
     .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; animation: fadeInView 0.25s ease; }
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -328,11 +326,11 @@
     </div>
     <div class="rating-card" id="view-rating-content">
       <div class="card-block-title" style="color: var(--accent-purple);"><span>⚔️</span><span>Клубный рейтинг игроков</span></div>
-      <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Сыграйте первый рейтинговый матч!</span></div>
+      <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Загрузка рейтинга...</span></div>
     </div>
     <div class="leaderboard-card" id="view-time-content" style="display: none;">
       <div class="card-block-title" style="color: var(--accent-gold);"><span>🥇</span><span>Зал славы (Тренировки)</span></div>
-      <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span></div>
+      <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Загрузка статистики...</span></div>
     </div>
   </div>
 
@@ -428,7 +426,7 @@
   </div>
 </div>
 
-<!-- ПРОЧИЕ МОДАЛКИ (Анонс, Быстрый Матч, Продление, Редактор Профиля) -->
+<!-- ПРОЧИЕ МОДАЛКИ -->
 <div class="modal-overlay" id="announcement-modal"><div class="modal-box" style="border-color: var(--accent-amber);"><h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс</h3><textarea id="announcement-textarea" class="textarea-announcement"></textarea><input type="hidden" id="announcement-target-loc" value="" /><button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить</button><button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary);" onclick="deleteAnnouncement()">Удалить анонс</button><button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button></div></div>
 <div class="modal-overlay" id="match-modal"><div class="modal-box" style="border-color: var(--accent-purple);"><h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3><select id="match-opponent-select" class="input-select"></select><div class="score-picker"><button class="score-btn reg-score-btn" onclick="selectScore(3, 0)">3 : 0</button><button class="score-btn reg-score-btn" onclick="selectScore(3, 1)">3 : 1</button><button class="score-btn reg-score-btn" onclick="selectScore(3, 2)">3 : 2</button><button class="score-btn reg-score-btn" onclick="selectScore(2, 3)">2 : 3</button><button class="score-btn reg-score-btn" onclick="selectScore(1, 3)">1 : 3</button><button class="score-btn reg-score-btn" onclick="selectScore(0, 3)">0 : 3</button></div><input type="hidden" id="match-my-score" value="3" /><input type="hidden" id="match-opp-score" value="0" /><button class="btn btn-join" style="background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%);" onclick="submitMatchProposal()">Отправить запрос</button><button class="btn-cancel-modal" onclick="closeMatchModal()">Отмена</button></div></div>
 <div class="modal-overlay" id="extend-modal"><div class="modal-box" style="border-color: var(--accent-amber);"><h3 style="font-size: 18px; color: var(--accent-amber);">⏰ Время у стола</h3><div class="modal-options-grid"><button class="btn-opt" onclick="extendSession(30)">+30 мин</button><button class="btn-opt" onclick="extendSession(60)">+1 час</button><button class="btn-opt" onclick="extendSession(120)">+2 часа</button></div><button class="btn btn-leave" style="margin-top: 4px; background: #be123c; color: white;" onclick="confirmLeaveFromModal()">👋 Уйти</button></div></div>
@@ -453,6 +451,13 @@
 </div>
 
 <script>
+  // ================= ЭКРАНИРОВАНИЕ XSS =================
+  // Жестко экранирует любые символы кавычек, чтобы они не ломали вызовы функций onclick
+  function escapeJS(str) {
+    if (!str) return '';
+    return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '\\"');
+  }
+
   // ================= КАСТОМНОЕ ПОДТВЕРЖДЕНИЕ =================
   var confirmActionCallback = null;
   function openConfirmModal(msg, action) { document.getElementById('confirm-modal-text').innerText = msg; confirmActionCallback = action; document.getElementById('confirm-modal').style.display = 'flex'; }
@@ -597,7 +602,7 @@
     Promise.race([ref.get(), new Promise(function(_, r) { setTimeout(function() { r(new Error('Timeout')) }, 2000); })]).then(function(snap) {
         if (!snap.exists) { 
             ref.set(userData).then(function() {
-                db.collection('users').get().then(function(usersSnap) { sendTelegramAlert("🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>" + cleanHtml(name) + "</b>\n\n📈 Теперь нас в рейтинге: <b>" + usersSnap.size + "</b> человек!"); }).catch(function(){});
+                db.collection('users').get().then(function(usersSnap) { sendTelegramAlert('🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>' + cleanHtml(name) + '</b>\n\n📈 Теперь нас в рейтинге: <b>' + usersSnap.size + '</b> человек!'); }).catch(function(){});
             });
         } else { 
             for (var key in snap.data()) { userData[key] = snap.data()[key]; } 
@@ -663,7 +668,7 @@
     document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge;
     var deltaHtml = currentUserProfile.lastEloDelta ? (currentUserProfile.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + currentUserProfile.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + currentUserProfile.lastEloDelta + ') 📉</span>') : '';
 
-    document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 12px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" onclick="showUserInfoModal(\'' + currentUserProfile.uid + '\')">i</button></div>';
+    document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 12px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button></div>';
     
     var rttfText = currentUserProfile.rttf ? ' • РТТФ: ' + currentUserProfile.rttf : '';
     var streakText = (currentUserProfile.winStreak !== undefined && currentUserProfile.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + currentUserProfile.winStreak + ' побед подряд</span>' : '';
@@ -754,7 +759,7 @@
             tP.unshift({ name: currentUserProfile.name, time: now, uid: uid, maxLimitMs: DEFAULT_LIMIT_MS }); finalList = tP;
             t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
         });
-    }).then(function() { hasTriggeredPush = false; if (canSendTgAlert('status_change')) sendTelegramAlert("🏓 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> уже у стола " + LOCATION_NAMES[loc] + "!" + buildBlockquoteList(finalList, "Сейчас за столом") + "\n\nКто составит компанию?"); }).catch(function(){});
+    }).then(function() { hasTriggeredPush = false; if (canSendTgAlert('status_change')) sendTelegramAlert('🏓 игрок <b>' + cleanHtml(currentUserProfile.name) + '</b> уже у стола ' + LOCATION_NAMES[loc] + '!' + buildBlockquoteList(finalList, "Сейчас за столом") + '\n\nКто составит компанию?'); }).catch(function(){});
   }
   
   function leave(loc) {
@@ -770,7 +775,7 @@
     }).then(function() {
         if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
         document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
-        if (canSendTgAlert('status_change')) sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> закончил тренировку и покинул стол " + LOCATION_NAMES[loc] + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
+        if (canSendTgAlert('status_change')) sendTelegramAlert('👋 игрок <b>' + cleanHtml(currentUserProfile.name) + '</b> закончил тренировку и покинул стол ' + LOCATION_NAMES[loc] + (spentStr ? ' (время: <code>' + spentStr + '</code>).' : '.') + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : '\n\n<i>(столы освободились)</i>'));
     }).catch(function(){});
   }
   
@@ -798,7 +803,7 @@
             var pl = (d.exists ? d.data().plans || [] : []).filter(function(p) { return (p.uid||p) !== uid });
             pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid }); t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
         });
-    }).then(function() { if (canSendTgAlert('status_change')) sendTelegramAlert("⏳ игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> планирует быть у стола " + LOCATION_NAMES[loc] + " <b>" + formatUntil(ts) + "</b>!\n\nКто готов составить пару?"); }).catch(function(){});
+    }).then(function() { if (canSendTgAlert('status_change')) sendTelegramAlert('⏳ игрок <b>' + cleanHtml(currentUserProfile.name) + '</b> планирует быть у стола ' + LOCATION_NAMES[loc] + ' <b>' + formatUntil(ts) + '</b>!\n\nКто готов составить пару?'); }).catch(function(){});
   }
   function cancelPlan(loc) { var uid = getVerifiedUserId(); if(!uid) return; db.runTransaction(function(t) { return t.get(db.collection('locations').doc(loc)).then(function(d) { if(!d.exists) return; t.set(db.collection('locations').doc(loc), { plans: (d.data().plans || []).filter(function(p) { return (p.uid||p) !== uid }) }, { merge: true }); }); }).catch(function(){}); }
 
@@ -807,7 +812,7 @@
     if (!isUserVerified()) return; var uid = getVerifiedUserId(); if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
     var sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
     var opps = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []).filter(function(p) { return (p.uid||p) !== uid });
-    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; } else { for(var i=0; i<opps.length; i++) { sel.innerHTML += '<option value="' + (opps[i].uid||opps[i]) + '">' + cleanHtml(opps[i].name) + '</option>'; } }
+    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; } else { for(var i=0; i<opps.length; i++) { sel.innerHTML += '<option value="' + escapeJS(opps[i].uid||opps[i]) + '">' + cleanHtml(opps[i].name) + '</option>'; } }
     selectScore(3,0); document.getElementById('match-modal').style.display = 'flex';
   }
   function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
@@ -823,7 +828,7 @@
     db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(function(snap) {
       var c = document.getElementById('pending-matches-container'); if (snap.empty) { c.innerHTML = ''; return; }
       var html = '';
-      snap.forEach(function(doc) { var m = doc.data(); html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>'+cleanHtml(m.proposerName)+'</b></div><div style="font-size: 13px;">Счёт: Вы <b>'+m.scoreOpponent+' : '+m.scoreProposer+'</b> '+cleanHtml(m.proposerName)+'</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\''+doc.id+'\')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\''+doc.id+'\')">Отклонить</button></div></div>'; });
+      snap.forEach(function(doc) { var m = doc.data(); html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>'+cleanHtml(m.proposerName)+'</b></div><div style="font-size: 13px;">Счёт: Вы <b>'+m.scoreOpponent+' : '+m.scoreProposer+'</b> '+cleanHtml(m.proposerName)+'</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\''+escapeJS(doc.id)+'\')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\''+escapeJS(doc.id)+'\')">Отклонить</button></div></div>'; });
       c.innerHTML = html;
     });
   }
@@ -850,7 +855,7 @@
         });
       }).then(function() {
           db.collection('matches_history').add({ p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
-          matchRef.delete(); sendTelegramAlert("🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• " + cleanHtml(m.proposerName) + ": " + newPElo + "\n• " + cleanHtml(m.opponentName) + ": " + newOElo + "</blockquote>");
+          matchRef.delete(); sendTelegramAlert('🏆 <b>Рейтинговый матч подтверждён!</b>\n\n🏓 <b>' + cleanHtml(m.proposerName) + '</b>  <code>' + m.scoreProposer + ' : ' + m.scoreOpponent + '</code>  <b>' + cleanHtml(m.opponentName) + '</b>\n\n<blockquote>📊 <b>Новый рейтинг:</b>\n• ' + cleanHtml(m.proposerName) + ': ' + newPElo + '\n• ' + cleanHtml(m.opponentName) + ': ' + newOElo + '</blockquote>');
       }).catch(function(){});
     });
   }
@@ -904,7 +909,7 @@
             for(var i=0; i<parts.length; i++) { if (parts[i].uid === uid) isInList = true; }
             if (!isInList) { parts.push({uid: uid, name: currentUserProfile.name, elo: currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000}); t.update(ref, { participants: parts }); joined = true; }
         });
-    }).then(function() { if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert("🏆 Игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> зарегистрировался на турнир <b>" + title + "</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!"); } }).catch(function(){});
+    }).then(function() { if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert('🏆 Игрок <b>' + cleanHtml(currentUserProfile.name) + '</b> зарегистрировался на турнир <b>' + title + '</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!'); } }).catch(function(){});
   }
   function leaveTournament(id) {
     var uid = getVerifiedUserId(); if (!uid) return;
@@ -998,7 +1003,7 @@
       Promise.all(promises).then(function() {
           batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
           batch.commit().then(function() {
-              sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
+              sendTelegramAlert('🏆 <b>Турнир «' + cleanHtml(data.title) + '» завершен!</b>\n\n🥇 <b>1 место:</b> ' + cleanHtml(gld.name) + '\n🥈 <b>2 место:</b> ' + cleanHtml(slv.name) + '\n🥉 <b>3 место:</b> ' + cleanHtml(brn.name) + '\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.');
           });
       });
     }).catch(function(){});
@@ -1070,11 +1075,11 @@
     var str = '';
     for(var i=0; i<matches.length; i++) {
       var m = matches[i]; var isDone = m.score1 !== null;
-      var badge = isDone ? '<span class="tour-score-badge">' + m.score1 + ' : ' + m.score2 + '</span>' : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+tourId+'\', \''+m.id+'\', \''+cleanHtml(m.p1Name)+'\', \''+cleanHtml(m.p2Name)+'\')">Указать счет</button>';
+      var badge = isDone ? '<span class="tour-score-badge">' + m.score1 + ' : ' + m.score2 + '</span>' : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\')">Указать счет</button>';
       var n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
       var n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
       var titleHtml = titleFilter ? '<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">'+m.title+'</div>' : '';
-      str += '<div class="tour-match-row"><div class="tour-match-names">' + titleHtml + '<span class="'+n1C+' clickable-name" onclick="showUserInfoModal(\''+m.p1Uid+'\')">' + cleanHtml(m.p1Name) + '</span><span class="'+n2C+' clickable-name" onclick="showUserInfoModal(\''+m.p2Uid+'\')">' + cleanHtml(m.p2Name) + '</span></div>' + badge + '</div>';
+      str += '<div class="tour-match-row"><div class="tour-match-names">' + titleHtml + '<span class="'+n1C+' clickable-name" onclick="showUserInfoModal(\''+escapeJS(m.p1Uid)+'\')">' + cleanHtml(m.p1Name) + '</span><span class="'+n2C+' clickable-name" onclick="showUserInfoModal(\''+escapeJS(m.p2Uid)+'\')">' + cleanHtml(m.p2Name) + '</span></div>' + badge + '</div>';
     }
     return str;
   }
@@ -1083,7 +1088,7 @@
     if (!groupPlayers || groupPlayers.length === 0) return '';
     var sorted = groupPlayers.slice().sort(function(a,b) { return b.w - a.w || b.pts - a.pts });
     var rows = '';
-    for(var i=0; i<sorted.length; i++) { var p = sorted[i]; rows += '<tr><td>'+(i+1)+'. <span class="clickable-name" onclick="showUserInfoModal(\''+p.uid+'\')">' + cleanHtml(p.name) + '</span></td><td>' + p.w + '</td><td>' + p.l + '</td><td>' + p.pts + '</td></tr>'; }
+    for(var i=0; i<sorted.length; i++) { var p = sorted[i]; rows += '<tr><td>'+(i+1)+'. <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(p.uid)+'\')">' + cleanHtml(p.name) + '</span></td><td>' + p.w + '</td><td>' + p.l + '</td><td>' + p.pts + '</td></tr>'; }
     return '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ' + groupName + '</div><table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>' + rows + '</table>';
   }
 
@@ -1100,7 +1105,7 @@
         var isDisliked = myUid && dislikes.indexOf(myUid) !== -1;
         var isPart = false; for(var i=0; i<parts.length; i++) { if (parts[i].uid === myUid) isPart = true; }
         
-        var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal(\''+id+'\')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px;" onclick="deleteTournament(\''+id+'\')">🗑 Удалить</button></div>' : '';
+        var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal(\''+escapeJS(id)+'\')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px;" onclick="deleteTournament(\''+escapeJS(id)+'\')">🗑 Удалить</button></div>' : '';
 
         if (d.status === 'completed') {
           var res = d.results || {};
@@ -1111,19 +1116,19 @@
           var silverUid = (res.silver && res.silver.uid) ? res.silver.uid : '';
           var bronzeUid = (res.bronze && res.bronze.uid) ? res.bronze.uid : '';
           
-          archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.85;"><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div><div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;"><div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+goldUid+'\')">' + cleanHtml(goldName) + '</span></div><div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal(\''+silverUid+'\')">' + cleanHtml(silverName) + '</span></div><div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal(\''+bronzeUid+'\')">' + cleanHtml(bronzeName) + '</span></div></div>' + adminActionHtml + '</div>';
+          archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.85;"><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div><div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;"><div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div><div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(silverUid)+'\')">' + cleanHtml(silverName) + '</span></div><div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(bronzeUid)+'\')">' + cleanHtml(bronzeName) + '</span></div></div>' + adminActionHtml + '</div>';
           return;
         }
 
         var content = '', buttonsHtml = '', actionRowHtml = '';
 
         if (d.status === 'registration') {
-          var pListItems = []; for(var j=0; j<parts.length; j++) { pListItems.push('<span class="clickable-name" onclick="showUserInfoModal(\''+parts[j].uid+'\')">' + cleanHtml(parts[j].name) + '</span>'); }
+          var pListItems = []; for(var j=0; j<parts.length; j++) { pListItems.push('<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(parts[j].uid)+'\')">' + cleanHtml(parts[j].name) + '</span>'); }
           var pList = pListItems.length > 0 ? pListItems.join(', ') : 'Пока никто не записался';
           content = '<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (' + parts.length + '):</b> ' + pList + '</div>';
           
-          if (myUid) { buttonsHtml += isPart ? '<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament(\''+id+'\')">Отказаться</button>' : '<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament(\''+id+'\', \''+cleanHtml(d.title).replace(/'/g,"\\'")+'\')">🏆 Участвовать</button>'; }
-          if (isAdmin) { actionRowHtml += '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+id+'\', \'random\')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+id+'\', \'smart\')">🧠 Умная (по Эло)</button></div>'; }
+          if (myUid) { buttonsHtml += isPart ? '<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament(\''+escapeJS(id)+'\')">Отказаться</button>' : '<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament(\''+escapeJS(id)+'\', \''+escapeJS(cleanHtml(d.title))+'\')">🏆 Участвовать</button>'; }
+          if (isAdmin) { actionRowHtml += '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button></div>'; }
         } 
         else if (d.status === 'active') {
           var groupA = d.groups && d.groups.A ? d.groups.A : []; var groupB = d.groups && d.groups.B ? d.groups.B : [];
@@ -1135,23 +1140,23 @@
 
           var groupMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'group' }) : [];
           var isUnfinishedGroups = false; for(var k=0; k<groupMatches.length; k++) { if (groupMatches[k].score1 === null) isUnfinishedGroups = true; }
-          if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs(\''+id+'\')">Сформировать Плей-офф</button>'; }
+          if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs(\''+escapeJS(id)+'\')">Сформировать Плей-офф</button>'; }
         }
         else if (d.status === 'playoffs') {
           content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>';
           var semiMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'semi' }) : []; content += renderMatchList(semiMatches, id, true);
           var isUnfinishedSemis = false; for(var l=0; l<semiMatches.length; l++) { if (semiMatches[l].score1 === null) isUnfinishedSemis = true; }
-          if (isAdmin && semiMatches.length > 0 && !isUnfinishedSemis) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals(\''+id+'\')">Создать Финалы</button>'; }
+          if (isAdmin && semiMatches.length > 0 && !isUnfinishedSemis) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals(\''+escapeJS(id)+'\')">Создать Финалы</button>'; }
         }
         else if (d.status === 'finals') {
           content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>';
           var finalMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'final' }) : []; content += renderMatchList(finalMatches, id, true);
           var isUnfinishedFinals = false; for(var x=0; x<finalMatches.length; x++) { if (finalMatches[x].score1 === null) isUnfinishedFinals = true; }
-          if (isAdmin && finalMatches.length > 0 && !isUnfinishedFinals) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament(\''+id+'\')">Завершить турнир</button>'; }
+          if (isAdmin && finalMatches.length > 0 && !isUnfinishedFinals) { actionRowHtml += '<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament(\''+escapeJS(id)+'\')">Завершить турнир</button>'; }
         }
 
         var dDesc = d.desc ? '<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">' + cleanHtml(d.desc) + '</div>' : '';
-        activeHtml += '<div class="card" style="border-color: var(--accent-amber);"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted);">' + (d.dateStr || '') + '</div></div>' + dDesc + content + '<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="score-btn ' + (isLiked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+id+'\', \'like\')">👍 ' + likes.length + '</button><button class="score-btn ' + (isDisliked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+id+'\', \'dislike\')">👎 ' + dislikes.length + '</button>' + buttonsHtml + '</div>' + actionRowHtml + adminActionHtml + '</div>';
+        activeHtml += '<div class="card" style="border-color: var(--accent-amber);"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted);">' + (d.dateStr || '') + '</div></div>' + dDesc + content + '<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="score-btn ' + (isLiked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'like\')">👍 ' + likes.length + '</button><button class="score-btn ' + (isDisliked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'dislike\')">👎 ' + dislikes.length + '</button>' + buttonsHtml + '</div>' + actionRowHtml + adminActionHtml + '</div>';
       });
       activeEl.innerHTML = activeHtml || '<span class="empty-note">Пока нет активных турниров</span>';
       archiveEl.innerHTML = archiveHtml || '<span class="empty-note">Архив пуст</span>';
@@ -1160,6 +1165,7 @@
 
   // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
   function showUserInfoModal(uid) {
+    if(!uid) return;
     document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
     document.getElementById('user-info-modal').style.display = 'flex';
     db.collection('users').doc(uid).get().then(function(d) {
@@ -1169,7 +1175,7 @@
       var customBadge = getCustomBadge(uid);
       document.getElementById('info-modal-title').innerHTML = '👤 ' + cleanHtml(u.name||"Игрок") + ' ' + adminTag + ' ' + customBadge;
       
-      var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + uid + '</span></div>' : '';
+      var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
       
       db.collection('leaderboard').doc(uid).get().then(function(ld) {
         var mins = ld.exists ? ld.data().totalMinutes||0 : 0;
@@ -1242,7 +1248,7 @@
         if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
             for (var i = 0; i < res.leftPlayers.length; i++) {
                 var lp = res.leftPlayers[i];
-                sendTelegramAlert("👋 игрок <b>" + cleanHtml(lp.name) + "</b> закончил тренировку и покинул стол " + res.locName + " (время: <code>" + lp.durationStr + "</code>)." + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : "\n\n<i>(столы освободились)</i>")); 
+                sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
             }
         }
       }).catch(function(e){});
@@ -1268,7 +1274,7 @@
             var pRows = [];
             for(var i=0; i<players.length; i++) {
                 var item = players[i];
-                pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\''+item.uid+'\')">'+cleanHtml(item.name || 'Игрок')+'</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с '+formatTime(item.time || Date.now())+'</span><span class="time-badge">'+formatDuration(item.time || Date.now())+'</span></div></div></div>');
+                pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(item.uid)+'\')">'+cleanHtml(item.name || 'Игрок')+'</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с '+formatTime(item.time || Date.now())+'</span><span class="time-badge">'+formatDuration(item.time || Date.now())+'</span></div></div></div>');
             }
             listEl.innerHTML = pRows.join(''); 
         }
@@ -1281,7 +1287,7 @@
             var plRows = [];
             for(var j=0; j<plans.length; j++) {
                 var p = plans[j];
-                plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\''+p.uid+'\')">'+cleanHtml(p.name || 'Игрок')+'</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к '+formatTime(p.planTime)+'</span><span class="time-badge-plan">'+formatUntil(p.planTime)+'</span></div></div></div>');
+                plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(p.uid)+'\')">'+cleanHtml(p.name || 'Игрок')+'</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к '+formatTime(p.planTime)+'</span><span class="time-badge-plan">'+formatUntil(p.planTime)+'</span></div></div></div>');
             }
             planListEl.innerHTML = plRows.join(''); 
         }
