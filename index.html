@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
   <!-- Telegram WebApp SDK -->
@@ -31,7 +31,9 @@
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; }
-    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: 40px; }
+    
+    /* Отступ для нижнего свайп-бара на iPhone */
+    .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; padding-bottom: max(40px, env(safe-area-inset-bottom)); }
 
     .club-header {
       display: flex; align-items: center; justify-content: space-between; gap: 10px;
@@ -42,48 +44,33 @@
     .club-header-text h1 { font-size: 14px; font-weight: 700; line-height: 1.2; color: #f8fafc; }
     .club-header-text p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-    .btn-app-qr-large {
-      background: #334155; color: #f8fafc; border: 1px solid var(--card-border); width: 48px; height: 48px; border-radius: 50%;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: background 0.2s, transform 0.2s; padding: 0; overflow: hidden;
-    }
+    /* Анимация прожатия всех кнопок */
+    .btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only { transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease; }
+    .btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active { transform: scale(0.95); }
+
+    .btn-app-qr-large { background: #334155; color: #f8fafc; border: 1px solid var(--card-border); width: 48px; height: 48px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; padding: 0; overflow: hidden; }
     .btn-app-qr-large:hover { background: #475569; transform: scale(1.05); }
     .icon-img-large { width: 28px; height: 28px; object-fit: contain; background: transparent; }
 
     .social-links-minimal { display: flex; gap: 8px; }
-    .social-pill {
-      flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 6px 10px;
-      display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-    }
-    .social-pill-left {
-      display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600;
-      padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; transition: opacity 0.2s;
-    }
+    .social-pill { flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2); }
+    .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 6px 10px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; transition: opacity 0.2s; }
     .social-pill-left:hover { opacity: 0.9; }
     .pill-tg { background: #0ea5e9; }
     .pill-max { background: #8b5cf6; }
 
-    .btn-qr-icon-only {
-      background: #334155; border: 1px solid var(--card-border); color: #f8fafc; width: 32px; height: 32px; border-radius: 50%;
-      cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.2s; padding: 0; overflow: hidden; flex-shrink: 0; margin-left: 6px;
-    }
+    .btn-qr-icon-only { background: #334155; border: 1px solid var(--card-border); color: #f8fafc; width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; overflow: hidden; flex-shrink: 0; margin-left: 6px; }
     .btn-qr-icon-only:hover { background: #475569; transform: scale(1.05); }
     .icon-img-mini { width: 20px; height: 20px; object-fit: contain; background: transparent; }
 
-    .auth-banner {
-      display: none; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95));
-      border: 1px solid var(--accent-sky); border-radius: 16px; padding: 16px; text-align: center; flex-direction: column; align-items: center; gap: 10px;
-    }
+    .auth-banner { display: none; background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.95)); border: 1px solid var(--accent-sky); border-radius: 16px; padding: 16px; text-align: center; flex-direction: column; align-items: center; gap: 10px; }
     .auth-banner h3 { font-size: 15px; color: #f8fafc; }
     .auth-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
-    .btn-auth-provider {
-      width: 100%; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
+    .btn-auth-provider { width: 100%; border: none; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
     .vpn-hint { font-size: 11px; color: #cbd5e1; background: rgba(15, 23, 42, 0.8); border: 1px dashed rgba(56, 189, 248, 0.4); padding: 8px 10px; border-radius: 8px; text-align: center; }
 
-    .profile-card {
-      background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
-    }
+    .profile-card { background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3); }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
     .user-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -101,28 +88,16 @@
     .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #d8b4fe; margin-left: 4px; }
     .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #38bdf8; margin-left: 4px; }
     .badge-bot { background: rgba(148, 163, 184, 0.2); color: #cbd5e1; margin-left: 4px; }
+    .badge-coach { background: rgba(59, 130, 246, 0.2); color: #60a5fa; margin-left: 4px; }
 
-    .badge-admin-btn {
-      background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; 
-      font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; 
-      box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); transition: transform 0.2s; flex-shrink: 0; margin-left: 4px;
-    }
+    .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.3); flex-shrink: 0; margin-left: 4px; }
     .badge-admin-btn:active { transform: scale(0.95); }
 
-    .btn-edit, .btn-logout {
-      flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none;
-    }
+    .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none; }
     .btn-edit { background: #334155; color: #cbd5e1; }
     .btn-logout { background: rgba(225, 29, 72, 0.15); border: 1px solid rgba(225, 29, 72, 0.3); color: #fda4af; }
 
-    .btn-match-quick {
-      background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4);
-      padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px;
-    }
-
-    .admin-panel-card {
-      display: none; background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%); border: 1px solid var(--accent-amber); border-radius: 16px; padding: 14px 16px; flex-direction: column; gap: 10px;
-    }
+    .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
 
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
@@ -137,18 +112,9 @@
     .card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
     .weather-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
-    .weather-badge {
-      display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1);
-      border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: var(--accent-sky); width: fit-content;
-    }
-    .event-badge {
-      display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1);
-      border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #d8b4fe; margin-top: 6px;
-    }
-    .btn-admin-edit-announcement {
-      background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fde68a;
-      font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; width: fit-content; margin-top: 4px; display: none;
-    }
+    .weather-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: var(--accent-sky); width: fit-content; }
+    .event-badge { display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #d8b4fe; margin-top: 6px; }
+    .btn-admin-edit-announcement { background: rgba(245, 158, 11, 0.15); border: 1px solid rgba(245, 158, 11, 0.4); color: #fde68a; font-size: 11px; font-weight: 600; padding: 4px 8px; border-radius: 6px; cursor: pointer; width: fit-content; margin-top: 4px; display: none; }
 
     .counter { background: rgba(225, 29, 72, 0.15); color: #fda4af; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; white-space: nowrap; }
     .counter.has-players { background: rgba(16, 185, 129, 0.15); color: var(--accent-green); }
@@ -169,25 +135,15 @@
     .btn-leave { background: #334155; color: #cbd5e1; }
 
     .tabs-container { display: flex; gap: 8px; background: rgba(15, 23, 42, 0.8); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); }
-    .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; transition: all 0.2s ease; }
+    .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; cursor: pointer; }
     .tab-btn.active { background: #334155; color: #ffffff; }
 
-    .leaderboard-card, .rating-card {
-      background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
-    }
+    .leaderboard-card, .rating-card { background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .rating-card { border: 1px solid rgba(168, 85, 247, 0.4); }
     .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
     
-    .scrollable-list {
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-      max-height: 480px; 
-      overflow-y: auto;
-      padding-right: 4px;
-      overscroll-behavior: contain;
-    }
+    .scrollable-list { display: flex; flex-direction: column; gap: 6px; max-height: 480px; overflow-y: auto; padding-right: 4px; overscroll-behavior: contain; }
     .scrollable-list::-webkit-scrollbar { width: 4px; }
     .scrollable-list::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.4); border-radius: 4px; }
     .scrollable-list::-webkit-scrollbar-thumb { background: var(--card-border); border-radius: 4px; }
@@ -200,23 +156,22 @@
     .rating-score { font-weight: 700; color: var(--accent-purple); }
     .player-status-tag { font-size: 11px; color: var(--text-muted); display: block; }
 
-    .btn-info {
-      background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-sky);
-      width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0;
-    }
+    .btn-info { background: rgba(56, 189, 248, 0.15); border: 1px solid rgba(56, 189, 248, 0.3); color: var(--accent-sky); width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 
-    .modal-overlay {
-      position: fixed; inset: 0; background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 999;
-    }
-    .modal-box {
-      background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto;
-    }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(11, 17, 32, 0.92); backdrop-filter: blur(6px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 999; }
+    .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.6); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; }
     .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .btn-opt { background: #0f172a; border: 1px solid var(--card-border); color: #cbd5e1; padding: 12px 4px; border-radius: 10px; font-size: 13px; cursor: pointer; font-weight: 600; }
-    .input-time, .input-select, .textarea-announcement, .input-name {
-      background: #0b1120; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-size: 14px; outline: none; width: 100%;
+    
+    .input-time, .input-select, .textarea-announcement, .input-name { background: #0b1120; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; font-size: 14px; outline: none; width: 100%; }
+    
+    /* Стилизованный ровный селект */
+    .input-select {
+      -webkit-appearance: none; appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px;
     }
+    
     .textarea-announcement { resize: vertical; min-height: 90px; }
     .input-name { text-align: center; font-size: 15px; padding: 12px 14px; }
     .name-error-msg { color: #f87171; font-size: 12px; display: none; }
@@ -440,12 +395,14 @@
   </div>
 </div>
 
+<!-- Модальное окно анонсов -->
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: #fde68a;">📢 Анонс</h3>
     <textarea id="announcement-textarea" class="textarea-announcement"></textarea>
     <input type="hidden" id="announcement-target-loc" value="" />
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="saveAnnouncement()">Сохранить и отправить</button>
+    <button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.15); border: 1px solid rgba(225, 29, 72, 0.3); color: #fda4af;" onclick="deleteAnnouncement()">Удалить анонс</button>
     <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
   </div>
 </div>
@@ -491,7 +448,7 @@
     </div>
     <div class="custom-time-row">
       <input type="time" id="exact-time-input" class="input-time" />
-      <button class="btn btn-join" style="padding: 10px 16px; width: auto;" onclick="submitExactPlan()">ОК</button>
+      <button class="btn btn-join" style="padding: 10px 16px; width: auto; margin-top: 8px;" onclick="submitExactPlan()">ОК</button>
     </div>
     <button class="btn-cancel-modal" onclick="closePlanModal()">Отмена</button>
   </div>
@@ -632,6 +589,9 @@
     if (uid === 'tg_750209461') return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
     if (uid === 'tg_6126323287') return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
     if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') return '<span class="platform-badge badge-bot">Бот 🤖</span>';
+    if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') {
+      return '<span class="platform-badge badge-coach">Тренер 📋</span>';
+    }
     return '';
   }
 
@@ -794,7 +754,6 @@
           const totalCount = allUsers.size;
           sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении настольного тенниса ЧМЗ зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${totalCount}</b> человек!\n\n🏓 Заходите в приложение, отмечайтесь у столов и находите соперников для игры!`);
         } catch(e) { console.error("Ошибка подсчета юзеров:", e); }
-        // ----------------------------------------------
         
       } else {
         userData = snap.data();
@@ -831,7 +790,7 @@
         if (snap.exists) {
           let data = snap.data();
           
-          // 🏥 АВТО-ЛЕЧЕНИЕ БАЗЫ ДАННЫХ: проверяем, хватает ли полей при загрузке
+          // 🏥 АВТО-ЛЕЧЕНИЕ БАЗЫ ДАННЫХ
           if (data.isVerified === undefined || data.elo === undefined) {
             data.isVerified = true;
             data.elo = data.elo !== undefined ? data.elo : 1000;
@@ -840,7 +799,6 @@
             data.losses = data.losses || 0;
             data.uid = savedId;
             data.platform = savedId.startsWith('google_') ? 'google' : 'tg';
-            // Тихо отправляем правильные данные обратно в базу
             db.collection('users').doc(savedId).set(data, { merge: true }); 
           }
           
@@ -940,7 +898,14 @@
     const val = document.getElementById('name-input').value.trim();
     const rttfRaw = document.getElementById('rttf-input').value.trim();
     const rttfVal = rttfRaw ? parseInt(rttfRaw) : null;
+    
     if (val.length < 2) return;
+
+    // 🛡️ ЗАЩИТА РТТФ: Жесткая валидация
+    if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) {
+      customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
+      return;
+    }
     
     try {
       const updateData = { name: val };
@@ -951,7 +916,6 @@
       const doc = await db.collection('users').doc(uid).get();
       const data = doc.exists ? doc.data() : {};
 
-      // Если профиля в базе вообще нет (баг из-за плохого интернета) ИЛИ он сломан
       if (!doc.exists || data.isVerified === undefined || data.elo === undefined) {
         updateData.isVerified = true;
         updateData.elo = data.elo !== undefined ? data.elo : 1000;
@@ -965,7 +929,6 @@
       
       await db.collection('users').doc(uid).set(updateData, { merge: true });
       
-      // Обновляем локальные данные приложения
       currentUserProfile.name = val;
       currentUserProfile.rttf = rttfVal;
       if (updateData.isVerified) {
@@ -1328,12 +1291,22 @@
     document.getElementById('announcement-modal').style.display = 'flex';
   }
   function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
+  
   async function saveAnnouncement() {
     const loc = document.getElementById('announcement-target-loc').value;
     const txt = document.getElementById('announcement-textarea').value.trim();
     await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true });
     closeAnnouncementModal();
     if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`);
+  }
+
+  // Тихое удаление анонса
+  async function deleteAnnouncement() {
+    if(!isSuperAdmin()) return;
+    const loc = document.getElementById('announcement-target-loc').value;
+    await db.collection('settings').doc('announcements').set({ [loc]: "" }, { merge: true });
+    closeAnnouncementModal();
+    customAlert("✅ Анонс успешно удален");
   }
 
   // ================= РЕЙТИНГИ =================
