@@ -352,7 +352,19 @@
 </div>
 <button class="btn-scroll-top" id="btn-scroll-top" onclick="scrollToTop()"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"></polyline></svg></button>
 
-<!-- МОДАЛКИ (СТАНДАРТНЫЕ) -->
+<!-- МОДАЛКА КАСТОМНОГО ПОДТВЕРЖДЕНИЯ (ДЛЯ УДАЛЕНИЯ ТУРНИРА) -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box" style="border-color: var(--accent-red); padding: 24px;">
+    <h3 style="font-size: 18px; margin-bottom: 8px; color: var(--accent-red);">Внимание</h3>
+    <p id="confirm-modal-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p>
+    <div style="display: flex; gap: 8px;">
+      <button class="btn btn-join" style="background: var(--accent-red); flex: 1;" onclick="executeConfirm()">Да, удалить</button>
+      <button class="btn btn-leave" style="flex: 1;" onclick="closeConfirmModal()">Отмена</button>
+    </div>
+  </div>
+</div>
+
+<!-- ПРОЧИЕ МОДАЛКИ (СТАНДАРТНЫЕ) -->
 <div class="modal-overlay" id="custom-alert-modal"><div class="modal-box" style="border-color: var(--accent-sky); padding: 24px;"><h3 style="font-size: 16px; margin-bottom: 8px;">Клуб ЧМЗ</h3><p id="custom-alert-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p><button class="btn btn-join" onclick="closeCustomAlert()">ОК</button></div></div>
 <div class="modal-overlay" id="admin-modal"><div class="modal-box" style="border-color: var(--accent-amber);"><div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 10px;"><h3 style="font-size: 16px; color: var(--accent-amber);">⚙️ Панель администратора</h3><button class="btn-cancel-modal" style="margin-top:0;" onclick="closeAdminMenu()">✕</button></div><textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea><button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button><button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button></div></div>
 <div class="modal-overlay" id="qr-modal"><div class="modal-box" style="border-color: var(--accent-sky);"><div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;"><h3 style="font-size: 16px; color: var(--accent-sky);" id="qr-modal-title">📷 QR-код</h3><button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button></div><p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям:</p><div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;"><img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" /></div><div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button><button class="btn btn-join" style="background: var(--primary); flex: 1;" onclick="closeQrModal()">Готово</button></div></div></div>
@@ -378,7 +390,7 @@
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: var(--accent-amber);">🏆 Турнир</h3>
     <input type="text" id="tour-title" class="input-name" placeholder="Название (напр. Осенний кубок)" />
-    <input type="date" id="tour-date" class="input-name" />
+    <input type="datetime-local" id="tour-date" class="input-name" />
     <textarea id="tour-desc" class="textarea-announcement" placeholder="Описание, взносы, условия..."></textarea>
     <button id="btn-save-tour" class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
     <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
@@ -432,6 +444,22 @@
 </div>
 
 <script>
+  // ================= КАСТОМНОЕ ПОДТВЕРЖДЕНИЕ =================
+  let confirmActionCallback = null;
+  function openConfirmModal(msg, action) {
+    document.getElementById('confirm-modal-text').innerText = msg;
+    confirmActionCallback = action;
+    document.getElementById('confirm-modal').style.display = 'flex';
+  }
+  function closeConfirmModal() {
+    document.getElementById('confirm-modal').style.display = 'none';
+    confirmActionCallback = null;
+  }
+  function executeConfirm() {
+    if (confirmActionCallback) confirmActionCallback();
+    closeConfirmModal();
+  }
+
   // ================= ТЕМА И НАВИГАЦИЯ =================
   function initTheme() {
     const savedTheme = localStorage.getItem('tt_theme') || 'dark';
@@ -853,11 +881,12 @@
     } catch(e) { customAlert('Ошибка сохранения: ' + e.message); }
   }
 
-  async function deleteTournament(id) { 
+  function deleteTournament(id) { 
     if (!isSuperAdmin()) return; 
-    const doDelete = async () => { try { await db.collection('tournaments').doc(id).delete(); customAlert("✅ Турнир удален"); } catch(e) { customAlert("❌ Ошибка удаления: " + e.message); } };
-    if (window.Telegram?.WebApp?.showConfirm) { window.Telegram.WebApp.showConfirm('Удалить этот турнир навсегда?', (ok) => { if (ok) doDelete(); }); } 
-    else { if (confirm('Удалить этот турнир навсегда?')) doDelete(); } 
+    openConfirmModal('Вы уверены, что хотите навсегда удалить этот турнир?', async () => {
+      try { await db.collection('tournaments').doc(id).delete(); customAlert("✅ Турнир удален"); } 
+      catch(e) { customAlert("❌ Ошибка удаления: " + e.message); }
+    });
   }
   
   async function toggleTourReaction(id, type) {
@@ -1195,89 +1224,87 @@
     });
   }
 
-  // ================= АДМИН И ПРОЧЕЕ =================
-  function openAdminMenu() { document.getElementById('admin-modal').style.display = 'flex'; }
-  function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
-  function sendAdminBroadcast() { if(!isSuperAdmin()) return; const t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return; sendTelegramAlert(`📢 <b>Сообщение от администрации клуба:</b>\n\n${cleanHtml(t)}`); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено"); }
-  function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
-  function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
-  async function saveAnnouncement() { const loc = document.getElementById('announcement-target-loc').value, txt = document.getElementById('announcement-textarea').value.trim(); await db.collection('settings').doc('announcements').set({ [loc]: txt }, { merge: true }); closeAnnouncementModal(); if(txt) sendTelegramAlert(`📢 <b>Обновление информации ${LOCATION_NAMES[loc]}</b>\n\n${cleanHtml(txt)}`); }
-  async function deleteAnnouncement() { if(!isSuperAdmin()) return; const loc = document.getElementById('announcement-target-loc').value; await db.collection('settings').doc('announcements').set({ [loc]: "" }, { merge: true }); closeAnnouncementModal(); customAlert("✅ Анонс удален"); }
-
-  // ================= ПРОФИЛЬ ДРУГОГО ИГРОКА =================
-  async function showUserInfoModal(uid) {
-    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; document.getElementById('user-info-modal').style.display = 'flex';
+  // ================= ПОГОДА И СЕССИИ =================
+  async function loadParkWeather() {
+    const container = document.getElementById('weather-park'); if (!container) return;
     try {
-      const d = await db.collection('users').doc(uid).get(); if(!d.exists) { closeUserInfoModal(); return; }
-      const u = d.data(), adminTag = ADMIN_UIDS.includes(uid) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '', customBadge = getCustomBadge(uid);
-      document.getElementById('info-modal-title').innerHTML = `👤 ${cleanHtml(u.name||"Игрок")} ${adminTag} ${customBadge}`;
-      
-      let uidHtml = isSuperAdmin() ? `<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">${uid}</span></div>` : '';
-      const ld = await db.collection('leaderboard').doc(uid).get(), mins = ld.exists ? ld.data().totalMinutes||0 : 0, winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
-      const deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${u.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${u.lastEloDelta}) 📉</span>`) : '';
-      const streakText = (u.winStreak && u.winStreak >= 3) ? `<span class="streak-fire">🔥${u.winStreak} побед</span>` : '';
-
-      const mContainer = document.getElementById('info-modal-medals');
-      const m = u.medals || {gold:0, silver:0, bronze:0};
-      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-        mContainer.innerHTML = `<div class="medal-item">🏆 ${u.tournamentsPlayed || 0}</div><div class="medal-item">🥇 ${m.gold || 0}</div><div class="medal-item">🥈 ${m.silver || 0}</div><div class="medal-item">🥉 ${m.bronze || 0}</div>`; mContainer.style.display = 'flex';
-      } else { mContainer.style.display = 'none'; }
-
-      document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
-      
-      const invContainer = document.getElementById('info-modal-inventory');
-      if (u.blade || u.rubberL || u.rubberR) {
-        let invHtml = `<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>`;
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-      } else { invContainer.style.display = 'none'; }
-
-      const snaps = await db.collection('matches_history').where('participants','array-contains',uid).orderBy('timestamp','desc').limit(10).get();
-      const hEl = document.getElementById('info-modal-history');
-      if(snaps.empty) { hEl.innerHTML = '<span class="empty-note">Пусто</span>'; return; }
-      let h = '';
-      snaps.forEach(doc => {
-        const m = doc.data(), isP1 = m.p1Uid === uid, myS = isP1?m.p1Score:m.p2Score, opS = isP1?m.p2Score:m.p1Score, opN = isP1?m.p2Name:m.p1Name, isWin = myS>opS;
-        h += `<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>${cleanHtml(opN)}</b></div><div style="color:var(--text-muted);font-size:10px;">${new Date(m.timestamp).toLocaleDateString()}</div></div><div style="color:${isWin?'#059669':'#f87171'}; font-weight:bold;">${myS} : ${opS}</div></div>`;
-      });
-      hEl.innerHTML = h;
-    } catch(e){}
+      const data = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')).json();
+      const c = data.current, d = data.daily;
+      const getW = code => { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
+      container.innerHTML = `<div class="weather-badge"><span>${getW(c.weather_code)}, ${Math.round(c.temperature_2m)}°C • ветер ${Math.round(c.wind_speed_10m)} м/с (${getWindDirection(c.wind_direction_10m)})</span></div><div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ${getW(d.weather_code[1]).split(' ')[1].toLowerCase()}, от ${Math.round(d.temperature_2m_min[1])}° до ${Math.round(d.temperature_2m_max[1])}°C</span></div>`;
+    } catch (e) { container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`; }
   }
-  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
-  // ================= РЕЙТИНГИ И СТАРТ =================
-  function listenRatings() { db.collection('users').orderBy('elo', 'desc').limit(100).onSnapshot(snap => { const listEl = document.getElementById('rating-list'); allRegisteredUsers = []; if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; } let html = '', rank = 1, myUid = getVerifiedUserId(); snap.forEach(doc => { const d = doc.data(); if (!doc.id.match(/^(tg|google)_/) && !d.isVerified) return; allRegisteredUsers.push({ uid: doc.id, name: d.name, elo: d.elo || 1000 }); if (doc.id === myUid) { currentUserProfile = { ...currentUserProfile, ...d }; updateProfileDisplay(); } const rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`; const wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0, winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0; const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id), rttfText = d.rttf ? ` • РТТФ: ${d.rttf}` : ''; const streakHtml = (d.winStreak && d.winStreak >= 3) ? `<span class="streak-fire">🔥${d.winStreak}</span>` : ''; const deltaHtml = d.lastEloDelta ? (d.lastEloDelta > 0 ? `<span class="elo-delta elo-up">(+${d.lastEloDelta}) 📈</span>` : `<span class="elo-delta elo-down">(${d.lastEloDelta}) 📉</span>`) : ''; html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div><div class="player-status-tag">${getPlayerStatus(d.elo || 1000)}${rttfText}${streakHtml}</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">${d.elo || 1000}</span>${deltaHtml}</div><span style="font-size: 10px; color: var(--text-muted);">${wins}В - ${losses}П (${winrate}%)</span></div><button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button></div></div>`; rank++; }); listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>'; }); }
-  function listenLeaderboard() { db.collection('leaderboard').orderBy('totalMinutes', 'desc').limit(100).onSnapshot(snap => { const listEl = document.getElementById('leaderboard-list'); if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; } let html = '', rank = 1; snap.forEach(doc => { const d = doc.data(); if (!doc.id.match(/^(tg|google)_/)) return; const hours = (d.totalMinutes / 60).toFixed(1), rankClass = rank <= 3 ? `leader-rank-${rank}` : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : `${rank}.`; const adminBadgeHTML = ADMIN_UIDS.includes(doc.id) ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(doc.id); html += `<div class="leader-row"><div class="leader-left"><span class="leader-rank ${rankClass}">${medal}</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>${cleanHtml(d.name)}</b> ${adminBadgeHTML} ${customBadge}</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">${hours} ч (${d.sessions || 0} игр)</span><button class="btn-info" onclick="showUserInfoModal('${doc.id}')">i</button></div></div>`; rank++; }); listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>'; }); }
-  async function loadParkWeather() { const container = document.getElementById('weather-park'); if (!container) return; try { const data = await (await fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')).json(); const c = data.current, d = data.daily; const getW = code => { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; }; container.innerHTML = `<div class="weather-badge"><span>${getW(c.weather_code)}, ${Math.round(c.temperature_2m)}°C • ветер ${Math.round(c.wind_speed_10m)} м/с (${getWindDirection(c.wind_direction_10m)})</span></div><div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ${getW(d.weather_code[1]).split(' ')[1].toLowerCase()}, от ${Math.round(d.temperature_2m_min[1])}° до ${Math.round(d.temperature_2m_max[1])}°C</span></div>`; } catch (e) { container.innerHTML = `<div class="weather-badge"><span>Парк: столы на улице</span></div>`; } }
-  
-  // Рендер Радара
+  async function monitorSessions() {
+    const now = Date.now();
+    for (const loc of ['park', 'vostok']) {
+      try {
+        let leftPlayers = [], remainingList = [];
+        await db.runTransaction(async (t) => {
+          const doc = await t.get(db.collection('locations').doc(loc)); if (!doc.exists) return;
+          let players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [];
+          for (const p of players) {
+            const elapsed = now - (p.time || now);
+            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { changed = true; recordTrainingTime(p.uid, p.name || 'Игрок', Math.floor(elapsed / 60000)); leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatDuration(p.time || now) }); } 
+            else { activePlayers.push(p); }
+          }
+          const activePlans = plans.filter(pl => { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
+          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); remainingList = activePlayers; }
+        });
+        if (leftPlayers.length > 0) { for (const lp of leftPlayers) { sendTelegramAlert(`👋 игрок <b>${cleanHtml(lp.name)}</b> закончил тренировку и покинул стол ${LOCATION_NAMES[loc]} (время: <code>${lp.durationStr}</code>).${remainingList.length > 0 ? buildBlockquoteList(remainingList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"}`); } }
+      } catch(e) {}
+    }
+  }
+
   function renderAll() {
-    const myUid = getVerifiedUserId(), now = Date.now(); currentUserActiveLoc = null; currentUserActivePlayer = null;
+    const myUid = getVerifiedUserId(), now = Date.now();
+    currentUserActiveLoc = null; currentUserActivePlayer = null;
+
     ['park', 'vostok'].forEach(loc => {
       const { players } = locationsData[loc] || { players: [] }, plans = (locationsData[loc]?.plans || []).filter(p => p.planTime && p.planTime + 300000 > now);
-      const badge = document.getElementById('badge-' + loc); if(badge) { badge.innerText = `${players.length} ${getPlayersCountSuffix(players.length)}`; badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
+      const badge = document.getElementById('badge-' + loc);
+      if(badge) { badge.innerText = `${players.length} ${getPlayersCountSuffix(players.length)}`; badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
+
       const listEl = document.getElementById('list-' + loc);
-      if(listEl) { if (players.length === 0) listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; else listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div>${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}</div></div>`).join(''); }
+      if(listEl) {
+        if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
+        else { listEl.innerHTML = players.map(item => `<div class="player-row"><div class="player-name"><span>🏓</span><span>${cleanHtml(item.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ${formatTime(item.time || Date.now())}</span><span class="time-badge">${formatDuration(item.time || Date.now())}</span></div>${item.uid ? `<button class="btn-info" onclick="showUserInfoModal('${item.uid}')">i</button>` : ''}</div></div>`).join(''); }
+      }
+
       const planListEl = document.getElementById('plan-list-' + loc);
-      if(planListEl) { if (plans.length === 0) planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; else planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div>${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}</div></div>`).join(''); }
+      if(planListEl) {
+        if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
+        else { planListEl.innerHTML = plans.map(p => `<div class="player-row"><div class="player-name"><span>⏳</span><span>${cleanHtml(p.name || 'Игрок')}</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ${formatTime(p.planTime)}</span><span class="time-badge-plan">${formatUntil(p.planTime)}</span></div>${p.uid ? `<button class="btn-info" onclick="showUserInfoModal('${p.uid}')">i</button>` : ''}</div></div>`).join(''); }
+      }
+
       const activePlayerObj = myUid ? players.find(p => (p.uid || p) === myUid) : null, isUserOpened = myUid ? plans.some(p => (p.uid || p) === myUid) : null, btnBox = document.getElementById('btn-container-' + loc);
-      if(btnBox) { if (activePlayerObj) { currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; btnBox.innerHTML = `<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`; } else if (isUserOpened) { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`; } else { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`; } }
+      if(btnBox) {
+        if (activePlayerObj) { currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; btnBox.innerHTML = `<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave('${loc}')">👋 Покинуть стол</button>`; } 
+        else if (isUserOpened) { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan('${loc}')">Отменить визит</button>`; } 
+        else { btnBox.innerHTML = `<button class="btn btn-join" onclick="handleCheckInClick('${loc}')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick('${loc}')">⏳ Буду позже...</button>`; }
+      }
     });
-    if (currentUserActiveLoc && currentUserActivePlayer) { const elap = Date.now() - (currentUserActivePlayer.time||Date.now()), lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS; if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { document.getElementById('extend-modal').style.display = 'flex'; if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } } else { document.getElementById('extend-modal').style.display = 'none'; } } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
+
+    if (currentUserActiveLoc && currentUserActivePlayer) {
+      const elap = Date.now() - (currentUserActivePlayer.time||Date.now()), lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
+      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { document.getElementById('extend-modal').style.display = 'flex'; if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } } 
+      else { document.getElementById('extend-modal').style.display = 'none'; }
+    } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
   }
 
+  // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', () => {
     initUserProfile(); listenRatings(); listenLeaderboard(); listenTournaments(); listenPendingMatches(); loadParkWeather();
-    ['park', 'vostok'].forEach(loc => { db.collection('locations').doc(loc).onSnapshot(doc => { const data = doc.data() || {}; locationsData[loc].plans = data.plans || []; locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p); renderAll(); }); });
-    db.collection('settings').doc('announcements').onSnapshot(doc => { announcementsData = doc.data() || {park:"", vostok:""}; ['park','vostok'].forEach(loc => { const b = document.getElementById('announcement-box-'+loc), t = document.getElementById('announcement-text-'+loc); if(b && t) { if(announcementsData[loc]) { t.innerHTML=cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display='flex'; } else { b.style.display='none'; } } }); });
+    ['park', 'vostok'].forEach(loc => {
+      db.collection('locations').doc(loc).onSnapshot(doc => { const data = doc.data() || {}; locationsData[loc].plans = data.plans || []; locationsData[loc].players = (data.players || []).map(p => typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p); renderAll(); });
+    });
+    db.collection('settings').doc('announcements').onSnapshot(doc => {
+      announcementsData = doc.data() || {park:"", vostok:""};
+      ['park','vostok'].forEach(loc => {
+        const b = document.getElementById('announcement-box-'+loc), t = document.getElementById('announcement-text-'+loc);
+        if(b && t) { if(announcementsData[loc]) { t.innerHTML=cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display='flex'; } else { b.style.display='none'; } }
+      });
+    });
     setInterval(renderAll, 30000); setInterval(monitorSessions, 60000); setInterval(loadParkWeather, 600000); 
   });
 </script>
