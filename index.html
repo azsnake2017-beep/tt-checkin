@@ -733,21 +733,27 @@
     return "Легенда клуба 🏛️";
   }
   function isUserVerified() { 
-      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user);
-      const tgId = tgUser ? tgUser.id : null;
+      let tgId = null;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+          tgId = window.Telegram.WebApp.initDataUnsafe.user.id;
+      }
       const localId = localStorage.getItem('tt_member_id');
       return !!(tgId || (localId && (localId.indexOf('tg_') === 0 || localId.indexOf('google_') === 0)));
   }
   function getVerifiedUserId() { 
-      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user);
-      if (tgUser && tgUser.id) {
-          return 'tg_' + tgUser.id;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+          if (window.Telegram.WebApp.initDataUnsafe.user.id) {
+              return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
+          }
       }
       return localStorage.getItem('tt_member_id'); 
   }
   function isSuperAdmin() { 
-      const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user);
-      if (tgUser && tgUser.username && tgUser.username.toLowerCase() === 'azsnake') return true;
+      if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+          if (window.Telegram.WebApp.initDataUnsafe.user.username && window.Telegram.WebApp.initDataUnsafe.user.username.toLowerCase() === 'azsnake') {
+              return true;
+          }
+      }
       const uid = getVerifiedUserId();
       return uid ? ADMIN_UIDS.includes(uid) : false;
   }
@@ -821,7 +827,11 @@
   async function initUserProfile() {
     const banner = document.getElementById('web-auth-banner');
     
-    const tgUser = (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) ? window.Telegram.WebApp.initDataUnsafe.user : null;
+    let tgUser = null;
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+        tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+    }
+
     if (tgUser && tgUser.id) {
       if (banner) banner.style.display = 'none';
       const name = (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')).trim() || tgUser.username || "Игрок";
@@ -1002,7 +1012,7 @@
         updateData.wins = data.wins || 0; 
         updateData.losses = data.losses || 0; 
         updateData.uid = uid; 
-        updateData.platform = uid.startsWith('google_') ? 'google' : 'tg'; 
+        updateData.platform = uid.indexOf('google_') === 0 ? 'google' : 'tg'; 
         updateData.createdAt = data.createdAt || Date.now();
       }
       
@@ -1236,7 +1246,7 @@
   // ================= ТУРНИРНЫЙ ДВИЖОК =================
   function openTournamentModal(tourId) { 
     if (!isSuperAdmin()) return; 
-    currentEditingTourId = tourId && typeof tourId === 'string' ? tourId : null;
+    currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null;
     const btn = document.getElementById('btn-save-tour');
     
     if (currentEditingTourId) {
@@ -1592,18 +1602,28 @@
       const archiveEl = document.getElementById('tournaments-list-archive');
       
       let activeHtml = '', archiveHtml = '';
-      const myUid = getVerifiedUserId(), isAdmin = isSuperAdmin();
+      const myUid = getVerifiedUserId();
+      const isAdmin = isSuperAdmin();
 
       snap.forEach(doc => {
-        const d = doc.data(), id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
-        const isLiked = myUid && likes.includes(myUid), isDisliked = myUid && dislikes.includes(myUid), isPart = myUid && parts.some(p => p.uid === myUid);
+        const d = doc.data();
+        const id = doc.id;
+        const likes = d.likes || [];
+        const dislikes = d.dislikes || [];
+        const parts = d.participants || [];
+        const isLiked = myUid && likes.includes(myUid);
+        const isDisliked = myUid && dislikes.includes(myUid);
+        const isPart = myUid && parts.some(p => p.uid === myUid);
         
-        let adminBtn = isAdmin ? `
-          <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
-            <button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal('${id}')">✏️ Изменить</button>
-            <button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px;" onclick="deleteTournament('${id}')">🗑 Удалить</button>
-          </div>
-        ` : '';
+        let adminActionHtml = '';
+        if (isAdmin) {
+          adminActionHtml = `
+            <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
+              <button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal('${id}')">✏️ Изменить</button>
+              <button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px;" onclick="deleteTournament('${id}')">🗑 Удалить</button>
+            </div>
+          `;
+        }
 
         if (d.status === 'completed') {
           const res = d.results || {};
@@ -1621,15 +1641,17 @@
               <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
                 <div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal('${goldUid}')">${cleanHtml(goldName)}</span></div>
                 <div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal('${silverUid}')">${cleanHtml(silverName)}</span></div>
-                <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${bronzeUid}')">${cleanHtml(bronzeName)}</span></div>
+                <div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal('${bronzeUid}')">${cleanHtml(bronName)}</span></div>
               </div>
-              ${adminBtn}
+              ${adminActionHtml}
             </div>
           `;
           return;
         }
 
-        let content = '', buttonsHtml = '';
+        let content = '';
+        let buttonsHtml = '';
+        let actionRowHtml = '';
 
         if (d.status === 'registration') {
           let pList = parts.length > 0 ? parts.map(p => `<span class="clickable-name" onclick="showUserInfoModal('${p.uid}')">${cleanHtml(p.name)}</span>`).join(', ') : 'Пока никто не записался';
@@ -1640,10 +1662,13 @@
               ? `<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament('${id}')">Отказаться</button>`
               : `<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament('${id}', '${cleanHtml(d.title)}')">🏆 Участвовать</button>`;
           }
+          
           if (isAdmin) {
-            buttonsHtml += `</div><div style="display: flex; gap: 8px; margin-top: 8px;">
-              <button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${id}', 'random')">🎲 Случайная</button>
-              <button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${id}', 'smart')">🧠 Умная (по Эло)</button>`;
+            actionRowHtml += `
+              <div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;">
+                <button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament('${id}', 'random')">🎲 Случайная</button>
+                <button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament('${id}', 'smart')">🧠 Умная (по Эло)</button>
+              </div>`;
           }
         } 
         else if (d.status === 'active') {
@@ -1657,21 +1682,23 @@
           content += renderMatchList((d.matches||[]).filter(m => m.group === 'B'), id, false);
 
           if (isAdmin && !(d.matches||[]).filter(m => m.stage==='group').some(m => m.score1 === null)) {
-            buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px;" onclick="generatePlayoffs('${id}')">Сформировать Плей-офф</button><div>`;
+            actionRowHtml += `<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs('${id}')">Сформировать Плей-офф</button>`;
           }
         }
         else if (d.status === 'playoffs') {
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>`;
           content += renderMatchList((d.matches||[]).filter(m => m.stage === 'semi'), id, true);
+          
           if (isAdmin && !(d.matches||[]).filter(m => m.stage==='semi').some(m => m.score1 === null)) {
-            buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px;" onclick="generateFinals('${id}')">Создать Финалы</button><div>`;
+            actionRowHtml += `<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals('${id}')">Создать Финалы</button>`;
           }
         }
         else if (d.status === 'finals') {
           content += `<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>`;
           content += renderMatchList((d.matches||[]).filter(m => m.stage === 'final'), id, true);
+          
           if (isAdmin && !(d.matches||[]).filter(m => m.stage==='final').some(m => m.score1 === null)) {
-            buttonsHtml += `</div><button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px;" onclick="completeTournament('${id}')">Завершить турнир</button><div>`;
+            actionRowHtml += `<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament('${id}')">Завершить турнир</button>`;
           }
         }
 
@@ -1688,7 +1715,8 @@
               <button class="score-btn ${isDisliked ? 'active' : ''}" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction('${id}', 'dislike')">👎 ${dislikes.length}</button>
               ${buttonsHtml}
             </div>
-            ${adminBtn}
+            ${actionRowHtml}
+            ${adminActionHtml}
           </div>
         `;
       });
