@@ -364,6 +364,9 @@
       <span>⚔️</span><span>Записать результат матча</span>
     </button>
     <div id="pending-matches-container"></div>
+    
+    <!-- НОВЫЙ БЛОК: ИСТОРИЯ МАТЧЕЙ -->
+    <div id="recent-matches-container"></div>
 
     <div class="tabs-container">
       <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
@@ -562,7 +565,7 @@
     <input type="text" id="tour-title" class="input-name" placeholder="Название (напр. Осенний кубок)" />
     <input type="date" id="tour-date" class="input-name" />
     <textarea id="tour-desc" class="textarea-announcement" placeholder="Описание, взносы, условия..."></textarea>
-    <button id="btn-save-tour" class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveTournament()">Создать</button>
     <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
   </div>
 </div>
@@ -908,7 +911,7 @@
       if (!snap.exists) {
         await ref.set(userData);
         try { const sz = (await db.collection('users').get()).size; sendTelegramAlert(`🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>${cleanHtml(name)}</b>\n\n📈 Теперь нас в рейтинге: <b>${sz}</b> человек!`); } catch(e) {}
-      } else { Object.assign(userData, snap.data()); }
+      } else { userData = { ...userData, ...snap.data() }; }
     } catch (e) {}
     currentUserProfile = userData;
     const banner = document.getElementById('web-auth-banner'); if (banner) banner.style.display = 'none';
@@ -1186,9 +1189,9 @@
       } else { mContainer.style.display = 'none'; }
 
       document.getElementById('info-modal-content-area').innerHTML = `${uidHtml}
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo !== undefined ? u.elo : 1000}</span>${deltaHtml}</div></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">${u.elo||1000}</span>${deltaHtml}</div></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo !== undefined ? u.elo : 1000)}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span>${streakText}</div></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>`;
@@ -1266,6 +1269,44 @@
     } catch(e) {}
   }
   async function rejectMatch(matchId) { try { await db.collection('pending_matches').doc(matchId).delete(); document.getElementById('pending-matches-container').innerHTML = ''; } catch(e) {} }
+
+  // --- ИСТОРИЯ ПОСЛЕДНИХ МАТЧЕЙ (НОВОЕ) ---
+  function listenRecentMatches() {
+    db.collection('matches_history').orderBy('timestamp', 'desc').limit(5).onSnapshot(function(snap) {
+      try {
+        var container = document.getElementById('recent-matches-container');
+        if (!container) return;
+        if (snap.empty) { container.innerHTML = ''; return; }
+        
+        var html = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 4px 0 8px 4px; text-transform: uppercase; letter-spacing: 0.5px;">Последние матчи:</div>';
+        
+        snap.forEach(function(doc) {
+          var m = doc.data();
+          var isP1Win = m.p1Score > m.p2Score;
+          var isP2Win = m.p2Score > m.p1Score;
+          var p1Color = isP1Win ? 'color: #10b981;' : '';
+          var p2Color = isP2Win ? 'color: #10b981;' : '';
+          
+          var d = new Date(m.timestamp);
+          var day = ('0' + d.getDate()).slice(-2);
+          var month = ('0' + (d.getMonth() + 1)).slice(-2);
+          var hours = ('0' + d.getHours()).slice(-2);
+          var minutes = ('0' + d.getMinutes()).slice(-2);
+          var timeStr = day + '.' + month + ' ' + hours + ':' + minutes;
+
+          html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
+                    '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                      '<div style="display:flex; flex:1; justify-content: flex-end; overflow: hidden;"><span class="clickable-name" style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span></div>' +
+                      '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 10px; white-space: nowrap;">' + m.p1Score + ' : ' + m.p2Score + '</div>' +
+                      '<div style="display:flex; flex:1; justify-content: flex-start; overflow: hidden;"><span class="clickable-name" style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span></div>' +
+                    '</div>' +
+                    '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">' + timeStr + '</div>' +
+                  '</div>';
+        });
+        container.innerHTML = html;
+      } catch(e) {}
+    });
+  }
 
   // ================= ТУРНИРНЫЙ ДВИЖОК =================
   function openTournamentModal(tourId) { 
@@ -1719,7 +1760,7 @@
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', () => {
-    initUserProfile(); listenRatings(); listenLeaderboard(); listenTournaments(); listenPendingMatches(); loadParkWeather();
+    initUserProfile(); listenRatings(); listenLeaderboard(); listenTournaments(); listenPendingMatches(); listenRecentMatches(); loadParkWeather();
     
     ['park', 'vostok'].forEach(loc => {
       db.collection('locations').doc(loc).onSnapshot(doc => { 
