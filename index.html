@@ -155,7 +155,7 @@
     .leaderboard-card { border: 1px solid rgba(251, 191, 36, 0.3); }
     .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; }
     
-    /* Убрали ловушку скролла (удалили max-height и overflow-y) */
+    /* Убран внутренний скролл */
     .scrollable-list { display: flex; flex-direction: column; gap: 6px; padding-bottom: 20px; }
 
     .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: rgba(15, 23, 42, 0.6); font-size: 13px; }
@@ -676,21 +676,21 @@
     return true;
   }
 
-  async function sendTelegramAlert(text) {
+  // ВЕРНУЛ ОРИГИНАЛЬНУЮ И РАБОЧУЮ ФУНКЦИЮ (ГДЕ ИСПОЛЬЗУЕТСЯ IFRAME И GET-ЗАПРОС)
+  function sendTelegramAlert(text) {
     if (!GOOGLE_GATEWAY_URL) return;
     try {
-      await fetch(GOOGLE_GATEWAY_URL, {
-        method: "POST",
-        mode: "no-cors",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ message: text })
-      });
-      console.log("Уведомление отправлено через GAS!");
-    } catch (e) {
-      console.error("Ошибка при отправке в Telegram:", e);
-    }
+      let f = document.getElementById('tg_sink_frame');
+      if (!f) {
+        f = document.createElement('iframe'); f.id = 'tg_sink_frame'; f.name = 'tg_sink_frame'; f.style.display = 'none';
+        document.body.appendChild(f);
+      }
+      const form = document.createElement('form');
+      form.method = 'GET'; form.action = GOOGLE_GATEWAY_URL; form.target = 'tg_sink_frame'; form.style.display = 'none';
+      const input = document.createElement('input'); input.type = 'hidden'; input.name = 'text'; input.value = text;
+      form.appendChild(input); document.body.appendChild(form); form.submit();
+      setTimeout(() => { if (form.parentNode) form.parentNode.removeChild(form); }, 2000);
+    } catch (e) {}
   }
 
   function sendDevicePushNotification(title, body) {
@@ -1319,7 +1319,7 @@
         ${uidHtml}
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><span style="font-weight: 700; color: var(--accent-purple);">${u.elo||1000}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">${u.rttf||"Не указан"}</span></div>
-        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span id="info-modal-status" style="font-weight: 600;">${getPlayerStatus(u.elo||1000)}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">${u.matches||0}</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><span style="font-weight: 600; color: var(--accent-green);">${u.wins||0}В - ${u.losses||0}П (${winrate}%)</span></div>
         <div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">${formatMinutes(mins)}</span></div>
