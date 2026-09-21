@@ -9,10 +9,10 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Firebase SDK Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- Firebase SDK Compat (ИСПОЛЬЗУЕТСЯ jsDelivr ДЛЯ ОБХОДА БЛОКИРОВОК) -->
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -57,6 +57,7 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
+    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
@@ -100,7 +101,7 @@
 
     .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 4px; }
 
-    .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; }
+    .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; display: none; }
     .btn-edit { background: var(--card-border); color: var(--text); }
     .btn-logout { background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary); }
 
@@ -208,6 +209,7 @@
     .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
     .textarea-announcement { resize: vertical; min-height: 90px; }
     .input-name { text-align: left; padding: 12px 14px; }
+    .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -249,7 +251,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ -->
+  <!-- ЭКРАН ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ (ГОСТЕВОЙ РЕЖИМ УДАЛЕН) -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -279,8 +281,8 @@
       <div id="user-inventory-container" style="display: none;"></div>
 
       <div class="profile-actions-row">
-        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()">Редактировать профиль</button>
-        <button class="btn-logout" id="btn-logout" onclick="logoutProfile()">Выйти</button>
+        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()" style="display:none;">Редактировать профиль</button>
+        <button class="btn-logout" id="btn-logout" onclick="logoutProfile()" style="display:none;">Выйти</button>
       </div>
     </div>
     
@@ -690,6 +692,9 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   var db = firebase.firestore();
 
+  // Применяем настройки ДО любых запросов
+  db.settings({ experimentalForceLongPolling: true });
+
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
     document.getElementById('custom-alert-modal').style.display = 'flex';
@@ -837,6 +842,16 @@
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
+  function getPlayerStatus(elo) {
+    if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
+    if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
+    if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆";
+    if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️";
+    if (elo <= 3400) return "Чемпион клуба 👑"; if (elo <= 3600) return "Гранд-мастер 🎖️"; if (elo <= 3800) return "Снайпер 🎯";
+    if (elo <= 4000) return "Легенда клуба 🏛️"; if (elo <= 4200) return "Премьер-лига 📈"; if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
+    if (elo <= 4600) return "Властелин стола 👑🏓"; if (elo <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
+  }
+
   function isUserVerified() {
     var tgUser = null;
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -874,6 +889,14 @@
     var uid = 'tg_' + user.id; 
     localStorage.setItem('tt_member_id', uid);
     var name = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок";
+    
+    // Мгновенный вход в интерфейс
+    currentUserProfile = { uid: uid, name: name, elo: 1000, isVerified: true };
+    var authScreen = document.getElementById('mandatory-auth-screen');
+    if (authScreen) authScreen.style.display = 'none';
+    updateProfileDisplay();
+    renderAll();
+
     syncUserProfile(uid, name, 'tg');
   };
 
@@ -883,6 +906,14 @@
         var uid = 'google_' + res.user.uid; 
         localStorage.setItem('tt_member_id', uid);
         var name = res.user.displayName || res.user.email.split('@')[0];
+        
+        // Мгновенный вход в интерфейс
+        currentUserProfile = { uid: uid, name: name, elo: 1000, isVerified: true };
+        var authScreen = document.getElementById('mandatory-auth-screen');
+        if (authScreen) authScreen.style.display = 'none';
+        updateProfileDisplay();
+        renderAll();
+
         syncUserProfile(uid, name, 'google');
       }
     }).catch(function(e) { customAlert("Ошибка входа: " + e.message); });
@@ -923,21 +954,14 @@
           var snapData = snap.data();
           for (var key in snapData) { userData[key] = snapData[key]; }
       }
-      finishSync(uid, userData);
-    }).catch(function(e) {
-      finishSync(uid, { uid: uid, name: name, isVerified: true, elo: 1000 });
-    });
-  }
-
-  function finishSync(uid, userData) {
-      currentUserProfile = userData;
-      var authScreen = document.getElementById('mandatory-auth-screen');
-      if (authScreen) authScreen.style.display = 'none';
       
+      currentUserProfile = userData;
       subscribeToUserLeaderboard(uid); 
       updateProfileDisplay();
       localStorage.setItem('tt_name', currentUserProfile.name); 
       renderAll();
+
+    }).catch(function(e) {});
   }
 
   function initUserProfile() {
@@ -948,9 +972,18 @@
     }
 
     if (tgUser && tgUser.id) {
-      if (authScreen) authScreen.style.display = 'none';
+      var uid = 'tg_' + tgUser.id;
       var name = (tgUser.first_name + (tgUser.last_name ? ' ' + tgUser.last_name : '')).trim() || tgUser.username || "Игрок";
-      syncUserProfile('tg_' + tgUser.id, name, 'tg');
+      localStorage.setItem('tt_member_id', uid);
+      localStorage.setItem('tt_name', name);
+      
+      // Мгновенный Оптимистичный UI
+      currentUserProfile = { uid: uid, name: name, elo: 1000, isVerified: true };
+      if (authScreen) authScreen.style.display = 'none';
+      updateProfileDisplay();
+      renderAll();
+
+      syncUserProfile(uid, name, 'tg');
       return;
     }
     
@@ -958,11 +991,13 @@
     var savedName = localStorage.getItem('tt_name') || "Игрок";
     
     if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
+      // Мгновенный Оптимистичный UI
       currentUserProfile = { uid: savedId, name: savedName, elo: 1000, isVerified: true };
       if (authScreen) authScreen.style.display = 'none';
       updateProfileDisplay();
       renderAll();
 
+      // Фоновое обновление из БД
       db.collection('users').doc(savedId).onSnapshot(function(snap) {
         if (snap.exists) {
           currentUserProfile = snap.data();
@@ -1229,6 +1264,7 @@
     sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
   }
 
+  // ОТПРАВКА СТАТИСТИКИ И ТОП-10 В ЧАТ ТЕЛЕГРАМ
   function sendClubStatsBroadcast() {
     if (!isSuperAdmin()) return;
     
@@ -1925,83 +1961,15 @@
     }).catch(function(e) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; });
   }
 
-  function renderAll() {
-    var myUid = getVerifiedUserId(); var now = Date.now();
-    currentUserActiveLoc = null; currentUserActivePlayer = null;
-
-    ['park', 'vostok'].forEach(function(loc) {
-      try {
-        var rawData = locationsData[loc] || { players: [], plans: [] };
-        var players = (rawData.players || []).filter(function(p) { return (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS); });
-        var plans = (rawData.plans || []).filter(function(p) { return p.planTime && p.planTime + 300000 > now; });
-        
-        var badge = document.getElementById('badge-' + loc); 
-        if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
-
-        var listEl = document.getElementById('list-' + loc);
-        if(listEl) {
-          if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
-          else { 
-              var pRows = [];
-              for(var i=0; i<players.length; i++) {
-                  var item = players[i];
-                  pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + formatTime(item.time || Date.now()) + '</span><span class="time-badge">'+ formatDuration(item.time || Date.now()) + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
-              }
-              listEl.innerHTML = pRows.join(''); 
-          }
-        }
-
-        var planListEl = document.getElementById('plan-list-' + loc);
-        if(planListEl) {
-          if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
-          else { 
-              var plRows = [];
-              for(var j=0; j<plans.length; j++) {
-                  var p = plans[j];
-                  planListEl.innerHTML = '<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(p.planTime) + '</span><span class="time-badge-plan">' + formatUntil(p.planTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>';
-              }
-              planListEl.innerHTML = plRows.join(''); 
-          }
-        }
-
-        var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
-        var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
-        var btnBox = document.getElementById('btn-container-' + loc);
-        
-        if(btnBox) {
-          if (!myUid) {
-            btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
-          } else if (activePlayerObj) { 
-              currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
-              btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
-          } else if (isUserOpened) { 
-              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
-          } else { 
-              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
-          }
-        }
-      } catch(e) {}
-    });
-
-    if (currentUserActiveLoc && currentUserActivePlayer) {
-      var elap = Date.now() - (currentUserActivePlayer.time||Date.now());
-      var lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
-      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { 
-          document.getElementById('extend-modal').style.display = 'flex'; 
-          if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
-      } else { document.getElementById('extend-modal').style.display = 'none'; } 
-    } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
-  }
-
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
-    try { initUserProfile(); } catch(e) { console.error("initUserProfile", e); }
-    try { listenRatings(); } catch(e) { console.error("listenRatings", e); }
-    try { listenLeaderboard(); } catch(e) { console.error("listenLeaderboard", e); }
-    try { listenTournaments(); } catch(e) { console.error("listenTournaments", e); }
-    try { listenPendingMatches(); } catch(e) { console.error("listenPendingMatches", e); }
-    try { listenRecentMatches(); } catch(e) { console.error("listenRecentMatches", e); }
-    try { loadParkWeather(); } catch(e) { console.error("loadParkWeather", e); }
+    try { initUserProfile(); } catch(e) { console.error("initUserProfile error", e); }
+    try { listenRatings(); } catch(e) { console.error("listenRatings error", e); }
+    try { listenLeaderboard(); } catch(e) { console.error("listenLeaderboard error", e); }
+    try { listenTournaments(); } catch(e) { console.error("listenTournaments error", e); }
+    try { listenPendingMatches(); } catch(e) { console.error("listenPendingMatches error", e); }
+    try { listenRecentMatches(); } catch(e) { console.error("listenRecentMatches error", e); }
+    try { loadParkWeather(); } catch(e) { console.error("loadParkWeather error", e); }
     
     setTimeout(monitorSessions, 1000);
     
@@ -2015,7 +1983,7 @@
                 renderAll(); 
             } catch(e){} 
         });
-      } catch(e) { console.error("locations", loc, e); }
+      } catch(e) { console.error("locations error", e); }
     });
 
     try {
@@ -2032,7 +2000,7 @@
           });
         } catch(e) {}
       });
-    } catch(e) { console.error("announcements", e); }
+    } catch(e) { console.error("announcements error", e); }
 
     setInterval(renderAll, 30000); 
     setInterval(monitorSessions, 60000); 
