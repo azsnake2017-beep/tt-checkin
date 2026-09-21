@@ -9,7 +9,7 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Firebase SDK Compat -->
+  <!-- Стабильный Firebase SDK Compat через проверенный CDN -->
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
@@ -34,11 +34,10 @@
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* БАННЕР УСТАРЕВШЕГО БРАУЗЕРА */
     .outdated-browser-banner { display: none; background: #991b1b; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; text-align: center; margin-bottom: 8px; border: 1px solid #f87171; }
     .outdated-browser-banner a { color: #fef08a; font-weight: 700; text-decoration: underline; }
 
-    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
+    .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); }
     .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
     .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
@@ -61,14 +60,14 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    /* БЛОК АВТОРИЗАЦИИ */
+    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin-top: 8px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
 
-    .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; flex-shrink: 0; }
+    .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
     .user-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
@@ -86,8 +85,7 @@
     .inventory-value { color: var(--text); font-weight: 600; margin-left: 2px; }
 
     .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
-    .profile-large-logo { width: 100%; height: auto; max-height: 35vh; object-fit: contain; background: transparent; filter: drop-shadow(0 10px 20px var(--logo-shadow)); transition: transform 0.3s ease, filter 0.3s ease; }
-    .profile-large-logo:hover { transform: scale(1.02); }
+    .profile-large-logo { width: 100%; height: auto; max-height: 35vh; object-fit: contain; background: transparent; filter: drop-shadow(0 10px 20px var(--logo-shadow)); }
 
     .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
     .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
@@ -213,7 +211,6 @@
     .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
     .textarea-announcement { resize: vertical; min-height: 90px; }
     .input-name { text-align: left; padding: 12px 14px; }
-    .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -225,6 +222,7 @@
 
 <div class="container">
 
+  <!-- БАННЕР ОБНОВЛЕНИЯ БРАУЗЕРА -->
   <div class="outdated-browser-banner" id="outdated-browser-banner">
     ⚠️ <b>Ваш браузер устарел!</b><br>
     Некоторые функции клуба могут работать некорректно. Рекомендуем открыть через <a href="https://browser.yandex.ru" target="_blank">Яндекс.Браузер</a> или обновить Android System WebView.
@@ -260,6 +258,7 @@
     </div>
   </div>
 
+  <!-- ЭКРАН АВТОРИЗАЦИИ -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -557,7 +556,7 @@
       <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>
+      <button class="score-btn tour-score-btn" onclick="selectScore(0, 3)">0 : 3</button>
     </div>
     <input type="hidden" id="tour-match-id-val" />
     <input type="hidden" id="tour-id-val" />
@@ -569,6 +568,21 @@
 </div>
 
 <script>
+  // ================= ПРОВЕРКА БРАУЗЕРА =================
+  function checkBrowserCompatibility() {
+    var isSupported = true;
+    try {
+      if (!window.fetch || !window.Promise || !window.localStorage || !document.querySelector) {
+        isSupported = false;
+      }
+    } catch(e) { isSupported = false; }
+    if (!isSupported) {
+      var banner = document.getElementById('outdated-browser-banner');
+      if (banner) banner.style.display = 'block';
+    }
+  }
+  checkBrowserCompatibility();
+
   function escapeJS(str) {
     if (!str) return '';
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
@@ -694,10 +708,10 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   var db = firebase.firestore();
 
-  // Принудительный Long Polling для стабильности в сетях РФ
-  db.settings({ 
-    experimentalForceLongPolling: true 
-  });
+  // Безопасное подключение Long Polling
+  try {
+    db.settings({ experimentalForceLongPolling: true });
+  } catch(e) {}
 
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
@@ -745,21 +759,6 @@
   }
 
   function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
-
-  function switchTab(tab) {
-    var tabRating = document.getElementById('tab-btn-rating');
-    var tabTime = document.getElementById('tab-btn-time');
-    var viewRating = document.getElementById('view-rating-content');
-    var viewTime = document.getElementById('view-time-content');
-
-    if (tab === 'rating') {
-      tabRating.classList.add('active'); tabTime.classList.remove('active');
-      viewRating.style.display = 'flex'; viewTime.style.display = 'none';
-    } else {
-      tabTime.classList.add('active'); tabRating.classList.remove('active');
-      viewTime.style.display = 'flex'; viewRating.style.display = 'none';
-    }
-  }
 
   function getWindDirection(degrees) {
     if (degrees === undefined || degrees === null) return "";
@@ -939,7 +938,11 @@
     if (!uid) return;
     if (currentUserLeaderboardUnsubscribe) currentUserLeaderboardUnsubscribe();
     currentUserLeaderboardUnsubscribe = db.collection('leaderboard').doc(uid).onSnapshot(function(doc) {
-        currentUserProfile.totalMinutes = (doc.exists && doc.data()) ? (doc.data().totalMinutes || 0) : 0;
+        if (doc.exists && doc.data()) {
+          currentUserProfile.totalMinutes = doc.data().totalMinutes || 0;
+        } else {
+          currentUserProfile.totalMinutes = 0;
+        }
         updateProfileDisplay();
     }, function(err) {});
   }
@@ -1382,6 +1385,7 @@
       });
   }
 
+  // КАРТОЧКА ИГРОКА: ЧТЕНИЕ ПОСЛЕДНИХ МАТЧЕЙ С КЛИЕНТСКОЙ СОРТИРОВКОЙ
   function showUserInfoModal(uid) {
     if(!uid) return;
     document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
@@ -1437,7 +1441,7 @@
               invContainer.style.display = 'none'; 
             }
 
-            db.collection('matches_history').get().then(function(snaps) {
+            db.collection('matches_history').limit(30).get().then(function(snaps) {
                 var matches = [];
                 snaps.forEach(function(docX) {
                   var mx = docX.data();
@@ -1464,7 +1468,7 @@
                 });
                 hEl.innerHTML = h;
             }).catch(function(err) {
-                document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки матчей</span>';
+                document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Пусто</span>';
             });
         }).catch(function() {
             closeUserInfoModal();
@@ -1664,7 +1668,7 @@
         return t.get(ref).then(function(doc) {
             if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
             if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid; }); } } 
-            else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
+            else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
             t.update(ref, { likes: likes, dislikes: dislikes });
         });
     }).catch(function(e) {});
@@ -1854,225 +1858,6 @@
             if (updatedMatch) db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
         });
     }).catch(function(e){});
-  }
-
-  function listenRatings() {
-    db.collection('users').onSnapshot(function(snap) {
-      var listEl = document.getElementById('rating-list');
-      if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
-      
-      var users = [];
-      var myUid = getVerifiedUserId();
-      snap.forEach(function(doc) {
-        var d = doc.data();
-        if (doc.id.match(/^(tg|google)_/) || d.isVerified) {
-          users.push({ uid: doc.id, data: d });
-        }
-      });
-
-      users.sort(function(a, b) { return (b.data.elo || 1000) - (a.data.elo || 1000); });
-
-      var html = '', rank = 1;
-      users.forEach(function(item) {
-        try {
-          var d = item.data;
-          var docId = item.uid;
-          if (docId === myUid) { 
-              var currentTm = currentUserProfile.totalMinutes || 0;
-              for(var k in d) currentUserProfile[k] = d[k];
-              currentUserProfile.totalMinutes = currentTm;
-              updateProfileDisplay(); 
-          }
-          var rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-          var wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0, winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-          var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(docId), rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
-          
-          var streakHtml = (d.winStreak && d.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + d.winStreak + '</span>' : '';
-          var deltaHtml = d.lastEloDelta ? (d.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + d.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + d.lastEloDelta + ') 📉</span>') : '';
-
-          html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div><div class="player-status-tag">' + getPlayerStatus(d.elo || 1000) + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (d.elo || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
-          rank++;
-        } catch(e) {}
-      });
-      listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
-    }, function(err) {});
-  }
-
-  function listenLeaderboard() {
-    db.collection('leaderboard').onSnapshot(function(snap) {
-      var listEl = document.getElementById('leaderboard-list');
-      if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
-      
-      var items = [];
-      snap.forEach(function(doc) {
-        if (doc.id.match(/^(tg|google)_/)) {
-          items.push({ uid: doc.id, data: doc.data() });
-        }
-      });
-
-      items.sort(function(a, b) { return (b.data.totalMinutes || 0) - (a.data.totalMinutes || 0); });
-
-      var html = '', rank = 1;
-      items.forEach(function(item) {
-        try {
-          var d = item.data;
-          var docId = item.uid;
-          var hours = ((d.totalMinutes || 0) / 60).toFixed(1), rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-          var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(docId);
-          
-          html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">' + hours + ' ч (' + (d.sessions || 0) + ' игр)</span><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
-          rank++;
-        } catch (e) {}
-      });
-      listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
-    }, function(err) {});
-  }
-
-  function loadParkWeather() {
-    var container = document.getElementById('weather-park'); if (!container) return;
-    var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-    var signal = controller ? controller.signal : null;
-    var timeoutId = setTimeout(function() { if (controller) controller.abort(); }, 8000);
-
-    fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto', { signal: signal })
-    .then(function(res) { return res.json(); }).then(function(data) {
-      clearTimeout(timeoutId);
-      try {
-          var c = data.current, d = data.daily;
-          var getW = function(code) { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
-          var tmrStr = '';
-          if (d && d.weather_code && d.weather_code.length > 1 && d.temperature_2m_min && d.temperature_2m_max) {
-              tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
-          }
-          container.innerHTML = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
-      } catch (innerE) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; }
-    }).catch(function(e) { 
-      clearTimeout(timeoutId);
-      container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; 
-    });
-  }
-
-  function monitorSessions() {
-    var now = Date.now();
-    ['park', 'vostok'].forEach(function(loc) {
-      db.runTransaction(function(t) {
-        return t.get(db.collection('locations').doc(loc)).then(function(doc) {
-          if (!doc.exists) return null;
-          var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
-          for (var i = 0; i < players.length; i++) {
-            var p = players[i]; 
-            var pTime = parseTime(p.time) || now;
-            var elapsed = now - pTime;
-            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
-                changed = true; 
-                var limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
-                var actualMins = Math.floor(elapsed / 60000);
-                var recordedMins = actualMins > limitMins ? limitMins : actualMins;
-                recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
-                leftPlayers.push({ uid: p.uid, name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
-            } 
-            else { activePlayers.push(p); }
-          }
-          var activePlans = plans.filter(function(pl) { 
-            var pt = parseTime(pl.planTime);
-            if (!pt || now > pt + 300000) { changed = true; return false; } 
-            return true; 
-          });
-          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
-          return null;
-        });
-      }).then(function(res) {
-        if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
-            for (var i = 0; i < res.leftPlayers.length; i++) {
-                var lp = res.leftPlayers[i];
-                if (canSendTgAlert('status_leave_' + loc + '_' + lp.uid)) {
-                    sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
-                }
-            }
-        }
-      }).catch(function(e){});
-    });
-  }
-
-  function renderAll() {
-    var myUid = getVerifiedUserId(); var now = Date.now();
-    currentUserActiveLoc = null; currentUserActivePlayer = null;
-
-    ['park', 'vostok'].forEach(function(loc) {
-      try {
-        var rawData = locationsData[loc] || { players: [], plans: [] };
-        
-        var players = (rawData.players || []).filter(function(p) { 
-          var pt = parseTime(p.time);
-          if (!pt) return true;
-          return (now - pt) < (p.maxLimitMs || DEFAULT_LIMIT_MS); 
-        });
-
-        var plans = (rawData.plans || []).filter(function(p) { 
-          var pt = parseTime(p.planTime);
-          if (!pt) return false;
-          return pt + 300000 > now; 
-        });
-        
-        var badge = document.getElementById('badge-' + loc); 
-        if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
-
-        var listEl = document.getElementById('list-' + loc);
-        if(listEl) {
-          if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
-          else { 
-              var pRows = [];
-              for(var i=0; i<players.length; i++) {
-                  var item = players[i];
-                  var itemTime = parseTime(item.time) || Date.now();
-                  pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + formatTime(itemTime) + '</span><span class="time-badge">'+ formatDuration(itemTime) + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
-              }
-              listEl.innerHTML = pRows.join(''); 
-          }
-        }
-
-        var planListEl = document.getElementById('plan-list-' + loc);
-        if(planListEl) {
-          if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
-          else { 
-              var plRows = [];
-              for(var j=0; j<plans.length; j++) {
-                  var p = plans[j];
-                  var pPlanTime = parseTime(p.planTime);
-                  plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(pPlanTime) + '</span><span class="time-badge-plan">' + formatUntil(pPlanTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>');
-              }
-              planListEl.innerHTML = plRows.join(''); 
-          }
-        }
-
-        var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
-        var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
-        var btnBox = document.getElementById('btn-container-' + loc);
-        
-        if(btnBox) {
-          if (!myUid) {
-            btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
-          } else if (activePlayerObj) { 
-              currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
-              btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
-          } else if (isUserOpened) { 
-              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
-          } else { 
-              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
-          }
-        }
-      } catch(e) {}
-    });
-
-    if (currentUserActiveLoc && currentUserActivePlayer) {
-      var pTime = parseTime(currentUserActivePlayer.time) || Date.now();
-      var elap = Date.now() - pTime;
-      var lim = currentUserActivePlayer.maxLimitMs || DEFAULT_LIMIT_MS;
-      if (elap >= (lim - REMIND_BEFORE_MS) && elap < lim) { 
-          document.getElementById('extend-modal').style.display = 'flex'; 
-          if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
-      } else { document.getElementById('extend-modal').style.display = 'none'; } 
-    } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
   }
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
