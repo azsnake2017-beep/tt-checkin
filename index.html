@@ -6,7 +6,10 @@
   <meta name="theme-color" content="#0b1120" id="meta-theme-color">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
+  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <!-- Firebase SDK Compat -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
@@ -84,14 +87,14 @@
 
     .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
     .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
-    .badge-teacher { background: rgba(16, 185, 129, 0.2); color: #059669; margin-left: 4px; }
-    .badge-temshik { background: rgba(168, 85, 247, 0.2); color: #9333ea; margin-left: 4px; }
+    .badge-teacher { background: rgba(168, 85, 247, 0.2); color: #9333ea; margin-left: 4px; }
+    .badge-temshik { background: rgba(16, 185, 129, 0.2); color: #059669; margin-left: 4px; }
     .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #0284c7; margin-left: 4px; }
     .badge-bot { background: rgba(148, 163, 184, 0.2); color: #64748b; margin-left: 4px; }
     .badge-coach { background: rgba(59, 130, 246, 0.2); color: #2563eb; margin-left: 4px; }
     :root[data-theme="dark"] .badge-admin { color: #f59e0b; }
-    :root[data-theme="dark"] .badge-teacher { color: #10b981; }
-    :root[data-theme="dark"] .badge-temshik { color: #d8b4fe; }
+    :root[data-theme="dark"] .badge-teacher { color: #d8b4fe; }
+    :root[data-theme="dark"] .badge-temshik { color: #10b981; }
     :root[data-theme="dark"] .badge-hockey { color: #38bdf8; }
     :root[data-theme="dark"] .badge-bot { color: #cbd5e1; }
     :root[data-theme="dark"] .badge-coach { color: #60a5fa; }
@@ -401,6 +404,10 @@
     </div>
     <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea>
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
+    
+    <!-- НОВАЯ КНОПКА: ОТПРАВКА СТАТИСТИКИ И ТОП-10 -->
+    <button class="btn btn-join" style="background: var(--accent-purple); color: #ffffff; font-weight: 700; margin-top: 6px;" onclick="sendClubStatsBroadcast()">📊 Отправить ТОП-10 и статистику в чат</button>
+    
     <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
 </div>
@@ -832,16 +839,6 @@
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
-  function getPlayerStatus(elo) {
-    if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
-    if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
-    if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆";
-    if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️";
-    if (elo <= 3400) return "Чемпион клуба 👑"; if (elo <= 3600) return "Гранд-мастер 🎖️"; if (elo <= 3800) return "Снайпер 🎯";
-    if (elo <= 4000) return "Легенда клуба 🏛️"; if (elo <= 4200) return "Премьер-лига 📈"; if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
-    if (elo <= 4600) return "Властелин стола 👑🏓"; if (elo <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
-  }
-
   function isUserVerified() {
     var tgUser = null;
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
@@ -945,7 +942,6 @@
       renderAll();
   }
 
-  // СТРОГАЯ АВТОРИЗАЦИЯ: ГОСТЕВОЙ РЕЖИМ УДАЛЕН
   function initUserProfile() {
     var authScreen = document.getElementById('mandatory-auth-screen');
     var tgUser = null;
@@ -964,8 +960,7 @@
     if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
       db.collection('users').doc(savedId).get().then(function(snap) {
         if (snap.exists) {
-          var data = snap.data();
-          currentUserProfile = data;
+          currentUserProfile = snap.data();
           if (authScreen) authScreen.style.display = 'none';
           updateProfileDisplay();
           subscribeToUserLeaderboard(savedId);
@@ -1141,7 +1136,7 @@
         });
     }).then(function() {
         hasTriggeredPush = false; 
-        if (canSendTgAlert('status_checkin_' + loc)) {
+        if (canSendTgAlert('status_checkin_' + loc + '_' + uid)) {
             sendTelegramAlert("🏓 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> уже у стола " + LOCATION_NAMES[loc] + "!" + buildBlockquoteList(finalList, "Сейчас за столом") + "\n\nКто составит компанию?");
         }
     }).catch(function(e) {});
@@ -1170,7 +1165,7 @@
     }).then(function() {
         if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
         document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
-        if (canSendTgAlert('status_leave_' + loc)) {
+        if (canSendTgAlert('status_leave_' + loc + '_' + uid)) {
             sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> закончил тренировку и покинул стол " + LOCATION_NAMES[loc] + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
         }
     }).catch(function(e) {});
@@ -1214,7 +1209,7 @@
             pl.push({ name: currentUserProfile.name, planTime: ts, uid: uid }); t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
         });
     }).then(function() {
-        if (canSendTgAlert('status_plan_' + loc)) sendTelegramAlert("⏳ игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> планирует быть у стола " + LOCATION_NAMES[loc] + " <b>" + formatUntil(ts) + "</b>!\n\nКто готов составить пару?");
+        if (canSendTgAlert('status_plan_' + loc + '_' + uid)) sendTelegramAlert("⏳ игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> планирует быть у стола " + LOCATION_NAMES[loc] + " <b>" + formatUntil(ts) + "</b>!\n\nКто готов составить пару?");
     }).catch(function(e) {});
   }
   function cancelPlan(loc) { 
@@ -1233,6 +1228,68 @@
     if(!isSuperAdmin()) return; var t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
     sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
   }
+
+  // ОТПРАВКА СТАТИСТИКИ И ТОП-10 В ЧАТ ТЕЛЕГРАМ
+  function sendClubStatsBroadcast() {
+    if (!isSuperAdmin()) return;
+    
+    Promise.all([
+      db.collection('users').orderBy('elo', 'desc').get(),
+      db.collection('matches_history').get(),
+      db.collection('leaderboard').get()
+    ]).then(function(results) {
+      var usersSnap = results[0];
+      var matchesSnap = results[1];
+      var leadSnap = results[2];
+
+      var totalUsers = 0;
+      var topList = [];
+      
+      usersSnap.forEach(function(doc) {
+        var d = doc.data();
+        if (doc.id.match(/^(tg|google)_/) || d.isVerified) {
+          totalUsers++;
+          if (topList.length < 10) {
+            topList.push({
+              name: d.name || 'Игрок',
+              elo: d.elo || 1000,
+              wins: d.wins || 0,
+              losses: d.losses || 0,
+              matches: d.matches || 0
+            });
+          }
+        }
+      });
+
+      var totalMinutesAll = 0;
+      leadSnap.forEach(function(doc) {
+        totalMinutesAll += (doc.data().totalMinutes || 0);
+      });
+      var totalHoursAll = Math.round(totalMinutesAll / 60);
+
+      var text = "📊 <b>Официальная статистика Клуба ЧМЗ</b>\n\n" +
+        "👥 Игроков в рейтинге: <b>" + totalUsers + "</b>\n" +
+        "⚔️ Всего сыграно матчей: <b>" + matchesSnap.size + "</b>\n" +
+        "⏱ Общее время тренировок: <b>" + totalHoursAll + " ч</b>\n\n" +
+        "🏆 <b>ТОП-10 ИГРОКОВ КЛУБА (ЭЛО):</b>\n";
+
+      for (var i = 0; i < topList.length; i++) {
+        var p = topList[i];
+        var medal = (i === 0) ? '🥇 ' : (i === 1) ? '🥈 ' : (i === 2) ? '🥉 ' : ((i + 1) + '. ');
+        var winrate = p.matches > 0 ? Math.round((p.wins / p.matches) * 100) : 0;
+        text += medal + "<b>" + cleanHtml(p.name) + "</b> — <code>" + p.elo + "</code> (" + p.wins + "В-" + p.losses + "П, " + winrate + "%)\n";
+      }
+
+      text += "\n📲 <i>Смотрите полную таблицу и бронируйте столы в нашем приложении!</i>";
+
+      sendTelegramAlert(text);
+      closeAdminMenu();
+      customAlert("✅ Статистика и ТОП-10 отправлены в чат!");
+    }).catch(function(err) {
+      customAlert("Ошибка сбора статистики: " + err.message);
+    });
+  }
+
   function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
   function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
   function saveAnnouncement() { 
@@ -1867,108 +1924,6 @@
           container.innerHTML = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
       } catch (innerE) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; }
     }).catch(function(e) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; });
-  }
-
-  function monitorSessions() {
-    var now = Date.now();
-    ['park', 'vostok'].forEach(function(loc) {
-      db.runTransaction(function(t) {
-        return t.get(db.collection('locations').doc(loc)).then(function(doc) {
-          if (!doc.exists) return null;
-          var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
-          for (var i = 0; i < players.length; i++) {
-            var p = players[i]; var elapsed = now - (p.time || now);
-            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
-                changed = true; 
-                var limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
-                var actualMins = Math.floor(elapsed / 60000);
-                var recordedMins = actualMins > limitMins ? limitMins : actualMins;
-                recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
-                leftPlayers.push({ name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
-            } 
-            else { activePlayers.push(p); }
-          }
-          var activePlans = plans.filter(function(pl) { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
-          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
-          return null;
-        });
-      }).then(function(res) {
-        if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
-            for (var i = 0; i < res.leftPlayers.length; i++) {
-                var lp = res.leftPlayers[i];
-                sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
-            }
-        }
-      }).catch(function(e){});
-    });
-  }
-
-  function renderAll() {
-    var myUid = getVerifiedUserId(); var now = Date.now();
-    currentUserActiveLoc = null; currentUserActivePlayer = null;
-
-    ['park', 'vostok'].forEach(function(loc) {
-      try {
-        var rawData = locationsData[loc] || { players: [], plans: [] };
-        var players = (rawData.players || []).filter(function(p) { return (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS); });
-        var plans = (rawData.plans || []).filter(function(p) { return p.planTime && p.planTime + 300000 > now; });
-        
-        var badge = document.getElementById('badge-' + loc); 
-        if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
-
-        var listEl = document.getElementById('list-' + loc);
-        if(listEl) {
-          if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
-          else { 
-              var pRows = [];
-              for(var i=0; i<players.length; i++) {
-                  var item = players[i];
-                  pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + formatTime(item.time || Date.now()) + '</span><span class="time-badge">' + formatDuration(item.time || Date.now()) + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
-              }
-              listEl.innerHTML = pRows.join(''); 
-          }
-        }
-
-        var planListEl = document.getElementById('plan-list-' + loc);
-        if(planListEl) {
-          if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
-          else { 
-              var plRows = [];
-              for(var j=0; j<plans.length; j++) {
-                  var p = plans[j];
-                  planListEl.innerHTML = '<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(p.planTime) + '</span><span class="time-badge-plan">' + formatUntil(p.planTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>';
-              }
-              planListEl.innerHTML = plRows.join(''); 
-          }
-        }
-
-        var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
-        var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
-        var btnBox = document.getElementById('btn-container-' + loc);
-        
-        if(btnBox) {
-          if (!myUid) {
-            btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
-          } else if (activePlayerObj) { 
-              currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
-              btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
-          } else if (isUserOpened) { 
-              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
-          } else { 
-              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
-          }
-        }
-      } catch(e) {}
-    });
-
-    if (currentUserActiveLoc && currentUserActivePlayer) {
-      var elap = Date.now() - (currentUserActivePlayer.time||Date.now());
-      var lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
-      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { 
-          document.getElementById('extend-modal').style.display = 'flex'; 
-          if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
-      } else { document.getElementById('extend-modal').style.display = 'none'; } 
-    } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
   }
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
