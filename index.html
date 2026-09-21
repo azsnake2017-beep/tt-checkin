@@ -6,10 +6,7 @@
   <meta name="theme-color" content="#0b1120" id="meta-theme-color">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
-  <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
-  <!-- Firebase SDK (jsDelivr для стабильной работы без VPN в РФ) -->
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
@@ -34,7 +31,6 @@
     .main-view.active { display: flex; }
     @keyframes fadeInView { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
-    /* ШАПКА */
     .club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); transition: background-color 0.3s, border-color 0.3s; }
     .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
     .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
@@ -58,14 +54,12 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    /* АВТОРИЗАЦИЯ */
     .auth-banner { display: none; background: var(--row-bg); border: 1px solid var(--accent-sky); border-radius: 16px; padding: 16px; text-align: center; flex-direction: column; align-items: center; gap: 10px; }
     .auth-banner h3 { font-size: 15px; color: var(--text); }
     .auth-banner p { font-size: 12px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 8px; max-width: 300px; margin-top: 4px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 10px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
     
-    /* ПРОФИЛЬ */
     .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); transition: 0.3s; flex-shrink: 0; }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
     .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
@@ -75,7 +69,6 @@
     .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 8px; }
     .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
 
-    /* МЕДАЛИ И ИНВЕНТАРЬ */
     .medals-box { display: flex; gap: 10px; justify-content: center; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 8px; border-radius: 8px; margin-top: 4px; }
     .medal-item { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; }
     .inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
@@ -84,7 +77,6 @@
     .inventory-item-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
     .inventory-value { color: var(--text); font-weight: 600; margin-left: 2px; }
 
-    /* ЛОГОТИП */
     .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
     .profile-large-logo { width: 100%; height: auto; max-height: 35vh; object-fit: contain; background: transparent; filter: drop-shadow(0 10px 20px var(--logo-shadow)); transition: transform 0.3s ease, filter 0.3s ease; }
     .profile-large-logo:hover { transform: scale(1.02); }
@@ -111,7 +103,6 @@
 
     .btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;}
 
-    /* КАРТОЧКИ И АНИМАЦИИ */
     .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; transition: 0.3s; }
     .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
     .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
@@ -183,7 +174,6 @@
     .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
     :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
 
-    /* СТИЛИ ДЛЯ ТУРНИРОВ И ИСТОРИИ МАТЧЕЙ */
     .tour-group-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; background: var(--list-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); }
     .tour-group-table th, .tour-group-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--card-border); }
     .tour-group-table th { background: var(--row-bg); color: var(--text-muted); font-weight: 600; }
@@ -195,7 +185,6 @@
     .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
     .clickable-name:active { opacity: 0.6; }
 
-    /* BOTTOM NAVIGATION */
     .bottom-nav {
       position: fixed;
       bottom: 0; left: 0; width: 100%;
@@ -212,7 +201,6 @@
     .nav-icon { font-size: 22px; margin-bottom: 4px; }
     .nav-item:active { transform: scale(0.9); }
 
-    /* МОДАЛКИ */
     .modal-overlay { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: none; align-items: center; justify-content: center; padding: 20px; z-index: 1001; }
     .modal-box { background: var(--card-bg); border: 1px solid var(--card-border); width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; flex-direction: column; gap: 14px; text-align: center; max-height: 85vh; overflow-y: auto; color: var(--text); }
     .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
@@ -234,7 +222,6 @@
 
 <div class="container">
 
-  <!-- ЕДИНЫЙ БЛОК ШАПКИ -->
   <div class="club-header">
     <div class="club-header-top">
       <div class="club-header-left">
@@ -265,7 +252,6 @@
     </div>
   </div>
 
-  <!-- Плашка авторизации глобальная -->
   <div class="auth-banner" id="web-auth-banner">
     <h3>🔐 Подтвердите профиль игрока</h3>
     <p>Для участия в рейтинге клуба выберите удобный способ входа:</p>
@@ -275,7 +261,6 @@
         <span>🌐</span> Войти через Google
       </button>
     </div>
-    <div class="vpn-hint">💡 Если виджет не загружается, отключите VPN или войдите через Google.</div>
   </div>
 
   <!-- ЭКРАН 1: ПРОФИЛЬ -->
@@ -292,10 +277,7 @@
         <span class="player-status-tag">0В - 0П (0%)</span>
       </div>
       
-      <!-- Медали -->
       <div id="user-medals-container" class="medals-box" style="display:none;"></div>
-      
-      <!-- Блок Инвентаря -->
       <div id="user-inventory-container" style="display: none;"></div>
 
       <div class="profile-actions-row">
@@ -364,7 +346,6 @@
     </button>
     <div id="pending-matches-container"></div>
     
-    <!-- ИСТОРИЯ ПОСЛЕДНИХ МАТЧЕЙ -->
     <div id="recent-matches-container"></div>
 
     <div class="tabs-container">
@@ -399,7 +380,7 @@
 
 </div>
 
-<!-- BOTTOM NAVIGATION (Без лишней стрелки скролла) -->
+<!-- BOTTOM NAVIGATION -->
 <div class="bottom-nav">
   <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></a>
   <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')"><span class="nav-icon">📍</span><span>Радар</span></a>
@@ -428,7 +409,6 @@
   </div>
 </div>
 
-<!-- Окно кастомного подтверждения удаления -->
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box" style="border-color: var(--accent-red); padding: 24px;">
     <h3 style="font-size: 18px; margin-bottom: 8px; color: var(--accent-red);">Внимание</h3>
@@ -553,7 +533,6 @@
   </div>
 </div>
 
-<!-- ТУРНИР: СОЗДАНИЕ И РЕДАКТИРОВАНИЕ -->
 <div class="modal-overlay" id="tournament-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: var(--accent-amber);">🏆 Турнир</h3>
@@ -565,7 +544,6 @@
   </div>
 </div>
 
-<!-- ТУРНИР: ВВОД СЧЕТА МАТЧА -->
 <div class="modal-overlay" id="tour-match-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 16px; color: var(--accent-amber);">Внести счет матча</h3>
@@ -588,13 +566,11 @@
 </div>
 
 <script>
-  // ================= ЭКРАНИРОВАНИЕ XSS =================
   function escapeJS(str) {
     if (!str) return '';
     return String(str).replace(/\\/g, '\\\\').replace(/'/g, "\\'").replace(/"/g, '&quot;');
   }
 
-  // ================= ЮМОР ДЛЯ БОТА ПО ИТОГАМ МАТЧА =================
   function getMatchHumor(winnerScore, loserScore, winnerName, loserName) {
     var jokes_3_0 = [
       "🔥 " + cleanHtml(winnerName) + " оформил сухой закон! " + cleanHtml(loserName) + ", держись, реванш не за горами!",
@@ -622,7 +598,6 @@
     return pool[Math.floor(Math.random() * pool.length)];
   }
 
-  // ================= КАСТОМНОЕ ПОДТВЕРЖДЕНИЕ =================
   var confirmActionCallback = null;
   function openConfirmModal(msg, action) {
     document.getElementById('confirm-modal-text').innerText = msg;
@@ -638,7 +613,6 @@
     closeConfirmModal();
   }
 
-  // ================= ТЕМА И НАВИГАЦИЯ =================
   function initTheme() {
     var savedTheme = localStorage.getItem('tt_theme') || 'dark';
     document.documentElement.setAttribute('data-theme', savedTheme);
@@ -679,7 +653,6 @@
   initTheme();
   initNavTab();
 
-  // ================= ОБЪЯВЛЕНИЕ ГЛОБАЛЬНЫХ ПЕРЕМЕННЫХ =================
   var GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
   var TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
   var TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
@@ -705,7 +678,6 @@
   var currentUserLeaderboardUnsubscribe = null;
   var currentEditingTourId = null;
 
-  // ================= ИНИЦИАЛИЗАЦИЯ FIREBASE =================
   var firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
     authDomain: "tt-chmz.firebaseapp.com",
@@ -717,9 +689,7 @@
   
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   var db = firebase.firestore();
-  db.settings({ experimentalForceLongPolling: true });
 
-  // ================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =================
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
     document.getElementById('custom-alert-modal').style.display = 'flex';
@@ -862,7 +832,6 @@
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
 
-  // ================= ПРОФИЛЬ И АВТОРИЗАЦИЯ =================
   function getPlayerStatus(elo) {
     if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
     if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
@@ -1034,7 +1003,6 @@
     
     document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(currentUserProfile.totalMinutes || 0) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + (currentUserProfile.wins || 0) + 'В - ' + (currentUserProfile.losses || 0) + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
 
-    // Медали
     var mContainer = document.getElementById('user-medals-container');
     var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
     if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
@@ -1042,7 +1010,6 @@
       mContainer.style.display = 'flex';
     } else { mContainer.style.display = 'none'; }
 
-    // Инвентарь
     var invContainer = document.getElementById('user-inventory-container');
     if (invContainer) {
       if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
@@ -1058,7 +1025,6 @@
     if (isUserVerified()) { document.getElementById('btn-edit-profile').style.display = 'block'; document.getElementById('btn-logout').style.display = 'block'; }
   }
 
-  // ================= РЕДАКТИРОВАНИЕ ПРОФИЛЯ =================
   function handleEditProfileClick() { 
     if (isUserVerified()) { 
       document.getElementById('name-input').value = currentUserProfile.name || ''; 
@@ -1102,7 +1068,6 @@
     }).catch(function(e) { customAlert("Не удалось сохранить профиль."); });
   }
 
-  // ================= ЧЕКИН И БРОНЬ =================
   function handleCheckInClick(loc) { if (isUserVerified()) checkIn(loc); }
   function handlePlanClick(loc) { if (isUserVerified()) { activePlanningLoc = loc; document.getElementById('plan-modal').style.display = 'flex'; } }
   function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
@@ -1227,7 +1192,6 @@
       }).catch(function(e) {}); 
   }
 
-  // ================= ПОДТВЕРЖДЕНИЕ МАТЧА (ИСПРАВЛЕНО + ЮМОР) =================
   function confirmMatch(matchId) {
     var myUid = getVerifiedUserId(); if (!myUid) return;
     var matchRef = db.collection('pending_matches').doc(matchId);
@@ -1302,7 +1266,6 @@
     });
   }
 
-  // ================= ПОГОДА И СЕССИИ =================
   function loadParkWeather() {
     var container = document.getElementById('weather-park'); if (!container) return;
     fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto')
@@ -1386,7 +1349,7 @@
               var plRows = [];
               for(var j=0; j<plans.length; j++) {
                   var p = plans[j];
-                  planListEl.innerHTML = '<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(p.planTime) + '</span><span class="time-badge-plan">' + formatUntil(p.planTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>';
+                  plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(p.planTime) + '</span><span class="time-badge-plan">' + formatUntil(p.planTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>');
               }
               planListEl.innerHTML = plRows.join(''); 
           }
@@ -1419,7 +1382,6 @@
     } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
   }
 
-  // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
     initUserProfile(); listenRatings(); listenLeaderboard(); listenTournaments(); listenPendingMatches(); listenRecentMatches(); loadParkWeather();
     
