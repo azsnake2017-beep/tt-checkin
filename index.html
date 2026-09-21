@@ -9,10 +9,10 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Firebase SDK Compat -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- Firebase SDK Compat (jsDelivr для обхода блокировок) -->
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -250,7 +250,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ (ГОСТЕВОЙ РЕЖИМ УДАЛЕН) -->
+  <!-- ЭКРАН ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -405,7 +405,6 @@
     <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea>
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
     
-    <!-- НОВАЯ КНОПКА: ОТПРАВКА СТАТИСТИКИ И ТОП-10 -->
     <button class="btn btn-join" style="background: var(--accent-purple); color: #ffffff; font-weight: 700; margin-top: 6px;" onclick="sendClubStatsBroadcast()">📊 Отправить ТОП-10 и статистику в чат</button>
     
     <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
@@ -692,6 +691,11 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   var db = firebase.firestore();
 
+  // Безопасное включение Long Polling для стабильности в сетях РФ
+  try {
+    db.settings({ experimentalForceLongPolling: true });
+  } catch(e) {}
+
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
     document.getElementById('custom-alert-modal').style.display = 'flex';
@@ -778,6 +782,7 @@
     return '<div class="inventory-item"><div class="inventory-item-left"><span>' + icon + '</span> <span style="color: var(--text-muted);">' + label + '</span> <span class="inventory-value">' + cleanHtml(value) + '</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink(\'' + url + '\')">i</button></div>';
   }
 
+  // Персональный антиспам на действие игрока
   function canSendTgAlert(actionType) {
     var now = Date.now();
     var lastTime = localStorage.getItem('tt_last_alert_' + actionType);
@@ -942,6 +947,7 @@
       renderAll();
   }
 
+  // МГНОВЕННАЯ АВТОРИЗАЦИЯ ИЗ КЭША ТЕЛЕФОНА (БЕЗ ГОСТЯ И БЕЗ ЗАВИСАНИЙ)
   function initUserProfile() {
     var authScreen = document.getElementById('mandatory-auth-screen');
     var tgUser = null;
@@ -957,19 +963,25 @@
     }
     
     var savedId = localStorage.getItem('tt_member_id');
+    var savedName = localStorage.getItem('tt_name') || "Игрок";
+    
     if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
+      // Моментально пускаем игрока с локальными данными
+      currentUserProfile = { uid: savedId, name: savedName, elo: 1000, isVerified: true };
+      if (authScreen) authScreen.style.display = 'none';
+      updateProfileDisplay();
+      renderAll();
+
+      // В фоне без блокировки интерфейса запрашиваем актуальные данные из Firebase
       db.collection('users').doc(savedId).get().then(function(snap) {
         if (snap.exists) {
           currentUserProfile = snap.data();
-          if (authScreen) authScreen.style.display = 'none';
           updateProfileDisplay();
           subscribeToUserLeaderboard(savedId);
           renderAll();
-        } else {
-          showAuthRequired(authScreen);
         }
-      }).catch(function() {
-        showAuthRequired(authScreen);
+      }).catch(function(err) {
+        console.warn("Фоновое обновление профиля отложено:", err);
       });
       return;
     }
@@ -1114,6 +1126,7 @@
     }).catch(function(e) {});
   }
 
+  // ПЕРСОНАЛЬНЫЙ АНТИСПАМ-ТАЙМЕР
   function checkIn(loc) {
     var uid = getVerifiedUserId(); if (!uid) return;
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
@@ -1851,7 +1864,7 @@
             activeHtml += '<div class="card" style="border-color: var(--accent-amber);"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted);">' + (d.dateStr || '') + '</div></div>' + dDesc + content + '<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="score-btn ' + (isLiked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'like\')">👍 ' + likes.length + '</button><button class="score-btn ' + (isDisliked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'dislike\')">👎 ' + dislikes.length + '</button>' + buttonsHtml + '</div>' + adminActionHtml + '</div>';
           } catch (err) {
             if (isAdmin) {
-              activeHtml += '<div class="card" style="border-color: #ef4444; border-width: 2px;"><div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Сбой в данных турнира</div><div style="font-size: 11px; color: var(--text-muted);">Этот турнир поврежден. Остальная система работает нормально. Нажмите кнопку ниже, чтобы принудительно удалить сбойный турнир из базы.</div><button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament(\''+escapeJS(doc.id)+'\')">🗑 Принудительно удалить</button></div>';
+              activeHtml += '<div class="card" style="border-color: #ef4444; border-width: 2px;"><div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Сбой в данных турнира</div><div style="font-size: 11px; color: var(--text-muted);">Этот турнир поврежден. Нажмите кнопку ниже, чтобы принудительно удалить сбойный турнир из базы.</div><button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament(\''+escapeJS(doc.id)+'\')">🗑 Принудительно удалить</button></div>';
             }
           }
         });
@@ -1926,6 +1939,110 @@
     }).catch(function(e) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; });
   }
 
+  function monitorSessions() {
+    var now = Date.now();
+    ['park', 'vostok'].forEach(function(loc) {
+      db.runTransaction(function(t) {
+        return t.get(db.collection('locations').doc(loc)).then(function(doc) {
+          if (!doc.exists) return null;
+          var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
+          for (var i = 0; i < players.length; i++) {
+            var p = players[i]; var elapsed = now - (p.time || now);
+            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
+                changed = true; 
+                var limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
+                var actualMins = Math.floor(elapsed / 60000);
+                var recordedMins = actualMins > limitMins ? limitMins : actualMins;
+                recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
+                leftPlayers.push({ uid: p.uid, name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
+            } 
+            else { activePlayers.push(p); }
+          }
+          var activePlans = plans.filter(function(pl) { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
+          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
+          return null;
+        });
+      }).then(function(res) {
+        if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
+            for (var i = 0; i < res.leftPlayers.length; i++) {
+                var lp = res.leftPlayers[i];
+                if (canSendTgAlert('status_leave_' + loc + '_' + lp.uid)) {
+                    sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
+                }
+            }
+        }
+      }).catch(function(e){});
+    });
+  }
+
+  function renderAll() {
+    var myUid = getVerifiedUserId(); var now = Date.now();
+    currentUserActiveLoc = null; currentUserActivePlayer = null;
+
+    ['park', 'vostok'].forEach(function(loc) {
+      try {
+        var rawData = locationsData[loc] || { players: [], plans: [] };
+        var players = (rawData.players || []).filter(function(p) { return (now - (p.time || now)) < (p.maxLimitMs || DEFAULT_LIMIT_MS); });
+        var plans = (rawData.plans || []).filter(function(p) { return p.planTime && p.planTime + 300000 > now; });
+        
+        var badge = document.getElementById('badge-' + loc); 
+        if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
+
+        var listEl = document.getElementById('list-' + loc);
+        if(listEl) {
+          if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
+          else { 
+              var pRows = [];
+              for(var i=0; i<players.length; i++) {
+                  var item = players[i];
+                  pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + formatTime(item.time || Date.now()) + '</span><span class="time-badge">'+ formatDuration(item.time || Date.now()) + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
+              }
+              listEl.innerHTML = pRows.join(''); 
+          }
+        }
+
+        var planListEl = document.getElementById('plan-list-' + loc);
+        if(planListEl) {
+          if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
+          else { 
+              var plRows = [];
+              for(var j=0; j<plans.length; j++) {
+                  var p = plans[j];
+                  planListEl.innerHTML = '<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(p.planTime) + '</span><span class="time-badge-plan">' + formatUntil(p.planTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>';
+              }
+              planListEl.innerHTML = plRows.join(''); 
+          }
+        }
+
+        var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
+        var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
+        var btnBox = document.getElementById('btn-container-' + loc);
+        
+        if(btnBox) {
+          if (!myUid) {
+            btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
+          } else if (activePlayerObj) { 
+              currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
+              btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
+          } else if (isUserOpened) { 
+              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
+          } else { 
+              btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
+          }
+        }
+      } catch(e) {}
+    });
+
+    if (currentUserActiveLoc && currentUserActivePlayer) {
+      var elap = Date.now() - (currentUserActivePlayer.time||Date.now());
+      var lim = currentUserActivePlayer.maxLimitMs||DEFAULT_LIMIT_MS;
+      if (elap >= (lim-REMIND_BEFORE_MS) && elap < lim) { 
+          document.getElementById('extend-modal').style.display = 'flex'; 
+          if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
+      } else { document.getElementById('extend-modal').style.display = 'none'; } 
+    } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
+  }
+
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
     try { initUserProfile(); } catch(e) { console.error("initUserProfile error", e); }
@@ -1956,8 +2073,7 @@
         try {
           announcementsData = doc.data() || {park:"", vostok:""};
           ['park','vostok'].forEach(function(loc) {
-            var b = document.getElementById('announcement-box-'+loc);
-            var t = document.getElementById('announcement-text-'+loc);
+            var b = document.getElementById('announcement-box-'+loc), t = document.getElementById('announcement-text-'+loc);
             if(b && t) { 
                 if(announcementsData[loc]) { 
                     t.innerHTML = cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display = 'flex'; 
