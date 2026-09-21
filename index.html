@@ -9,10 +9,10 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Стабильный Firebase SDK Compat -->
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
+  <!-- Асинхронное подключение Firebase с атрибутом defer для мгновенного отображения интерфейса -->
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -60,7 +60,6 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
@@ -212,7 +211,6 @@
     .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
     .textarea-announcement { resize: vertical; min-height: 90px; }
     .input-name { text-align: left; padding: 12px 14px; }
-    .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -259,6 +257,7 @@
     </div>
   </div>
 
+  <!-- ЭКРАН АВТОРИЗАЦИИ С ПОДСКАЗКОЙ О VPN -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -712,11 +711,6 @@
   }
   var db = firebase.firestore();
 
-  // Принудительный Long Polling для стабильности в сетях РФ
-  try {
-    db.settings({ experimentalForceLongPolling: true });
-  } catch(e) {}
-
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
     document.getElementById('custom-alert-modal').style.display = 'flex';
@@ -870,16 +864,6 @@
     document.getElementById('qr-modal').style.display = 'flex';
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
-
-  function getPlayerStatus(elo) {
-    if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
-    if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
-    if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆";
-    if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️";
-    if (elo <= 3400) return "Чемпион клуба 👑"; if (elo <= 3600) return "Гранд-мастер 🎖️"; if (elo <= 3800) return "Снайпер 🎯";
-    if (elo <= 4000) return "Легенда клуба 🏛️"; if (elo <= 4200) return "Премьер-лига 📈"; if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
-    if (elo <= 4600) return "Властелин стола 👑🏓"; if (elo <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
-  }
 
   function isUserVerified() {
     var tgUser = null;
@@ -1335,68 +1319,6 @@
     sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
   }
 
-  // ВЫГРУЗКА ТОП-10 И СТАТИСТИКИ КЛУБА В ЧАТ
-  function sendClubStatsBroadcast() {
-    if (!isSuperAdmin()) return;
-    
-    Promise.all([
-      db.collection('users').get(),
-      db.collection('matches_history').get(),
-      db.collection('leaderboard').get()
-    ]).then(function(results) {
-      var usersSnap = results[0];
-      var matchesSnap = results[1];
-      var leadSnap = results[2];
-
-      var totalUsers = 0;
-      var usersList = [];
-      
-      usersSnap.forEach(function(doc) {
-        var d = doc.data();
-        if (doc.id.match(/^(tg|google)_/) || d.isVerified) {
-          totalUsers++;
-          usersList.push({
-            name: d.name || 'Игрок',
-            elo: d.elo || 1000,
-            wins: d.wins || 0,
-            losses: d.losses || 0,
-            matches: d.matches || 0
-          });
-        }
-      });
-
-      usersList.sort(function(a, b) { return (b.elo || 1000) - (a.elo || 1000); });
-      var topList = usersList.slice(0, 10);
-
-      var totalMinutesAll = 0;
-      leadSnap.forEach(function(doc) {
-        totalMinutesAll += (doc.data().totalMinutes || 0);
-      });
-      var totalHoursAll = Math.round(totalMinutesAll / 60);
-
-      var text = "📊 <b>Официальная статистика Клуба ЧМЗ</b>\n\n" +
-        "👥 Игроков в рейтинге: <b>" + totalUsers + "</b>\n" +
-        "⚔️ Всего сыграно матчей: <b>" + matchesSnap.size + "</b>\n" +
-        "⏱ Общее время тренировок: <b>" + totalHoursAll + " ч</b>\n\n" +
-        "🏆 <b>ТОП-10 ИГРОКОВ КЛУБА (ЭЛО):</b>\n";
-
-      for (var i = 0; i < topList.length; i++) {
-        var p = topList[i];
-        var medal = (i === 0) ? '🥇 ' : (i === 1) ? '🥈 ' : (i === 2) ? '🥉 ' : ((i + 1) + '. ');
-        var winrate = p.matches > 0 ? Math.round((p.wins / p.matches) * 100) : 0;
-        text += medal + "<b>" + cleanHtml(p.name) + "</b> — <code>" + p.elo + "</code> (" + p.wins + "В-" + p.losses + "П, " + winrate + "%)\n";
-      }
-
-      text += "\n📲 <i>Смотрите полную таблицу и бронируйте столы в нашем приложении!</i>";
-
-      sendTelegramAlert(text);
-      closeAdminMenu();
-      customAlert("✅ Статистика и ТОП-10 отправлены в чат!");
-    }).catch(function(err) {
-      customAlert("Ошибка сбора статистики: " + err.message);
-    });
-  }
-
   function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
   function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
   function saveAnnouncement() { 
@@ -1838,71 +1760,6 @@
     }).catch(function(e) {});
   }
 
-  function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
-    document.getElementById('tour-match-id-val').value = matchId; 
-    document.getElementById('tour-id-val').value = tourId; 
-    document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
-    selectTourScore(3, 0); 
-    document.getElementById('tour-match-modal').style.display = 'flex';
-  }
-  function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
-  function selectTourScore(s1, s2) { 
-      document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; 
-      var btns = document.querySelectorAll('.tour-score-btn');
-      for(var i=0; i<btns.length; i++) {
-          if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active');
-          else btns[i].classList.remove('active');
-      }
-  }
-  
-  function submitTourMatchScore() {
-    var s1 = parseInt(document.getElementById('tour-match-s1').value, 10), s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
-    var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
-    closeTourMatchModal();
-    
-    db.runTransaction(function(t) {
-        var ref = db.collection('tournaments').doc(tourId);
-        return t.get(ref).then(function(doc) {
-            if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
-            var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
-            if (mIdx === -1 || matches[mIdx].score1 !== null) return;
-            var match = matches[mIdx];
-            if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
-
-            match.score1 = s1; match.score2 = s2;
-            var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
-            
-            return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
-                var p1Doc = uDocs[0], p2Doc = uDocs[1];
-                var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-                var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-                
-                var isPWin = s1 > s2; var p1Elo = p1Data.elo !== undefined ? p1Data.elo : 1000; var p2Elo = p2Data.elo !== undefined ? p2Data.elo : 1000;
-                var myDelta = calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0);
-                var newP1Elo = Math.max(100, p1Elo + myDelta); var newP2Elo = Math.max(100, p2Elo - myDelta);
-                var p1S = isPWin ? ((p1Data.winStreak||0)+1) : 0; var p2S = isPWin ? 0 : ((p2Data.winStreak||0)+1);
-
-                t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
-                t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
-                
-                if (match.stage === 'group') {
-                  var groups = data.groups; var grp = groups[match.group];
-                  var pl1 = null, pl2 = null;
-                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
-                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
-                  t.update(ref, { matches: matches, groups: groups });
-                } else { t.update(ref, { matches: matches }); }
-            });
-        });
-    }).then(function() {
-        db.collection('tournaments').doc(tourId).get().then(function(d) {
-            var mArr = d.data().matches || []; var updatedMatch = null;
-            for(var x=0; x<mArr.length; x++) { if(mArr[x].id === matchId) updatedMatch = mArr[x]; }
-            if (updatedMatch) db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
-        });
-    }).catch(function(e){});
-  }
-
   function listenRatings() {
     db.collection('users').onSnapshot(function(snap) {
       var listEl = document.getElementById('rating-list');
@@ -1977,9 +1834,18 @@
 
   function loadParkWeather() {
     var container = document.getElementById('weather-park'); if (!container) return;
+    
+    // Мгновенное чтение кэша погоды
+    var cachedW = localStorage.getItem('tt_weather_cache');
+    var cachedTime = localStorage.getItem('tt_weather_cache_ts');
+    if (cachedW && cachedTime && (Date.now() - parseInt(cachedTime, 10) < 1800000)) {
+      container.innerHTML = cachedW;
+      return;
+    }
+
     var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var signal = controller ? controller.signal : null;
-    var timeoutId = setTimeout(function() { if (controller) controller.abort(); }, 8000);
+    var timeoutId = setTimeout(function() { if (controller) controller.abort(); }, 6000);
 
     fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto', { signal: signal })
     .then(function(res) { return res.json(); }).then(function(data) {
@@ -1991,11 +1857,14 @@
           if (d && d.weather_code && d.weather_code.length > 1 && d.temperature_2m_min && d.temperature_2m_max) {
               tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
           }
-          container.innerHTML = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
+          var weatherHtml = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
+          container.innerHTML = weatherHtml;
+          localStorage.setItem('tt_weather_cache', weatherHtml);
+          localStorage.setItem('tt_weather_cache_ts', Date.now().toString());
       } catch (innerE) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; }
     }).catch(function(e) { 
       clearTimeout(timeoutId);
-      container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; 
+      if (!cachedW) container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; 
     });
   }
 
@@ -2124,16 +1993,10 @@
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
+    // 1. Моментальная локальная отрисовка
     try { initUserProfile(); } catch(e) {}
-    try { listenRatings(); } catch(e) {}
-    try { listenLeaderboard(); } catch(e) {}
-    try { listenTournaments(); } catch(e) {}
-    try { listenPendingMatches(); } catch(e) {}
-    try { listenRecentMatches(); } catch(e) {}
-    try { loadParkWeather(); } catch(e) {}
-    
-    setTimeout(monitorSessions, 1000);
-    
+
+    // 2. Первая очередь - подключение профиля и радара
     ['park', 'vostok'].forEach(function(loc) {
       try {
         db.collection('locations').doc(loc).onSnapshot(function(doc) { 
@@ -2164,6 +2027,17 @@
         } catch(e) {}
       }, function(err) {});
     } catch(e) {}
+
+    // 3. Вторая очередь - фоновые слушатели (рейтинг, турниры, история) с задержкой 400мс
+    setTimeout(function() {
+      try { listenRatings(); } catch(e) {}
+      try { listenLeaderboard(); } catch(e) {}
+      try { listenTournaments(); } catch(e) {}
+      try { listenPendingMatches(); } catch(e) {}
+      try { listenRecentMatches(); } catch(e) {}
+      try { loadParkWeather(); } catch(e) {}
+      monitorSessions();
+    }, 400);
 
     setInterval(renderAll, 30000); 
     setInterval(monitorSessions, 60000); 
