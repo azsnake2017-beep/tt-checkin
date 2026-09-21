@@ -60,11 +60,13 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
+    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin-top: 8px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
+    .auth-vpn-note { font-size: 11px; color: var(--accent-amber); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); padding: 8px 10px; border-radius: 8px; line-height: 1.4; text-align: center; margin-top: 4px; }
 
     .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -265,6 +267,9 @@
       <button class="btn-auth-provider" onclick="loginWithGoogle()">
         <span>🌐</span> Войти через Google
       </button>
+      <div class="auth-vpn-note">
+        💡 <b>Подсказка:</b> если кнопка Telegram выше не загружается в браузере — включите VPN только на момент авторизации, либо войдите через Google (VPN не требуется).
+      </div>
     </div>
   </div>
 
@@ -707,12 +712,10 @@
   }
   var db = firebase.firestore();
 
-  // Безопасное подключение Long Polling (выполняется строго до обращений)
+  // Принудительный Long Polling для стабильности в сетях РФ
   try {
     db.settings({ experimentalForceLongPolling: true });
-  } catch(e) {
-    // Игнорируем повторную попытку при перезапуске клиентом
-  }
+  } catch(e) {}
 
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
@@ -760,6 +763,21 @@
   }
 
   function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
+
+  function switchTab(tab) {
+    var tabRating = document.getElementById('tab-btn-rating');
+    var tabTime = document.getElementById('tab-btn-time');
+    var viewRating = document.getElementById('view-rating-content');
+    var viewTime = document.getElementById('view-time-content');
+
+    if (tab === 'rating') {
+      tabRating.classList.add('active'); tabTime.classList.remove('active');
+      viewRating.style.display = 'flex'; viewTime.style.display = 'none';
+    } else {
+      tabTime.classList.add('active'); tabRating.classList.remove('active');
+      viewTime.style.display = 'flex'; viewRating.style.display = 'none';
+    }
+  }
 
   function getWindDirection(degrees) {
     if (degrees === undefined || degrees === null) return "";
@@ -1317,6 +1335,7 @@
     sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
   }
 
+  // ВЫГРУЗКА ТОП-10 И СТАТИСТИКИ КЛУБА В ЧАТ
   function sendClubStatsBroadcast() {
     if (!isSuperAdmin()) return;
     
@@ -1346,7 +1365,7 @@
         }
       });
 
-      usersList.sort(function(a, b) { return b.elo - a.elo; });
+      usersList.sort(function(a, b) { return (b.elo || 1000) - (a.elo || 1000); });
       var topList = usersList.slice(0, 10);
 
       var totalMinutesAll = 0;
@@ -1817,6 +1836,71 @@
           });
       });
     }).catch(function(e) {});
+  }
+
+  function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
+    document.getElementById('tour-match-id-val').value = matchId; 
+    document.getElementById('tour-id-val').value = tourId; 
+    document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
+    selectTourScore(3, 0); 
+    document.getElementById('tour-match-modal').style.display = 'flex';
+  }
+  function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
+  function selectTourScore(s1, s2) { 
+      document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; 
+      var btns = document.querySelectorAll('.tour-score-btn');
+      for(var i=0; i<btns.length; i++) {
+          if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active');
+          else btns[i].classList.remove('active');
+      }
+  }
+  
+  function submitTourMatchScore() {
+    var s1 = parseInt(document.getElementById('tour-match-s1').value, 10), s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
+    var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
+    closeTourMatchModal();
+    
+    db.runTransaction(function(t) {
+        var ref = db.collection('tournaments').doc(tourId);
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
+            var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
+            if (mIdx === -1 || matches[mIdx].score1 !== null) return;
+            var match = matches[mIdx];
+            if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
+
+            match.score1 = s1; match.score2 = s2;
+            var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
+            
+            return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
+                var p1Doc = uDocs[0], p2Doc = uDocs[1];
+                var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                
+                var isPWin = s1 > s2; var p1Elo = p1Data.elo !== undefined ? p1Data.elo : 1000; var p2Elo = p2Data.elo !== undefined ? p2Data.elo : 1000;
+                var myDelta = calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0);
+                var newP1Elo = Math.max(100, p1Elo + myDelta); var newP2Elo = Math.max(100, p2Elo - myDelta);
+                var p1S = isPWin ? ((p1Data.winStreak||0)+1) : 0; var p2S = isPWin ? 0 : ((p2Data.winStreak||0)+1);
+
+                t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
+                t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
+                
+                if (match.stage === 'group') {
+                  var groups = data.groups; var grp = groups[match.group];
+                  var pl1 = null, pl2 = null;
+                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
+                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+                  t.update(ref, { matches: matches, groups: groups });
+                } else { t.update(ref, { matches: matches }); }
+            });
+        });
+    }).then(function() {
+        db.collection('tournaments').doc(tourId).get().then(function(d) {
+            var mArr = d.data().matches || []; var updatedMatch = null;
+            for(var x=0; x<mArr.length; x++) { if(mArr[x].id === matchId) updatedMatch = mArr[x]; }
+            if (updatedMatch) db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
+        });
+    }).catch(function(e){});
   }
 
   function listenRatings() {
