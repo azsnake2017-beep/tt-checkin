@@ -6,6 +6,12 @@
   <meta name="theme-color" content="#0b1120" id="meta-theme-color">
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
+  <!-- Предварительное открытие сетевых соединений для моментальной первой загрузки -->
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
+  <link rel="dns-prefetch" href="https://telegram.org">
+  <link rel="dns-prefetch" href="https://api.open-meteo.com">
+
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
@@ -60,7 +66,6 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
@@ -259,7 +264,6 @@
     </div>
   </div>
 
-  <!-- ЭКРАН АВТОРИЗАЦИИ С ПОДСКАЗКОЙ О VPN -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -994,7 +998,7 @@
         });
         finishSync(uid, userData);
       } else { 
-          var snapData = snap.data();
+          var snapData = snap.data() || {};
           var currentTm = currentUserProfile.totalMinutes || 0;
           for (var k in snapData) { currentUserProfile[k] = snapData[k]; }
           currentUserProfile.totalMinutes = currentTm;
@@ -1046,7 +1050,7 @@
       
       db.collection('users').doc(uid).onSnapshot(function(snap) {
         if (snap.exists) {
-          var data = snap.data();
+          var data = snap.data() || {};
           var currentTm = currentUserProfile.totalMinutes || 0;
           for (var k in data) currentUserProfile[k] = data[k];
           currentUserProfile.totalMinutes = currentTm;
@@ -1066,7 +1070,7 @@
 
       db.collection('users').doc(savedId).onSnapshot(function(snap) {
         if (snap.exists) {
-          var data = snap.data();
+          var data = snap.data() || {};
           var currentTm = currentUserProfile.totalMinutes || 0;
           for (var k in data) currentUserProfile[k] = data[k];
           currentUserProfile.totalMinutes = currentTm;
@@ -1336,7 +1340,6 @@
     sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
   }
 
-  // ВЫГРУЗКА ТОП-10 И СТАТИСТИКИ КЛУБА В ЧАТ
   function sendClubStatsBroadcast() {
     if (!isSuperAdmin()) return;
     
@@ -1353,7 +1356,7 @@
       var usersList = [];
       
       usersSnap.forEach(function(doc) {
-        var d = doc.data();
+        var d = doc.data() || {};
         if (doc.id.match(/^(tg|google)_/) || d.isVerified) {
           totalUsers++;
           usersList.push({
@@ -1366,12 +1369,12 @@
         }
       });
 
-      usersList.sort(function(a, b) { return (b.elo || 1000) - (a.elo || 1000); });
+      usersList.sort(function(a, b) { return b.elo - a.elo; });
       var topList = usersList.slice(0, 10);
 
       var totalMinutesAll = 0;
       leadSnap.forEach(function(doc) {
-        totalMinutesAll += (doc.data().totalMinutes || 0);
+        totalMinutesAll += ((doc.data() && doc.data().totalMinutes) || 0);
       });
       var totalHoursAll = Math.round(totalMinutesAll / 60);
 
@@ -1438,7 +1441,7 @@
         return; 
       }
 
-      var u = d.data();
+      var u = d.data() || {};
       var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
       var customBadge = getCustomBadge(uid);
       document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
@@ -1486,7 +1489,7 @@
           var matches = [];
           snaps.forEach(function(docX) {
             var mx = docX.data();
-            if (mx.participants && mx.participants.indexOf(uid) !== -1) {
+            if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) {
               matches.push(mx);
             }
           });
@@ -1839,17 +1842,80 @@
     }).catch(function(e) {});
   }
 
-  // СЛУШАТЕЛЬ РЕЙТИНГА ЭЛО
+  function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
+    document.getElementById('tour-match-id-val').value = matchId; 
+    document.getElementById('tour-id-val').value = tourId; 
+    document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
+    selectTourScore(3, 0); 
+    document.getElementById('tour-match-modal').style.display = 'flex';
+  }
+  function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
+  function selectTourScore(s1, s2) { 
+      document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; 
+      var btns = document.querySelectorAll('.tour-score-btn');
+      for(var i=0; i<btns.length; i++) {
+          if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active');
+          else btns[i].classList.remove('active');
+      }
+  }
+  
+  function submitTourMatchScore() {
+    var s1 = parseInt(document.getElementById('tour-match-s1').value, 10), s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
+    var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
+    closeTourMatchModal();
+    
+    db.runTransaction(function(t) {
+        var ref = db.collection('tournaments').doc(tourId);
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
+            var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
+            if (mIdx === -1 || matches[mIdx].score1 !== null) return;
+            var match = matches[mIdx];
+            if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
+
+            match.score1 = s1; match.score2 = s2;
+            var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
+            
+            return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
+                var p1Doc = uDocs[0], p2Doc = uDocs[1];
+                var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                
+                var isPWin = s1 > s2; var p1Elo = p1Data.elo !== undefined ? p1Data.elo : 1000; var p2Elo = p2Data.elo !== undefined ? p2Data.elo : 1000;
+                var myDelta = calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0);
+                var newP1Elo = Math.max(100, p1Elo + myDelta); var newP2Elo = Math.max(100, p2Elo - myDelta);
+                var p1S = isPWin ? ((p1Data.winStreak||0)+1) : 0; var p2S = isPWin ? 0 : ((p2Data.winStreak||0)+1);
+
+                t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
+                t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
+                
+                if (match.stage === 'group') {
+                  var groups = data.groups; var grp = groups[match.group];
+                  var pl1 = null, pl2 = null;
+                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
+                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+                  t.update(ref, { matches: matches, groups: groups });
+                } else { t.update(ref, { matches: matches }); }
+            });
+        });
+    }).then(function() {
+        db.collection('tournaments').doc(tourId).get().then(function(d) {
+            var mArr = d.data().matches || []; var updatedMatch = null;
+            for(var x=0; x<mArr.length; x++) { if(mArr[x].id === matchId) updatedMatch = mArr[x]; }
+            if (updatedMatch) db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
+        });
+    }).catch(function(e){});
+  }
+
   function listenRatings() {
     db.collection('users').onSnapshot(function(snap) {
       var listEl = document.getElementById('rating-list');
-      if (!listEl) return;
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
       
       var users = [];
       var myUid = getVerifiedUserId();
       snap.forEach(function(doc) {
-        var d = doc.data() || {};
+        var d = doc.data();
         if (doc.id.match(/^(tg|google)_/) || d.isVerified) {
           users.push({ uid: doc.id, data: d });
         }
@@ -1862,14 +1928,12 @@
         try {
           var d = item.data;
           var docId = item.uid;
-          
           if (docId === myUid) { 
               var currentTm = currentUserProfile.totalMinutes || 0;
-              for (var k in d) { currentUserProfile[k] = d[k]; }
+              for(var k in d) currentUserProfile[k] = d[k];
               currentUserProfile.totalMinutes = currentTm;
               updateProfileDisplay(); 
           }
-
           var rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
           var wins = d.wins || 0, losses = d.losses || 0, matches = d.matches || 0, winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
           var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(docId), rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
@@ -1877,7 +1941,7 @@
           var streakHtml = (d.winStreak && d.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + d.winStreak + '</span>' : '';
           var deltaHtml = d.lastEloDelta ? (d.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + d.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + d.lastEloDelta + ') 📉</span>') : '';
 
-          html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name || 'Игрок') + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div><div class="player-status-tag">' + getPlayerStatus(d.elo || 1000) + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (d.elo || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
+          html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div><div class="player-status-tag">' + getPlayerStatus(d.elo || 1000) + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (d.elo || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
           rank++;
         } catch(e) {}
       });
@@ -1888,13 +1952,12 @@
   function listenLeaderboard() {
     db.collection('leaderboard').onSnapshot(function(snap) {
       var listEl = document.getElementById('leaderboard-list');
-      if (!listEl) return;
       if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
       
       var items = [];
       snap.forEach(function(doc) {
         if (doc.id.match(/^(tg|google)_/)) {
-          items.push({ uid: doc.id, data: doc.data() || {} });
+          items.push({ uid: doc.id, data: doc.data() });
         }
       });
 
@@ -1908,7 +1971,7 @@
           var hours = ((d.totalMinutes || 0) / 60).toFixed(1), rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
           var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(docId);
           
-          html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name || 'Игрок') + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">' + hours + ' ч (' + (d.sessions || 0) + ' игр)</span><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
+          html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">' + hours + ' ч (' + (d.sessions || 0) + ' игр)</span><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
           rank++;
         } catch (e) {}
       });
@@ -1916,44 +1979,31 @@
     }, function(err) {});
   }
 
-  // ЗАГРУЗКА ПОГОДЫ С КЭШИРОВАНИЕМ И ЗАЩИТОЙ ОТ ЗАВИСАНИЯ
   function loadParkWeather() {
-    var container = document.getElementById('weather-park'); 
-    if (!container) return;
-
+    var container = document.getElementById('weather-park'); if (!container) return;
+    
+    // Мгновенное чтение кэша актуальной погоды (до 10 минут)
     var cachedW = localStorage.getItem('tt_weather_cache');
-    var cachedTs = localStorage.getItem('tt_weather_cache_ts');
-    if (cachedW && cachedTs && (Date.now() - parseInt(cachedTs, 10) < 1800000)) {
+    var cachedTime = localStorage.getItem('tt_weather_cache_ts');
+    if (cachedW && cachedTime && (Date.now() - parseInt(cachedTime, 10) < 600000)) {
       container.innerHTML = cachedW;
     }
 
     var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
     var signal = controller ? controller.signal : null;
-    var timeoutId = setTimeout(function() { 
-      if (controller) controller.abort(); 
-    }, 5000);
+    var timeoutId = setTimeout(function() { if (controller) controller.abort(); }, 5000);
 
     fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto', { signal: signal })
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
+    .then(function(res) { return res.json(); }).then(function(data) {
       clearTimeout(timeoutId);
       try {
-          var c = data.current;
-          var d = data.daily;
-          if (!c) throw new Error("No current weather");
-
-          var getW = function(code) { 
-            if (code <= 3) return code == 0 ? "☀️ Ясно" : "⛅️ Облачно"; 
-            if (code <= 67) return "🌧 Дождь"; 
-            if (code <= 77) return "❄️ Снег"; 
-            return "🌧 Ливень"; 
-          };
-
+          var c = data.current, d = data.daily;
+          if (!c) throw new Error("No current");
+          var getW = function(code) { if(code<=3) return code==0?"☀️ Ясно":"⛅️ Облачно"; if(code<=67) return "🌧 Дождь"; if(code<=77) return "❄️ Снег"; return "🌧 Ливень"; };
           var tmrStr = '';
           if (d && d.weather_code && d.weather_code.length > 1 && d.temperature_2m_min && d.temperature_2m_max) {
               tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
           }
-
           var weatherHtml = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
           container.innerHTML = weatherHtml;
           localStorage.setItem('tt_weather_cache', weatherHtml);
@@ -2092,7 +2142,10 @@
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
+    // 1. Мгновенная инициализация профиля из локального хранилища
     try { initUserProfile(); } catch(e) {}
+
+    // 2. Быстрая загрузка основных компонентов
     try { listenRatings(); } catch(e) {}
     try { listenLeaderboard(); } catch(e) {}
     try { listenTournaments(); } catch(e) {}
