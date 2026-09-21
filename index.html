@@ -60,13 +60,11 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
     .auth-methods-box { width: 100%; display: flex; flex-direction: column; gap: 10px; max-width: 320px; margin-top: 8px; }
     .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; user-select: none; background: #fff; color: #1e293b; }
-    .auth-vpn-note { font-size: 11px; color: var(--accent-amber); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); padding: 8px 10px; border-radius: 8px; line-height: 1.4; text-align: center; margin-top: 4px; }
 
     .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
     .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
@@ -224,7 +222,6 @@
 
 <div class="container">
 
-  <!-- БАННЕР ОБНОВЛЕНИЯ БРАУЗЕРА -->
   <div class="outdated-browser-banner" id="outdated-browser-banner">
     ⚠️ <b>Ваш браузер устарел!</b><br>
     Некоторые функции клуба могут работать некорректно. Рекомендуем открыть через <a href="https://browser.yandex.ru" target="_blank">Яндекс.Браузер</a> или обновить Android System WebView.
@@ -260,7 +257,6 @@
     </div>
   </div>
 
-  <!-- ЭКРАН АВТОРИЗАЦИИ С ИНФОРМАЦИЕЙ О VPN -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -269,9 +265,6 @@
       <button class="btn-auth-provider" onclick="loginWithGoogle()">
         <span>🌐</span> Войти через Google
       </button>
-      <div class="auth-vpn-note">
-        💡 <b>Подсказка:</b> если кнопка Telegram выше не загружается в браузере — включите VPN только на момент авторизации, либо войдите через Google (VPN не требуется).
-      </div>
     </div>
   </div>
 
@@ -714,10 +707,12 @@
   }
   var db = firebase.firestore();
 
-  // Принудительный Long Polling для стабильности в сетях РФ
+  // Безопасное подключение Long Polling (выполняется строго до обращений)
   try {
     db.settings({ experimentalForceLongPolling: true });
-  } catch(e) {}
+  } catch(e) {
+    // Игнорируем повторную попытку при перезапуске клиентом
+  }
 
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
@@ -765,21 +760,6 @@
   }
 
   function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
-
-  function switchTab(tab) {
-    var tabRating = document.getElementById('tab-btn-rating');
-    var tabTime = document.getElementById('tab-btn-time');
-    var viewRating = document.getElementById('view-rating-content');
-    var viewTime = document.getElementById('view-time-content');
-
-    if (tab === 'rating') {
-      tabRating.classList.add('active'); tabTime.classList.remove('active');
-      viewRating.style.display = 'flex'; viewTime.style.display = 'none';
-    } else {
-      tabTime.classList.add('active'); tabRating.classList.remove('active');
-      viewTime.style.display = 'flex'; viewRating.style.display = 'none';
-    }
-  }
 
   function getWindDirection(degrees) {
     if (degrees === undefined || degrees === null) return "";
@@ -872,6 +852,16 @@
     document.getElementById('qr-modal').style.display = 'flex';
   }
   function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
+
+  function getPlayerStatus(elo) {
+    if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
+    if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
+    if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆";
+    if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️";
+    if (elo <= 3400) return "Чемпион клуба 👑"; if (elo <= 3600) return "Гранд-мастер 🎖️"; if (elo <= 3800) return "Снайпер 🎯";
+    if (elo <= 4000) return "Легенда клуба 🏛️"; if (elo <= 4200) return "Премьер-лига 📈"; if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
+    if (elo <= 4600) return "Властелин стола 👑🏓"; if (elo <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
+  }
 
   function isUserVerified() {
     var tgUser = null;
@@ -1406,6 +1396,111 @@
       });
   }
 
+  // КАРТОЧКА ИГРОКА (ПАРАЛЛЕЛЬНЫЙ ЗАПРОС + КЛИЕНТСКАЯ СОРТИРОВКА)
+  function showUserInfoModal(uid) {
+    if(!uid) return;
+    document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
+    document.getElementById('info-modal-content-area').innerHTML = "Загрузка данных профиля...";
+    document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
+    document.getElementById('info-modal-medals').style.display = 'none';
+    document.getElementById('info-modal-inventory').style.display = 'none';
+    document.getElementById('user-info-modal').style.display = 'flex';
+    
+    Promise.all([
+      db.collection('users').doc(uid).get(),
+      db.collection('leaderboard').doc(uid).get()
+    ]).then(function(docs) {
+      var d = docs[0];
+      var ld = docs[1];
+
+      if (!d.exists) { 
+        closeUserInfoModal(); 
+        return; 
+      }
+
+      var u = d.data();
+      var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+      var customBadge = getCustomBadge(uid);
+      document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
+      
+      var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
+      
+      var mins = (ld.exists && ld.data()) ? (ld.data().totalMinutes || 0) : 0;
+      var winrate = u.matches > 0 ? Math.round((u.wins / u.matches) * 100) : 0;
+      var deltaHtml = u.lastEloDelta ? (u.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + u.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + u.lastEloDelta + ') 📉</span>') : '';
+      var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
+
+      var mContainer = document.getElementById('info-modal-medals');
+      var m = u.medals || { gold:0, silver:0, bronze:0 };
+      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
+        mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
+        mContainer.style.display = 'flex';
+      } else { 
+        mContainer.style.display = 'none'; 
+      }
+
+      var eloDisplay = u.elo !== undefined ? u.elo : 1000;
+      document.getElementById('info-modal-content-area').innerHTML = uidHtml +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + getPlayerStatus(eloDisplay) + '</span></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей:</span><span style="font-weight: 600;">' + (u.matches || 0) + '</span></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + (u.wins || 0) + 'В - ' + (u.losses || 0) + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>';
+      
+      var invContainer = document.getElementById('info-modal-inventory');
+      if (u.blade || u.rubberL || u.rubberR) {
+        var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
+        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+        invContainer.innerHTML = invHtml; 
+        invContainer.className = 'inventory-box'; 
+        invContainer.style.display = 'flex';
+      } else { 
+        invContainer.style.display = 'none'; 
+      }
+
+      // Подгрузка матчей без блокировки интерфейса
+      db.collection('matches_history').limit(50).get().then(function(snaps) {
+          var matches = [];
+          snaps.forEach(function(docX) {
+            var mx = docX.data();
+            if (mx.participants && mx.participants.indexOf(uid) !== -1) {
+              matches.push(mx);
+            }
+          });
+          
+          var hEl = document.getElementById('info-modal-history');
+          if(matches.length === 0) { 
+            hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; 
+            return; 
+          }
+          
+          matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+          matches = matches.slice(0, 10);
+          
+          var h = '';
+          matches.forEach(function(mx) {
+            var isP1 = mx.p1Uid === uid;
+            var myS = isP1 ? mx.p1Score : mx.p2Score;
+            var opS = isP1 ? mx.p2Score : mx.p1Score;
+            var opN = isP1 ? mx.p2Name : mx.p1Name;
+            var isWin = myS > opS;
+            var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
+            h += '<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>' + cleanHtml(opN) + '</b></div><div style="color:var(--text-muted);font-size:10px;">' + dtStr + '</div></div><div style="color:' + (isWin ? '#059669' : '#f87171') + '; font-weight:bold;">' + myS + ' : ' + opS + '</div></div>';
+          });
+          hEl.innerHTML = h;
+      }).catch(function(err) {
+          document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
+      });
+
+    }).catch(function(e) {
+      closeUserInfoModal();
+    });
+  }
+  function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
+
   function handleMatchClick() {
     if (!isUserVerified()) return customAlert("❌ Записывать матчи могут только авторизованные игроки!");
     var uid = getVerifiedUserId(); 
@@ -1597,7 +1692,7 @@
         return t.get(ref).then(function(doc) {
             if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
             if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid; }); } } 
-            else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
+            else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
             t.update(ref, { likes: likes, dislikes: dislikes });
         });
     }).catch(function(e) {});
@@ -1722,71 +1817,6 @@
           });
       });
     }).catch(function(e) {});
-  }
-
-  function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
-    document.getElementById('tour-match-id-val').value = matchId; 
-    document.getElementById('tour-id-val').value = tourId; 
-    document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
-    selectTourScore(3, 0); 
-    document.getElementById('tour-match-modal').style.display = 'flex';
-  }
-  function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
-  function selectTourScore(s1, s2) { 
-      document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; 
-      var btns = document.querySelectorAll('.tour-score-btn');
-      for(var i=0; i<btns.length; i++) {
-          if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active');
-          else btns[i].classList.remove('active');
-      }
-  }
-  
-  function submitTourMatchScore() {
-    var s1 = parseInt(document.getElementById('tour-match-s1').value, 10), s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
-    var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
-    closeTourMatchModal();
-    
-    db.runTransaction(function(t) {
-        var ref = db.collection('tournaments').doc(tourId);
-        return t.get(ref).then(function(doc) {
-            if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
-            var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
-            if (mIdx === -1 || matches[mIdx].score1 !== null) return;
-            var match = matches[mIdx];
-            if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
-
-            match.score1 = s1; match.score2 = s2;
-            var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
-            
-            return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
-                var p1Doc = uDocs[0], p2Doc = uDocs[1];
-                var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-                var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-                
-                var isPWin = s1 > s2; var p1Elo = p1Data.elo !== undefined ? p1Data.elo : 1000; var p2Elo = p2Data.elo !== undefined ? p2Data.elo : 1000;
-                var myDelta = calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0);
-                var newP1Elo = Math.max(100, p1Elo + myDelta); var newP2Elo = Math.max(100, p2Elo - myDelta);
-                var p1S = isPWin ? ((p1Data.winStreak||0)+1) : 0; var p2S = isPWin ? 0 : ((p2Data.winStreak||0)+1);
-
-                t.update(p1Ref, { elo: newP1Elo, lastEloDelta: isPWin?myDelta:-myDelta, winStreak: p1S, matches: (p1Data.matches||0)+1, wins:(p1Data.wins||0)+(isPWin?1:0), losses:(p1Data.losses||0)+(isPWin?0:1) });
-                t.update(p2Ref, { elo: newP2Elo, lastEloDelta: isPWin?-myDelta:myDelta, winStreak: p2S, matches: (p2Data.matches||0)+1, wins:(p2Data.wins||0)+(isPWin?0:1), losses:(p2Data.losses||0)+(isPWin?1:0) });
-                
-                if (match.stage === 'group') {
-                  var groups = data.groups; var grp = groups[match.group];
-                  var pl1 = null, pl2 = null;
-                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
-                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
-                  t.update(ref, { matches: matches, groups: groups });
-                } else { t.update(ref, { matches: matches }); }
-            });
-        });
-    }).then(function() {
-        db.collection('tournaments').doc(tourId).get().then(function(d) {
-            var mArr = d.data().matches || []; var updatedMatch = null;
-            for(var x=0; x<mArr.length; x++) { if(mArr[x].id === matchId) updatedMatch = mArr[x]; }
-            if (updatedMatch) db.collection('matches_history').add({ p1Uid: updatedMatch.p1Uid, p1Name: updatedMatch.p1Name, p1Score: s1, p2Uid: updatedMatch.p2Uid, p2Name: updatedMatch.p2Name, p2Score: s2, participants: [updatedMatch.p1Uid, updatedMatch.p2Uid], timestamp: Date.now() });
-        });
-    }).catch(function(e){});
   }
 
   function listenRatings() {
@@ -2010,13 +2040,13 @@
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
-    try { initUserProfile(); } catch(e) { console.error("initUserProfile error", e); }
-    try { listenRatings(); } catch(e) { console.error("listenRatings error", e); }
-    try { listenLeaderboard(); } catch(e) { console.error("listenLeaderboard error", e); }
-    try { listenTournaments(); } catch(e) { console.error("listenTournaments error", e); }
-    try { listenPendingMatches(); } catch(e) { console.error("listenPendingMatches error", e); }
-    try { listenRecentMatches(); } catch(e) { console.error("listenRecentMatches error", e); }
-    try { loadParkWeather(); } catch(e) { console.error("loadParkWeather error", e); }
+    try { initUserProfile(); } catch(e) {}
+    try { listenRatings(); } catch(e) {}
+    try { listenLeaderboard(); } catch(e) {}
+    try { listenTournaments(); } catch(e) {}
+    try { listenPendingMatches(); } catch(e) {}
+    try { listenRecentMatches(); } catch(e) {}
+    try { loadParkWeather(); } catch(e) {}
     
     setTimeout(monitorSessions, 1000);
     
@@ -2032,7 +2062,7 @@
                 renderAll(); 
             } catch(e){} 
         }, function(err) {});
-      } catch(e) { console.error("locations error", e); }
+      } catch(e) {}
     });
 
     try {
@@ -2049,7 +2079,7 @@
           });
         } catch(e) {}
       }, function(err) {});
-    } catch(e) { console.error("announcements error", e); }
+    } catch(e) {}
 
     setInterval(renderAll, 30000); 
     setInterval(monitorSessions, 60000); 
