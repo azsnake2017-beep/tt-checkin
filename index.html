@@ -9,10 +9,10 @@
   <!-- Telegram WebApp SDK -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
-  <!-- Firebase SDK Compat (jsDelivr для обхода блокировок) -->
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
+  <!-- Firebase SDK Compat -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <style>
     :root {
@@ -57,7 +57,6 @@
     .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
     .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
-    /* БЛОК ПРИНУДИТЕЛЬНОЙ АВТОРИЗАЦИИ */
     .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
     .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
     .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
@@ -691,11 +690,6 @@
   if (!firebase.apps.length) { firebase.initializeApp(firebaseConfig); }
   var db = firebase.firestore();
 
-  // Безопасное включение Long Polling для стабильности в сетях РФ
-  try {
-    db.settings({ experimentalForceLongPolling: true });
-  } catch(e) {}
-
   function customAlert(msg) {
     document.getElementById('custom-alert-text').innerText = msg;
     document.getElementById('custom-alert-modal').style.display = 'flex';
@@ -782,7 +776,6 @@
     return '<div class="inventory-item"><div class="inventory-item-left"><span>' + icon + '</span> <span style="color: var(--text-muted);">' + label + '</span> <span class="inventory-value">' + cleanHtml(value) + '</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink(\'' + url + '\')">i</button></div>';
   }
 
-  // Персональный антиспам на действие игрока
   function canSendTgAlert(actionType) {
     var now = Date.now();
     var lastTime = localStorage.getItem('tt_last_alert_' + actionType);
@@ -947,7 +940,6 @@
       renderAll();
   }
 
-  // МГНОВЕННАЯ АВТОРИЗАЦИЯ ИЗ КЭША ТЕЛЕФОНА (БЕЗ ГОСТЯ И БЕЗ ЗАВИСАНИЙ)
   function initUserProfile() {
     var authScreen = document.getElementById('mandatory-auth-screen');
     var tgUser = null;
@@ -966,22 +958,18 @@
     var savedName = localStorage.getItem('tt_name') || "Игрок";
     
     if (savedId && (savedId.indexOf('tg_') === 0 || savedId.indexOf('google_') === 0)) {
-      // Моментально пускаем игрока с локальными данными
       currentUserProfile = { uid: savedId, name: savedName, elo: 1000, isVerified: true };
       if (authScreen) authScreen.style.display = 'none';
       updateProfileDisplay();
       renderAll();
 
-      // В фоне без блокировки интерфейса запрашиваем актуальные данные из Firebase
-      db.collection('users').doc(savedId).get().then(function(snap) {
+      db.collection('users').doc(savedId).onSnapshot(function(snap) {
         if (snap.exists) {
           currentUserProfile = snap.data();
           updateProfileDisplay();
           subscribeToUserLeaderboard(savedId);
           renderAll();
         }
-      }).catch(function(err) {
-        console.warn("Фоновое обновление профиля отложено:", err);
       });
       return;
     }
@@ -1126,7 +1114,6 @@
     }).catch(function(e) {});
   }
 
-  // ПЕРСОНАЛЬНЫЙ АНТИСПАМ-ТАЙМЕР
   function checkIn(loc) {
     var uid = getVerifiedUserId(); if (!uid) return;
     if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
@@ -1242,7 +1229,6 @@
     sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
   }
 
-  // ОТПРАВКА СТАТИСТИКИ И ТОП-10 В ЧАТ ТЕЛЕГРАМ
   function sendClubStatsBroadcast() {
     if (!isSuperAdmin()) return;
     
@@ -1864,7 +1850,7 @@
             activeHtml += '<div class="card" style="border-color: var(--accent-amber);"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted);">' + (d.dateStr || '') + '</div></div>' + dDesc + content + '<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="score-btn ' + (isLiked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'like\')">👍 ' + likes.length + '</button><button class="score-btn ' + (isDisliked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'dislike\')">👎 ' + dislikes.length + '</button>' + buttonsHtml + '</div>' + adminActionHtml + '</div>';
           } catch (err) {
             if (isAdmin) {
-              activeHtml += '<div class="card" style="border-color: #ef4444; border-width: 2px;"><div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Сбой в данных турнира</div><div style="font-size: 11px; color: var(--text-muted);">Этот турнир поврежден. Нажмите кнопку ниже, чтобы принудительно удалить сбойный турнир из базы.</div><button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament(\''+escapeJS(doc.id)+'\')">🗑 Принудительно удалить</button></div>';
+              activeHtml += '<div class="card" style="border-color: #ef4444; border-width: 2px;"><div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Сбой в данных турнира</div><div style="font-size: 11px; color: var(--text-muted);">Этот турнир поврежден. Остальная система работает нормально. Нажмите кнопку ниже, чтобы принудительно удалить сбойный турнир из базы.</div><button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament(\''+escapeJS(doc.id)+'\')">🗑 Принудительно удалить</button></div>';
             }
           }
         });
@@ -1939,42 +1925,6 @@
     }).catch(function(e) { container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице</span></div>'; });
   }
 
-  function monitorSessions() {
-    var now = Date.now();
-    ['park', 'vostok'].forEach(function(loc) {
-      db.runTransaction(function(t) {
-        return t.get(db.collection('locations').doc(loc)).then(function(doc) {
-          if (!doc.exists) return null;
-          var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
-          for (var i = 0; i < players.length; i++) {
-            var p = players[i]; var elapsed = now - (p.time || now);
-            if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
-                changed = true; 
-                var limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
-                var actualMins = Math.floor(elapsed / 60000);
-                var recordedMins = actualMins > limitMins ? limitMins : actualMins;
-                recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
-                leftPlayers.push({ uid: p.uid, name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
-            } 
-            else { activePlayers.push(p); }
-          }
-          var activePlans = plans.filter(function(pl) { if (!pl.planTime || now > pl.planTime + 300000) { changed = true; return false; } return true; });
-          if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
-          return null;
-        });
-      }).then(function(res) {
-        if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
-            for (var i = 0; i < res.leftPlayers.length; i++) {
-                var lp = res.leftPlayers[i];
-                if (canSendTgAlert('status_leave_' + loc + '_' + lp.uid)) {
-                    sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
-                }
-            }
-        }
-      }).catch(function(e){});
-    });
-  }
-
   function renderAll() {
     var myUid = getVerifiedUserId(); var now = Date.now();
     currentUserActiveLoc = null; currentUserActivePlayer = null;
@@ -2045,13 +1995,13 @@
 
   // ================= СТАРТ ПРИЛОЖЕНИЯ =================
   document.addEventListener('DOMContentLoaded', function() {
-    try { initUserProfile(); } catch(e) { console.error("initUserProfile error", e); }
-    try { listenRatings(); } catch(e) { console.error("listenRatings error", e); }
-    try { listenLeaderboard(); } catch(e) { console.error("listenLeaderboard error", e); }
-    try { listenTournaments(); } catch(e) { console.error("listenTournaments error", e); }
-    try { listenPendingMatches(); } catch(e) { console.error("listenPendingMatches error", e); }
-    try { listenRecentMatches(); } catch(e) { console.error("listenRecentMatches error", e); }
-    try { loadParkWeather(); } catch(e) { console.error("loadParkWeather error", e); }
+    try { initUserProfile(); } catch(e) { console.error("initUserProfile", e); }
+    try { listenRatings(); } catch(e) { console.error("listenRatings", e); }
+    try { listenLeaderboard(); } catch(e) { console.error("listenLeaderboard", e); }
+    try { listenTournaments(); } catch(e) { console.error("listenTournaments", e); }
+    try { listenPendingMatches(); } catch(e) { console.error("listenPendingMatches", e); }
+    try { listenRecentMatches(); } catch(e) { console.error("listenRecentMatches", e); }
+    try { loadParkWeather(); } catch(e) { console.error("loadParkWeather", e); }
     
     setTimeout(monitorSessions, 1000);
     
@@ -2065,7 +2015,7 @@
                 renderAll(); 
             } catch(e){} 
         });
-      } catch(e) { console.error("locations error", e); }
+      } catch(e) { console.error("locations", loc, e); }
     });
 
     try {
@@ -2082,7 +2032,7 @@
           });
         } catch(e) {}
       });
-    } catch(e) { console.error("announcements error", e); }
+    } catch(e) { console.error("announcements", e); }
 
     setInterval(renderAll, 30000); 
     setInterval(monitorSessions, 60000); 
