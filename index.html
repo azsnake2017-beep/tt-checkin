@@ -20,6 +20,9 @@
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
+  <!-- Автономный генератор QR-кодов (Canvas, без внешних API) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
   <style>
     :root {
       --primary: #e11d48; --primary-hover: #be123c; --bg: #0b1120; --card-bg: #1e293b; --card-border: #334155;
@@ -197,6 +200,12 @@
     .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
     .clickable-name:active { opacity: 0.6; }
 
+    .badge-mode { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; }
+    .badge-mode-singles { background: rgba(56, 189, 248, 0.15); color: #0284c7; }
+    :root[data-theme="dark"] .badge-mode-singles { color: var(--accent-sky); }
+    .badge-mode-doubles { background: rgba(168, 85, 247, 0.15); color: #9333ea; }
+    :root[data-theme="dark"] .badge-mode-doubles { color: var(--accent-purple); }
+
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; width: 100%;
       background: var(--bottom-nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
@@ -217,7 +226,6 @@
     .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
     .textarea-announcement { resize: vertical; min-height: 90px; }
     .input-name { text-align: left; padding: 12px 14px; }
-    .name-error-msg { color: #f87171; font-size: 12px; display: none; }
     .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; cursor: pointer; margin-top: 4px; }
     .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
     .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; cursor: pointer; }
@@ -437,6 +445,7 @@
   </div>
 </div>
 
+<!-- МОДАЛЬНОЕ ОКНО QR-КОДА (АВТОНОМНЫЙ ХОЛСТ) -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -444,7 +453,7 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
     <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
-    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;"><img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" /></div>
+    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-flex; justify-content: center; align-items: center; margin: 0 auto;" id="qr-canvas-container"></div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
       <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
@@ -479,10 +488,33 @@
   </div>
 </div>
 
+<!-- МОДАЛЬНОЕ ОКНО ЗАПИСИ МАТЧА (1x1 и 2x2) -->
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3>
-    <select id="match-opponent-select" class="input-select"></select>
+    
+    <div class="tabs-container" style="margin-bottom: 4px;">
+      <button class="tab-btn active" id="btn-match-type-singles" onclick="setMatchModalType('singles')">👤 Одиночный (1x1)</button>
+      <button class="tab-btn" id="btn-match-type-doubles" onclick="setMatchModalType('doubles')">👥 Парный (2x2)</button>
+    </div>
+
+    <!-- Поля для одиночного матча -->
+    <div id="match-fields-singles" style="display: flex; flex-direction: column; gap: 6px;">
+      <div style="font-size: 11px; text-align: left; color: var(--text-muted); font-weight: 700;">СОПЕРНИК:</div>
+      <select id="match-opponent-select" class="input-select"></select>
+    </div>
+
+    <!-- Поля для парного матча -->
+    <div id="match-fields-doubles" style="display: none; flex-direction: column; gap: 8px;">
+      <div style="font-size: 11px; text-align: left; color: var(--accent-green); font-weight: 700;">ВАШ НАПАРНИК (КОМАНДА 1):</div>
+      <select id="match-partner-select" class="input-select"></select>
+
+      <div style="font-size: 11px; text-align: left; color: var(--accent-red); font-weight: 700; margin-top: 2px;">СОПЕРНИКИ (КОМАНДА 2):</div>
+      <select id="match-opp1-select" class="input-select"></select>
+      <select id="match-opp2-select" class="input-select"></select>
+    </div>
+
+    <div style="font-size: 11px; text-align: left; color: var(--text-muted); font-weight: 700; margin-top: 4px;">ИТОГОВЫЙ СЧЁТ:</div>
     <div class="score-picker">
       <button class="score-btn reg-score-btn" onclick="selectScore(3, 0)">3 : 0</button>
       <button class="score-btn reg-score-btn" onclick="selectScore(3, 1)">3 : 1</button>
@@ -606,21 +638,21 @@
 
   function getMatchHumor(winnerScore, loserScore, winnerName, loserName) {
     var jokes_3_0 = [
-      "🔥 " + cleanHtml(winnerName) + " оформил сухой закон! " + cleanHtml(loserName) + ", держись, реванш не за горами!",
-      "🧹 Полный вынос в одну калитку! " + cleanHtml(winnerName) + " буквально смёл соперника со стола.",
-      "⚡ Без шансов! " + cleanHtml(winnerName) + " побеждает всухую. " + cleanHtml(loserName) + ", нужно срочно менять накладки!",
-      "🎯 Идеальная точность: " + cleanHtml(winnerName) + " не отдал ни сета. Это было быстро и безжалостно."
+      "🔥 " + cleanHtml(winnerName) + " оформили сухой закон! " + cleanHtml(loserName) + ", держитесь, реванш не за горами!",
+      "🧹 Полный вынос в одну калитку! " + cleanHtml(winnerName) + " буквально смели соперников со стола.",
+      "⚡ Без шансов! " + cleanHtml(winnerName) + " побеждают всухую. " + cleanHtml(loserName) + ", нужно срочно менять накладки!",
+      "🎯 Идеальная точность: " + cleanHtml(winnerName) + " не отдали ни сета. Это было быстро и безжалостно."
     ];
     var jokes_3_1 = [
-      "💪 Уверенная победа! " + cleanHtml(loserName) + " взял сет престижа, но " + cleanHtml(winnerName) + " своего не упустил.",
-      "🎾 " + cleanHtml(winnerName) + " позволил сопернику размочить счет, но быстро расставил всё по местам!",
-      "🥊 " + cleanHtml(loserName) + " огрызнулся одной партией, но против мощи " + cleanHtml(winnerName) + " приема не нашлось.",
-      "🚀 Четкая победа по делу! " + cleanHtml(winnerName) + " забирает матч с комфортным счетом."
+      "💪 Уверенная победа! " + cleanHtml(loserName) + " взяли сет престижа, но " + cleanHtml(winnerName) + " своего не упустили.",
+      "🎾 " + cleanHtml(winnerName) + " позволили соперникам размочить счет, но быстро расставили всё по местам!",
+      "🥊 " + cleanHtml(loserName) + " огрызнулись одной партией, но против слаженности " + cleanHtml(winnerName) + приема не нашлось.",
+      "🚀 Четкая победа по делу! " + cleanHtml(winnerName) + " забирают матч с комфортным счетом."
     ];
     var jokes_3_2 = [
       "🍿 Валидольный триллер! " + cleanHtml(winnerName) + " и " + cleanHtml(loserName) + " устроили бой гладиаторов на балансе!",
       "⚡ Битва титанов до седых волос! В пяти партиях фортуна всё-таки улыбнулась " + cleanHtml(winnerName) + ".",
-      "🔥 Вот это заруба! " + cleanHtml(winnerName) + " выгрызает победу в решающей пятой партии на зубах!",
+      "🔥 Вот это заруба! " + cleanHtml(winnerName) + " выгрызают победу в решающей пятой партии на зубах!",
       "😱 Корвалол в студию! Настоящая драма за столом завершается сложнейшей победой " + cleanHtml(winnerName) + "!"
     ];
 
@@ -703,6 +735,7 @@
   var currentModalUrl = "";
   var currentUserLeaderboardUnsubscribe = null;
   var currentEditingTourId = null;
+  var currentMatchModalType = 'singles';
 
   var firebaseConfig = {
     apiKey: "AIzaSyA4NIFGbC0xhhykyW0QosrWFJj5eU4bOuY",
@@ -860,30 +893,63 @@
     }
   }
 
+  // АВТОНОМНЫЙ QR-КОД БЕЗ СТОРОННИХ API
+  var qrCodeInstance = null;
+
   function openQrModal(type) {
     var targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
     var title = "QR-код приложения";
     var desc = "Покажите этот QR-код друзьям для быстрого доступа:";
-    if (type === 'tg') { targetUrl = TELEGRAM_CHAT_URL; title = "QR-код Telegram чата"; desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; }
-    else if (type === 'max') { targetUrl = MAX_CHAT_URL; title = "QR-код МАКС чата"; desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; }
+    
+    if (type === 'tg') { 
+      targetUrl = TELEGRAM_CHAT_URL; 
+      title = "QR-код Telegram чата"; 
+      desc = "Отсканируйте, чтобы присоединиться к Telegram-чату клуба:"; 
+    } else if (type === 'max') { 
+      targetUrl = MAX_CHAT_URL; 
+      title = "QR-код МАКС чата"; 
+      desc = "Отсканируйте, чтобы присоединиться к МАКС-чату клуба:"; 
+    }
 
     currentModalUrl = targetUrl;
     document.getElementById('qr-modal-title').innerText = "📷 " + title;
     document.getElementById('qr-modal-desc').innerText = desc;
     document.getElementById('qr-url-text').innerText = targetUrl;
-    document.getElementById('qr-code-img').src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
+
+    var container = document.getElementById('qr-canvas-container');
+    container.innerHTML = '';
+
+    if (window.QRCode) {
+      qrCodeInstance = new QRCode(container, {
+        text: targetUrl,
+        width: 180,
+        height: 180,
+        colorDark: "#000000",
+        colorLight: "#ffffff",
+        correctLevel: QRCode.CorrectLevel.M
+      });
+    } else {
+      container.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180" width="180" height="180" alt="QR" style="display:block;" />';
+    }
+
     document.getElementById('qr-modal').style.display = 'flex';
   }
-  function closeQrModal() { document.getElementById('qr-modal').style.display = 'none'; }
+
+  function closeQrModal() { 
+    document.getElementById('qr-modal').style.display = 'none'; 
+    var container = document.getElementById('qr-canvas-container');
+    if (container) container.innerHTML = '';
+  }
 
   function getPlayerStatus(elo) {
-    if (elo <= 1000) return "Новичок 🟢"; if (elo <= 1200) return "Ученик 📘"; if (elo <= 1400) return "Любитель 👟";
-    if (elo <= 1600) return "Игрок основы 🏃‍♂️"; if (elo <= 1800) return "Третий разряд 🥉"; if (elo <= 2000) return "Второй разряд 🥈";
-    if (elo <= 2200) return "Первый разряд 🥇"; if (elo <= 2400) return "КМС 🏅"; if (elo <= 2600) return "Мастер спорта 🏆";
-    if (elo <= 2800) return "Элитный игрок ⭐"; if (elo <= 3000) return "Мастер атаки 🔥"; if (elo <= 3200) return "Гроссмейстер ♟️";
-    if (elo <= 3400) return "Чемпион клуба 👑"; if (elo <= 3600) return "Гранд-мастер 🎖️"; if (elo <= 3800) return "Снайпер 🎯";
-    if (elo <= 4000) return "Легенда клуба 🏛️"; if (elo <= 4200) return "Премьер-лига 📈"; if (elo <= 4400) return "Гранд-чемпион 🔥🏆";
-    if (elo <= 4600) return "Властелин стола 👑🏓"; if (elo <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
+    var e = parseInt(elo, 10) || 1000;
+    if (e <= 1000) return "Новичок 🟢"; if (e <= 1200) return "Ученик 📘"; if (e <= 1400) return "Любитель 👟";
+    if (e <= 1600) return "Игрок основы 🏃‍♂️"; if (e <= 1800) return "Третий разряд 🥉"; if (e <= 2000) return "Второй разряд 🥈";
+    if (e <= 2200) return "Первый разряд 🥇"; if (e <= 2400) return "КМС 🏅"; if (e <= 2600) return "Мастер спорта 🏆";
+    if (e <= 2800) return "Элитный игрок ⭐"; if (e <= 3000) return "Мастер атаки 🔥"; if (e <= 3200) return "Гроссмейстер ♟️";
+    if (e <= 3400) return "Чемпион клуба 👑"; if (e <= 3600) return "Гранд-мастер 🎖️"; if (e <= 3800) return "Снайпер 🎯";
+    if (e <= 4000) return "Легенда клуба 🏛️"; if (e <= 4200) return "Премьер-лига 📈"; if (e <= 4400) return "Гранд-чемпион 🔥🏆";
+    if (e <= 4600) return "Властелин стола 👑🏓"; if (e <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
   }
 
   function isUserVerified() {
@@ -1109,23 +1175,27 @@
     if (!currentUserProfile.uid) return;
     var adminTag = isSuperAdmin() ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
     var customBadge = getCustomBadge(currentUserProfile.uid);
-    var elo = currentUserProfile.elo !== undefined ? currentUserProfile.elo : 1000;
+    var elo = parseInt(currentUserProfile.elo, 10) || 1000;
 
     var authScreen = document.getElementById('mandatory-auth-screen'); 
     if (authScreen) authScreen.style.display = 'none';
 
     document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge;
     
-    var deltaHtml = currentUserProfile.lastEloDelta ? (currentUserProfile.lastEloDelta > 0 ? '<span class="elo-delta elo-up">(+' + currentUserProfile.lastEloDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + currentUserProfile.lastEloDelta + ') 📉</span>') : '';
+    var lastDelta = parseInt(currentUserProfile.lastEloDelta, 10) || 0;
+    var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
 
     document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 12px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button></div>';
     
     var rttfText = currentUserProfile.rttf ? ' • РТТФ: ' + currentUserProfile.rttf : '';
     var streakText = (currentUserProfile.winStreak !== undefined && currentUserProfile.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + currentUserProfile.winStreak + ' побед подряд</span>' : '';
-    var winrate = currentUserProfile.matches > 0 ? Math.round((currentUserProfile.wins / currentUserProfile.matches) * 100) : 0;
+    var wins = parseInt(currentUserProfile.wins, 10) || 0;
+    var losses = parseInt(currentUserProfile.losses, 10) || 0;
+    var matches = parseInt(currentUserProfile.matches, 10) || 0;
+    var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
     
     var minsTotal = currentUserProfile.totalMinutes || 0;
-    document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + (currentUserProfile.wins || 0) + 'В - ' + (currentUserProfile.losses || 0) + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+    document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
 
     var mContainer = document.getElementById('user-medals-container');
     var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
@@ -1492,7 +1562,6 @@
       db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(snaps) {
           renderUserHistoryFromSnaps(snaps, uid);
       }).catch(function() {
-          // Резервная выборка, если в проекте отсутствует составной индекс
           db.collection('matches_history').get().then(function(allSnaps) {
               var matches = [];
               allSnaps.forEach(function(docX) {
@@ -1529,31 +1598,100 @@
     
     var h = '';
     matches.forEach(function(mx) {
-      var isP1 = mx.p1Uid === uid;
-      var myS = isP1 ? mx.p1Score : mx.p2Score;
-      var opS = isP1 ? mx.p2Score : mx.p1Score;
-      var opN = isP1 ? mx.p2Name : mx.p1Name;
+      var isDoubles = mx.type === 'doubles';
+      var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
+      var myS = isTeam1 ? (mx.team1Score || mx.p1Score) : (mx.team2Score || mx.p2Score);
+      var opS = isTeam1 ? (mx.team2Score || mx.p2Score) : (mx.team1Score || mx.p1Score);
+      var opN = isTeam1 ? (isDoubles ? mx.team2Names : mx.p2Name) : (isDoubles ? mx.team1Names : mx.p1Name);
+      var myPartner = isDoubles ? (isTeam1 ? (mx.team1Uids[0] === uid ? mx.team1NamesArr[1] : mx.team1NamesArr[0]) : (mx.team2Uids[0] === uid ? mx.team2NamesArr[1] : mx.team2NamesArr[0])) : null;
       var isWin = myS > opS;
       var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
-      h += '<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; font-size:12px;"><div><div>против <b>' + cleanHtml(opN) + '</b></div><div style="color:var(--text-muted);font-size:10px;">' + dtStr + '</div></div><div style="color:' + (isWin ? '#059669' : '#f87171') + '; font-weight:bold;">' + myS + ' : ' + opS + '</div></div>';
+      var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles">2x2</span> ' : '';
+      var partnerStr = myPartner ? '<div style="font-size: 10px; color: var(--accent-sky);">в паре с: ' + cleanHtml(myPartner) + '</div>' : '';
+
+      h += '<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">' +
+             '<div>' +
+               '<div>' + modeBadge + 'против <b>' + cleanHtml(opN) + '</b></div>' +
+               partnerStr +
+               '<div style="color:var(--text-muted);font-size:10px;">' + dtStr + '</div>' +
+             '</div>' +
+             '<div style="color:' + (isWin ? '#059669' : '#f87171') + '; font-weight:bold; font-size: 14px;">' + myS + ' : ' + opS + '</div>' +
+           '</div>';
     });
     hEl.innerHTML = h;
   }
 
   function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
+  // ================= ЛОГИКА ЗАПИСИ МАТЧЕЙ (1x1 и 2x2) =================
+  function setMatchModalType(type) {
+    currentMatchModalType = type;
+    var btnS = document.getElementById('btn-match-type-singles');
+    var btnD = document.getElementById('btn-match-type-doubles');
+    var fS = document.getElementById('match-fields-singles');
+    var fD = document.getElementById('match-fields-doubles');
+
+    if (type === 'singles') {
+      btnS.classList.add('active'); btnD.classList.remove('active');
+      fS.style.display = 'flex'; fD.style.display = 'none';
+    } else {
+      btnD.classList.add('active'); btnS.classList.remove('active');
+      fD.style.display = 'flex'; fS.style.display = 'none';
+    }
+  }
+
   function handleMatchClick() {
     if (!isUserVerified()) return customAlert("❌ Записывать матчи могут только авторизованные игроки!");
     var uid = getVerifiedUserId(); 
     if (!currentUserActiveLoc || !uid) return customAlert("❌ Записывать матчи могут только игроки за столом (сделайте чекин)!");
-    var sel = document.getElementById('match-opponent-select'); sel.innerHTML = '';
-    var opps = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []).filter(function(p) { return (p.uid||p) !== uid; });
-    if (opps.length === 0) { sel.innerHTML = '<option value="">(нет других игроков)</option>'; } else { for(var i=0; i<opps.length; i++) { sel.innerHTML += '<option value="' + escapeJS(opps[i].uid||opps[i]) + '">' + cleanHtml(opps[i].name) + '</option>'; } }
-    selectScore(3,0); document.getElementById('match-modal').style.display = 'flex';
+    
+    var playersAtTable = (locationsData[currentUserActiveLoc] && locationsData[currentUserActiveLoc].players ? locationsData[currentUserActiveLoc].players : []);
+    var opps = playersAtTable.filter(function(p) { return (p.uid || p) !== uid; });
+
+    // Заполнение селектора одиночного матча
+    var sel = document.getElementById('match-opponent-select'); 
+    sel.innerHTML = '';
+    if (opps.length === 0) { 
+      sel.innerHTML = '<option value="">(нет других игроков у стола)</option>'; 
+    } else { 
+      for(var i=0; i<opps.length; i++) { 
+        sel.innerHTML += '<option value="' + escapeJS(opps[i].uid || opps[i]) + '">' + cleanHtml(opps[i].name) + '</option>'; 
+      } 
+    }
+
+    // Заполнение селекторов парного матча
+    var selPartner = document.getElementById('match-partner-select');
+    var selOpp1 = document.getElementById('match-opp1-select');
+    var selOpp2 = document.getElementById('match-opp2-select');
+    selPartner.innerHTML = ''; selOpp1.innerHTML = ''; selOpp2.innerHTML = '';
+
+    if (opps.length < 3) {
+      var note = '<option value="">(нужно минимум 4 игрока у стола)</option>';
+      selPartner.innerHTML = note; selOpp1.innerHTML = note; selOpp2.innerHTML = note;
+    } else {
+      for(var j=0; j<opps.length; j++) {
+        var opt = '<option value="' + escapeJS(opps[j].uid || opps[j]) + '">' + cleanHtml(opps[j].name) + '</option>';
+        selPartner.innerHTML += opt;
+        selOpp1.innerHTML += opt;
+        selOpp2.innerHTML += opt;
+      }
+      if (opps.length >= 3) {
+        selPartner.selectedIndex = 0;
+        selOpp1.selectedIndex = 1;
+        selOpp2.selectedIndex = 2;
+      }
+    }
+
+    setMatchModalType('singles');
+    selectScore(3, 0); 
+    document.getElementById('match-modal').style.display = 'flex';
   }
+
   function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
+  
   function selectScore(my, opp) { 
-      document.getElementById('match-my-score').value = my; document.getElementById('match-opp-score').value = opp; 
+      document.getElementById('match-my-score').value = my; 
+      document.getElementById('match-opp-score').value = opp; 
       var btns = document.querySelectorAll('.reg-score-btn');
       for(var i=0; i<btns.length; i++) {
           if (btns[i].innerText.replace(/\s+/g,'') === (my + ":" + opp)) btns[i].classList.add('active');
@@ -1562,31 +1700,98 @@
   }
   
   function submitMatchProposal() {
-    var uid = getVerifiedUserId(), sel = document.getElementById('match-opponent-select'), oppUid = sel.value;
-    if(!uid || !oppUid || uid===oppUid) return customAlert("Выберите соперника!");
-    closeMatchModal();
-    db.collection('pending_matches').add({ 
-      proposerUid: uid, 
-      proposerName: currentUserProfile.name, 
-      opponentUid: oppUid, 
-      opponentName: sel.options[sel.selectedIndex].text, 
-      scoreProposer: parseInt(document.getElementById('match-my-score').value, 10), 
-      scoreOpponent: parseInt(document.getElementById('match-opp-score').value, 10), 
-      timestamp: Date.now() 
-    }).then(function() { 
-      customAlert("✅ Запрос отправлен!"); 
-    }).catch(function(e){});
+    var uid = getVerifiedUserId();
+    if (!uid) return;
+    var myScore = parseInt(document.getElementById('match-my-score').value, 10);
+    var oppScore = parseInt(document.getElementById('match-opp-score').value, 10);
+
+    if (currentMatchModalType === 'singles') {
+      var sel = document.getElementById('match-opponent-select');
+      var oppUid = sel.value;
+      if (!oppUid || uid === oppUid) return customAlert("Выберите соперника у стола!");
+      
+      closeMatchModal();
+      db.collection('pending_matches').add({ 
+        type: 'singles',
+        proposerUid: uid, 
+        proposerName: currentUserProfile.name, 
+        opponentUid: oppUid, 
+        opponentName: sel.options[sel.selectedIndex].text, 
+        scoreProposer: myScore, 
+        scoreOpponent: oppScore, 
+        targetUids: [oppUid],
+        timestamp: Date.now() 
+      }).then(function() { 
+        customAlert("✅ Запрос на подтверждение матча 1х1 отправлен!"); 
+      }).catch(function(e){});
+
+    } else {
+      // ПАРНЫЙ МАТЧ 2х2
+      var pSel = document.getElementById('match-partner-select');
+      var o1Sel = document.getElementById('match-opp1-select');
+      var o2Sel = document.getElementById('match-opp2-select');
+      var partnerUid = pSel.value;
+      var opp1Uid = o1Sel.value;
+      var opp2Uid = o2Sel.value;
+
+      if (!partnerUid || !opp1Uid || !opp2Uid) {
+        return customAlert("Для парного матча необходимо выбрать напарника и двух соперников!");
+      }
+
+      var uidsList = [uid, partnerUid, opp1Uid, opp2Uid];
+      var uniqueUids = new Set(uidsList);
+      if (uniqueUids.size < 4) {
+        return customAlert("Все 4 игрока в парном матче должны быть разными участниками!");
+      }
+
+      var partnerName = pSel.options[pSel.selectedIndex].text;
+      var opp1Name = o1Sel.options[o1Sel.selectedIndex].text;
+      var opp2Name = o2Sel.options[o2Sel.selectedIndex].text;
+
+      closeMatchModal();
+      db.collection('pending_matches').add({
+        type: 'doubles',
+        proposerUid: uid,
+        team1Uids: [uid, partnerUid],
+        team1Names: currentUserProfile.name + " & " + partnerName,
+        team1NamesArr: [currentUserProfile.name, partnerName],
+        team2Uids: [opp1Uid, opp2Uid],
+        team2Names: opp1Name + " & " + opp2Name,
+        team2NamesArr: [opp1Name, opp2Name],
+        scoreTeam1: myScore,
+        scoreTeam2: oppScore,
+        targetUids: [opp1Uid, opp2Uid], // Любой из соперников может подтвердить
+        timestamp: Date.now()
+      }).then(function() {
+        customAlert("✅ Запрос на подтверждение парного матча 2х2 отправлен соперникам!");
+      }).catch(function(e){});
+    }
   }
 
   function listenPendingMatches() {
     var myUid = getVerifiedUserId(); if (!myUid) return;
-    db.collection('pending_matches').where('opponentUid', '==', myUid).onSnapshot(function(snap) {
+    db.collection('pending_matches').where('targetUids', 'array-contains', myUid).onSnapshot(function(snap) {
       try {
-        var c = document.getElementById('pending-matches-container'); if (snap.empty) { c.innerHTML = ''; return; }
+        var c = document.getElementById('pending-matches-container'); 
+        if (snap.empty) { c.innerHTML = ''; return; }
         var html = '';
         snap.forEach(function(doc) { 
             var m = doc.data(); 
-            html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;"><div style="font-size: 13px; font-weight: 600; color: #9333ea;">⚔️ Подтверждение матча от <b>' + cleanHtml(m.proposerName) + '</b></div><div style="font-size: 13px;">Счёт: Вы <b>' + m.scoreOpponent + ' : ' + m.scoreProposer + '</b> ' + cleanHtml(m.proposerName) + '</div><div style="display: flex; gap: 8px; margin-top: 4px;"><button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button><button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button></div></div>'; 
+            var isDoubles = m.type === 'doubles';
+            var title = isDoubles ? '👥 Подтверждение парного матча 2х2' : '⚔️ Подтверждение матча от <b>' + cleanHtml(m.proposerName) + '</b>';
+            var scoreText = isDoubles 
+              ? ('Счёт: <b>' + cleanHtml(m.team2Names) + '</b> ' + m.scoreTeam2 + ' : ' + m.scoreTeam1 + ' <b>' + cleanHtml(m.team1Names) + '</b>')
+              : ('Счёт: Вы <b>' + m.scoreOpponent + ' : ' + m.scoreProposer + '</b> ' + cleanHtml(m.proposerName));
+
+            html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">' +
+                      '<div style="font-size: 13px; font-weight: 600; color: #9333ea;">' + title + '</div>' +
+                      '<div style="font-size: 13px;">' + scoreText + '</div>' +
+                      '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
+                      '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
+                        '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
+                        '<button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
+                      '</div>' +
+                    '</div>'; 
         });
         c.innerHTML = html;
       } catch(e) {}
@@ -1600,7 +1805,7 @@
     return Math.round(k * (scoreA - (1 / (1 + Math.pow(10, (ratingB - ratingA) / 400))))); 
   }
 
-  // НАДЁЖНОЕ ПОДТВЕРЖДЕНИЕ МАТЧА БЕЗ СБОЕВ В БАЗЕ
+  // ПОДТВЕРЖДЕНИЕ МАТЧЕЙ (ОДИНОЧНЫХ И ПАРНЫХ 2х2)
   function confirmMatch(matchId) {
     var myUid = getVerifiedUserId(); if (!myUid) return;
     var matchRef = db.collection('pending_matches').doc(matchId);
@@ -1608,84 +1813,199 @@
     matchRef.get().then(function(matchDoc) {
       if (!matchDoc.exists) return;
       var m = matchDoc.data();
-      var pRef = db.collection('users').doc(m.proposerUid);
-      var oRef = db.collection('users').doc(m.opponentUid);
+      
+      // ================= 1. ОБРАБОТКА ОДИНОЧНОГО МАТЧА 1х1 =================
+      if (m.type !== 'doubles') {
+        var pRef = db.collection('users').doc(m.proposerUid);
+        var oRef = db.collection('users').doc(m.opponentUid);
 
-      Promise.all([pRef.get(), oRef.get()]).then(function(docs) {
-        var pDoc = docs[0], oDoc = docs[1];
-        var pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
-        var oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
-        
-        var isPWin = m.scoreProposer > m.scoreOpponent;
-        var pElo = parseInt(pData.elo, 10) || 1000;
-        var oElo = parseInt(oData.elo, 10) || 1000;
-        var myDelta = calculateElo(pElo, oElo, isPWin ? 1 : 0);
-        var newPElo = Math.max(100, pElo + myDelta);
-        var newOElo = Math.max(100, oElo - myDelta);
-        
-        var pWinStreak = isPWin ? ((parseInt(pData.winStreak, 10) || 0) + 1) : 0;
-        var oWinStreak = isPWin ? 0 : ((parseInt(oData.winStreak, 10) || 0) + 1);
+        Promise.all([pRef.get(), oRef.get()]).then(function(docs) {
+          var pDoc = docs[0], oDoc = docs[1];
+          var pData = pDoc.exists ? pDoc.data() : { name: m.proposerName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+          var oData = oDoc.exists ? oDoc.data() : { name: m.opponentName, elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+          
+          var isPWin = m.scoreProposer > m.scoreOpponent;
+          var pElo = parseInt(pData.elo, 10) || 1000;
+          var oElo = parseInt(oData.elo, 10) || 1000;
+          var myDelta = calculateElo(pElo, oElo, isPWin ? 1 : 0, 32);
+          var newPElo = Math.max(100, pElo + myDelta);
+          var newOElo = Math.max(100, oElo - myDelta);
+          
+          var pWinStreak = isPWin ? ((parseInt(pData.winStreak, 10) || 0) + 1) : 0;
+          var oWinStreak = isPWin ? 0 : ((parseInt(oData.winStreak, 10) || 0) + 1);
 
-        var batch = db.batch();
-        batch.set(pRef, { 
-          elo: newPElo, 
-          lastEloDelta: isPWin ? myDelta : -myDelta, 
-          winStreak: pWinStreak, 
-          matches: (parseInt(pData.matches, 10) || 0) + 1, 
-          wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), 
-          losses: (parseInt(pData.losses, 10) || 0) + (isPWin ? 0 : 1), 
-          updatedAt: Date.now() 
-        }, { merge: true });
+          var batch = db.batch();
+          batch.set(pRef, { 
+            elo: newPElo, 
+            lastEloDelta: isPWin ? myDelta : -myDelta, 
+            winStreak: pWinStreak, 
+            matches: (parseInt(pData.matches, 10) || 0) + 1, 
+            wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), 
+            losses: (parseInt(pData.losses, 10) || 0) + (isPWin ? 0 : 1), 
+            updatedAt: Date.now() 
+          }, { merge: true });
 
-        batch.set(oRef, { 
-          elo: newOElo, 
-          lastEloDelta: isPWin ? -myDelta : myDelta, 
-          winStreak: oWinStreak, 
-          matches: (parseInt(oData.matches, 10) || 0) + 1, 
-          wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), 
-          losses: (parseInt(oData.losses, 10) || 0) + (isPWin ? 1 : 0), 
-          updatedAt: Date.now() 
-        }, { merge: true });
+          batch.set(oRef, { 
+            elo: newOElo, 
+            lastEloDelta: isPWin ? -myDelta : myDelta, 
+            winStreak: oWinStreak, 
+            matches: (parseInt(oData.matches, 10) || 0) + 1, 
+            wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), 
+            losses: (parseInt(oData.losses, 10) || 0) + (isPWin ? 1 : 0), 
+            updatedAt: Date.now() 
+          }, { merge: true });
 
-        batch.delete(matchRef);
+          batch.delete(matchRef);
 
-        batch.commit().then(function() {
-          // Гарантированная запись в историю матчей
-          db.collection('matches_history').add({ 
-            p1Uid: m.proposerUid, 
-            p1Name: m.proposerName, 
-            p1Score: m.scoreProposer, 
-            p2Uid: m.opponentUid, 
-            p2Name: m.opponentName, 
-            p2Score: m.scoreOpponent, 
-            participants: [m.proposerUid, m.opponentUid], 
-            timestamp: Date.now() 
-          }).then(function() {
-            var winnerName = isPWin ? m.proposerName : m.opponentName;
-            var loserName = isPWin ? m.opponentName : m.proposerName;
-            var wScore = isPWin ? m.scoreProposer : m.scoreOpponent;
-            var lScore = isPWin ? m.scoreOpponent : m.scoreProposer;
-            var humorComment = getMatchHumor(wScore, lScore, winnerName, loserName);
+          batch.commit().then(function() {
+            db.collection('matches_history').add({ 
+              type: 'singles',
+              p1Uid: m.proposerUid, 
+              p1Name: m.proposerName, 
+              p1Score: m.scoreProposer, 
+              p2Uid: m.opponentUid, 
+              p2Name: m.opponentName, 
+              p2Score: m.scoreOpponent, 
+              participants: [m.proposerUid, m.opponentUid], 
+              timestamp: Date.now() 
+            }).then(function() {
+              var winnerName = isPWin ? m.proposerName : m.opponentName;
+              var loserName = isPWin ? m.opponentName : m.proposerName;
+              var wScore = isPWin ? m.scoreProposer : m.scoreOpponent;
+              var lScore = isPWin ? m.scoreOpponent : m.scoreProposer;
+              var humorComment = getMatchHumor(wScore, lScore, winnerName, loserName);
 
-            sendTelegramAlert(
-              "🏆 <b>Рейтинговый матч подтверждён!</b>\n\n" +
-              "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
-              "<i>" + humorComment + "</i>\n\n" +
-              "<blockquote>📊 <b>Новый клубный рейтинг:</b>\n" +
-              "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (isPWin ? "+" : "") + (isPWin ? myDelta : -myDelta) + ")\n" +
-              "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (!isPWin ? "+" : "") + (isPWin ? -myDelta : myDelta) + ")</blockquote>"
-            );
-          }).catch(function(errHistory) {
-            console.error("Ошибка сохранения истории матча:", errHistory);
-          });
+              sendTelegramAlert(
+                "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
+                "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
+                "<i>" + humorComment + "</i>\n\n" +
+                "<blockquote>📊 <b>Новый рейтинг Эло:</b>\n" +
+                "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (isPWin ? "+" : "") + myDelta + ")\n" +
+                "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (!isPWin ? "+" : "-") + myDelta + ")</blockquote>"
+              );
+            });
+          }).catch(function(e) { customAlert("Ошибка сохранения: " + e.message); });
+        });
 
-        }).catch(function(e) { customAlert("Ошибка сохранения: " + e.message); });
-      }).catch(function(e) { customAlert("Ошибка доступа к профилям: " + e.message); });
+      } else {
+        // ================= 2. ОБРАБОТКА ПАРНОГО МАТЧА 2х2 (ВАРИАНТ А) =================
+        var t1aRef = db.collection('users').doc(m.team1Uids[0]);
+        var t1bRef = db.collection('users').doc(m.team1Uids[1]);
+        var t2aRef = db.collection('users').doc(m.team2Uids[0]);
+        var t2bRef = db.collection('users').doc(m.team2Uids[1]);
+
+        Promise.all([t1aRef.get(), t1bRef.get(), t2aRef.get(), t2bRef.get()]).then(function(docs) {
+          var d1a = docs[0].exists ? docs[0].data() : { name: m.team1NamesArr[0], elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+          var d1b = docs[1].exists ? docs[1].data() : { name: m.team1NamesArr[1], elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+          var d2a = docs[2].exists ? docs[2].data() : { name: m.team2NamesArr[0], elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+          var d2b = docs[3].exists ? docs[3].data() : { name: m.team2NamesArr[1], elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0 };
+
+          var elo1a = parseInt(d1a.elo, 10) || 1000;
+          var elo1b = parseInt(d1b.elo, 10) || 1000;
+          var elo2a = parseInt(d2a.elo, 10) || 1000;
+          var elo2b = parseInt(d2b.elo, 10) || 1000;
+
+          var team1AvgElo = (elo1a + elo1b) / 2;
+          var team2AvgElo = (elo2a + elo2b) / 2;
+
+          var isTeam1Win = m.scoreTeam1 > m.scoreTeam2;
+          var delta = calculateElo(team1AvgElo, team2AvgElo, isTeam1Win ? 1 : 0, 24);
+
+          var newElo1a = Math.max(100, elo1a + delta);
+          var newElo1b = Math.max(100, elo1b + delta);
+          var newElo2a = Math.max(100, elo2a - delta);
+          var newElo2b = Math.max(100, elo2b - delta);
+
+          var batch = db.batch();
+
+          // Обновление Команды 1
+          batch.set(t1aRef, {
+            elo: newElo1a,
+            lastEloDelta: isTeam1Win ? delta : -delta,
+            winStreak: isTeam1Win ? ((parseInt(d1a.winStreak, 10) || 0) + 1) : 0,
+            matches: (parseInt(d1a.matches, 10) || 0) + 1,
+            wins: (parseInt(d1a.wins, 10) || 0) + (isTeam1Win ? 1 : 0),
+            losses: (parseInt(d1a.losses, 10) || 0) + (isTeam1Win ? 0 : 1),
+            updatedAt: Date.now()
+          }, { merge: true });
+
+          batch.set(t1bRef, {
+            elo: newElo1b,
+            lastEloDelta: isTeam1Win ? delta : -delta,
+            winStreak: isTeam1Win ? ((parseInt(d1b.winStreak, 10) || 0) + 1) : 0,
+            matches: (parseInt(d1b.matches, 10) || 0) + 1,
+            wins: (parseInt(d1b.wins, 10) || 0) + (isTeam1Win ? 1 : 0),
+            losses: (parseInt(d1b.losses, 10) || 0) + (isTeam1Win ? 0 : 1),
+            updatedAt: Date.now()
+          }, { merge: true });
+
+          // Обновление Команды 2
+          batch.set(t2aRef, {
+            elo: newElo2a,
+            lastEloDelta: isTeam1Win ? -delta : delta,
+            winStreak: isTeam1Win ? 0 : ((parseInt(d2a.winStreak, 10) || 0) + 1),
+            matches: (parseInt(d2a.matches, 10) || 0) + 1,
+            wins: (parseInt(d2a.wins, 10) || 0) + (isTeam1Win ? 0 : 1),
+            losses: (parseInt(d2a.losses, 10) || 0) + (isTeam1Win ? 1 : 0),
+            updatedAt: Date.now()
+          }, { merge: true });
+
+          batch.set(t2bRef, {
+            elo: newElo2b,
+            lastEloDelta: isTeam1Win ? -delta : delta,
+            winStreak: isTeam1Win ? 0 : ((parseInt(d2b.winStreak, 10) || 0) + 1),
+            matches: (parseInt(d2b.matches, 10) || 0) + 1,
+            wins: (parseInt(d2b.wins, 10) || 0) + (isTeam1Win ? 0 : 1),
+            losses: (parseInt(d2b.losses, 10) || 0) + (isTeam1Win ? 1 : 0),
+            updatedAt: Date.now()
+          }, { merge: true });
+
+          batch.delete(matchRef);
+
+          batch.commit().then(function() {
+            db.collection('matches_history').add({
+              type: 'doubles',
+              team1Uids: m.team1Uids,
+              team1Names: m.team1Names,
+              team1NamesArr: m.team1NamesArr,
+              team2Uids: m.team2Uids,
+              team2Names: m.team2Names,
+              team2NamesArr: m.team2NamesArr,
+              team1Score: m.scoreTeam1,
+              team2Score: m.scoreTeam2,
+              participants: m.team1Uids.concat(m.team2Uids),
+              timestamp: Date.now()
+            }).then(function() {
+              var winTeam = isTeam1Win ? m.team1Names : m.team2Names;
+              var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
+              var wScore = isTeam1Win ? m.scoreTeam1 : m.scoreTeam2;
+              var lScore = isTeam1Win ? m.scoreTeam2 : m.scoreTeam1;
+              var humorComment = getMatchHumor(wScore, lScore, winTeam, loseTeam);
+
+              sendTelegramAlert(
+                "👥 <b>Парный матч 2х2 подтверждён!</b>\n\n" +
+                "🏓 <b>" + cleanHtml(m.team1Names) + "</b>  <code>" + m.scoreTeam1 + " : " + m.scoreTeam2 + "</code>  <b>" + cleanHtml(m.team2Names) + "</b>\n\n" +
+                "<i>" + humorComment + "</i>\n\n" +
+                "<blockquote>📊 <b>Новый рейтинг Эло участников:</b>\n" +
+                "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (isTeam1Win ? "+" : "") + delta + ")\n" +
+                "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (isTeam1Win ? "+" : "") + delta + ")\n" +
+                "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (!isTeam1Win ? "+" : "-") + delta + ")\n" +
+                "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (!isTeam1Win ? "+" : "-") + delta + ")</blockquote>"
+              );
+            });
+          }).catch(function(e) { customAlert("Ошибка сохранения: " + e.message); });
+        });
+      }
     });
   }
 
-  function rejectMatch(matchId) { db.collection('pending_matches').doc(matchId).delete().then(function() { document.getElementById('pending-matches-container').innerHTML = ''; }).catch(function(e) {}); }
+  function rejectMatch(matchId) { 
+    db.collection('pending_matches').doc(matchId).delete().then(function() { 
+      document.getElementById('pending-matches-container').innerHTML = ''; 
+    }).catch(function(e) {}); 
+  }
 
+  // ПОСЛЕДНИЕ МАТЧИ С ПОДДЕРЖКОЙ 1х1 И 2х2
   function listenRecentMatches() {
     db.collection('matches_history').onSnapshot(function(snap) {
       try {
@@ -1701,8 +2021,11 @@
         var html = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); margin: 4px 0 8px 4px; text-transform: uppercase; letter-spacing: 0.5px;">Последние матчи:</div>';
         
         matches.forEach(function(m) {
-          var isP1Win = m.p1Score > m.p2Score;
-          var isP2Win = m.p2Score > m.p1Score;
+          var isDoubles = m.type === 'doubles';
+          var s1 = isDoubles ? m.team1Score : m.p1Score;
+          var s2 = isDoubles ? m.team2Score : m.p2Score;
+          var isP1Win = s1 > s2;
+          var isP2Win = s2 > s1;
           var p1Color = isP1Win ? 'color: #10b981;' : '';
           var p2Color = isP2Win ? 'color: #10b981;' : '';
           
@@ -1712,14 +2035,26 @@
           var hours = ('0' + d.getHours()).slice(-2);
           var minutes = ('0' + d.getMinutes()).slice(-2);
           var timeStr = day + '.' + month + ' ' + hours + ':' + minutes;
+          var badgeHtml = isDoubles ? '<span class="badge-mode badge-mode-doubles">2x2</span> ' : '<span class="badge-mode badge-mode-singles">1x1</span> ';
+
+          var leftSideHtml = '';
+          var rightSideHtml = '';
+
+          if (isDoubles) {
+            leftSideHtml = '<span style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names) + '</span>';
+            rightSideHtml = '<span style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names) + '</span>';
+          } else {
+            leftSideHtml = '<span class="clickable-name" style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span>';
+            rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
+          }
 
           html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
                     '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                      '<div style="display:flex; flex:1; justify-content: flex-end; overflow: hidden;"><span class="clickable-name" style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span></div>' +
-                      '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 10px; white-space: nowrap;">' + m.p1Score + ' : ' + m.p2Score + '</div>' +
-                      '<div style="display:flex; flex:1; justify-content: flex-start; overflow: hidden;"><span class="clickable-name" style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span></div>' +
+                      '<div style="display:flex; flex:1; justify-content: flex-end; overflow: hidden;">' + leftSideHtml + '</div>' +
+                      '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 10px; white-space: nowrap;">' + s1 + ' : ' + s2 + '</div>' +
+                      '<div style="display:flex; flex:1; justify-content: flex-start; overflow: hidden;">' + rightSideHtml + '</div>' +
                     '</div>' +
-                    '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">' + timeStr + '</div>' +
+                    '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">' + badgeHtml + timeStr + '</div>' +
                   '</div>';
         });
         container.innerHTML = html;
@@ -1967,9 +2302,9 @@
             });
         });
     }).then(function() {
-        // Мгновенная синхронная запись матча в общую историю
         if (recordedMatch) {
           db.collection('matches_history').add({ 
+            type: 'singles',
             p1Uid: recordedMatch.p1Uid, 
             p1Name: recordedMatch.p1Name, 
             p1Score: s1, 
