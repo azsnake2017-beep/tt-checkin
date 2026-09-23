@@ -4,6 +4,13 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b1120" id="meta-theme-color">
+  
+  <!-- Полноэкранный режим веб-приложения (скрытие адресной строки) -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-touch-fullscreen" content="yes">
+  
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
@@ -100,7 +107,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 2: РАДАР (КАРТОЧКИ ПО УМОЛЧАНИЮ СВЁРНУТЫ) -->
+  <!-- ЭКРАН 2: РАДАР (ПЛАВНЫЕ КАРТОЧКИ) -->
   <div id="view-radar" class="main-view">
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
@@ -110,15 +117,17 @@
         </div>
         <span class="counter" id="badge-park">0 игроков</span>
       </div>
-      <div class="card-body-collapse">
-        <div class="weather-container" id="weather-park"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
-        <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-        <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
-        <div class="section-label">Собираются прийти:</div>
-        <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
-        <div class="action-group" id="btn-container-park">
-          <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
-          <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
+      <div class="card-collapse-wrapper">
+        <div class="card-body-collapse">
+          <div class="weather-container" id="weather-park"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
+          <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+          <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
+          <div class="section-label">Собираются прийти:</div>
+          <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
+          <div class="action-group" id="btn-container-park">
+            <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
+            <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
+          </div>
         </div>
       </div>
     </div>
@@ -131,16 +140,18 @@
         </div>
         <span class="counter" id="badge-vostok">0 игроков</span>
       </div>
-      <div class="card-body-collapse">
-        <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
-        <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс встречи</button>
-        <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
-        <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
-        <div class="section-label">Собираются прийти:</div>
-        <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
-        <div class="action-group" id="btn-container-vostok">
-          <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
-          <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
+      <div class="card-collapse-wrapper">
+        <div class="card-body-collapse">
+          <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
+          <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс встречи</button>
+          <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+          <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
+          <div class="section-label">Собираются прийти:</div>
+          <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
+          <div class="action-group" id="btn-container-vostok">
+            <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
+            <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
+          </div>
         </div>
       </div>
     </div>
@@ -384,7 +395,7 @@
       <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 1)">3 : 1</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>
+      <button class="score-btn tour-score-btn" onclick="selectScore(1, 3)">1 : 3</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>
     </div>
     <input type="hidden" id="tour-match-id-val" />
