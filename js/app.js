@@ -541,8 +541,15 @@ function showUserInfoModal(uid) {
     userMatches.forEach(function(mx) {
       var isDoubles = mx.type === 'doubles';
       var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
-      var myScore = isTeam1 ? (mx.team1Score !== undefined ? mx.team1Score : mx.p1Score) : (mx.team2Score !== undefined ? mx.team2Score : mx.p2Score);
-      var oppScore = isTeam1 ? (mx.team2Score !== undefined ? mx.team2Score : mx.p2Score) : (mx.team1Score !== undefined ? mx.team1Score : mx.p1Score);
+      
+      // Надежное извлечение счета (0 больше не превратится в undefined)
+      var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
+      var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
+
+      if (s1 === "?" || s2 === "?") return; // Защита от битых исторических данных
+
+      var myScore = isTeam1 ? s1 : s2;
+      var oppScore = isTeam1 ? s2 : s1;
       var isWin = myScore > oppScore;
 
       if (isDoubles) {
@@ -614,22 +621,50 @@ function renderUserHistoryList(matches, uid) {
   recentMatches.forEach(function(mx) {
     var isDoubles = mx.type === 'doubles';
     var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
-    var myS = isTeam1 ? (mx.team1Score || mx.p1Score) : (mx.team2Score || mx.p2Score);
-    var opS = isTeam1 ? (mx.team2Score || mx.p2Score) : (mx.team1Score || mx.p1Score);
+    
+    // Бронебойное получение счета
+    var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
+    var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
+
+    var myS = isTeam1 ? s1 : s2;
+    var opS = isTeam1 ? s2 : s1;
+
+    // Безопасное получение имен соперников
     var opN = isTeam1 ? (isDoubles ? mx.team2Names : mx.p2Name) : (isDoubles ? mx.team1Names : mx.p1Name);
-    var myPartner = isDoubles ? (isTeam1 ? (mx.team1Uids[0] === uid ? mx.team1NamesArr[1] : mx.team1NamesArr[0]) : (mx.team2Uids[0] === uid ? mx.team2NamesArr[1] : mx.team2NamesArr[0])) : null;
-    var isWin = myS > opS;
+    if (!opN) opN = "Неизвестные игроки";
+
+    // Безопасное получение имени напарника
+    var myPartner = null;
+    if (isDoubles) {
+        var tArr = isTeam1 ? mx.team1NamesArr : mx.team2NamesArr;
+        var tUids = isTeam1 ? mx.team1Uids : mx.team2Uids;
+        if (tArr && tUids) {
+            myPartner = (tUids[0] === uid) ? tArr[1] : tArr[0];
+        }
+    }
+
+    var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
     var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
     var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles">2x2</span> ' : '';
-    var partnerStr = myPartner ? '<div style="font-size: 10px; color: var(--accent-sky); word-break: break-word;">в паре с: ' + cleanHtml(myPartner) + '</div>' : '';
+    
+    var partnerStr = myPartner ? '<div style="font-size: 10px; color: var(--accent-sky); word-break: break-word; line-height: 1.3; margin-top: 2px;">в паре с: <b>' + cleanHtml(myPartner) + '</b></div>' : '';
+
+    // Перенос имен соперников с амперсандом
+    var formattedOpN = cleanHtml(opN);
+    if (isDoubles) {
+        formattedOpN = formattedOpN.replace(/ & /g, '<br>& ');
+    }
+
+    var p1Color = isWin ? '#059669' : '#f87171';
+    if (myS === "?") p1Color = 'var(--text-muted)'; // На случай сломанных старых записей
 
     h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px;">' +
            '<div style="flex: 1; min-width: 0;">' + 
-             '<div style="word-break: break-word; line-height: 1.4;">' + modeBadge + 'против <b>' + cleanHtml(opN) + '</b></div>' +
+             '<div style="word-break: break-word; line-height: 1.4;">' + modeBadge + 'против <b>' + formattedOpN + '</b></div>' +
              partnerStr +
              '<div style="color:var(--text-muted);font-size:10px; margin-top:4px;">' + dtStr + '</div>' +
            '</div>' +
-           '<div style="color:' + (isWin ? '#059669' : '#f87171') + '; font-weight:bold; font-size: 16px; white-space: nowrap; flex-shrink: 0;">' + myS + ' : ' + opS + '</div>' +
+           '<div style="color:' + p1Color + '; font-weight:bold; font-size: 16px; white-space: nowrap; flex-shrink: 0; margin-left: 8px;">' + myS + ' : ' + opS + '</div>' +
          '</div>';
   });
   hEl.innerHTML = h;
