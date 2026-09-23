@@ -622,7 +622,6 @@ function renderUserHistoryList(matches, uid) {
     var isDoubles = mx.type === 'doubles';
     var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
     
-    // Бронебойное получение счета
     var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
     var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
 
@@ -638,8 +637,9 @@ function renderUserHistoryList(matches, uid) {
     var myStyle = isWin ? winStyle : loseStyle;
     var opStyle = !isWin ? winStyle : loseStyle;
     
-    var myEmoji = isWin ? '👑 ' : '🔻 ';
-    var opEmoji = !isWin ? '👑 ' : '🔻 ';
+    // Окрашиваем стрелочки
+    var myEmoji = isWin ? '<span style="' + winStyle + '">▲</span> ' : '<span style="' + loseStyle + '">▼</span> ';
+    var opEmoji = !isWin ? '<span style="' + winStyle + '">▲</span> ' : '<span style="' + loseStyle + '">▼</span> ';
 
     var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
     var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px;">2x2</span>' : '<span class="badge-mode badge-mode-singles" style="margin-right: 6px;">1x1</span>';
@@ -680,7 +680,6 @@ function renderUserHistoryList(matches, uid) {
         leftContentHtml = '<div style="line-height: 1.4; word-break: break-word; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
     }
 
-    // Кнопка удаления для админа
     var adminDelBtn = (isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
 
     h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
