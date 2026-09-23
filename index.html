@@ -18,16 +18,16 @@
 
   <link rel="stylesheet" href="style.css">
 
-  <!-- Асинхронная загрузка внешних SDK (не блокирует отрисовку сайта) -->
-  <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- Асинхронная загрузка внешних SDK (чтобы Chrome не вис без VPN) -->
+  <script async src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- Официальные сервера Google (gstatic) работают в России быстрее всего -->
+  <!-- Официальные сервера Google -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
-  <!-- Локальные модули приложения (загрузятся сразу после Firebase) -->
+  <!-- Локальные модули приложения -->
   <script defer src="js/config.js"></script>
   <script defer src="js/matches.js"></script>
   <script defer src="js/radar.js"></script>
@@ -266,6 +266,7 @@
   </div>
 </div>
 
+<!-- ИСПРАВЛЕННОЕ ОКНО ПРОФИЛЯ -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -278,28 +279,16 @@
     
     <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;"></div>
 
-    <!-- Блок аналитики -->
     <div id="info-modal-extended-stats" style="display: none; flex-direction: column; gap: 6px; background: var(--list-bg); padding: 12px; border-radius: 12px; margin-top: 8px; text-align: left; border: 1px solid var(--card-border);">
       <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 4px;">Аналитика игрока:</div>
       <div id="extended-stats-body" style="font-size: 12px; color: var(--text-muted);">Загрузка аналитики...</div>
     </div>
 
     <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 8px;">История матчей:</div>
+    <!-- Убран max-height: 200px, чтобы скроллилась вся карточка целиком -->
+    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; padding-bottom: 4px;"><span class="empty-note">Пусто</span></div>
     
-    <!-- История матчей с внутренним скроллом, как вы и просили -->
-    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto; overscroll-behavior: contain; padding-bottom: 4px; padding-right: 4px;"><span class="empty-note">Пусто</span></div>
-    
-    <button class="btn btn-leave" style="margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
-  </div>
-</div>
-
-  
-    <!-- НОВЫЙ БЛОК ДЛЯ РАСШИРЕННОЙ СТАТИСТИКИ -->
-    <div id="info-modal-extended-stats" style="display: none; flex-direction: column; gap: 6px; background: var(--list-bg); padding: 12px; border-radius: 12px; margin-top: 8px; text-align: left; border: 1px solid var(--card-border);"></div>
-
-    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 8px;">История матчей:</div>
-    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
-    <button class="btn btn-leave" style="margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
+    <button class="btn btn-leave" style="margin-top: 4px;" onclick="closeUserInfoModal()">Закрыть</button>
   </div>
 </div>
 
@@ -418,7 +407,7 @@
       <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>
+      <button class="score-btn tour-score-btn" onclick="selectScore(0, 3)">0 : 3</button>
     </div>
     <input type="hidden" id="tour-match-id-val" />
     <input type="hidden" id="tour-id-val" />
