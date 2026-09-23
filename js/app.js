@@ -33,7 +33,7 @@ function isSuperAdmin() {
   return uid ? (ADMIN_UIDS.indexOf(uid) !== -1) : false;
 }
 
-// Отображение админских кнопок (турниры и анонс встречи в ДК Восток)
+// Отображение админских кнопок (турниры и анонс встречи в ДК «Восток»)
 function updateAdminControls() {
   var isAdmin = isSuperAdmin();
   var btnAddTour = document.getElementById('btn-add-tournament'); 
@@ -378,12 +378,12 @@ function sendClubStatsBroadcast() {
   });
 }
 
-// --- УПРАВЛЕНИЕ АНОНСАМИ ВСТРЕЧ ДК «ВОСТОК» ---
+// --- УПРАВЛЕНИЕ АНОНСОМ ВСТРЕЧИ ДК «ВОСТОК» ---
 function openAnnouncementModal(loc) { 
   if(!isSuperAdmin()) return; 
-  document.getElementById('announcement-target-loc').value = loc; 
+  document.getElementById('announcement-target-loc').value = 'vostok'; 
   
-  var aData = announcementsData[loc];
+  var aData = announcementsData.vostok;
   var dateInput = document.getElementById('announcement-date');
   var descInput = document.getElementById('announcement-textarea');
 
@@ -403,14 +403,12 @@ function closeAnnouncementModal() {
 }
 
 function saveAnnouncement() { 
-  var loc = document.getElementById('announcement-target-loc').value || 'vostok';
   var dateStr = document.getElementById('announcement-date').value.trim();
   var descStr = document.getElementById('announcement-textarea').value.trim();
   
   if (!dateStr && !descStr) return deleteAnnouncement();
 
-  var obj = {}; 
-  obj[loc] = { date: dateStr, desc: descStr };
+  var obj = { vostok: { date: dateStr, desc: descStr } };
   
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
       closeAnnouncementModal(); 
@@ -426,8 +424,7 @@ function saveAnnouncement() {
 
 function deleteAnnouncement() { 
   if(!isSuperAdmin()) return; 
-  var loc = document.getElementById('announcement-target-loc').value || 'vostok'; 
-  var obj = {}; obj[loc] = null;
+  var obj = { vostok: null };
   
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
       closeAnnouncementModal(); 
