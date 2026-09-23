@@ -1,5 +1,158 @@
 // js/app.js — Управление профилем, турниры, анонсы встреч и запуск
 
+function isUserVerified() {
+  var tgUser = null;
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+      tgUser = window.Telegram.WebApp.initDataUnsafe.user;
+  }
+  var tgId = tgUser ? tgUser.id : null;
+  var localId = localStorage.getItem('tt_member_id');
+  var localMatch = false;
+  if (localId && (localId.indexOf('tg_') === 0 || localId.indexOf('google_') === 0)) { localMatch = true; }
+  return !!(tgId || localMatch);
+}
+
+function getVerifiedUserId() {
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+      if (window.Telegram.WebApp.initDataUnsafe.user.id) {
+          return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
+      }
+  }
+  var id = localStorage.getItem('tt_member_id');
+  if (id && (id.indexOf('tg_') === 0 || id.indexOf('google_') === 0)) return id;
+  return null;
+}
+
+function isSuperAdmin() {
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
+      if (window.Telegram.WebApp.initDataUnsafe.user.username && window.Telegram.WebApp.initDataUnsafe.user.username.toLowerCase() === 'azsnake') {
+          return true;
+      }
+  }
+  var uid = getVerifiedUserId();
+  return uid ? (ADMIN_UIDS.indexOf(uid) !== -1) : false;
+}
+
+// Гарантированное отображение кнопок управления анонсами для администратора
+function updateAdminControls() {
+  var isAdmin = isSuperAdmin();
+  var btnAddTour = document.getElementById('btn-add-tournament'); 
+  if (btnAddTour) btnAddTour.style.display = isAdmin ? 'block' : 'none';
+  
+  var btnEditAnnPark = document.getElementById('btn-edit-announcement-park');
+  if (btnEditAnnPark) btnEditAnnPark.style.display = isAdmin ? 'block' : 'none';
+  
+  var btnEditAnnVostok = document.getElementById('btn-edit-announcement-vostok');
+  if (btnEditAnnVostok) btnEditAnnVostok.style.display = isAdmin ? 'block' : 'none';
+}
+
+window.onTelegramAuth = function(user) {
+  var uid = 'tg_' + user.id; 
+  var defaultName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок";
+  var savedId = localStorage.getItem('tt_member_id');
+  var savedName = localStorage.getItem('tt_name');
+  var uiName = (savedId === uid && savedName) ? savedName : defaultName;
+  
+  localStorage.setItem('tt_member_id', uid);
+  
+  currentUserProfile = { uid: uid, name: uiName, elo: 1000, isVerified: true, totalMinutes: currentUserProfile.totalMinutes || 0 };
+  var authScreen = document.getElementById('mandatory-auth-screen');
+  if (authScreen) authScreen.style.display = 'none';
+  subscribeToUserLeaderboard(uid);
+  updateProfileDisplay();
+  updateAdminControls();
+  renderAll();
+
+  syncUserProfile(uid, defaultName, 'tg');
+};
+
+function loginWithGoogle() {
+  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function(res) {
+    if (res && res.user) {
+      var uid = 'google_' + res.user.uid; 
+      var defaultName = res.user.displayName || res.user.email.split('@')[0];
+      var savedId = localStorage.getItem('tt_member_id');
+      var savedName = localStorage.getItem('tt_name');
+      var uiName = (savedId === uid && savedName) ? savedName : defaultName;
+      
+      localStorage.setItem('tt_member_id', uid);
+      
+      currentUserProfile = { uid: uid, name: uiName, elo: 1000, isVerified: true, totalMinutes: currentUserProfile.totalMinutes || 0 };
+      var authScreen = document.getElementById('mandatory-auth-screen');
+      if (authScreen) authScreen.style.display = 'none';
+      subscribeToUserLeaderboard(uid);
+      updateProfileDisplay();
+      updateAdminControls();
+      renderAll();
+
+      syncUserProfile(uid, defaultName, 'google');
+    }
+  }).catch(function(e) { customAlert("Ошибка входа: " + e.message); });
+}
+
+function logoutProfile() {
+  firebase.auth().signOut().then(function(){}).catch(function(){});
+  localStorage.removeItem('tt_member_id'); 
+  localStorage.removeItem('tt_name');
+  window.location.reload();
+}
+
+function subscribeToUserLeaderboard(uid) {
+  if (!uid) return;
+  if (currentUserLeaderboardUnsubscribe) currentUserLeaderboardUnsubscribe();
+  currentUserLeaderboardUnsubscribe = db.collection('leaderboard').doc(uid).onSnapshot(function(doc) {
+      if (doc.exists && doc.data()) {
+        currentUserProfile.totalMinutes = doc.data().totalMinutes || 0;
+      } else {
+        currentUserProfile.totalMinutes = 0;
+      }
+      updateProfileDisplay();
+  }, function(err) {});
+}
+
+function syncUserProfile(uid, defaultName, platform) {
+  var ref = db.collection('users').doc(uid);
+  ref.get().then(function(snap) {
+    if (!snap.exists) {
+      var userData = { 
+        uid: uid, name: defaultName, platform: platform, 
+        elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, 
+        tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, 
+        isVerified: true, createdAt: Date.now() 
+      };
+      ref.set(userData).then(function() {
+          db.collection('users').get().then(function(usersSnap) { 
+              sendTelegramAlert("🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>" + cleanHtml(defaultName) + "</b>\n\n📈 Теперь нас в рейтинге: <b>" + usersSnap.size + "</b> человек!"); 
+          }).catch(function(){});
+      });
+      finishSync(uid, userData);
+    } else { 
+        var snapData = snap.data() || {};
+        var currentTm = currentUserProfile.totalMinutes || 0;
+        for (var k in snapData) { currentUserProfile[k] = snapData[k]; }
+        currentUserProfile.totalMinutes = currentTm;
+        finishSync(uid, currentUserProfile);
+    }
+  }).catch(function(e) {
+    finishSync(uid, currentUserProfile);
+  });
+}
+
+function finishSync(uid, userData) {
+    var tm = currentUserProfile.totalMinutes || 0;
+    for (var k in userData) { currentUserProfile[k] = userData[k]; }
+    currentUserProfile.totalMinutes = tm;
+    
+    var authScreen = document.getElementById('mandatory-auth-screen');
+    if (authScreen) authScreen.style.display = 'none';
+    
+    subscribeToUserLeaderboard(uid); 
+    updateProfileDisplay();
+    updateAdminControls();
+    if (currentUserProfile.name) localStorage.setItem('tt_name', currentUserProfile.name); 
+    renderAll();
+}
+
 function initUserProfile() {
   var authScreen = document.getElementById('mandatory-auth-screen');
   var tgUser = null;
@@ -21,6 +174,7 @@ function initUserProfile() {
     if (authScreen) authScreen.style.display = 'none';
     subscribeToUserLeaderboard(uid);
     updateProfileDisplay();
+    updateAdminControls();
     renderAll();
 
     syncUserProfile(uid, defaultName, 'tg');
@@ -32,6 +186,7 @@ function initUserProfile() {
         for (var k in data) currentUserProfile[k] = data[k];
         currentUserProfile.totalMinutes = currentTm;
         updateProfileDisplay();
+        updateAdminControls();
         renderAll();
       }
     }, function(err) {});
@@ -43,6 +198,7 @@ function initUserProfile() {
     if (authScreen) authScreen.style.display = 'none';
     subscribeToUserLeaderboard(savedId);
     updateProfileDisplay();
+    updateAdminControls();
     renderAll();
 
     db.collection('users').doc(savedId).onSnapshot(function(snap) {
@@ -52,6 +208,7 @@ function initUserProfile() {
         for (var k in data) currentUserProfile[k] = data[k];
         currentUserProfile.totalMinutes = currentTm;
         updateProfileDisplay();
+        updateAdminControls();
         renderAll();
       }
     }, function(err) {});
@@ -59,27 +216,6 @@ function initUserProfile() {
   }
   
   showAuthRequired(authScreen);
-}
-
-function showAuthRequired(authScreen) {
-    currentUserProfile = { uid: null, name: "", totalMinutes: 0 };
-    if (authScreen) authScreen.style.display = 'flex';
-    
-    document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b style="color: var(--accent-red);">Не авторизован</b></span>';
-    document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag" style="color: var(--accent-red);">Войдите для доступа к функциям</span>';
-    
-    var container = document.getElementById('telegram-login-container');
-    if (container && container.children.length === 0) {
-      var script = document.createElement('script');
-      script.src = "https://telegram.org/js/telegram-widget.js?22";
-      script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
-      script.setAttribute('data-size', 'large'); 
-      script.setAttribute('data-radius', '10');
-      script.setAttribute('data-onauth', 'onTelegramAuth(user)'); 
-      script.setAttribute('data-request-access', 'write');
-      container.appendChild(script);
-    }
-    renderAll();
 }
 
 function updateProfileDisplay() {
@@ -127,15 +263,6 @@ function updateProfileDisplay() {
     } else { invContainer.style.display = 'none'; }
   }
 
-  var btnAddTour = document.getElementById('btn-add-tournament'); 
-  if (btnAddTour) btnAddTour.style.display = isAdmin ? 'block' : 'none';
-  
-  var btnEditAnnPark = document.getElementById('btn-edit-announcement-park');
-  if (btnEditAnnPark) btnEditAnnPark.style.display = isAdmin ? 'block' : 'none';
-  
-  var btnEditAnnVostok = document.getElementById('btn-edit-announcement-vostok');
-  if (btnEditAnnVostok) btnEditAnnVostok.style.display = isAdmin ? 'block' : 'none';
-
   var bEdit = document.getElementById('btn-edit-profile'); if (bEdit) bEdit.style.display = 'block';
   var bLogout = document.getElementById('btn-logout'); if (bLogout) bLogout.style.display = 'block';
 }
@@ -180,6 +307,7 @@ function saveCustomNameWithCheck() {
       currentUserProfile.rttf = rttfVal;
       localStorage.setItem('tt_name', val); 
       updateProfileDisplay(); 
+      updateAdminControls();
       hideNameModal(); 
       renderAll();
   }).catch(function(e) { customAlert("Не удалось сохранить профиль: " + e.message); });
@@ -882,6 +1010,7 @@ document.addEventListener('DOMContentLoaded', function() {
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
   try { initUserProfile(); } catch(e) {}
+  try { updateAdminControls(); } catch(e) {}
   try { listenRatings(); } catch(e) {}
   try { listenLeaderboard(); } catch(e) {}
   try { listenTournaments(); } catch(e) {}
