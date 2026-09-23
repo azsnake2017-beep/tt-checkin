@@ -237,9 +237,16 @@
       <h3 style="font-size: 16px; color: var(--accent-amber);">⚙️ Панель администратора</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeAdminMenu()">✕</button>
     </div>
+    
     <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea>
+    
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
+    
     <button class="btn btn-join" style="background: var(--accent-purple); color: #ffffff; font-weight: 700; margin-top: 6px;" onclick="sendClubStatsBroadcast()">📊 Отправить ТОП-10 и статистику в чат</button>
+    
+    <!-- КНОПКА: СГОРАНИЕ ЭЛО (Ручной режим) -->
+    <button class="btn btn-join" style="background: rgba(225,29,72,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; margin-top: 6px;" onclick="applyEloDecay()">📉 Списать -50 Эло за неактивность (7 дней)</button>
+    
     <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
 </div>
