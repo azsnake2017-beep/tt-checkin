@@ -1,4 +1,4 @@
-// js/config.js — Базовые настройки, утилиты и константы
+// js/config.js — Базовые настройки, утилиты, автономные QR и константы
 
 function checkBrowserCompatibility() {
   var isSupported = true;
@@ -153,7 +153,6 @@ function switchNavTab(tabId) {
   window.scrollTo(0, 0); 
   localStorage.setItem('tt_active_tab', tabId);
   
-  // При переходе на экран радара гарантированно обновляем видимость админских кнопок
   if (tabId === 'radar' && typeof updateAdminControls === 'function') {
     updateAdminControls();
   }
@@ -204,7 +203,7 @@ var activePlanningLoc = null;
 var currentUserActiveLoc = null;
 var currentUserActivePlayer = null;
 var hasTriggeredPush = false;
-var announcementsData = { park: null, vostok: null };
+var announcementsData = { vostok: null };
 var currentModalUrl = "";
 var currentUserLeaderboardUnsubscribe = null;
 var currentEditingTourId = null;
@@ -273,6 +272,7 @@ function shareModalUrl() {
   }
 }
 
+// НАДЁЖНЫЙ ВЫВОД QR-КОДОВ (ВНЕШНИЙ ШЛЮЗ + АВТОНОМНЫЙ FALLBACK)
 function openQrModal(type) {
   var targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
   var title = "QR-код приложения";
@@ -295,8 +295,10 @@ function openQrModal(type) {
 
   var img = document.getElementById('qr-code-img');
   if (img) {
+    // Основной генератор на базе надёжного сервера
     img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
     img.onerror = function() {
+      // Резервный шлюз, если первый сервер заблокирован у оператора
       this.onerror = null;
       this.src = 'https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180';
     };
