@@ -629,42 +629,65 @@ function renderUserHistoryList(matches, uid) {
     var myS = isTeam1 ? s1 : s2;
     var opS = isTeam1 ? s2 : s1;
 
-    // Безопасное получение имен соперников
-    var opN = isTeam1 ? (isDoubles ? mx.team2Names : mx.p2Name) : (isDoubles ? mx.team1Names : mx.p1Name);
-    if (!opN) opN = "Неизвестные игроки";
+    var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
+    var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px;">2x2</span>' : '';
+    
+    var leftContentHtml = '';
 
-    // Безопасное получение имени напарника
-    var myPartner = null;
     if (isDoubles) {
+        // Достаем напарника
         var tArr = isTeam1 ? mx.team1NamesArr : mx.team2NamesArr;
         var tUids = isTeam1 ? mx.team1Uids : mx.team2Uids;
+        var myPartner = null, myPartnerUid = null;
         if (tArr && tUids) {
-            myPartner = (tUids[0] === uid) ? tArr[1] : tArr[0];
+            if (tUids[0] === uid) { myPartner = tArr[1]; myPartnerUid = tUids[1]; }
+            else { myPartner = tArr[0]; myPartnerUid = tUids[0]; }
         }
+        
+        var partnerHtml = myPartner ? '<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(myPartnerUid)+'\')">' + cleanHtml(myPartner) + '</span>' : 'Неизвестно';
+        
+        // Достаем соперников (и делаем их кликабельными)
+        var opArr = isTeam1 ? mx.team2NamesArr : mx.team1NamesArr;
+        var opUids = isTeam1 ? mx.team2Uids : mx.team1Uids;
+        var opHtml = '';
+        if (opArr && opUids && opArr.length > 1) {
+            opHtml = '<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(opUids[0])+'\')">' + cleanHtml(opArr[0]) + '</span>' +
+                     ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ' +
+                     '<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(opUids[1])+'\')">' + cleanHtml(opArr[1]) + '</span>';
+        } else {
+            var opN = isTeam1 ? mx.team2Names : mx.team1Names;
+            opHtml = cleanHtml(opN || "Неизвестные игроки").replace(/ & /g, ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ');
+        }
+
+        // Верстка: Сначала режим и напарник, на новой строке — противники
+        leftContentHtml = '<div style="margin-bottom: 4px;">' + modeBadge + '<span style="font-size: 11px; color: var(--accent-sky);">в паре с:</span> <b>' + partnerHtml + '</b></div>' +
+                          '<div style="line-height: 1.4; word-break: break-word;">против <b>' + opHtml + '</b></div>';
+
+    } else {
+        // Одиночный матч
+        var opUid = isTeam1 ? mx.p2Uid : mx.p1Uid;
+        var opName = isTeam1 ? mx.p2Name : mx.p1Name;
+        var opHtml = '<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(opUid)+'\')">' + cleanHtml(opName || "Неизвестно") + '</span>';
+        
+        leftContentHtml = '<div style="line-height: 1.4; word-break: break-word;">против <b>' + opHtml + '</b></div>';
     }
 
     var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
-    var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
-    var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles">2x2</span> ' : '';
-    
-    var partnerStr = myPartner ? '<div style="font-size: 10px; color: var(--accent-sky); word-break: break-word; line-height: 1.3; margin-top: 2px;">в паре с: <b>' + cleanHtml(myPartner) + '</b></div>' : '';
-
-    // Перенос имен соперников с амперсандом
-    var formattedOpN = cleanHtml(opN);
-    if (isDoubles) {
-        formattedOpN = formattedOpN.replace(/ & /g, '<br>& ');
-    }
-
     var p1Color = isWin ? '#059669' : '#f87171';
-    if (myS === "?") p1Color = 'var(--text-muted)'; // На случай сломанных старых записей
+    if (myS === "?") p1Color = 'var(--text-muted)';
 
-    h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px;">' +
+    // Оставляем кнопку удаления (если вы добавили админку)
+    var adminDelBtn = (isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
+
+    h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
            '<div style="flex: 1; min-width: 0;">' + 
-             '<div style="word-break: break-word; line-height: 1.4;">' + modeBadge + 'против <b>' + formattedOpN + '</b></div>' +
-             partnerStr +
+             leftContentHtml +
              '<div style="color:var(--text-muted);font-size:10px; margin-top:4px;">' + dtStr + '</div>' +
            '</div>' +
-           '<div style="color:' + p1Color + '; font-weight:bold; font-size: 16px; white-space: nowrap; flex-shrink: 0; margin-left: 8px;">' + myS + ' : ' + opS + '</div>' +
+           '<div style="display: flex; align-items: center;">' +
+             '<div style="color:' + p1Color + '; font-weight:bold; font-size: 16px; white-space: nowrap; flex-shrink: 0;">' + myS + ' : ' + opS + '</div>' +
+             adminDelBtn +
+           '</div>' +
          '</div>';
   });
   hEl.innerHTML = h;
