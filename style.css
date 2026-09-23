@@ -73,7 +73,7 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
 .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
 .badge-teacher { background: rgba(168, 85, 247, 0.2); color: #9333ea; margin-left: 4px; }
-.badge-temshik { background: rgba(168, 85, 247, 0.2); color: #059669; margin-left: 4px; }
+.badge-temshik { background: rgba(16, 185, 129, 0.2); color: #059669; margin-left: 4px; }
 .badge-hockey { background: rgba(56, 189, 248, 0.2); color: #0284c7; margin-left: 4px; }
 .badge-bot { background: rgba(148, 163, 184, 0.2); color: #64748b; margin-left: 4px; }
 .badge-coach { background: rgba(59, 130, 246, 0.2); color: #2563eb; margin-left: 4px; }
