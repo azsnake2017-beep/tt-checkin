@@ -278,18 +278,12 @@
       <button class="btn-cancel-modal" style="margin: 0;" onclick="closeUserInfoModal()">✕</button>
     </div>
     
-    <!-- СКРОЛЛИРУЕМАЯ ЧАСТЬ -->
+    <!-- СКРОЛЛИРУЕМАЯ ЧАСТЬ БЕЗ АНАЛИТИКИ -->
     <div style="overflow-y: auto; overscroll-behavior: contain; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
         <div id="info-modal-medals" class="medals-box" style="display:none; margin-top:0;"></div>
         <div id="info-modal-inventory" style="display: none;"></div>
         
         <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;"></div>
-
-        <!-- Блок аналитики -->
-        <div id="info-modal-extended-stats" style="display: none; flex-direction: column; gap: 6px; background: var(--list-bg); padding: 12px; border-radius: 12px; text-align: left; border: 1px solid var(--card-border);">
-          <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 4px;">Аналитика игрока:</div>
-          <div id="extended-stats-body" style="font-size: 12px; color: var(--text-muted);">Загрузка аналитики...</div>
-        </div>
 
         <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
         <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"><span class="empty-note">Пусто</span></div>
