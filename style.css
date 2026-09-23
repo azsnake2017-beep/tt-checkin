@@ -247,11 +247,21 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 
 /* Плавные анимации модальных окон */
 .modal-overlay { 
-  position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); 
-  backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); 
-  display: none; align-items: center; justify-content: center; 
-  padding: 20px; z-index: 1001; 
-  animation: fadeInOverlay 0.2s ease forwards;
+  position: fixed; 
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6); 
+  backdrop-filter: blur(4px); 
+  -webkit-backdrop-filter: blur(4px); 
+  display: none; 
+  align-items: center; 
+  justify-content: center; 
+  padding: 20px; 
+  z-index: 1001; 
 }
 .modal-box { 
   background: var(--card-bg); 
