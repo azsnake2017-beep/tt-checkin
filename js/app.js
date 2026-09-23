@@ -470,7 +470,7 @@ function showUserInfoModal(uid) {
   Promise.all([
     db.collection('users').doc(uid).get(),
     db.collection('leaderboard').doc(uid).get(),
-    db.collection('matches_history').get() // Загружаем все матчи сразу
+    db.collection('matches_history').get()
   ]).then(function(docs) {
     var d = docs[0], ld = docs[1], allMatchesSnap = docs[2];
 
@@ -520,10 +520,13 @@ function showUserInfoModal(uid) {
       invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
     } else { invContainer.style.display = 'none'; }
 
-    // Выделяем матчи конкретного игрока
     var userMatches = [];
     allMatchesSnap.forEach(function(docX) {
       var mx = docX.data() || {};
+      
+      // ВОТ ЭТА СТРОЧКА ВКЛЮЧАЕТ КОРЗИНЫ:
+      mx.docId = docX.id; 
+      
       var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
                    (mx.p1Uid === uid || mx.p2Uid === uid) ||
                    (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
@@ -533,7 +536,6 @@ function showUserInfoModal(uid) {
 
     userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
 
-    // РАСЧЕТ РАСШИРЕННОЙ АНАЛИТИКИ
     var sPlayed = 0, sWins = 0, dPlayed = 0, dWins = 0;
     var formBadges = [];
     var rivals = {};
@@ -542,11 +544,10 @@ function showUserInfoModal(uid) {
       var isDoubles = mx.type === 'doubles';
       var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
       
-      // Надежное извлечение счета (0 больше не превратится в undefined)
       var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
       var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
 
-      if (s1 === "?" || s2 === "?") return; // Защита от битых исторических данных
+      if (s1 === "?" || s2 === "?") return; 
 
       var myScore = isTeam1 ? s1 : s2;
       var oppScore = isTeam1 ? s2 : s1;
