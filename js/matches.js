@@ -453,8 +453,8 @@ function listenRecentMatches() {
         var p1Style = isP1Win ? winStyle : loseStyle;
         var p2Style = isP2Win ? winStyle : loseStyle;
         
-        var p1Emoji = isP1Win ? '👑 ' : '🔻 ';
-        var p2Emoji = isP2Win ? ' 👑' : ' 🔻'; 
+        var p1Emoji = isP1Win ? '<span style="' + winStyle + '">▲</span> ' : '<span style="' + loseStyle + '">▼</span> ';
+        var p2Emoji = isP2Win ? ' <span style="' + winStyle + '">▲</span>' : ' <span style="' + loseStyle + '">▼</span>'; 
         
         var d = new Date(parseTime(m.timestamp));
         var day = ('0' + d.getDate()).slice(-2);
