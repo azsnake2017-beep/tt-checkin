@@ -1,3 +1,5 @@
+// js/matches.js
+
 function getMatchHumor(winnerScore, loserScore, winnerName, loserName) {
   var jokes_3_0 = [
     "🔥 " + cleanHtml(winnerName) + " оформили сухой закон! " + cleanHtml(loserName) + ", держитесь, реванш не за горами!",
@@ -99,8 +101,8 @@ function selectScore(my, opp) {
   document.getElementById('match-opp-score').value = opp; 
   var btns = document.querySelectorAll('.reg-score-btn');
   for(var i=0; i<btns.length; i++) {
-    if (btns[i].innerText.replace(/\s+/g,'') === (my + ":" + opp)) btns[i].classList.add('active');
-    else btns[i].classList.remove('active');
+      if (btns[i].innerText.replace(/\s+/g,'') === (my + ":" + opp)) btns[i].classList.add('active');
+      else btns[i].classList.remove('active');
   }
 }
 
@@ -153,7 +155,7 @@ function submitMatchProposal() {
     var opp2Name = o2Sel.options[o2Sel.selectedIndex].text;
 
     closeMatchModal();
-    db.collection('pending_matches').add({ 
+    db.collection('pending_matches').add({
       type: 'doubles',
       proposerUid: uid,
       team1Uids: [uid, partnerUid],
@@ -165,9 +167,9 @@ function submitMatchProposal() {
       scoreTeam1: myScore,
       scoreTeam2: oppScore,
       targetUids: [opp1Uid, opp2Uid],
-      timestamp: Date.now() 
-    }).then(function() { 
-      customAlert("✅ Запрос на подтверждение парного матча 2х2 отправлен соперникам!"); 
+      timestamp: Date.now()
+    }).then(function() {
+      customAlert("✅ Запрос на подтверждение парного матча 2х2 отправлен соперникам!");
     }).catch(function(e){});
   }
 }
@@ -180,22 +182,22 @@ function listenPendingMatches() {
       if (snap.empty) { c.innerHTML = ''; return; }
       var html = '';
       snap.forEach(function(doc) { 
-        var m = doc.data(); 
-        var isDoubles = m.type === 'doubles';
-        var title = isDoubles ? '👥 Подтверждение парного матча 2х2' : '⚔️ Подтверждение матча от <b>' + cleanHtml(m.proposerName) + '</b>';
-        var scoreText = isDoubles 
-          ? ('Счёт: <b>' + cleanHtml(m.team2Names) + '</b> ' + m.scoreTeam2 + ' : ' + m.scoreTeam1 + ' <b>' + cleanHtml(m.team1Names) + '</b>')
-          : ('Счёт: Вы <b>' + m.scoreOpponent + ' : ' + m.scoreProposer + '</b> ' + cleanHtml(m.proposerName));
+          var m = doc.data(); 
+          var isDoubles = m.type === 'doubles';
+          var title = isDoubles ? '👥 Подтверждение парного матча 2х2' : '⚔️ Подтверждение матча от <b>' + cleanHtml(m.proposerName) + '</b>';
+          var scoreText = isDoubles 
+            ? ('Счёт: <b>' + cleanHtml(m.team2Names) + '</b> ' + m.scoreTeam2 + ' : ' + m.scoreTeam1 + ' <b>' + cleanHtml(m.team1Names) + '</b>')
+            : ('Счёт: Вы <b>' + m.scoreOpponent + ' : ' + m.scoreProposer + '</b> ' + cleanHtml(m.proposerName));
 
-        html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">' +
-                  '<div style="font-size: 13px; font-weight: 600; color: #9333ea;">' + title + '</div>' +
-                  '<div style="font-size: 13px;">' + scoreText + '</div>' +
-                  '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
-                  '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
-                    '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
-                    '<button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
-                  '</div>' +
-                '</div>'; 
+          html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">' +
+                    '<div style="font-size: 13px; font-weight: 600; color: #9333ea;">' + title + '</div>' +
+                    '<div style="font-size: 13px;">' + scoreText + '</div>' +
+                    '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
+                    '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
+                      '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
+                      '<button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
+                    '</div>' +
+                  '</div>'; 
       });
       c.innerHTML = html;
     } catch(e) {}
@@ -355,7 +357,7 @@ function confirmMatch(matchId) {
         batch.delete(matchRef);
 
         batch.commit().then(function() {
-          db.collection('matches_history').add({ 
+          db.collection('matches_history').add({
             type: 'doubles',
             team1Uids: m.team1Uids,
             team1Names: m.team1Names,
@@ -366,7 +368,7 @@ function confirmMatch(matchId) {
             team1Score: m.scoreTeam1,
             team2Score: m.scoreTeam2,
             participants: m.team1Uids.concat(m.team2Uids),
-            timestamp: Date.now() 
+            timestamp: Date.now()
           }).then(function() {
             var winTeam = isTeam1Win ? m.team1Names : m.team2Names;
             var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
