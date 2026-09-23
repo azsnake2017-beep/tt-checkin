@@ -447,14 +447,15 @@ function listenRecentMatches() {
         var isP1Win = s1 > s2;
         var isP2Win = s2 > s1;
         
-        var winStyle = 'color: #10b981; font-weight: 800; text-shadow: 0 0 8px rgba(16,185,129,0.3);';
-        var loseStyle = 'color: var(--text-muted); font-weight: 400; opacity: 0.6;';
+        // Спокойные стили для общей ленты
+        var winStyle = 'color: #059669; font-weight: 600;';
+        var loseStyle = 'color: var(--text-muted); font-weight: 400;';
 
         var p1Style = isP1Win ? winStyle : loseStyle;
         var p2Style = isP2Win ? winStyle : loseStyle;
         
-        var p1Emoji = isP1Win ? '<span style="' + winStyle + '">▲</span> ' : '<span style="' + loseStyle + '">▼</span> ';
-        var p2Emoji = isP2Win ? ' <span style="' + winStyle + '">▲</span>' : ' <span style="' + loseStyle + '">▼</span>'; 
+        var p1Emoji = isP1Win ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
+        var p2Emoji = isP2Win ? '<span style="color: #059669; font-size: 10px; margin-left: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-left: 4px;">▼</span>'; 
         
         var d = new Date(parseTime(m.timestamp));
         var day = ('0' + d.getDate()).slice(-2);
@@ -495,9 +496,9 @@ function listenRecentMatches() {
         html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
                   '<div style="display: flex; justify-content: space-between; align-items: center;">' +
                     '<div style="display:flex; flex:1; justify-content: flex-end; align-items: center; min-width: 0;">' + leftSideHtml + '</div>' +
-                    '<div style="font-weight: 900; font-size: 18px; background: var(--row-bg); border-radius: 8px; padding: 4px 10px; margin: 0 10px; white-space: nowrap; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">' +
+                    '<div style="font-weight: 700; font-size: 16px; background: var(--row-bg); border-radius: 8px; padding: 4px 10px; margin: 0 10px; white-space: nowrap; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.05);">' +
                       '<span style="' + p1Style + '">' + s1 + '</span>' +
-                      '<span style="color:var(--text-muted); margin: 0 4px;">:</span>' +
+                      '<span style="color:var(--text-muted); opacity: 0.5; margin: 0 4px;">:</span>' +
                       '<span style="' + p2Style + '">' + s2 + '</span>' +
                     '</div>' +
                     '<div style="display:flex; flex:1; justify-content: flex-start; align-items: center; min-width: 0;">' + rightSideHtml + '</div>' +
