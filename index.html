@@ -274,8 +274,13 @@
     </div>
     <div id="info-modal-medals" class="medals-box" style="display:none; margin-top:0;"></div>
     <div id="info-modal-inventory" style="display: none;"></div>
+    
     <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;"></div>
-    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
+    
+    <!-- НОВЫЙ БЛОК ДЛЯ РАСШИРЕННОЙ СТАТИСТИКИ -->
+    <div id="info-modal-extended-stats" style="display: none; flex-direction: column; gap: 6px; background: var(--list-bg); padding: 12px; border-radius: 12px; margin-top: 8px; text-align: left; border: 1px solid var(--card-border);"></div>
+
+    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 8px;">История матчей:</div>
     <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; max-height: 200px; overflow-y: auto;"><span class="empty-note">Пусто</span></div>
     <button class="btn btn-leave" style="margin-top: 6px;" onclick="closeUserInfoModal()">Закрыть</button>
   </div>
