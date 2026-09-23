@@ -100,7 +100,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 2: РАДАР (СВЁРНУТ ПО УМОЛЧАНИЮ) -->
+  <!-- ЭКРАН 2: РАДАР (КАРТОЧКИ ПО УМОЛЧАНИЮ СВЁРНУТЫ) -->
   <div id="view-radar" class="main-view">
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
@@ -112,8 +112,6 @@
       </div>
       <div class="card-body-collapse">
         <div class="weather-container" id="weather-park"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
-        <div class="event-badge" id="announcement-box-park" style="display: none;"><span id="announcement-text-park"></span></div>
-        <button class="btn-admin-edit-announcement" id="btn-edit-announcement-park" onclick="openAnnouncementModal('park')">✏️ Изменить анонс</button>
         <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
         <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
         <div class="section-label">Собираются прийти:</div>
@@ -230,7 +228,6 @@
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО QR-КОДА -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -264,7 +261,7 @@
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО АНОНСА ВСТРЕЧИ ДК ВОСТОК / ПАРК -->
+<!-- МОДАЛЬНОЕ ОКНО АНОНСА ВСТРЕЧИ ДК ВОСТОК -->
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс встречи клуба</h3>
@@ -283,7 +280,6 @@
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО ЗАПИСИ МАТЧА (1x1 и 2x2) -->
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3>
@@ -293,17 +289,14 @@
       <button class="tab-btn" id="btn-match-type-doubles" onclick="setMatchModalType('doubles')">👥 Парный (2x2)</button>
     </div>
 
-    <!-- Поля для одиночного матча -->
     <div id="match-fields-singles" style="display: flex; flex-direction: column; gap: 6px;">
       <div style="font-size: 11px; text-align: left; color: var(--text-muted); font-weight: 700;">СОПЕРНИК:</div>
       <select id="match-opponent-select" class="input-select"></select>
     </div>
 
-    <!-- Поля для парного матча -->
     <div id="match-fields-doubles" style="display: none; flex-direction: column; gap: 8px;">
       <div style="font-size: 11px; text-align: left; color: var(--accent-green); font-weight: 700;">ВАШ НАПАРНИК (КОМАНДА 1):</div>
       <select id="match-partner-select" class="input-select"></select>
-
       <div style="font-size: 11px; text-align: left; color: var(--accent-red); font-weight: 700; margin-top: 2px;">СОПЕРНИКИ (КОМАНДА 2):</div>
       <select id="match-opp1-select" class="input-select"></select>
       <select id="match-opp2-select" class="input-select"></select>
