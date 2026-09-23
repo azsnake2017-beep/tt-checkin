@@ -1214,3 +1214,19 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(monitorSessions, 60000); 
   setInterval(loadParkWeather, 600000); 
 });
+
+// Функция тихого удаления матча из истории (без изменения рейтинга)
+function deleteHistoryMatch(docId, profileUid) {
+  if (!isSuperAdmin()) return;
+  
+  if (!confirm('Удалить этот матч из истории?\n\n(Рейтинги игроков не изменятся, удалится только карточка матча)')) return;
+  
+  db.collection('matches_history').doc(docId).delete().then(function() {
+    customAlert('✅ Матч удален из истории');
+    if (profileUid) {
+      showUserInfoModal(profileUid); // Обновляем карточку игрока, чтобы матч сразу исчез
+    }
+  }).catch(function(e) {
+    customAlert('Ошибка удаления: ' + e.message);
+  });
+}
