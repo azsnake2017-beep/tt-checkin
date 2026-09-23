@@ -616,7 +616,7 @@ function toggleTourReaction(id, type) {
       return t.get(ref).then(function(doc) {
           if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
           if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid; }); } } 
-          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
+          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
           t.update(ref, { likes: likes, dislikes: dislikes });
       });
   }).catch(function(e) {});
@@ -749,11 +749,16 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
   document.getElementById('tour-id-val').value = tourId; 
   document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
   selectTourScore(3, 0); 
-  document.getElementById('tour-match-modal').style.display = 'flex';
+  document.getElementById('tour-match-modal').style.display = 'flex'; 
 }
-function closeTourMatchModal() { document.getElementById('tour-match-modal').style.display = 'none'; }
+
+function closeTourMatchModal() { 
+  document.getElementById('tour-match-modal').style.display = 'none'; 
+}
+
 function selectTourScore(s1, s2) { 
-    document.getElementById('tour-match-s1').value = s1; document.getElementById('tour-match-s2').value = s2; 
+    document.getElementById('tour-match-s1').value = s1; 
+    document.getElementById('tour-match-s2').value = s2; 
     var btns = document.querySelectorAll('.tour-score-btn');
     for(var i=0; i<btns.length; i++) {
         if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active');
@@ -1019,19 +1024,17 @@ function listenLeaderboard() {
 
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
 document.addEventListener('DOMContentLoaded', function() {
-  // Полноэкранный режим для Telegram Mini App
+  // Мягкое раскрытие Telegram Mini App без перекрывающего крестика
   if (window.Telegram && window.Telegram.WebApp) {
     try {
       window.Telegram.WebApp.ready();
-      if (typeof window.Telegram.WebApp.requestFullscreen === 'function') {
-        window.Telegram.WebApp.requestFullscreen();
-      } else if (typeof window.Telegram.WebApp.expand === 'function') {
+      if (typeof window.Telegram.WebApp.expand === 'function') {
         window.Telegram.WebApp.expand();
       }
     } catch(e) {}
   }
 
-  // Восстановление состояния шторок (Парк и ДК Восток)
+  // Восстановление состояния шторок локаций из памяти устройства
   try { restoreCardStates(); } catch(e) {}
 
   try { initTheme(); } catch(e) {}
