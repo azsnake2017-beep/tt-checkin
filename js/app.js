@@ -462,17 +462,24 @@ function showUserInfoModal(uid) {
   document.getElementById('info-modal-medals').style.display = 'none';
   document.getElementById('info-modal-inventory').style.display = 'none';
   
-  var extStats = document.getElementById('info-modal-extended-stats');
-  if (extStats) extStats.style.display = 'none'; // Скрываем перед новой загрузкой
+  var statsBody = document.getElementById('extended-stats-body');
+  if (statsBody) statsBody.innerHTML = 'Загрузка аналитики...';
   
   document.getElementById('user-info-modal').style.display = 'flex';
   
   Promise.all([
     db.collection('users').doc(uid).get(),
-    db.collection('leaderboard').doc(uid).get()
+    db.collection('leaderboard').doc(uid).get(),
+    db.collection('matches_history').get()
   ]).then(function(docs) {
-    var d = docs[0], ld = docs[1];
-    if (!d.exists) { closeUserInfoModal(); return; }
+    var d = docs[0];
+    var ld = docs[1];
+    var allMatchesSnap = docs[2];
+
+    if (!d.exists) { 
+      closeUserInfoModal(); 
+      return; 
+    }
 
     var u = d.data() || {};
     var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
@@ -495,7 +502,9 @@ function showUserInfoModal(uid) {
     if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
       mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
       mContainer.style.display = 'flex';
-    } else { mContainer.style.display = 'none'; }
+    } else { 
+      mContainer.style.display = 'none'; 
+    }
 
     var eloDisplay = parseInt(u.elo, 10) || 1000;
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
@@ -512,25 +521,83 @@ function showUserInfoModal(uid) {
       if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
       if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
       if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-      invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-    } else { invContainer.style.display = 'none'; }
+      invContainer.innerHTML = invHtml; 
+      invContainer.className = 'inventory-box'; 
+      invContainer.style.display = 'flex';
+    } else { 
+      invContainer.style.display = 'none'; 
+    }
 
-    // Загрузка матчей для истории и расширенной статистики
-    db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(snaps) {
-        renderUserHistoryFromSnaps(snaps, uid);
-    }).catch(function() {
-        db.collection('matches_history').get().then(function(allSnaps) {
-            var matches = [];
-            allSnaps.forEach(function(docX) {
-              var mx = docX.data();
-              if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) { matches.push(mx); }
-            });
-            renderUserHistoryList(matches, uid);
-        }).catch(function() {
-            document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Матчи не найдены</span>';
-        });
+    // Собираем матчи данного игрока
+    var userMatches = [];
+    allMatchesSnap.forEach(function(docX) {
+      var mx = docX.data() || {};
+      var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
+                   (mx.p1Uid === uid || mx.p2Uid === uid) ||
+                   (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
+                   (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
+      if (isPart) {
+        userMatches.push(mx);
+      }
     });
-  }).catch(function(e) { closeUserInfoModal(); });
+
+    // Расчет расширенной аналитики
+    userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+
+    var sPlayed = 0, sWins = 0, dPlayed = 0, dWins = 0;
+    var formBadges = [];
+    var rivals = {};
+
+    userMatches.forEach(function(mx) {
+      var isDoubles = mx.type === 'doubles';
+      var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
+      var myScore = isTeam1 ? (mx.team1Score !== undefined ? mx.team1Score : mx.p1Score) : (mx.team2Score !== undefined ? mx.team2Score : mx.p2Score);
+      var oppScore = isTeam1 ? (mx.team2Score !== undefined ? mx.team2Score : mx.p2Score) : (mx.team1Score !== undefined ? mx.team1Score : mx.p1Score);
+      var isWin = myScore > oppScore;
+
+      if (isDoubles) {
+        dPlayed++;
+        if (isWin) dWins++;
+      } else {
+        sPlayed++;
+        if (isWin) sWins++;
+        var oppName = isTeam1 ? mx.p2Name : mx.p1Name;
+        if (oppName) {
+          if (!rivals[oppName]) rivals[oppName] = { losses: 0 };
+          if (!isWin) rivals[oppName].losses++;
+        }
+      }
+
+      if (formBadges.length < 5) {
+        formBadges.push(isWin ? '<span style="color: #10b981; font-weight: 700;">В</span>' : '<span style="color: #f43f5e; font-weight: 700;">П</span>');
+      }
+    });
+
+    var sWinrate = sPlayed > 0 ? Math.round((sWins / sPlayed) * 100) : 0;
+    var dWinrate = dPlayed > 0 ? Math.round((dWins / dPlayed) * 100) : 0;
+    var formStr = formBadges.length > 0 ? formBadges.join(' ') : '—';
+
+    var hardRival = '—';
+    var maxL = 0;
+    for (var rName in rivals) {
+      if (rivals[rName].losses > maxL) {
+        maxL = rivals[rName].losses;
+        hardRival = cleanHtml(rName) + ' (' + maxL + ' пор.)';
+      }
+    }
+
+    if (statsBody) {
+      statsBody.innerHTML = 
+        '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Форма (последние матчи):</span><span style="letter-spacing: 3px;">' + formStr + '</span></div>' +
+        '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Одиночные (1x1):</span><b>' + sWins + 'В - ' + (sPlayed - sWins) + 'П (' + sWinrate + '%)</b></div>' +
+        '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Парные (2x2):</span><b>' + dWins + 'В - ' + (dPlayed - dWins) + 'П (' + dWinrate + '%)</b></div>' +
+        '<div style="display:flex; justify-content:space-between;"><span>Сложный соперник:</span><b style="color: var(--accent-red);">' + hardRival + '</b></div>';
+    }
+
+    renderUserHistoryList(userMatches, uid);
+  }).catch(function(e) {
+    closeUserInfoModal();
+  });
 }
 
 function renderUserHistoryFromSnaps(snaps, uid) {
