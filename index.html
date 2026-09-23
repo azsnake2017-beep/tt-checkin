@@ -16,18 +16,17 @@
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://telegram.org">
 
+  <!-- ПОДКЛЮЧЕНИЕ PWA-МАНИФЕСТА -->
+  <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 
-  <!-- Асинхронная загрузка внешних SDK (не блокирует отрисовку сайта) -->
   <script async src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- Официальные сервера Google -->
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
-  <!-- Локальные модули приложения -->
   <script defer src="js/config.js"></script>
   <script defer src="js/matches.js"></script>
   <script defer src="js/radar.js"></script>
@@ -72,7 +71,6 @@
     </div>
   </div>
 
-  <!-- ЭКРАН АВТОРИЗАЦИИ -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
@@ -125,11 +123,14 @@
         </div>
         <span class="counter" id="badge-park">0 игроков</span>
       </div>
+      
+      <!-- ПОГОДА ВЫНЕСЕНА НАРУЖУ (ВИДНА ВСЕГДА) -->
+      <div class="weather-container" id="weather-park" style="margin-top: 0;"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
+
       <div class="card-collapse-wrapper">
         <div class="card-body-collapse">
           <div class="card-body-inner">
-            <div class="weather-container" id="weather-park"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
-            <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+            <div class="section-label">Сейчас играют:</div>
             <div class="player-list" id="list-park"><span class="empty-note">У столов пока свободно</span></div>
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
@@ -150,12 +151,15 @@
         </div>
         <span class="counter" id="badge-vostok">0 игроков</span>
       </div>
+      
+      <!-- АНОНС ВЫНЕСЕН НАРУЖУ (ВИДЕН ВСЕГДА) -->
+      <div class="event-badge" id="announcement-box-vostok" style="display: none; margin-top: 0;"><span id="announcement-text-vostok"></span></div>
+
       <div class="card-collapse-wrapper">
         <div class="card-body-collapse">
           <div class="card-body-inner">
-            <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
             <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс встречи</button>
-            <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
+            <div class="section-label">Сейчас играют:</div>
             <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
@@ -266,7 +270,6 @@
   </div>
 </div>
 
-<!-- ИСПРАВЛЕННАЯ КАРТОЧКА ПРОФИЛЯ С ПРИЛИПАЮЩЕЙ ШАПКОЙ -->
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky); padding: 0; overflow: hidden; display: flex; flex-direction: column;">
     <!-- СТИКИ ШАПКА -->
@@ -289,7 +292,6 @@
         </div>
 
         <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
-        
         <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"><span class="empty-note">Пусто</span></div>
         
         <button class="btn btn-leave" onclick="closeUserInfoModal()">Закрыть</button>
