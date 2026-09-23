@@ -1,4 +1,4 @@
-// js/config.js — Настройки, базовые утилиты и инициализация Firebase
+// js/config.js — Базовые настройки, утилиты и константы
 
 function checkBrowserCompatibility() {
   var isSupported = true;
@@ -114,10 +114,15 @@ function executeConfirm() {
 }
 
 function customAlert(msg) {
-  document.getElementById('custom-alert-text').innerText = msg;
-  document.getElementById('custom-alert-modal').style.display = 'flex';
+  var el = document.getElementById('custom-alert-modal');
+  var txt = document.getElementById('custom-alert-text');
+  if (txt) txt.innerText = msg;
+  if (el) el.style.display = 'flex';
 }
-function closeCustomAlert() { document.getElementById('custom-alert-modal').style.display = 'none'; }
+function closeCustomAlert() { 
+  var el = document.getElementById('custom-alert-modal');
+  if (el) el.style.display = 'none'; 
+}
 
 function initTheme() {
   var savedTheme = localStorage.getItem('tt_theme') || 'dark';
@@ -160,11 +165,15 @@ function switchTab(tab) {
   var viewTime = document.getElementById('view-time-content');
 
   if (tab === 'rating') {
-    tabRating.classList.add('active'); tabTime.classList.remove('active');
-    viewRating.style.display = 'flex'; viewTime.style.display = 'none';
+    if (tabRating) tabRating.classList.add('active'); 
+    if (tabTime) tabTime.classList.remove('active');
+    if (viewRating) viewRating.style.display = 'flex'; 
+    if (viewTime) viewTime.style.display = 'none';
   } else {
-    tabTime.classList.add('active'); tabRating.classList.remove('active');
-    viewTime.style.display = 'flex'; viewRating.style.display = 'none';
+    if (tabTime) tabTime.classList.add('active'); 
+    if (tabRating) tabRating.classList.remove('active');
+    if (viewTime) viewTime.style.display = 'flex'; 
+    if (viewRating) viewRating.style.display = 'none';
   }
 }
 
@@ -190,7 +199,7 @@ var activePlanningLoc = null;
 var currentUserActiveLoc = null;
 var currentUserActivePlayer = null;
 var hasTriggeredPush = false;
-var announcementsData = { park: "", vostok: "" };
+var announcementsData = { park: null, vostok: null };
 var currentModalUrl = "";
 var currentUserLeaderboardUnsubscribe = null;
 var currentEditingTourId = null;
