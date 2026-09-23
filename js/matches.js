@@ -1,5 +1,8 @@
 // js/matches.js — Логика расчёта и фиксации матчей (1х1 и 2х2)
 
+// Глобальная блокировка от двойных (и пятерных) нажатий
+window.isProcessingMatch = false;
+
 function getMatchHumor(winnerScore, loserScore, winnerName, loserName) {
   var jokes_3_0 = [
     "🔥 " + cleanHtml(winnerName) + " оформили сухой закон! " + cleanHtml(loserName) + ", держитесь, реванш не за горами!",
@@ -205,11 +208,20 @@ function listenPendingMatches() {
 }
 
 function confirmMatch(matchId) {
-  var myUid = getVerifiedUserId(); if (!myUid) return;
+  // ЗАЩИТА: Блокируем двойные нажатия
+  if (window.isProcessingMatch) return;
+  window.isProcessingMatch = true;
+  
+  var myUid = getVerifiedUserId(); 
+  if (!myUid) { window.isProcessingMatch = false; return; }
+  
+  var container = document.getElementById('pending-matches-container');
+  if (container) container.innerHTML = '<div style="text-align:center; padding: 15px; font-size:13px; color:var(--text-muted);">⏳ Обработка матча...</div>';
+
   var matchRef = db.collection('pending_matches').doc(matchId);
   
   matchRef.get().then(function(matchDoc) {
-    if (!matchDoc.exists) return;
+    if (!matchDoc.exists) { window.isProcessingMatch = false; return; }
     var m = matchDoc.data();
     
     if (m.type !== 'doubles') {
@@ -224,9 +236,11 @@ function confirmMatch(matchId) {
         var isPWin = m.scoreProposer > m.scoreOpponent;
         var pElo = parseInt(pData.elo, 10) || 1000;
         var oElo = parseInt(oData.elo, 10) || 1000;
-        var myDelta = calculateElo(pElo, oElo, isPWin ? 1 : 0, 32);
-        var newPElo = Math.max(100, pElo + myDelta);
-        var newOElo = Math.max(100, oElo - myDelta);
+        
+        // Математика Эло: используем строго абсолютное значение дельты, чтобы избежать путаницы с минусами
+        var absDelta = Math.abs(calculateElo(pElo, oElo, isPWin ? 1 : 0, 32));
+        var newPElo = Math.max(100, pElo + (isPWin ? absDelta : -absDelta));
+        var newOElo = Math.max(100, oElo + (isPWin ? -absDelta : absDelta));
         
         var pWinStreak = isPWin ? ((parseInt(pData.winStreak, 10) || 0) + 1) : 0;
         var oWinStreak = isPWin ? 0 : ((parseInt(oData.winStreak, 10) || 0) + 1);
@@ -234,7 +248,7 @@ function confirmMatch(matchId) {
         var batch = db.batch();
         batch.set(pRef, { 
           elo: newPElo, 
-          lastEloDelta: isPWin ? myDelta : -myDelta, 
+          lastEloDelta: isPWin ? absDelta : -absDelta, 
           winStreak: pWinStreak, 
           matches: (parseInt(pData.matches, 10) || 0) + 1, 
           wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), 
@@ -244,7 +258,7 @@ function confirmMatch(matchId) {
 
         batch.set(oRef, { 
           elo: newOElo, 
-          lastEloDelta: isPWin ? -myDelta : myDelta, 
+          lastEloDelta: isPWin ? -absDelta : absDelta, 
           winStreak: oWinStreak, 
           matches: (parseInt(oData.matches, 10) || 0) + 1, 
           wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), 
@@ -253,35 +267,38 @@ function confirmMatch(matchId) {
         }, { merge: true });
 
         batch.delete(matchRef);
+        
+        // СОХРАНЕНИЕ ИСТОРИИ ВНУТРИ BATCH (гарантия сохранения при закрытии вкладки)
+        var historyRef = db.collection('matches_history').doc();
+        batch.set(historyRef, { 
+          type: 'singles',
+          p1Uid: m.proposerUid, 
+          p1Name: m.proposerName, 
+          p1Score: m.scoreProposer, 
+          p2Uid: m.opponentUid, 
+          p2Name: m.opponentName, 
+          p2Score: m.scoreOpponent, 
+          participants: [m.proposerUid, m.opponentUid], 
+          timestamp: Date.now() 
+        });
 
         batch.commit().then(function() {
-          db.collection('matches_history').add({ 
-            type: 'singles',
-            p1Uid: m.proposerUid, 
-            p1Name: m.proposerName, 
-            p1Score: m.scoreProposer, 
-            p2Uid: m.opponentUid, 
-            p2Name: m.opponentName, 
-            p2Score: m.scoreOpponent, 
-            participants: [m.proposerUid, m.opponentUid], 
-            timestamp: Date.now() 
-          }).then(function() {
-            var winnerName = isPWin ? m.proposerName : m.opponentName;
-            var loserName = isPWin ? m.opponentName : m.proposerName;
-            var wScore = isPWin ? m.scoreProposer : m.scoreOpponent;
-            var lScore = isPWin ? m.scoreOpponent : m.scoreProposer;
-            var humorComment = getMatchHumor(wScore, lScore, winnerName, loserName);
+          window.isProcessingMatch = false; // Снимаем блокировку
+          var winnerName = isPWin ? m.proposerName : m.opponentName;
+          var loserName = isPWin ? m.opponentName : m.proposerName;
+          var wScore = isPWin ? m.scoreProposer : m.scoreOpponent;
+          var lScore = isPWin ? m.scoreOpponent : m.scoreProposer;
+          var humorComment = getMatchHumor(wScore, lScore, winnerName, loserName);
 
-            sendTelegramAlert(
-              "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
-              "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
-              "<i>" + humorComment + "</i>\n\n" +
-              "<blockquote>📊 <b>Новый рейтинг Эло:</b>\n" +
-              "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (isPWin ? "+" : "") + myDelta + ")\n" +
-              "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (!isPWin ? "+" : "-") + myDelta + ")</blockquote>"
-            );
-          });
-        }).catch(function(e) { customAlert("Ошибка сохранения: " + e.message); });
+          sendTelegramAlert(
+            "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
+            "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
+            "<i>" + humorComment + "</i>\n\n" +
+            "<blockquote>📊 <b>Новый рейтинг Эло:</b>\n" +
+            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (isPWin ? "+" : "") + (isPWin ? absDelta : -absDelta) + ")\n" +
+            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (!isPWin ? "+" : "") + (!isPWin ? absDelta : -absDelta) + ")</blockquote>"
+          );
+        }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
 
     } else {
@@ -305,18 +322,18 @@ function confirmMatch(matchId) {
         var team2AvgElo = (elo2a + elo2b) / 2;
 
         var isTeam1Win = m.scoreTeam1 > m.scoreTeam2;
-        var delta = calculateElo(team1AvgElo, team2AvgElo, isTeam1Win ? 1 : 0, 24);
+        var absDelta = Math.abs(calculateElo(team1AvgElo, team2AvgElo, isTeam1Win ? 1 : 0, 24));
 
-        var newElo1a = Math.max(100, elo1a + delta);
-        var newElo1b = Math.max(100, elo1b + delta);
-        var newElo2a = Math.max(100, elo2a - delta);
-        var newElo2b = Math.max(100, elo2b - delta);
+        var newElo1a = Math.max(100, elo1a + (isTeam1Win ? absDelta : -absDelta));
+        var newElo1b = Math.max(100, elo1b + (isTeam1Win ? absDelta : -absDelta));
+        var newElo2a = Math.max(100, elo2a + (isTeam1Win ? -absDelta : absDelta));
+        var newElo2b = Math.max(100, elo2b + (isTeam1Win ? -absDelta : absDelta));
 
         var batch = db.batch();
 
         batch.set(t1aRef, {
           elo: newElo1a,
-          lastEloDelta: isTeam1Win ? delta : -delta,
+          lastEloDelta: isTeam1Win ? absDelta : -absDelta,
           winStreak: isTeam1Win ? ((parseInt(d1a.winStreak, 10) || 0) + 1) : 0,
           matches: (parseInt(d1a.matches, 10) || 0) + 1,
           wins: (parseInt(d1a.wins, 10) || 0) + (isTeam1Win ? 1 : 0),
@@ -326,7 +343,7 @@ function confirmMatch(matchId) {
 
         batch.set(t1bRef, {
           elo: newElo1b,
-          lastEloDelta: isTeam1Win ? delta : -delta,
+          lastEloDelta: isTeam1Win ? absDelta : -absDelta,
           winStreak: isTeam1Win ? ((parseInt(d1b.winStreak, 10) || 0) + 1) : 0,
           matches: (parseInt(d1b.matches, 10) || 0) + 1,
           wins: (parseInt(d1b.wins, 10) || 0) + (isTeam1Win ? 1 : 0),
@@ -336,7 +353,7 @@ function confirmMatch(matchId) {
 
         batch.set(t2aRef, {
           elo: newElo2a,
-          lastEloDelta: isTeam1Win ? -delta : delta,
+          lastEloDelta: isTeam1Win ? -absDelta : absDelta,
           winStreak: isTeam1Win ? 0 : ((parseInt(d2a.winStreak, 10) || 0) + 1),
           matches: (parseInt(d2a.matches, 10) || 0) + 1,
           wins: (parseInt(d2a.wins, 10) || 0) + (isTeam1Win ? 0 : 1),
@@ -346,7 +363,7 @@ function confirmMatch(matchId) {
 
         batch.set(t2bRef, {
           elo: newElo2b,
-          lastEloDelta: isTeam1Win ? -delta : delta,
+          lastEloDelta: isTeam1Win ? -absDelta : absDelta,
           winStreak: isTeam1Win ? 0 : ((parseInt(d2b.winStreak, 10) || 0) + 1),
           matches: (parseInt(d2b.matches, 10) || 0) + 1,
           wins: (parseInt(d2b.wins, 10) || 0) + (isTeam1Win ? 0 : 1),
@@ -356,47 +373,54 @@ function confirmMatch(matchId) {
 
         batch.delete(matchRef);
 
-        batch.commit().then(function() {
-          db.collection('matches_history').add({ 
-            type: 'doubles',
-            team1Uids: m.team1Uids,
-            team1Names: m.team1Names,
-            team1NamesArr: m.team1NamesArr,
-            team2Uids: m.team2Uids,
-            team2Names: m.team2Names,
-            team2NamesArr: m.team2NamesArr,
-            team1Score: m.scoreTeam1,
-            team2Score: m.scoreTeam2,
-            participants: m.team1Uids.concat(m.team2Uids),
-            timestamp: Date.now() 
-          }).then(function() {
-            var winTeam = isTeam1Win ? m.team1Names : m.team2Names;
-            var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
-            var wScore = isTeam1Win ? m.scoreTeam1 : m.scoreTeam2;
-            var lScore = isTeam1Win ? m.scoreTeam2 : m.scoreTeam1;
-            var humorComment = getMatchHumor(wScore, lScore, winTeam, loseTeam);
+        // История внутрь транзакции
+        var historyRefD = db.collection('matches_history').doc();
+        batch.set(historyRefD, { 
+          type: 'doubles',
+          team1Uids: m.team1Uids,
+          team1Names: m.team1Names,
+          team1NamesArr: m.team1NamesArr,
+          team2Uids: m.team2Uids,
+          team2Names: m.team2Names,
+          team2NamesArr: m.team2NamesArr,
+          team1Score: m.scoreTeam1,
+          team2Score: m.scoreTeam2,
+          participants: m.team1Uids.concat(m.team2Uids),
+          timestamp: Date.now() 
+        });
 
-            sendTelegramAlert(
-              "👥 <b>Парный матч 2х2 подтверждён!</b>\n\n" +
-              "🏓 <b>" + cleanHtml(m.team1Names) + "</b>  <code>" + m.scoreTeam1 + " : " + m.scoreTeam2 + "</code>  <b>" + cleanHtml(m.team2Names) + "</b>\n\n" +
-              "<i>" + humorComment + "</i>\n\n" +
-              "<blockquote>📊 <b>Новый рейтинг Эло участников:</b>\n" +
-              "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (isTeam1Win ? "+" : "") + delta + ")\n" +
-              "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (isTeam1Win ? "+" : "") + delta + ")\n" +
-              "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (!isTeam1Win ? "+" : "-") + delta + ")\n" +
-              "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (!isTeam1Win ? "+" : "-") + delta + ")</blockquote>"
-            );
-          });
-        }).catch(function(e) { customAlert("Ошибка сохранения: " + e.message); });
+        batch.commit().then(function() {
+          window.isProcessingMatch = false; // Снимаем блокировку
+          var winTeam = isTeam1Win ? m.team1Names : m.team2Names;
+          var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
+          var wScore = isTeam1Win ? m.scoreTeam1 : m.scoreTeam2;
+          var lScore = isTeam1Win ? m.scoreTeam2 : m.scoreTeam1;
+          var humorComment = getMatchHumor(wScore, lScore, winTeam, loseTeam);
+
+          sendTelegramAlert(
+            "👥 <b>Парный матч 2х2 подтверждён!</b>\n\n" +
+            "🏓 <b>" + cleanHtml(m.team1Names) + "</b>  <code>" + m.scoreTeam1 + " : " + m.scoreTeam2 + "</code>  <b>" + cleanHtml(m.team2Names) + "</b>\n\n" +
+            "<i>" + humorComment + "</i>\n\n" +
+            "<blockquote>📊 <b>Новый рейтинг Эло участников:</b>\n" +
+            "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (isTeam1Win ? "+" : "") + (isTeam1Win ? absDelta : -absDelta) + ")\n" +
+            "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (isTeam1Win ? "+" : "") + (isTeam1Win ? absDelta : -absDelta) + ")\n" +
+            "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (!isTeam1Win ? "+" : "") + (!isTeam1Win ? absDelta : -absDelta) + ")\n" +
+            "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (!isTeam1Win ? "+" : "") + (!isTeam1Win ? absDelta : -absDelta) + ")</blockquote>"
+          );
+        }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
     }
-  });
+  }).catch(function(e) { window.isProcessingMatch = false; });
 }
 
 function rejectMatch(matchId) { 
+  if (window.isProcessingMatch) return;
+  window.isProcessingMatch = true;
   db.collection('pending_matches').doc(matchId).delete().then(function() { 
-    document.getElementById('pending-matches-container').innerHTML = ''; 
-  }).catch(function(e) {}); 
+    window.isProcessingMatch = false;
+    var container = document.getElementById('pending-matches-container');
+    if (container) container.innerHTML = ''; 
+  }).catch(function(e) { window.isProcessingMatch = false; }); 
 }
 
 function listenRecentMatches() {
@@ -415,8 +439,11 @@ function listenRecentMatches() {
       
       matches.forEach(function(m) {
         var isDoubles = m.type === 'doubles';
-        var s1 = isDoubles ? m.team1Score : m.p1Score;
-        var s2 = isDoubles ? m.team2Score : m.p2Score;
+        
+        // Защита от unknow/undefined счета для парных турниров (старые/новые названия переменных)
+        var s1 = isDoubles ? (m.team1Score !== undefined ? m.team1Score : (m.scoreTeam1 !== undefined ? m.scoreTeam1 : "?")) : m.p1Score;
+        var s2 = isDoubles ? (m.team2Score !== undefined ? m.team2Score : (m.scoreTeam2 !== undefined ? m.scoreTeam2 : "?")) : m.p2Score;
+        
         var isP1Win = s1 > s2;
         var isP2Win = s2 > s1;
         var p1Color = isP1Win ? 'color: #10b981;' : '';
@@ -433,21 +460,22 @@ function listenRecentMatches() {
         var leftSideHtml = '';
         var rightSideHtml = '';
 
+        // Исправление переноса длинных имен команд
         if (isDoubles) {
-          leftSideHtml = '<span style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names) + '</span>';
-          rightSideHtml = '<span style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names) + '</span>';
+          leftSideHtml = '<span style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.3; font-size: 11px; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names).replace(/ & /g, '<br>& ') + '</span>';
+          rightSideHtml = '<span style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.3; font-size: 11px; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names).replace(/ & /g, '<br>& ') + '</span>';
         } else {
-          leftSideHtml = '<span class="clickable-name" style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span>';
-          rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
+          leftSideHtml = '<span class="clickable-name" style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.3; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span>';
+          rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.3; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
         }
 
         html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
                   '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                    '<div style="display:flex; flex:1; justify-content: flex-end; overflow: hidden;">' + leftSideHtml + '</div>' +
-                    '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 10px; white-space: nowrap;">' + s1 + ' : ' + s2 + '</div>' +
-                    '<div style="display:flex; flex:1; justify-content: flex-start; overflow: hidden;">' + rightSideHtml + '</div>' +
+                    '<div style="display:flex; flex:1; justify-content: flex-end; align-items: center; text-align: right; min-width: 0;">' + leftSideHtml + '</div>' +
+                    '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 10px; white-space: nowrap; flex-shrink: 0;">' + s1 + ' : ' + s2 + '</div>' +
+                    '<div style="display:flex; flex:1; justify-content: flex-start; align-items: center; text-align: left; min-width: 0;">' + rightSideHtml + '</div>' +
                   '</div>' +
-                  '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">' + badgeHtml + timeStr + '</div>' +
+                  '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 6px;">' + badgeHtml + timeStr + '</div>' +
                 '</div>';
       });
       container.innerHTML = html;
