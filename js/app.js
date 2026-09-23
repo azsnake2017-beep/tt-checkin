@@ -1175,3 +1175,95 @@ function deleteHistoryMatch(docId, profileUid) {
     });
   });
 }
+
+// --- МЕХАНИКА ELO DECAY (РУЧНОЙ ЗАПУСК С ЗАЩИТОЙ) ---
+function applyEloDecay() {
+  if (!isSuperAdmin()) return;
+
+  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Те, кто не играл последние 7 дней, получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
+  
+  // Возвращаем окну подтверждения красные цвета
+  var btn = document.querySelector('#confirm-modal .btn-join');
+  var title = document.querySelector('#confirm-modal h3');
+  var box = document.querySelector('#confirm-modal .modal-box');
+  if (btn) { btn.innerText = "Запустить списание"; btn.style.background = "var(--accent-red)"; }
+  if (title) { title.innerText = "Списание рейтинга"; title.style.color = "var(--accent-red)"; }
+  if (box) { box.style.borderColor = "var(--accent-red)"; }
+
+  openConfirmModal(confirmMsg, function() {
+    customAlert("⏳ Анализируем историю матчей за 7 дней...");
+
+    // 1. Вычисляем временную метку "7 дней назад"
+    var sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+
+    // 2. Ищем все матчи, сыгранные за эти 7 дней
+    db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
+      var activeUids = new Set();
+      
+      // Собираем UID всех, кто играл
+      snap.forEach(function(doc) {
+        var m = doc.data();
+        if (m.participants) {
+          m.participants.forEach(function(uid) { activeUids.add(uid); });
+        }
+      });
+
+      // 3. Получаем всех пользователей базы
+      db.collection('users').get().then(function(usersSnap) {
+        var batch = db.batch();
+        var penalizedCount = 0;
+        var penalizedNames = [];
+
+        usersSnap.forEach(function(uDoc) {
+          var u = uDoc.data();
+          var uid = uDoc.id;
+
+          // Пропускаем новичков, которые еще вообще не сыграли ни одного матча
+          if (!u.matches || u.matches === 0) return;
+
+          // Если игрок ЕСТЬ в списке активных - молодец, пропускаем
+          if (activeUids.has(uid)) return;
+
+          // Если игрока НЕТ в списке активных, проверяем, когда мы штрафовали его в последний раз
+          var lastPenalty = u.lastPenaltyDate || 0;
+          
+          // Защита: штрафуем только если с прошлого штрафа прошло минимум 6 дней
+          // (6 дней вместо 7, чтобы не было проблем со сдвигом часов, если вы нажмете кнопку чуть раньше)
+          if (Date.now() - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
+            var currentElo = parseInt(u.elo, 10) || 1000;
+            var newElo = Math.max(100, currentElo - 50); // Не даем рейтингу упасть ниже 100
+
+            batch.set(db.collection('users').doc(uid), {
+              elo: newElo,
+              lastPenaltyDate: Date.now(), // Запоминаем дату штрафа
+              lastEloDelta: -50 // Чтобы в профиле красиво горело красным 📉
+            }, { merge: true });
+
+            penalizedCount++;
+            penalizedNames.push(cleanHtml(u.name));
+          }
+        });
+
+        // 4. Применяем изменения и отправляем отчет
+        if (penalizedCount > 0) {
+          batch.commit().then(function() {
+            customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
+            
+            // Отправляем веселое сообщение в Telegram чат
+            var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
+                            "Следующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n" +
+                            "• " + penalizedNames.join('\n• ') + "\n\n" +
+                            "<i>Пора расчехлять ракетки и возвращать позиции!</i> 🏓";
+            sendTelegramAlert(tgMessage);
+            
+            closeAdminMenu();
+          }).catch(function(e) { customAlert("❌ Ошибка при списании: " + e.message); });
+        } else {
+          customAlert("✅ Проверка завершена. Все лентяи уже оштрафованы, остальные — активно играют!");
+          closeAdminMenu();
+        }
+
+      }).catch(function(e) { customAlert("❌ Ошибка базы пользователей: " + e.message); });
+    }).catch(function(e) { customAlert("❌ Ошибка истории матчей: " + e.message); });
+  });
+}
