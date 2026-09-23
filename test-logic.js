@@ -46,6 +46,12 @@ if (!cssRegex.test(html)) {
     console.log(`✅ Скрипт подключён: ${script}`);
   }
 });
+
+// Проверка наличия библиотеки QR-кода
+if (!html.includes('qrcode.min.js')) {
+  console.error('❌ Ошибка: Отсутствует библиотека qrcode.min.js');
+  hasError = true;
+}
 if (hasError) process.exit(1);
 
 // 3. Проверка синтаксиса JavaScript файлов
