@@ -1,4 +1,4 @@
-// js/config.js
+// js/config.js — Настройки, базовые утилиты и инициализация Firebase
 
 function checkBrowserCompatibility() {
   var isSupported = true;
@@ -153,7 +153,6 @@ function initNavTab() {
   switchNavTab(savedTab);
 }
 
-// Восстановленная функция переключения Рейтингов и Топа
 function switchTab(tab) {
   var tabRating = document.getElementById('tab-btn-rating');
   var tabTime = document.getElementById('tab-btn-time');
@@ -169,10 +168,10 @@ function switchTab(tab) {
   }
 }
 
-function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
-
-initTheme();
-initNavTab();
+function toggleCard(loc) { 
+  var c = document.getElementById('card-' + loc);
+  if (c) c.classList.toggle('expanded'); 
+}
 
 var GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
 var TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
@@ -280,15 +279,13 @@ function openQrModal(type) {
   document.getElementById('qr-modal-desc').innerText = desc;
   document.getElementById('qr-url-text').innerText = targetUrl;
 
-  var container = document.getElementById('qr-canvas-container');
-  if(container) container.innerHTML = '';
-
-  if (window.QRCode && container) {
-    new QRCode(container, {
-      text: targetUrl, width: 180, height: 180, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M
-    });
-  } else if (container) {
-    container.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180" width="180" height="180" alt="QR" style="display:block;" />';
+  var img = document.getElementById('qr-code-img');
+  if (img) {
+    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
+    img.onerror = function() {
+      this.onerror = null;
+      this.src = 'https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180';
+    };
   }
 
   document.getElementById('qr-modal').style.display = 'flex';
@@ -296,8 +293,6 @@ function openQrModal(type) {
 
 function closeQrModal() { 
   document.getElementById('qr-modal').style.display = 'none'; 
-  var container = document.getElementById('qr-canvas-container');
-  if (container) container.innerHTML = '';
 }
 
 function openExternalLink(url) {
