@@ -481,6 +481,53 @@ function showUserInfoModal(uid) {
     
     var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
+    // 1. СНАЧАЛА СОБИРАЕМ ИСТОРИЮ (чтобы узнать дату последней игры)
+    var userMatches = [];
+    allMatchesSnap.forEach(function(docX) {
+      var mx = docX.data() || {};
+      mx.docId = docX.id; 
+      var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
+                   (mx.p1Uid === uid || mx.p2Uid === uid) ||
+                   (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
+                   (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
+      if (isPart) { userMatches.push(mx); }
+    });
+
+    // Сортируем матчи от новых к старым
+    userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+
+    // Вычисляем дату последней игры и "умный" текст (Сегодня/Вчера)
+    var lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+    if (userMatches.length > 0) {
+      var lastTs = parseTime(userMatches[0].timestamp);
+      var mDate = new Date(lastTs);
+      
+      var day = ('0' + mDate.getDate()).slice(-2);
+      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+      var year = mDate.getFullYear();
+      
+      // Считаем разницу в днях, отбрасывая часы, чтобы расчет был точным
+      var today = new Date();
+      today.setHours(0,0,0,0);
+      var matchDay = new Date(lastTs);
+      matchDay.setHours(0,0,0,0);
+      var diffDays = Math.round((today - matchDay) / (1000 * 60 * 60 * 24));
+      
+      var daysText = "";
+      if (diffDays === 0) {
+        daysText = " (Сегодня)";
+      } else if (diffDays === 1) {
+        daysText = " (Вчера)";
+      } else {
+        // Если прошло больше 6 дней, подсвечиваем красным (предупреждение об Elo Decay)
+        var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
+        daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
+      }
+      
+      lastMatchStr = day + '.' + month + '.' + year + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
+    }
+
+    // 2. ГОТОВИМ ОСТАЛЬНЫЕ ДАННЫЕ
     var mins = (ld.exists && ld.data()) ? (ld.data().totalMinutes || 0) : 0;
     var wins = parseInt(u.wins, 10) || 0;
     var losses = parseInt(u.losses, 10) || 0;
@@ -498,13 +545,20 @@ function showUserInfoModal(uid) {
     } else { mContainer.style.display = 'none'; }
 
     var eloDisplay = parseInt(u.elo, 10) || 1000;
+    
+    // 3. ОТРИСОВЫВАЕМ КАРТОЧКУ (Здесь добавлено поле "Последняя игра")
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + getPlayerStatus(eloDisplay) + '</span></div>' +
+      
+      // Наша новая строчка, визуально немного отделенная
+      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--accent-sky);">' + lastMatchStr + '</span></div>' +
+      
+      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
+      
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>';
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
     
     var invContainer = document.getElementById('info-modal-inventory');
     if (u.blade || u.rubberL || u.rubberR) {
@@ -515,126 +569,12 @@ function showUserInfoModal(uid) {
       invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
     } else { invContainer.style.display = 'none'; }
 
-    // Собираем историю матчей
-    var userMatches = [];
-    allMatchesSnap.forEach(function(docX) {
-      var mx = docX.data() || {};
-      mx.docId = docX.id; 
-      var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
-                   (mx.p1Uid === uid || mx.p2Uid === uid) ||
-                   (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
-                   (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
-      if (isPart) { userMatches.push(mx); }
-    });
-
-    userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
-
     // Отрисовываем историю (функция renderUserHistoryList остается без изменений)
     renderUserHistoryList(userMatches, uid);
   }).catch(function(e) {
     closeUserInfoModal();
   });
 }
-
-function renderUserHistoryFromSnaps(snaps, uid) {
-  var matches = [];
-  snaps.forEach(function(docX) { matches.push(docX.data()); });
-  renderUserHistoryList(matches, uid);
-}
-
-function renderUserHistoryList(matches, uid) {
-  var hEl = document.getElementById('info-modal-history');
-  if (!matches || matches.length === 0) { 
-    hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; 
-    return; 
-  }
-  
-  var recentMatches = matches.slice(0, 10);
-  var h = '';
-  
-  recentMatches.forEach(function(mx) {
-    var isDoubles = mx.type === 'doubles';
-    var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
-    
-    var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
-    var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
-
-    var myS = isTeam1 ? s1 : s2;
-    var opS = isTeam1 ? s2 : s1;
-
-    var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
-    
-    // Спокойные, аккуратные стили без свечения
-    var winStyle = 'color: #059669; font-weight: 600;';
-    var loseStyle = 'color: var(--text-muted); font-weight: 400;';
-    
-    var myStyle = isWin ? winStyle : loseStyle;
-    var opStyle = !isWin ? winStyle : loseStyle;
-    
-    // Аккуратные геометрические стрелочки (не системные эмодзи)
-    var myEmoji = isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
-    var opEmoji = !isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
-
-    var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
-    var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px;">2x2</span>' : '<span class="badge-mode badge-mode-singles" style="margin-right: 6px;">1x1</span>';
-    
-    var leftContentHtml = '';
-
-    if (isDoubles) {
-        var tArr = isTeam1 ? mx.team1NamesArr : mx.team2NamesArr;
-        var tUids = isTeam1 ? mx.team1Uids : mx.team2Uids;
-        var myPartner = null, myPartnerUid = null;
-        if (tArr && tUids) {
-            if (tUids[0] === uid) { myPartner = tArr[1]; myPartnerUid = tUids[1]; }
-            else { myPartner = tArr[0]; myPartnerUid = tUids[0]; }
-        }
-        
-        var partnerHtml = myPartner ? '<span class="clickable-name" style="'+myStyle+'" onclick="showUserInfoModal(\''+escapeJS(myPartnerUid)+'\')">' + cleanHtml(myPartner) + '</span>' : '<span style="'+myStyle+'">Неизвестно</span>';
-        
-        var opArr = isTeam1 ? mx.team2NamesArr : mx.team1NamesArr;
-        var opUids = isTeam1 ? mx.team2Uids : mx.team1Uids;
-        var opHtml = '';
-        if (opArr && opUids && opArr.length > 1) {
-            opHtml = '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUids[0])+'\')">' + cleanHtml(opArr[0]) + '</span>' +
-                     ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ' +
-                     '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUids[1])+'\')">' + cleanHtml(opArr[1]) + '</span>';
-        } else {
-            var opN = isTeam1 ? mx.team2Names : mx.team1Names;
-            opHtml = '<span style="'+opStyle+'">' + cleanHtml(opN || "Неизвестные игроки").replace(/ & /g, ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ') + '</span>';
-        }
-
-        leftContentHtml = '<div style="margin-bottom: 4px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">в паре с:</span> ' + myEmoji + partnerHtml + '</div>' +
-                          '<div style="line-height: 1.4; word-break: break-word;"><span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
-
-    } else {
-        var opUid = isTeam1 ? mx.p2Uid : mx.p1Uid;
-        var opName = isTeam1 ? mx.p2Name : mx.p1Name;
-        var opHtml = '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUid)+'\')">' + cleanHtml(opName || "Неизвестно") + '</span>';
-        
-        leftContentHtml = '<div style="line-height: 1.4; word-break: break-word; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
-    }
-
-    var adminDelBtn = (isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
-
-    h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
-           '<div style="flex: 1; min-width: 0;">' + 
-             leftContentHtml +
-             '<div style="color:var(--text-muted);font-size:10px; margin-top:6px;">' + dtStr + '</div>' +
-           '</div>' +
-           '<div style="display: flex; align-items: center;">' +
-             '<div style="font-weight:700; font-size: 16px; white-space: nowrap; flex-shrink: 0; background: var(--row-bg); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">' +
-               '<span style="' + myStyle + '">' + myS + '</span>' +
-               '<span style="color:var(--text-muted); opacity: 0.5; margin: 0 4px;">:</span>' +
-               '<span style="' + opStyle + '">' + opS + '</span>' +
-             '</div>' +
-             adminDelBtn +
-           '</div>' +
-         '</div>';
-  });
-  hEl.innerHTML = h;
-}
-
-function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
 
 function openTournamentModal(tourId) { 
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
