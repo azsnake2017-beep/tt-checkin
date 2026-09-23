@@ -1153,7 +1153,15 @@ document.addEventListener('DOMContentLoaded', function() {
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
   
-  // Используем красивое встроенное окно приложения вместо системного confirm
+  // Принудительно возвращаем окну красные стили для предупреждения об удалении
+  var btn = document.querySelector('#confirm-modal .btn-join');
+  var title = document.querySelector('#confirm-modal h3');
+  var box = document.querySelector('#confirm-modal .modal-box');
+  
+  if (btn) { btn.innerText = "Да, удалить"; btn.style.background = "var(--accent-red)"; }
+  if (title) { title.innerText = "Внимание"; title.style.color = "var(--accent-red)"; }
+  if (box) { box.style.borderColor = "var(--accent-red)"; }
+  
   var confirmText = 'Удалить этот матч из истории?<br><br><span style="font-size: 12px; opacity: 0.8;">(Рейтинги игроков не изменятся, удалится только карточка матча)</span>';
   
   openConfirmModal(confirmText, function() {
