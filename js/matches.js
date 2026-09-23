@@ -423,6 +423,7 @@ function rejectMatch(matchId) {
   }).catch(function(e) { window.isProcessingMatch = false; }); 
 }
 
+// ГЛОБАЛЬНАЯ ЛЕНТА ПОСЛЕДНИХ МАТЧЕЙ (С коронами 👑 и цветами)
 function listenRecentMatches() {
   db.collection('matches_history').onSnapshot(function(snap) {
     try {
@@ -445,8 +446,15 @@ function listenRecentMatches() {
         
         var isP1Win = s1 > s2;
         var isP2Win = s2 > s1;
-        var p1Color = isP1Win ? 'color: #10b981;' : '';
-        var p2Color = isP2Win ? 'color: #10b981;' : '';
+        
+        var winStyle = 'color: #10b981; font-weight: 800; text-shadow: 0 0 8px rgba(16,185,129,0.3);';
+        var loseStyle = 'color: var(--text-muted); font-weight: 400; opacity: 0.6;';
+
+        var p1Style = isP1Win ? winStyle : loseStyle;
+        var p2Style = isP2Win ? winStyle : loseStyle;
+        
+        var p1Emoji = isP1Win ? '👑 ' : '🔻 ';
+        var p2Emoji = isP2Win ? ' 👑' : ' 🔻'; 
         
         var d = new Date(parseTime(m.timestamp));
         var day = ('0' + d.getDate()).slice(-2);
@@ -460,40 +468,41 @@ function listenRecentMatches() {
         var rightSideHtml = '';
 
         if (isDoubles) {
-          // Разбиваем Команду 1 на отдельные кликабельные имена
           if (m.team1Uids && m.team1NamesArr && m.team1Uids.length > 1) {
-              leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p1Color + '">' + 
-                             '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team1Uids[0]) + '\')">' + cleanHtml(m.team1NamesArr[0]) + '</span><br>' +
+              leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 12px; ' + p1Style + '">' + 
+                             p1Emoji + '<span class="clickable-name" style="'+p1Style+'" onclick="showUserInfoModal(\'' + escapeJS(m.team1Uids[0]) + '\')">' + cleanHtml(m.team1NamesArr[0]) + '</span><br>' +
                              '<span style="color:var(--text-muted);font-size:10px;">&</span> ' +
-                             '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team1Uids[1]) + '\')">' + cleanHtml(m.team1NamesArr[1]) + '</span>' + 
+                             '<span class="clickable-name" style="'+p1Style+'" onclick="showUserInfoModal(\'' + escapeJS(m.team1Uids[1]) + '\')">' + cleanHtml(m.team1NamesArr[1]) + '</span>' + 
                              '</div>';
           } else {
-              leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names || "").replace(/ & /g, '<br><span style="color:var(--text-muted);font-size:10px;">&</span> ') + '</div>';
+              leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 12px; ' + p1Style + '">' + p1Emoji + cleanHtml(m.team1Names || "").replace(/ & /g, '<br><span style="color:var(--text-muted);font-size:10px;">&</span> ') + '</div>';
           }
 
-          // Разбиваем Команду 2 на отдельные кликабельные имена
           if (m.team2Uids && m.team2NamesArr && m.team2Uids.length > 1) {
-              rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p2Color + '">' + 
-                              '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team2Uids[0]) + '\')">' + cleanHtml(m.team2NamesArr[0]) + '</span><br>' +
+              rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 12px; ' + p2Style + '">' + 
+                              '<span class="clickable-name" style="'+p2Style+'" onclick="showUserInfoModal(\'' + escapeJS(m.team2Uids[0]) + '\')">' + cleanHtml(m.team2NamesArr[0]) + '</span>' + p2Emoji + '<br>' +
                               '<span style="color:var(--text-muted);font-size:10px;">&</span> ' +
-                              '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team2Uids[1]) + '\')">' + cleanHtml(m.team2NamesArr[1]) + '</span>' + 
+                              '<span class="clickable-name" style="'+p2Style+'" onclick="showUserInfoModal(\'' + escapeJS(m.team2Uids[1]) + '\')">' + cleanHtml(m.team2NamesArr[1]) + '</span>' + 
                               '</div>';
           } else {
-              rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names || "").replace(/ & /g, '<br><span style="color:var(--text-muted);font-size:10px;">&</span> ') + '</div>';
+              rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 12px; ' + p2Style + '">' + cleanHtml(m.team2Names || "").replace(/ & /g, '<br><span style="color:var(--text-muted);font-size:10px;">&</span> ') + p2Emoji + '</div>';
           }
         } else {
-          // Одиночные матчи
-          leftSideHtml = '<span class="clickable-name" style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.3; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span>';
-          rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.3; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
+          leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.3; ' + p1Style + '">' + p1Emoji + '<span class="clickable-name" style="'+p1Style+'" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span></div>';
+          rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.3; ' + p2Style + '"><span class="clickable-name" style="'+p2Style+'" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>' + p2Emoji + '</div>';
         }
 
-        html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
+        html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 12px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
                   '<div style="display: flex; justify-content: space-between; align-items: center;">' +
-                    '<div style="display:flex; flex:1; justify-content: flex-end; align-items: center; text-align: right; min-width: 0;">' + leftSideHtml + '</div>' +
-                    '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 10px; white-space: nowrap; flex-shrink: 0;">' + s1 + ' : ' + s2 + '</div>' +
-                    '<div style="display:flex; flex:1; justify-content: flex-start; align-items: center; text-align: left; min-width: 0;">' + rightSideHtml + '</div>' +
+                    '<div style="display:flex; flex:1; justify-content: flex-end; align-items: center; min-width: 0;">' + leftSideHtml + '</div>' +
+                    '<div style="font-weight: 900; font-size: 18px; background: var(--row-bg); border-radius: 8px; padding: 4px 10px; margin: 0 10px; white-space: nowrap; flex-shrink: 0; box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);">' +
+                      '<span style="' + p1Style + '">' + s1 + '</span>' +
+                      '<span style="color:var(--text-muted); margin: 0 4px;">:</span>' +
+                      '<span style="' + p2Style + '">' + s2 + '</span>' +
+                    '</div>' +
+                    '<div style="display:flex; flex:1; justify-content: flex-start; align-items: center; min-width: 0;">' + rightSideHtml + '</div>' +
                   '</div>' +
-                  '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 6px;">' + badgeHtml + timeStr + '</div>' +
+                  '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 8px;">' + badgeHtml + timeStr + '</div>' +
                 '</div>';
       });
       container.innerHTML = html;
