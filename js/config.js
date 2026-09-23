@@ -1,3 +1,5 @@
+// js/config.js
+
 function checkBrowserCompatibility() {
   var isSupported = true;
   try {
@@ -69,6 +71,33 @@ function buildBlockquoteList(list, title) {
   return '\n\n<blockquote>👥 <b>' + title + ' (' + list.length + ' ' + getPlayersCountSuffix(list.length) + '):</b>\n' + items.join('\n') + '</blockquote>';
 }
 
+function getWindDirection(degrees) {
+  if (degrees === undefined || degrees === null) return "";
+  var directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
+  return directions[Math.round((degrees % 360) / 45) % 8];
+}
+
+function getCustomBadge(uid) {
+  if (!uid) return '';
+  if (uid === 'google_XUE0DYY6WoMfkI3TmG7o2HqPUEm1') return '<span class="platform-badge badge-teacher">Учитель 🎓</span>';
+  if (uid === 'tg_750209461') return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
+  if (uid === 'tg_6126323287') return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
+  if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') return '<span class="platform-badge badge-bot">Бот 🤖</span>';
+  if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') return '<span class="platform-badge badge-coach">Тренер 📋</span>';
+  return '';
+}
+
+function getPlayerStatus(elo) {
+  var e = parseInt(elo, 10) || 1000;
+  if (e <= 1000) return "Новичок 🟢"; if (e <= 1200) return "Ученик 📘"; if (e <= 1400) return "Любитель 👟";
+  if (e <= 1600) return "Игрок основы 🏃‍♂️"; if (e <= 1800) return "Третий разряд 🥉"; if (e <= 2000) return "Второй разряд 🥈";
+  if (e <= 2200) return "Первый разряд 🥇"; if (e <= 2400) return "КМС 🏅"; if (e <= 2600) return "Мастер спорта 🏆";
+  if (e <= 2800) return "Элитный игрок ⭐"; if (e <= 3000) return "Мастер атаки 🔥"; if (e <= 3200) return "Гроссмейстер ♟️";
+  if (e <= 3400) return "Чемпион клуба 👑"; if (e <= 3600) return "Гранд-мастер 🎖️"; if (e <= 3800) return "Снайпер 🎯";
+  if (e <= 4000) return "Легенда клуба 🏛️"; if (e <= 4200) return "Премьер-лига 📈"; if (e <= 4400) return "Гранд-чемпион 🔥🏆";
+  if (e <= 4600) return "Властелин стола 👑🏓"; if (e <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
+}
+
 var confirmActionCallback = null;
 function openConfirmModal(msg, action) {
   document.getElementById('confirm-modal-text').innerText = msg;
@@ -123,6 +152,24 @@ function initNavTab() {
   var savedTab = localStorage.getItem('tt_active_tab') || 'profile';
   switchNavTab(savedTab);
 }
+
+// Восстановленная функция переключения Рейтингов и Топа
+function switchTab(tab) {
+  var tabRating = document.getElementById('tab-btn-rating');
+  var tabTime = document.getElementById('tab-btn-time');
+  var viewRating = document.getElementById('view-rating-content');
+  var viewTime = document.getElementById('view-time-content');
+
+  if (tab === 'rating') {
+    tabRating.classList.add('active'); tabTime.classList.remove('active');
+    viewRating.style.display = 'flex'; viewTime.style.display = 'none';
+  } else {
+    tabTime.classList.add('active'); tabRating.classList.remove('active');
+    viewTime.style.display = 'flex'; viewRating.style.display = 'none';
+  }
+}
+
+function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
 
 initTheme();
 initNavTab();
@@ -233,13 +280,15 @@ function openQrModal(type) {
   document.getElementById('qr-modal-desc').innerText = desc;
   document.getElementById('qr-url-text').innerText = targetUrl;
 
-  var img = document.getElementById('qr-code-img');
-  if (img) {
-    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
-    img.onerror = function() {
-      this.onerror = null;
-      this.src = 'https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180';
-    };
+  var container = document.getElementById('qr-canvas-container');
+  if(container) container.innerHTML = '';
+
+  if (window.QRCode && container) {
+    new QRCode(container, {
+      text: targetUrl, width: 180, height: 180, colorDark: "#000000", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M
+    });
+  } else if (container) {
+    container.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180" width="180" height="180" alt="QR" style="display:block;" />';
   }
 
   document.getElementById('qr-modal').style.display = 'flex';
@@ -247,4 +296,21 @@ function openQrModal(type) {
 
 function closeQrModal() { 
   document.getElementById('qr-modal').style.display = 'none'; 
+  var container = document.getElementById('qr-canvas-container');
+  if (container) container.innerHTML = '';
+}
+
+function openExternalLink(url) {
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openLink) { 
+      window.Telegram.WebApp.openLink(url); 
+  } else { 
+      window.open(url, '_blank'); 
+  }
+}
+
+function getInventoryRowHtml(icon, label, value, searchPrefix) {
+  if (!value) return '';
+  var query = encodeURIComponent(searchPrefix + ' ' + value);
+  var url = 'https://www.google.com/search?q=' + query;
+  return '<div class="inventory-item"><div class="inventory-item-left"><span>' + icon + '</span> <span style="color: var(--text-muted);">' + label + '</span> <span class="inventory-value">' + cleanHtml(value) + '</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink(\'' + url + '\')">i</button></div>';
 }
