@@ -267,7 +267,7 @@
 </div>
 
 <div class="modal-overlay" id="user-info-modal">
-  <div class="modal-box" style="border-color: var(--accent-sky);">
+  <div class="modal-box" style="border-color: var(--accent-sky); position: relative;">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeUserInfoModal()">✕</button>
@@ -276,10 +276,20 @@
     <div id="info-modal-inventory" style="display: none;"></div>
     
     <div id="info-modal-content-area" style="display: flex; flex-direction: column; gap: 8px; text-align: left; background: var(--row-bg); padding: 12px; border-radius: 12px;"></div>
+    
+    <div id="info-modal-extended-stats" style="display: none; flex-direction: column; gap: 6px; background: var(--list-bg); padding: 12px; border-radius: 12px; margin-top: 8px; text-align: left; border: 1px solid var(--card-border);">
+      <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 4px;">Аналитика игрока:</div>
+      <div id="extended-stats-body" style="font-size: 12px; color: var(--text-muted);">Загрузка аналитики...</div>
+    </div>
 
-<div id="info-modal-extended-stats" style="display: flex; flex-direction: column; gap: 6px; background: var(--list-bg); padding: 12px; border-radius: 12px; margin-top: 8px; text-align: left; border: 1px solid var(--card-border);">
-  <div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 4px;">Аналитика игрока:</div>
-  <div id="extended-stats-body" style="font-size: 12px; color: var(--text-muted);">Загрузка аналитики...</div>
+    <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 8px;">История матчей:</div>
+    
+    <!-- Убрали max-height и overflow, теперь история тянется естественно -->
+    <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; padding-bottom: 12px;"><span class="empty-note">Пусто</span></div>
+    
+    <!-- Прилипающая (sticky) кнопка закрытия -->
+    <button class="btn btn-leave" style="margin-top: auto; position: sticky; bottom: -5px; z-index: 10; box-shadow: 0 -15px 15px -5px var(--card-bg);" onclick="closeUserInfoModal()">Закрыть</button>
+  </div>
 </div>
     
     <!-- НОВЫЙ БЛОК ДЛЯ РАСШИРЕННОЙ СТАТИСТИКИ -->
