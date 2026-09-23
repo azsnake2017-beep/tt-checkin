@@ -107,7 +107,7 @@
     :root[data-theme="dark"] .badge-bot { color: #cbd5e1; }
     :root[data-theme="dark"] .badge-coach { color: #60a5fa; }
 
-    .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 4px; }
+    .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; cursor: display; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 4px; }
 
     .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; text-align: center; }
     .btn-edit { background: var(--card-border); color: var(--text); }
@@ -443,7 +443,7 @@
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО QR-КОДА (АВТОНОМНЫЙ ХОЛСТ) -->
+<!-- МОДАЛЬНОЕ ОКНО QR-КОДА -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px;">
@@ -451,9 +451,7 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
     <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
-    
-    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-flex; justify-content: center; align-items: center; margin: 0 auto;" id="qr-canvas-container"></div>
-    
+    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;"><img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" /></div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
       <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
@@ -893,9 +891,7 @@
     }
   }
 
-  // АВТОНОМНЫЙ QR-КОД БЕЗ СТОРОННИХ API
-  var qrCodeInstance = null;
-
+  // НАДЁЖНЫЙ ВЫВОД QR-КОДА С ОТКАЗОУСТОЙЧИВЫМ FALLBACK
   function openQrModal(type) {
     var targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
     var title = "QR-код приложения";
@@ -916,20 +912,13 @@
     document.getElementById('qr-modal-desc').innerText = desc;
     document.getElementById('qr-url-text').innerText = targetUrl;
 
-    var container = document.getElementById('qr-canvas-container');
-    container.innerHTML = '';
-
-    if (window.QRCode) {
-      qrCodeInstance = new QRCode(container, {
-        text: targetUrl,
-        width: 180,
-        height: 180,
-        colorDark: "#000000",
-        colorLight: "#ffffff",
-        correctLevel: QRCode.CorrectLevel.M
-      });
-    } else {
-      container.innerHTML = '<img src="https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180" width="180" height="180" alt="QR" style="display:block;" />';
+    var img = document.getElementById('qr-code-img');
+    if (img) {
+      img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
+      img.onerror = function() {
+        this.onerror = null;
+        this.src = 'https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180';
+      };
     }
 
     document.getElementById('qr-modal').style.display = 'flex';
@@ -937,8 +926,6 @@
 
   function closeQrModal() { 
     document.getElementById('qr-modal').style.display = 'none'; 
-    var container = document.getElementById('qr-canvas-container');
-    if (container) container.innerHTML = '';
   }
 
   function getPlayerStatus(elo) {
@@ -1760,7 +1747,7 @@
         team2NamesArr: [opp1Name, opp2Name],
         scoreTeam1: myScore,
         scoreTeam2: oppScore,
-        targetUids: [opp1Uid, opp2Uid], // Любой из соперников может подтвердить
+        targetUids: [opp1Uid, opp2Uid],
         timestamp: Date.now()
       }).then(function() {
         customAlert("✅ Запрос на подтверждение парного матча 2х2 отправлен соперникам!");
