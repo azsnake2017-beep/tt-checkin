@@ -1205,3 +1205,56 @@ function executeConfirm() {
   }
   closeConfirmModal();
 }
+
+// --- АВТОМАТИЧЕСКАЯ ПОДГРУЗКА ДАТЫ В ГЛАВНОЕ МЕНЮ ---
+var mainProfileDateLoaded = false;
+
+setInterval(function() {
+  var targetEl = document.getElementById('main-profile-last-played');
+  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  
+  // Если элемент найден, пользователь авторизован, и мы еще не загружали данные
+  if (!mainProfileDateLoaded && targetEl && targetEl.innerHTML.includes('Загрузка') && myUid) {
+    mainProfileDateLoaded = true; // Сразу ставим флаг, чтобы не грузить базу повторно
+    
+    db.collection('matches_history').get().then(function(snap) {
+      var myMatches = [];
+      snap.forEach(function(docX) {
+        var mx = docX.data();
+        var isPart = (mx.participants && mx.participants.indexOf(myUid) !== -1) || 
+                     (mx.p1Uid === myUid || mx.p2Uid === myUid) ||
+                     (mx.team1Uids && mx.team1Uids.indexOf(myUid) !== -1) ||
+                     (mx.team2Uids && mx.team2Uids.indexOf(myUid) !== -1);
+        if (isPart) myMatches.push(mx);
+      });
+
+      if (myMatches.length === 0) {
+        targetEl.innerHTML = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+        return;
+      }
+
+      // Сортируем
+      myMatches.sort(function(a, b) {
+        var tA = typeof parseTime === 'function' ? parseTime(a.timestamp) : (a.timestamp || 0);
+        var tB = typeof parseTime === 'function' ? parseTime(b.timestamp) : (b.timestamp || 0);
+        return tB - tA;
+      });
+
+      // Считаем дни
+      var lastTs = typeof parseTime === 'function' ? parseTime(myMatches[0].timestamp) : myMatches[0].timestamp;
+      var mDate = new Date(lastTs);
+      var day = ('0' + mDate.getDate()).slice(-2);
+      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+      
+      var today = new Date(); today.setHours(0,0,0,0);
+      var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
+      var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+      
+      var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (' + diffDays + ' дн. назад)';
+      var color = diffDays >= 7 ? 'var(--accent-red)' : 'var(--text-muted)';
+      
+      // Вставляем результат
+      targetEl.innerHTML = day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px; color:' + color + ';">' + daysText + '</span>';
+    });
+  }
+}, 1000);
