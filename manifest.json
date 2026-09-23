@@ -1,1 +1,21 @@
-
+{
+  "name": "Настольный теннис ЧМЗ",
+  "short_name": "TT ЧМЗ",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1120",
+  "theme_color": "#0b1120",
+  "description": "Радар, рейтинг и статистика клуба любителей настольного тенниса ЧМЗ.",
+  "icons": [
+    {
+      "src": "logo.webp",
+      "sizes": "192x192",
+      "type": "image/webp"
+    },
+    {
+      "src": "logo.webp",
+      "sizes": "512x512",
+      "type": "image/webp"
+    }
+  ]
+}
