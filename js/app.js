@@ -215,6 +215,27 @@ function initUserProfile() {
   showAuthRequired(authScreen);
 }
 
+function showAuthRequired(authScreen) {
+    currentUserProfile = { uid: null, name: "", totalMinutes: 0 };
+    if (authScreen) authScreen.style.display = 'flex';
+    
+    document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b style="color: var(--accent-red);">Не авторизован</b></span>';
+    document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag" style="color: var(--accent-red);">Войдите для доступа к функциям</span>';
+    
+    var container = document.getElementById('telegram-login-container');
+    if (container && container.children.length === 0) {
+      var script = document.createElement('script');
+      script.src = "https://telegram.org/js/telegram-widget.js?22";
+      script.setAttribute('data-telegram-login', TELEGRAM_BOT_USERNAME);
+      script.setAttribute('data-size', 'large'); 
+      script.setAttribute('data-radius', '10');
+      script.setAttribute('data-onauth', 'onTelegramAuth(user)'); 
+      script.setAttribute('data-request-access', 'write');
+      container.appendChild(script);
+    }
+    renderAll();
+}
+
 function updateProfileDisplay() {
   if (!currentUserProfile.uid) return;
   var isAdmin = isSuperAdmin();
@@ -595,7 +616,7 @@ function toggleTourReaction(id, type) {
       return t.get(ref).then(function(doc) {
           if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
           if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid; }); } } 
-          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
+          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
           t.update(ref, { likes: likes, dislikes: dislikes });
       });
   }).catch(function(e) {});
@@ -996,8 +1017,23 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 
-// ТОЧКА ВХОДА (ПОСЛЕ ПОЛНОЙ ГОТОВНОСТИ DOM)
+// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
 document.addEventListener('DOMContentLoaded', function() {
+  // Полноэкранный режим для Telegram Mini App
+  if (window.Telegram && window.Telegram.WebApp) {
+    try {
+      window.Telegram.WebApp.ready();
+      if (typeof window.Telegram.WebApp.requestFullscreen === 'function') {
+        window.Telegram.WebApp.requestFullscreen();
+      } else if (typeof window.Telegram.WebApp.expand === 'function') {
+        window.Telegram.WebApp.expand();
+      }
+    } catch(e) {}
+  }
+
+  // Восстановление состояния шторок (Парк и ДК Восток)
+  try { restoreCardStates(); } catch(e) {}
+
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
   try { initUserProfile(); } catch(e) {}
