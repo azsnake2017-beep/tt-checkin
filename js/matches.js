@@ -440,9 +440,8 @@ function listenRecentMatches() {
       matches.forEach(function(m) {
         var isDoubles = m.type === 'doubles';
         
-        // Защита от unknow/undefined счета для парных турниров (старые/новые названия переменных)
-        var s1 = isDoubles ? (m.team1Score !== undefined ? m.team1Score : (m.scoreTeam1 !== undefined ? m.scoreTeam1 : "?")) : m.p1Score;
-        var s2 = isDoubles ? (m.team2Score !== undefined ? m.team2Score : (m.scoreTeam2 !== undefined ? m.scoreTeam2 : "?")) : m.p2Score;
+        var s1 = isDoubles ? (m.team1Score !== undefined ? m.team1Score : (m.scoreTeam1 !== undefined ? m.scoreTeam1 : (m.p1Score !== undefined ? m.p1Score : "?"))) : m.p1Score;
+        var s2 = isDoubles ? (m.team2Score !== undefined ? m.team2Score : (m.scoreTeam2 !== undefined ? m.scoreTeam2 : (m.p2Score !== undefined ? m.p2Score : "?"))) : m.p2Score;
         
         var isP1Win = s1 > s2;
         var isP2Win = s2 > s1;
@@ -460,11 +459,30 @@ function listenRecentMatches() {
         var leftSideHtml = '';
         var rightSideHtml = '';
 
-        // Исправление переноса длинных имен команд
         if (isDoubles) {
-          leftSideHtml = '<span style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.3; font-size: 11px; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names).replace(/ & /g, '<br>& ') + '</span>';
-          rightSideHtml = '<span style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.3; font-size: 11px; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names).replace(/ & /g, '<br>& ') + '</span>';
+          // Разбиваем Команду 1 на отдельные кликабельные имена
+          if (m.team1Uids && m.team1NamesArr && m.team1Uids.length > 1) {
+              leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p1Color + '">' + 
+                             '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team1Uids[0]) + '\')">' + cleanHtml(m.team1NamesArr[0]) + '</span><br>' +
+                             '<span style="color:var(--text-muted);font-size:10px;">&</span> ' +
+                             '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team1Uids[1]) + '\')">' + cleanHtml(m.team1NamesArr[1]) + '</span>' + 
+                             '</div>';
+          } else {
+              leftSideHtml = '<div style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names || "").replace(/ & /g, '<br><span style="color:var(--text-muted);font-size:10px;">&</span> ') + '</div>';
+          }
+
+          // Разбиваем Команду 2 на отдельные кликабельные имена
+          if (m.team2Uids && m.team2NamesArr && m.team2Uids.length > 1) {
+              rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p2Color + '">' + 
+                              '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team2Uids[0]) + '\')">' + cleanHtml(m.team2NamesArr[0]) + '</span><br>' +
+                              '<span style="color:var(--text-muted);font-size:10px;">&</span> ' +
+                              '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(m.team2Uids[1]) + '\')">' + cleanHtml(m.team2NamesArr[1]) + '</span>' + 
+                              '</div>';
+          } else {
+              rightSideHtml = '<div style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.4; font-size: 11px; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names || "").replace(/ & /g, '<br><span style="color:var(--text-muted);font-size:10px;">&</span> ') + '</div>';
+          }
         } else {
+          // Одиночные матчи
           leftSideHtml = '<span class="clickable-name" style="text-align:right; white-space: normal; word-break: break-word; line-height: 1.3; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span>';
           rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: normal; word-break: break-word; line-height: 1.3; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
         }
