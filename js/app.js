@@ -33,14 +33,11 @@ function isSuperAdmin() {
   return uid ? (ADMIN_UIDS.indexOf(uid) !== -1) : false;
 }
 
-// Гарантированное отображение кнопок управления анонсами для администратора
+// Отображение админских кнопок (турниры и анонс встречи в ДК Восток)
 function updateAdminControls() {
   var isAdmin = isSuperAdmin();
   var btnAddTour = document.getElementById('btn-add-tournament'); 
   if (btnAddTour) btnAddTour.style.display = isAdmin ? 'block' : 'none';
-  
-  var btnEditAnnPark = document.getElementById('btn-edit-announcement-park');
-  if (btnEditAnnPark) btnEditAnnPark.style.display = isAdmin ? 'block' : 'none';
   
   var btnEditAnnVostok = document.getElementById('btn-edit-announcement-vostok');
   if (btnEditAnnVostok) btnEditAnnVostok.style.display = isAdmin ? 'block' : 'none';
@@ -381,7 +378,7 @@ function sendClubStatsBroadcast() {
   });
 }
 
-// --- УПРАВЛЕНИЕ АНОНСАМИ С ДАТОЙ И ОПИСАНИЕМ ---
+// --- УПРАВЛЕНИЕ АНОНСАМИ ВСТРЕЧ ДК «ВОСТОК» ---
 function openAnnouncementModal(loc) { 
   if(!isSuperAdmin()) return; 
   document.getElementById('announcement-target-loc').value = loc; 
@@ -406,7 +403,7 @@ function closeAnnouncementModal() {
 }
 
 function saveAnnouncement() { 
-  var loc = document.getElementById('announcement-target-loc').value;
+  var loc = document.getElementById('announcement-target-loc').value || 'vostok';
   var dateStr = document.getElementById('announcement-date').value.trim();
   var descStr = document.getElementById('announcement-textarea').value.trim();
   
@@ -418,12 +415,9 @@ function saveAnnouncement() {
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
       closeAnnouncementModal(); 
       
-      var locNameStr = loc === 'park' ? 'Парке им. Тищенко 🌳' : 'ДК «Восток» 🏛';
-      var tgText = "📢 <b>АНОНС ВСТРЕЧИ КЛУБА!</b>\n\n📍 Место: <b>" + locNameStr + "</b>\n";
-      
+      var tgText = "📢 <b>АНОНС ВСТРЕЧИ КЛУБА!</b>\n\n📍 Место: <b>в ДК «Восток» 🏛</b>\n";
       if (dateStr) tgText += "🗓 <b>Дата и время:</b> " + cleanHtml(dateStr) + "\n";
       if (descStr) tgText += "\n📝 " + cleanHtml(descStr) + "\n";
-      
       tgText += "\n<i>Заходите в приложение, чтобы спланировать визит и занять стол!</i> 🏓";
       
       sendTelegramAlert(tgText);
@@ -432,7 +426,7 @@ function saveAnnouncement() {
 
 function deleteAnnouncement() { 
   if(!isSuperAdmin()) return; 
-  var loc = document.getElementById('announcement-target-loc').value; 
+  var loc = document.getElementById('announcement-target-loc').value || 'vostok'; 
   var obj = {}; obj[loc] = null;
   
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
@@ -604,7 +598,7 @@ function toggleTourReaction(id, type) {
       return t.get(ref).then(function(doc) {
           if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
           if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid; }); } } 
-          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
+          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
           t.update(ref, { likes: likes, dislikes: dislikes });
       });
   }).catch(function(e) {});
@@ -1035,31 +1029,30 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
   });
 
+  // Слушатель анонсов встреч (только для ДК «Восток»)
   try {
     db.collection('settings').doc('announcements').onSnapshot(function(doc) {
       try {
-        announcementsData = doc.data() || { park: null, vostok: null };
-        ['park','vostok'].forEach(function(loc) {
-          var badgeBox = document.getElementById('announcement-box-' + loc);
-          var textBox = document.getElementById('announcement-text-' + loc);
-          
-          if(badgeBox && textBox) { 
-              var aData = announcementsData[loc];
-              if(aData) { 
-                  if (typeof aData === 'object') {
-                      var resHtml = '';
-                      if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
-                      if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
-                      textBox.innerHTML = resHtml;
-                  } else {
-                      textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); 
-                  }
-                  badgeBox.style.display = 'flex'; 
-              } else { 
-                  badgeBox.style.display = 'none'; 
-              } 
-          }
-        });
+        announcementsData = doc.data() || { vostok: null };
+        var badgeBox = document.getElementById('announcement-box-vostok');
+        var textBox = document.getElementById('announcement-text-vostok');
+        
+        if (badgeBox && textBox) { 
+            var aData = announcementsData.vostok;
+            if (aData) { 
+                if (typeof aData === 'object') {
+                    var resHtml = '';
+                    if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
+                    if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
+                    textBox.innerHTML = resHtml;
+                } else {
+                    textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); 
+                }
+                badgeBox.style.display = 'flex'; 
+            } else { 
+                badgeBox.style.display = 'none'; 
+            } 
+        }
       } catch(e) {}
     }, function(err) {});
   } catch(e) {}
