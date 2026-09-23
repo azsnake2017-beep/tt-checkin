@@ -674,10 +674,8 @@ function renderUserHistoryList(matches, uid) {
     return; 
   }
   
-  // Строим расширенную статистику по всем найденным матчам ДО обрезки
   renderExtendedStats(matches, uid);
 
-  // Оставляем только 10 последних матчей для ленты
   matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
   var recentMatches = matches.slice(0, 10);
   
@@ -692,15 +690,15 @@ function renderUserHistoryList(matches, uid) {
     var isWin = myS > opS;
     var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
     var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles">2x2</span> ' : '';
-    var partnerStr = myPartner ? '<div style="font-size: 10px; color: var(--accent-sky);">в паре с: ' + cleanHtml(myPartner) + '</div>' : '';
+    var partnerStr = myPartner ? '<div style="font-size: 10px; color: var(--accent-sky); word-break: break-word;">в паре с: ' + cleanHtml(myPartner) + '</div>' : '';
 
-    h += '<div style="background: var(--card-bg); padding: 8px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px;">' +
-           '<div>' +
-             '<div>' + modeBadge + 'против <b>' + cleanHtml(opN) + '</b></div>' +
+    h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px;">' +
+           '<div style="flex: 1; min-width: 0;">' + // min-width: 0 запрещает тексту ломать flex-контейнер
+             '<div style="word-break: break-word; line-height: 1.4;">' + modeBadge + 'против <b>' + cleanHtml(opN) + '</b></div>' +
              partnerStr +
-             '<div style="color:var(--text-muted);font-size:10px;">' + dtStr + '</div>' +
+             '<div style="color:var(--text-muted);font-size:10px; margin-top:4px;">' + dtStr + '</div>' +
            '</div>' +
-           '<div style="color:' + (isWin ? '#059669' : '#f87171') + '; font-weight:bold; font-size: 14px;">' + myS + ' : ' + opS + '</div>' +
+           '<div style="color:' + (isWin ? '#059669' : '#f87171') + '; font-weight:bold; font-size: 16px; white-space: nowrap; flex-shrink: 0;">' + myS + ' : ' + opS + '</div>' +
          '</div>';
   });
   hEl.innerHTML = h;
