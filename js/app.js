@@ -628,18 +628,18 @@ function renderUserHistoryList(matches, uid) {
     var myS = isTeam1 ? s1 : s2;
     var opS = isTeam1 ? s2 : s1;
 
-    // Определяем победителя и стили
     var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
     
-    var winStyle = 'color: #10b981; font-weight: 800; text-shadow: 0 0 8px rgba(16,185,129,0.3);';
-    var loseStyle = 'color: var(--text-muted); font-weight: 400; opacity: 0.6;';
+    // Спокойные, аккуратные стили без свечения
+    var winStyle = 'color: #059669; font-weight: 600;';
+    var loseStyle = 'color: var(--text-muted); font-weight: 400;';
     
     var myStyle = isWin ? winStyle : loseStyle;
     var opStyle = !isWin ? winStyle : loseStyle;
     
-    // Окрашиваем стрелочки
-    var myEmoji = isWin ? '<span style="' + winStyle + '">▲</span> ' : '<span style="' + loseStyle + '">▼</span> ';
-    var opEmoji = !isWin ? '<span style="' + winStyle + '">▲</span> ' : '<span style="' + loseStyle + '">▼</span> ';
+    // Аккуратные геометрические стрелочки (не системные эмодзи)
+    var myEmoji = isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
+    var opEmoji = !isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
 
     var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
     var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px;">2x2</span>' : '<span class="badge-mode badge-mode-singles" style="margin-right: 6px;">1x1</span>';
@@ -688,9 +688,9 @@ function renderUserHistoryList(matches, uid) {
              '<div style="color:var(--text-muted);font-size:10px; margin-top:6px;">' + dtStr + '</div>' +
            '</div>' +
            '<div style="display: flex; align-items: center;">' +
-             '<div style="font-weight:900; font-size: 18px; white-space: nowrap; flex-shrink: 0; background: var(--row-bg); padding: 4px 10px; border-radius: 8px;">' +
+             '<div style="font-weight:700; font-size: 16px; white-space: nowrap; flex-shrink: 0; background: var(--row-bg); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">' +
                '<span style="' + myStyle + '">' + myS + '</span>' +
-               '<span style="color:var(--text-muted); margin: 0 4px;">:</span>' +
+               '<span style="color:var(--text-muted); opacity: 0.5; margin: 0 4px;">:</span>' +
                '<span style="' + opStyle + '">' + opS + '</span>' +
              '</div>' +
              adminDelBtn +
