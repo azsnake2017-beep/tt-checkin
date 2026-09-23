@@ -1,12 +1,7 @@
-function getWindDirection(degrees) {
-  if (degrees === undefined || degrees === null) return "";
-  var directions = ["С", "СВ", "В", "ЮВ", "Ю", "ЮЗ", "З", "СЗ"];
-  return directions[Math.round((degrees % 360) / 45) % 8];
-}
+// js/radar.js
 
 function loadParkWeather() {
   var container = document.getElementById('weather-park'); if (!container) return;
-  
   var cachedW = localStorage.getItem('tt_weather_cache');
   var cachedTime = localStorage.getItem('tt_weather_cache_ts');
   if (cachedW && cachedTime && (Date.now() - parseInt(cachedTime, 10) < 600000)) {
@@ -39,129 +34,6 @@ function loadParkWeather() {
     clearTimeout(timeoutId);
     if (!cachedW) container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице 🌳</span></div>'; 
   });
-}
-
-function monitorSessions() {
-  var now = Date.now();
-  ['park', 'vostok'].forEach(function(loc) {
-    db.runTransaction(function(t) {
-      return t.get(db.collection('locations').doc(loc)).then(function(doc) {
-        if (!doc.exists) return null;
-        var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
-        for (var i = 0; i < players.length; i++) {
-          var p = players[i]; 
-          var pTime = parseTime(p.time) || now;
-          var elapsed = now - pTime;
-          if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
-              changed = true; 
-              var limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
-              var actualMins = Math.floor(elapsed / 60000);
-              var recordedMins = actualMins > limitMins ? limitMins : actualMins;
-              recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
-              leftPlayers.push({ uid: p.uid, name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
-          } 
-          else { activePlayers.push(p); }
-        }
-        var activePlans = plans.filter(function(pl) { 
-          var pt = parseTime(pl.planTime);
-          if (!pt || now > pt + 300000) { changed = true; return false; } 
-          return true; 
-        });
-        if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
-        return null;
-      });
-    }).then(function(res) {
-      if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
-          for (var i = 0; i < res.leftPlayers.length; i++) {
-              var lp = res.leftPlayers[i];
-              if (canSendTgAlert('status_leave_' + loc + '_' + lp.uid)) {
-                  sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
-              }
-          }
-      }
-    }).catch(function(e){});
-  });
-}
-
-function renderAll() {
-  var myUid = getVerifiedUserId(); var now = Date.now();
-  currentUserActiveLoc = null; currentUserActivePlayer = null;
-
-  ['park', 'vostok'].forEach(function(loc) {
-    try {
-      var rawData = locationsData[loc] || { players: [], plans: [] };
-      
-      var players = (rawData.players || []).filter(function(p) { 
-        var pt = parseTime(p.time);
-        if (!pt) return true;
-        return (now - pt) < (p.maxLimitMs || DEFAULT_LIMIT_MS); 
-      });
-
-      var plans = (rawData.plans || []).filter(function(p) { 
-        var pt = parseTime(p.planTime);
-        if (!pt) return false;
-        return pt + 300000 > now; 
-      });
-      
-      var badge = document.getElementById('badge-' + loc); 
-      if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
-
-      var listEl = document.getElementById('list-' + loc);
-      if(listEl) {
-        if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
-        else { 
-            var pRows = [];
-            for(var i=0; i<players.length; i++) {
-                var item = players[i];
-                var itemTime = parseTime(item.time) || Date.now();
-                pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + formatTime(itemTime) + '</span><span class="time-badge">'+ formatDuration(itemTime) + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
-            }
-            listEl.innerHTML = pRows.join(''); 
-        }
-      }
-
-      var planListEl = document.getElementById('plan-list-' + loc);
-      if(planListEl) {
-        if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
-        else { 
-            var plRows = [];
-            for(var j=0; j<plans.length; j++) {
-                var p = plans[j];
-                var pPlanTime = parseTime(p.planTime);
-                plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(pPlanTime) + '</span><span class="time-badge-plan">' + formatUntil(pPlanTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>');
-            }
-            planListEl.innerHTML = plRows.join(''); 
-        }
-      }
-
-      var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
-      var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
-      var btnBox = document.getElementById('btn-container-' + loc);
-      
-      if(btnBox) {
-        if (!myUid) {
-          btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
-        } else if (activePlayerObj) { 
-            currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
-            btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
-        } else if (isUserOpened) { 
-            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
-          } else { 
-            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
-        }
-      }
-    } catch(e) {}
-  });
-
-  if (currentUserActiveLoc && currentUserActivePlayer) {
-    var pTime = parseTime(currentUserActivePlayer.time) || Date.now();
-    var elap = Date.now() - pTime;
-    var lim = currentUserActivePlayer.maxLimitMs || DEFAULT_LIMIT_MS;
-    if (elap >= (lim - REMIND_BEFORE_MS) && elap < lim) { 
-        document.getElementById('extend-modal').style.display = 'flex'; 
-        if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
-    } else { document.getElementById('extend-modal').style.display = 'none'; } 
-  } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
 }
 
 function handleCheckInClick(loc) { 
@@ -302,4 +174,125 @@ function cancelPlan(loc) {
     }).catch(function(e) {}); 
 }
 
-function toggleCard(loc) { document.getElementById('card-' + loc).classList.toggle('expanded'); }
+function monitorSessions() {
+  var now = Date.now();
+  ['park', 'vostok'].forEach(function(loc) {
+    db.runTransaction(function(t) {
+      return t.get(db.collection('locations').doc(loc)).then(function(doc) {
+        if (!doc.exists) return null;
+        var players = doc.data().players || [], plans = doc.data().plans || [], changed = false, activePlayers = [], leftPlayers = [];
+        for (var i = 0; i < players.length; i++) {
+          var p = players[i]; 
+          var pTime = parseTime(p.time) || now;
+          var elapsed = now - pTime;
+          if (elapsed >= (p.maxLimitMs || DEFAULT_LIMIT_MS)) { 
+              changed = true; 
+              var limitMins = Math.floor((p.maxLimitMs || DEFAULT_LIMIT_MS) / 60000);
+              var actualMins = Math.floor(elapsed / 60000);
+              var recordedMins = actualMins > limitMins ? limitMins : actualMins;
+              recordTrainingTime(p.uid, p.name || 'Игрок', recordedMins); 
+              leftPlayers.push({ uid: p.uid, name: p.name || 'Игрок', durationStr: formatMinutes(recordedMins) }); 
+          } 
+          else { activePlayers.push(p); }
+        }
+        var activePlans = plans.filter(function(pl) { 
+          var pt = parseTime(pl.planTime);
+          if (!pt || now > pt + 300000) { changed = true; return false; } 
+          return true; 
+        });
+        if (changed) { t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true }); return { leftPlayers: leftPlayers, remainingList: activePlayers, locName: LOCATION_NAMES[loc] }; }
+        return null;
+      });
+    }).then(function(res) {
+      if (res && res.leftPlayers && res.leftPlayers.length > 0) { 
+          for (var i = 0; i < res.leftPlayers.length; i++) {
+              var lp = res.leftPlayers[i];
+              if (canSendTgAlert('status_leave_' + loc + '_' + lp.uid)) {
+                  sendTelegramAlert('👋 игрок <b>' + cleanHtml(lp.name) + '</b> закончил тренировку и покинул стол ' + res.locName + ' (время: <code>' + lp.durationStr + '</code>).' + (res.remainingList.length > 0 ? buildBlockquoteList(res.remainingList, "Остались у столов") : '\n\n<i>(столы освободились)</i>')); 
+              }
+          }
+      }
+    }).catch(function(e){});
+  });
+}
+
+function renderAll() {
+  var myUid = getVerifiedUserId(); var now = Date.now();
+  currentUserActiveLoc = null; currentUserActivePlayer = null;
+
+  ['park', 'vostok'].forEach(function(loc) {
+    try {
+      var rawData = locationsData[loc] || { players: [], plans: [] };
+      
+      var players = (rawData.players || []).filter(function(p) { 
+        var pt = parseTime(p.time);
+        if (!pt) return true;
+        return (now - pt) < (p.maxLimitMs || DEFAULT_LIMIT_MS); 
+      });
+
+      var plans = (rawData.plans || []).filter(function(p) { 
+        var pt = parseTime(p.planTime);
+        if (!pt) return false;
+        return pt + 300000 > now; 
+      });
+      
+      var badge = document.getElementById('badge-' + loc); 
+      if(badge) { badge.innerText = players.length + ' ' + getPlayersCountSuffix(players.length); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
+
+      var listEl = document.getElementById('list-' + loc);
+      if(listEl) {
+        if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
+        else { 
+            var pRows = [];
+            for(var i=0; i<players.length; i++) {
+                var item = players[i];
+                var itemTime = parseTime(item.time) || Date.now();
+                pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + formatTime(itemTime) + '</span><span class="time-badge">'+ formatDuration(itemTime) + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
+            }
+            listEl.innerHTML = pRows.join(''); 
+        }
+      }
+
+      var planListEl = document.getElementById('plan-list-' + loc);
+      if(planListEl) {
+        if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
+        else { 
+            var plRows = [];
+            for(var j=0; j<plans.length; j++) {
+                var p = plans[j];
+                var pPlanTime = parseTime(p.planTime);
+                plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + formatTime(pPlanTime) + '</span><span class="time-badge-plan">' + formatUntil(pPlanTime) + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>');
+            }
+            planListEl.innerHTML = plRows.join(''); 
+        }
+      }
+
+      var activePlayerObj = null; for(var x=0; x<players.length; x++) { if((players[x].uid||players[x])===myUid) activePlayerObj = players[x]; }
+      var isUserOpened = false; for(var y=0; y<plans.length; y++) { if((plans[y].uid||plans[y])===myUid) isUserOpened = true; }
+      var btnBox = document.getElementById('btn-container-' + loc);
+      
+      if(btnBox) {
+        if (!myUid) {
+          btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
+        } else if (activePlayerObj) { 
+            currentUserActiveLoc = loc; currentUserActivePlayer = activePlayerObj; 
+            btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
+        } else if (isUserOpened) { 
+            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
+        } else { 
+            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
+        }
+      }
+    } catch(e) {}
+  });
+
+  if (currentUserActiveLoc && currentUserActivePlayer) {
+    var pTime = parseTime(currentUserActivePlayer.time) || Date.now();
+    var elap = Date.now() - pTime;
+    var lim = currentUserActivePlayer.maxLimitMs || DEFAULT_LIMIT_MS;
+    if (elap >= (lim - REMIND_BEFORE_MS) && elap < lim) { 
+        document.getElementById('extend-modal').style.display = 'flex'; 
+        if(!hasTriggeredPush) { hasTriggeredPush = true; sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже 1 ч 45 мин у стола! Продлите визит."); } 
+    } else { document.getElementById('extend-modal').style.display = 'none'; } 
+  } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
+}
