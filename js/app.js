@@ -460,11 +460,6 @@ function showUserInfoModal(uid) {
   document.getElementById('info-modal-medals').style.display = 'none';
   document.getElementById('info-modal-inventory').style.display = 'none';
   
-  var extStats = document.getElementById('info-modal-extended-stats');
-  var statsBody = document.getElementById('extended-stats-body');
-  if (extStats) extStats.style.display = 'none';
-  if (statsBody) statsBody.innerHTML = 'Загрузка аналитики...';
-  
   document.getElementById('user-info-modal').style.display = 'flex';
   
   Promise.all([
@@ -520,13 +515,11 @@ function showUserInfoModal(uid) {
       invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
     } else { invContainer.style.display = 'none'; }
 
+    // Собираем историю матчей
     var userMatches = [];
     allMatchesSnap.forEach(function(docX) {
       var mx = docX.data() || {};
-      
-      // ВОТ ЭТА СТРОЧКА ВКЛЮЧАЕТ КОРЗИНЫ:
       mx.docId = docX.id; 
-      
       var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
                    (mx.p1Uid === uid || mx.p2Uid === uid) ||
                    (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
@@ -536,67 +529,7 @@ function showUserInfoModal(uid) {
 
     userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
 
-    var sPlayed = 0, sWins = 0, dPlayed = 0, dWins = 0;
-    var formBadges = [];
-    var rivals = {};
-
-    userMatches.forEach(function(mx) {
-      var isDoubles = mx.type === 'doubles';
-      var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
-      
-      var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
-      var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
-
-      if (s1 === "?" || s2 === "?") return; 
-
-      var myScore = isTeam1 ? s1 : s2;
-      var oppScore = isTeam1 ? s2 : s1;
-      var isWin = myScore > oppScore;
-
-      if (isDoubles) {
-        dPlayed++;
-        if (isWin) dWins++;
-      } else {
-        sPlayed++;
-        if (isWin) sWins++;
-        var oppName = isTeam1 ? mx.p2Name : mx.p1Name;
-        if (oppName) {
-          if (!rivals[oppName]) rivals[oppName] = { losses: 0 };
-          if (!isWin) rivals[oppName].losses++;
-        }
-      }
-
-      if (formBadges.length < 5) {
-        formBadges.push(isWin ? '<span style="color: #10b981; font-weight: 700;">В</span>' : '<span style="color: #f43f5e; font-weight: 700;">П</span>');
-      }
-    });
-
-    var sWinrate = sPlayed > 0 ? Math.round((sWins / sPlayed) * 100) : 0;
-    var dWinrate = dPlayed > 0 ? Math.round((dWins / dPlayed) * 100) : 0;
-    var formStr = formBadges.length > 0 ? formBadges.reverse().join(' ') : '—';
-
-    var hardRival = '—';
-    var maxL = 0;
-    for (var rName in rivals) {
-      if (rivals[rName].losses > maxL) {
-        maxL = rivals[rName].losses;
-        hardRival = cleanHtml(rName) + ' (' + maxL + ' пор.)';
-      }
-    }
-
-    if (extStats && statsBody) {
-      if (userMatches.length > 0) {
-        statsBody.innerHTML = 
-          '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Форма (последние матчи):</span><span style="letter-spacing: 3px;">' + formStr + '</span></div>' +
-          '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Одиночные (1x1):</span><b>' + sWins + 'В - ' + (sPlayed - sWins) + 'П (' + sWinrate + '%)</b></div>' +
-          '<div style="display:flex; justify-content:space-between; margin-bottom:4px;"><span>Парные (2x2):</span><b>' + dWins + 'В - ' + (dPlayed - dWins) + 'П (' + dWinrate + '%)</b></div>' +
-          '<div style="display:flex; justify-content:space-between;"><span>Сложный соперник:</span><b style="color: var(--accent-red);">' + hardRival + '</b></div>';
-        extStats.style.display = 'flex';
-      } else {
-        extStats.style.display = 'none';
-      }
-    }
-
+    // Отрисовываем историю (функция renderUserHistoryList остается без изменений)
     renderUserHistoryList(userMatches, uid);
   }).catch(function(e) {
     closeUserInfoModal();
