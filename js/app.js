@@ -616,7 +616,62 @@ function showUserInfoModal(uid) {
     document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки</span>';
   });
 }
+function updateMainProfileLastPlayed(myUid) {
+  var targetEl = document.getElementById('main-profile-last-played');
+  if (!targetEl || !myUid) return;
 
+  db.collection('matches_history').get().then(function(snap) {
+    var myMatches = [];
+    snap.forEach(function(docX) {
+      var mx = docX.data() || {};
+      var isPart = (mx.participants && mx.participants.indexOf(myUid) !== -1) || 
+                   (mx.p1Uid === myUid || mx.p2Uid === myUid) ||
+                   (mx.team1Uids && mx.team1Uids.indexOf(myUid) !== -1) ||
+                   (mx.team2Uids && mx.team2Uids.indexOf(myUid) !== -1);
+      if (isPart) myMatches.push(mx);
+    });
+
+    if (myMatches.length === 0) {
+      targetEl.innerHTML = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+      return;
+    }
+
+    myMatches.sort(function(a, b) {
+      var tA = typeof parseTime === 'function' ? parseTime(a.timestamp) : Number(a.timestamp);
+      var tB = typeof parseTime === 'function' ? parseTime(b.timestamp) : Number(b.timestamp);
+      return tB - tA;
+    });
+
+    var lastTs = typeof parseTime === 'function' ? parseTime(myMatches[0].timestamp) : Number(myMatches[0].timestamp);
+    if (!lastTs) {
+      targetEl.innerHTML = '<span style="color: var(--text-muted); opacity: 0.6;">Неизвестно</span>';
+      return;
+    }
+
+    var mDate = new Date(lastTs);
+    var day = ('0' + mDate.getDate()).slice(-2);
+    var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+    var year = mDate.getFullYear();
+
+    var today = new Date();
+    today.setHours(0,0,0,0);
+    var matchDay = new Date(lastTs);
+    matchDay.setHours(0,0,0,0);
+
+    var diffDays = Math.round((today.getTime() - matchDay.getTime()) / (1000 * 60 * 60 * 24));
+    var daysText = "";
+    if (diffDays === 0) daysText = " (Сегодня)";
+    else if (diffDays === 1) daysText = " (Вчера)";
+    else if (diffDays > 1) {
+      var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
+      daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
+    }
+
+    targetEl.innerHTML = day + '.' + month + '.' + year + '<span style="font-size: 11px; margin-left: 4px;">' + daysText + '</span>';
+  }).catch(function() {
+    targetEl.innerHTML = '<span style="color: var(--text-muted); opacity: 0.6;">Неизвестно</span>';
+  });
+}
 function openTournamentModal(tourId) { 
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
   if (currentEditingTourId) { btn.innerText = 'Сохранить изменения'; db.collection('tournaments').doc(currentEditingTourId).get().then(function(doc) { if (doc.exists) { var d = doc.data(); document.getElementById('tour-title').value = d.title || ''; document.getElementById('tour-date').value = d.rawDate || ''; document.getElementById('tour-desc').value = d.desc || ''; } }); } 
