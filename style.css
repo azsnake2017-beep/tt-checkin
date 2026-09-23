@@ -254,11 +254,21 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
   animation: fadeInOverlay 0.2s ease forwards;
 }
 .modal-box { 
-  background: var(--card-bg); border: 1px solid var(--card-border); 
-  width: 100%; max-width: 360px; border-radius: 20px; padding: 20px; 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2); display: flex; 
-  flex-direction: column; gap: 14px; text-align: center; 
-  max-height: 85vh; overflow-y: auto; color: var(--text); 
+  background: var(--card-bg); 
+  border: 1px solid var(--card-border); 
+  width: 100%; 
+  max-width: 360px; 
+  border-radius: 20px; 
+  padding: 20px; 
+  box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+  display: flex; 
+  flex-direction: column; 
+  gap: 14px; 
+  text-align: center; 
+  max-height: 85vh; 
+  overflow-y: auto; 
+  overscroll-behavior: contain; /* чтобы при прокрутке карточки не дёргался фон */
+  color: var(--text); 
   animation: popInModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
 }
 @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
