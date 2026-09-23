@@ -177,6 +177,37 @@ function submitMatchProposal() {
   }
 }
 
+// --- ВЫЗОВ ОКОН ПОДТВЕРЖДЕНИЯ ДЛЯ ВХОДЯЩИХ МАТЧЕЙ ---
+function promptConfirmMatch(matchId) {
+  // Перекрашиваем окно в приятный зеленый цвет
+  var btn = document.querySelector('#confirm-modal .btn-join');
+  var title = document.querySelector('#confirm-modal h3');
+  var box = document.querySelector('#confirm-modal .modal-box');
+  
+  if (btn) { btn.innerText = "Подтвердить"; btn.style.background = "#059669"; }
+  if (title) { title.innerText = "Подтверждение матча"; title.style.color = "#059669"; }
+  if (box) { box.style.borderColor = "#059669"; }
+
+  openConfirmModal('Счет указан верно?<br><br><span style="font-size: 12px; opacity: 0.8;">После подтверждения матч запишется в историю, а ваш рейтинг Эло будет обновлен.</span>', function() {
+    confirmMatch(matchId);
+  });
+}
+
+function promptRejectMatch(matchId) {
+  // Перекрашиваем окно в красный цвет предупреждения
+  var btn = document.querySelector('#confirm-modal .btn-join');
+  var title = document.querySelector('#confirm-modal h3');
+  var box = document.querySelector('#confirm-modal .modal-box');
+  
+  if (btn) { btn.innerText = "Отклонить"; btn.style.background = "var(--accent-red)"; }
+  if (title) { title.innerText = "Отклонение матча"; title.style.color = "var(--accent-red)"; }
+  if (box) { box.style.borderColor = "var(--accent-red)"; }
+
+  openConfirmModal('Вы уверены, что хотите отклонить этот матч?<br><br><span style="font-size: 12px; opacity: 0.8;">Запрос будет удален, текущий рейтинг игроков не изменится.</span>', function() {
+    rejectMatch(matchId);
+  });
+}
+
 function listenPendingMatches() {
   var myUid = getVerifiedUserId(); if (!myUid) return;
   db.collection('pending_matches').where('targetUids', 'array-contains', myUid).onSnapshot(function(snap) {
@@ -197,8 +228,9 @@ function listenPendingMatches() {
                   '<div style="font-size: 13px;">' + scoreText + '</div>' +
                   '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
                   '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
-                    '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
-                    '<button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
+                    // ЗДЕСЬ МЫ ЗАМЕНИЛИ ПРЯМОЙ ВЫЗОВ НА PROMPT
+                    '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="promptConfirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
+                    '<button class="btn btn-leave" style="padding: 8px;" onclick="promptRejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
                   '</div>' +
                 '</div>'; 
       });
