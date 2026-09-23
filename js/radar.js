@@ -11,10 +11,10 @@ function loadParkWeather() {
     return;
   }
 
-  // Защита от бесконечного зависания запроса при блокировках сети
+  // Защита от бесконечного зависания запроса к Open-Meteo
   var fetchPromise = fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto');
   var timeoutPromise = new Promise(function(_, reject) {
-    setTimeout(function() { reject(new Error('Weather timeout')); }, 4000);
+    setTimeout(function() { reject(new Error('Weather timeout')); }, 4000); // Ждем максимум 4 секунды
   });
 
   Promise.race([fetchPromise, timeoutPromise])
@@ -22,7 +22,7 @@ function loadParkWeather() {
   .then(function(data) {
     try {
       var c = data.current, d = data.daily;
-      if (!c) throw new Error("No current");
+      if (!c) throw new Error("No current data");
       var getW = function(code) { 
         if(code <= 3) return code == 0 ? "☀️ Ясно" : "⛅️ Облачно"; 
         if(code <= 67) return "🌧 Дождь"; 
