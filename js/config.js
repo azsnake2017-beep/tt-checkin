@@ -1,4 +1,4 @@
-// js/config.js — Базовые настройки, утилиты, автономные QR и константы
+// js/config.js — Базовые настройки, утилиты, карточки и константы
 
 function checkBrowserCompatibility() {
   var isSupported = true;
@@ -181,9 +181,26 @@ function switchTab(tab) {
   }
 }
 
+// Плавное переключение шторки с сохранением в память
 function toggleCard(loc) { 
   var c = document.getElementById('card-' + loc);
-  if (c) c.classList.toggle('expanded'); 
+  if (!c) return;
+  var isExpanded = c.classList.toggle('expanded');
+  localStorage.setItem('tt_card_' + loc, isExpanded ? '1' : '0');
+}
+
+// Восстановление состояния шторки при открытии
+function restoreCardStates() {
+  ['park', 'vostok'].forEach(function(loc) {
+    var c = document.getElementById('card-' + loc);
+    if (!c) return;
+    var savedState = localStorage.getItem('tt_card_' + loc);
+    if (savedState === '1') {
+      c.classList.add('expanded');
+    } else {
+      c.classList.remove('expanded');
+    }
+  });
 }
 
 var GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQFeqJQzkmRfdjipM9MW4fZJJkGkhbqnnLkSap8O-ZTFae8MiMYvl3Xjg/exec";
@@ -272,7 +289,7 @@ function shareModalUrl() {
   }
 }
 
-// НАДЁЖНЫЙ ВЫВОД QR-КОДОВ (ВНЕШНИЙ ШЛЮЗ + АВТОНОМНЫЙ FALLBACK)
+// НАДЁЖНЫЙ ВЫВОД QR-КОДОВ (ОСНОВНОЙ + РЕЗЕРВНЫЙ FALLBACK)
 function openQrModal(type) {
   var targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
   var title = "QR-код приложения";
@@ -295,10 +312,8 @@ function openQrModal(type) {
 
   var img = document.getElementById('qr-code-img');
   if (img) {
-    // Основной генератор на базе надёжного сервера
     img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
     img.onerror = function() {
-      // Резервный шлюз, если первый сервер заблокирован у оператора
       this.onerror = null;
       this.src = 'https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180';
     };
