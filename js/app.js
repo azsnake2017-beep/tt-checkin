@@ -239,7 +239,7 @@ function updateProfileDisplay() {
   if (!currentUserProfile.uid) return;
   var isAdmin = isSuperAdmin();
   var adminTag = isAdmin ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
-  var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(currentUserProfile.uid) : '';
+  var customBadge = getCustomBadge(currentUserProfile.uid);
   var elo = parseInt(currentUserProfile.elo, 10) || 1000;
 
   var authScreen = document.getElementById('mandatory-auth-screen'); 
@@ -260,7 +260,7 @@ function updateProfileDisplay() {
   var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
   
   var minsTotal = currentUserProfile.totalMinutes || 0;
-  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок') + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal + ' м') + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
 
   var mContainer = document.getElementById('user-medals-container');
   var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
@@ -273,9 +273,9 @@ function updateProfileDisplay() {
   if (invContainer) {
     if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
       var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-      if (currentUserProfile.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки');
-      if (currentUserProfile.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка');
-      if (currentUserProfile.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка');
+      if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
+      if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
+      if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
       invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
     } else { invContainer.style.display = 'none'; }
   }
@@ -452,19 +452,15 @@ function deleteAnnouncement() {
 }
 
 // --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ПЛАВНЫМ СКРОЛЛОМ ---
-function closeUserInfoModal() {
-  var modal = document.getElementById('user-info-modal');
-  if (modal) modal.style.display = 'none';
-}
-
 function showUserInfoModal(uid) {
-  if (!uid) return;
+  if(!uid) return;
   document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
   document.getElementById('info-modal-content-area').innerHTML = "Загрузка данных профиля...";
   document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
+  document.getElementById('info-modal-medals').style.display = 'none';
+  document.getElementById('info-modal-inventory').style.display = 'none';
   
-  var modal = document.getElementById('user-info-modal');
-  if (modal) modal.style.display = 'flex';
+  document.getElementById('user-info-modal').style.display = 'flex';
   
   Promise.all([
     db.collection('users').doc(uid).get(),
@@ -472,19 +468,20 @@ function showUserInfoModal(uid) {
     db.collection('matches_history').get()
   ]).then(function(docs) {
     var d = docs[0], ld = docs[1], allMatchesSnap = docs[2];
+
     if (!d.exists) { 
-      if (modal) modal.style.display = 'none'; 
+      closeUserInfoModal(); 
       return; 
     }
 
     var u = d.data() || {};
-    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
-    var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
+    var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var customBadge = getCustomBadge(uid);
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
     
-    var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
+    var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
-    // Сбор всех матчей пользователя
+    // 1. СНАЧАЛА СОБИРАЕМ ИСТОРИЮ
     var userMatches = [];
     allMatchesSnap.forEach(function(docX) {
       try {
@@ -492,46 +489,58 @@ function showUserInfoModal(uid) {
         mx.docId = docX.id; 
         var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
                      (mx.p1Uid === uid || mx.p2Uid === uid) ||
-                     (mx.proposerUid === uid || mx.opponentUid === uid) ||
-                     (mx.winnerUid === uid || mx.loserUid === uid) ||
                      (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
                      (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
         if (isPart) { userMatches.push(mx); }
-      } catch(err) {}
+      } catch(e) {} // Защита от битых карточек в базе
     });
 
+    // Безопасная сортировка
     userMatches.sort(function(a, b) { 
-      var timeA = typeof parseTime === 'function' ? parseTime(a.timestamp) : (Number(a.timestamp) || 0);
-      var timeB = typeof parseTime === 'function' ? parseTime(b.timestamp) : (Number(b.timestamp) || 0);
+      var timeA = parseTime(a.timestamp) || 0;
+      var timeB = parseTime(b.timestamp) || 0;
       return timeB - timeA; 
     });
 
-    // Расчет даты последней игры
+    // 2. ВЫЧИСЛЯЕМ ПОСЛЕДНЮЮ ИГРУ
     var lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
     if (userMatches.length > 0) {
       try {
-        var lastTs = typeof parseTime === 'function' ? parseTime(userMatches[0].timestamp) : Number(userMatches[0].timestamp);
+        var lastTs = parseTime(userMatches[0].timestamp);
         if (lastTs) {
           var mDate = new Date(lastTs);
+          
           var day = ('0' + mDate.getDate()).slice(-2);
           var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+          var year = mDate.getFullYear();
           
-          var today = new Date(); today.setHours(0,0,0,0);
-          var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
-          var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+          var today = new Date();
+          today.setHours(0,0,0,0);
+          var matchDay = new Date(lastTs);
+          matchDay.setHours(0,0,0,0);
+          
+          var diffDays = Math.round((today.getTime() - matchDay.getTime()) / (1000 * 60 * 60 * 24));
           
           var daysText = "";
-          if (diffDays === 0) daysText = " (Сегодня)";
-          else if (diffDays === 1) daysText = " (Вчера)";
-          else if (diffDays > 1) {
+          if (diffDays === 0) {
+            daysText = " (Сегодня)";
+          } else if (diffDays === 1) {
+            daysText = " (Вчера)";
+          } else if (diffDays > 1) {
             var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
             daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
+          } else {
+            daysText = ""; // На случай если дата в будущем
           }
-          lastMatchStr = day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
+          
+          lastMatchStr = day + '.' + month + '.' + year + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
         }
-      } catch(err) {}
+      } catch (err) {
+        lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Неизвестно</span>';
+      }
     }
 
+    // 3. ГОТОВИМ ОСТАЛЬНЫЕ ДАННЫЕ
     var mins = (ld.exists && ld.data()) ? (ld.data().totalMinutes || 0) : 0;
     var wins = parseInt(u.wins, 10) || 0;
     var losses = parseInt(u.losses, 10) || 0;
@@ -540,94 +549,50 @@ function showUserInfoModal(uid) {
     var lastDelta = parseInt(u.lastEloDelta, 10) || 0;
     var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
-    var eloDisplay = parseInt(u.elo, 10) || 1000;
 
     var mContainer = document.getElementById('info-modal-medals');
-    if (mContainer) {
-      var m = u.medals || { gold:0, silver:0, bronze:0 };
-      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-        mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
-        mContainer.style.display = 'flex';
-      } else { mContainer.style.display = 'none'; }
-    }
+    var m = u.medals || { gold:0, silver:0, bronze:0 };
+    if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
+      mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
+      mContainer.style.display = 'flex';
+    } else { mContainer.style.display = 'none'; }
+
+    var eloDisplay = parseInt(u.elo, 10) || 1000;
     
+    // 4. ОТРИСОВЫВАЕМ КАРТОЧКУ
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + getPlayerStatus(eloDisplay) + '</span></div>' +
+      
       '<div style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--accent-sky);">' + lastMatchStr + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins + ' м') + '</span></div>' +
+      
+      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
+      
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
-
+    
     var invContainer = document.getElementById('info-modal-inventory');
-    if (invContainer) {
-      if (u.blade || u.rubberL || u.rubberR) {
-        var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-        if (u.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-      } else { invContainer.style.display = 'none'; }
-    }
+    if (u.blade || u.rubberL || u.rubberR) {
+      var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
+      if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+      if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+      if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+      invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
+    } else { invContainer.style.display = 'none'; }
 
-    // Изолированная отрисовка истории (защита от поломки модального окна)
+    // Безопасно рендерим историю
     try {
-      if (typeof renderUserHistoryList === 'function') {
-        renderUserHistoryList(userMatches, uid);
-      } else {
-        throw new Error("renderUserHistoryList is undefined");
-      }
-    } catch(errRender) {
-      var histEl = document.getElementById('info-modal-history');
-      if (userMatches.length === 0) {
-        histEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>';
-      } else {
-        var hHtml = '';
-        userMatches.forEach(function(m) {
-          var dateStr = '';
-          var ts = typeof parseTime === 'function' ? parseTime(m.timestamp) : Number(m.timestamp);
-          if (ts) {
-            var dt = new Date(ts);
-            dateStr = ('0' + dt.getDate()).slice(-2) + '.' + ('0' + (dt.getMonth() + 1)).slice(-2);
-          }
-          var isDoubles = (m.type === 'doubles');
-          var lineText = '';
-
-          if (isDoubles) {
-            var s1 = m.scoreTeam1 != null ? m.scoreTeam1 : (m.score1 != null ? m.score1 : 0);
-            var s2 = m.scoreTeam2 != null ? m.scoreTeam2 : (m.score2 != null ? m.score2 : 0);
-            lineText = '👥 Парный матч: <b>' + s1 + ':' + s2 + '</b>';
-          } else {
-            var isP1 = (m.p1Uid === uid || m.proposerUid === uid || m.winnerUid === uid);
-            var sA = m.score1 != null ? m.score1 : (m.p1Score != null ? m.p1Score : (m.scoreProposer != null ? m.scoreProposer : m.winnerScore));
-            var sB = m.score2 != null ? m.score2 : (m.p2Score != null ? m.p2Score : (m.scoreOpponent != null ? m.scoreOpponent : m.loserScore));
-            var myScore = isP1 ? sA : sB;
-            var oppScore = isP1 ? sB : sA;
-            var oppName = isP1 ? (m.p2Name || m.opponentName || m.loserName) : (m.p1Name || m.proposerName || m.winnerName);
-
-            var win = Number(myScore) > Number(oppScore);
-            var badge = win ? '<span style="color:#059669; font-weight:700;">▲ В</span>' : '<span style="color:#94a3b8; font-weight:700;">▼ П</span>';
-            lineText = badge + ' <b>' + (myScore || 0) + ':' + (oppScore || 0) + '</b> против ' + cleanHtml(oppName || 'Соперник');
-          }
-
-          var delBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && m.docId)
-            ? '<button onclick="deleteHistoryMatch(\'' + m.docId + '\', \'' + uid + '\')" style="background:none; border:none; color:var(--accent-red); cursor:pointer; font-size:12px; padding:0 4px;" title="Удалить матч">🗑️</button>'
-            : '';
-
-          hHtml += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:4px;">' +
-                     '<div style="display:flex; align-items:center; gap:6px;">' + lineText + '</div>' +
-                     '<div style="display:flex; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-size:11px;">' + dateStr + '</span>' + delBtn + '</div>' +
-                   '</div>';
-        });
-        histEl.innerHTML = hHtml;
-      }
+      renderUserHistoryList(userMatches, uid);
+    } catch (e) {
+      document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка отображения истории</span>';
     }
 
   }).catch(function(e) {
-    // ВАЖНО: Мы больше не ломаем имя в заголовке, если произошла ошибка!
-    var histEl = document.getElementById('info-modal-history');
-    if (histEl) histEl.innerHTML = '<span class="empty-note">Не удалось загрузить историю</span>';
+    // Если произошла глобальная ошибка, мы не блокируем интерфейс, а разрешаем его закрыть
+    document.getElementById('info-modal-title').innerHTML = "👤 Ошибка загрузки";
+    document.getElementById('info-modal-content-area').innerHTML = "Не удалось загрузить данные. Попробуйте позже.";
+    document.getElementById('info-modal-history').innerHTML = "";
   });
 }
 
@@ -1070,6 +1035,7 @@ function listenLeaderboard() {
 
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
 document.addEventListener('DOMContentLoaded', function() {
+  // Мягкое раскрытие Telegram Mini App без перекрывающего крестика
   if (window.Telegram && window.Telegram.WebApp) {
     try {
       window.Telegram.WebApp.ready();
@@ -1079,7 +1045,9 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
   }
 
+  // Восстановление состояния шторок локаций из памяти устройства
   try { restoreCardStates(); } catch(e) {}
+
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
   try { initUserProfile(); } catch(e) {}
@@ -1108,6 +1076,7 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
   });
 
+  // Слушатель анонсов встреч (только для ДК «Восток»)
   try {
     db.collection('settings').doc('announcements').onSnapshot(function(doc) {
       try {
@@ -1140,10 +1109,11 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(loadParkWeather, 600000); 
 });
 
-// --- БЛОК 1: ТИХОЕ УДАЛЕНИЕ МАТЧЕЙ ---
+// Функция тихого удаления матча из истории (в стилистике приложения)
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
   
+  // Принудительно возвращаем окну красные стили для предупреждения об удалении
   var btn = document.querySelector('#confirm-modal .btn-join');
   var title = document.querySelector('#confirm-modal h3');
   var box = document.querySelector('#confirm-modal .modal-box');
@@ -1158,7 +1128,7 @@ function deleteHistoryMatch(docId, profileUid) {
     db.collection('matches_history').doc(docId).delete().then(function() {
       customAlert('✅ Матч удален из истории');
       if (profileUid) {
-        showUserInfoModal(profileUid);
+        showUserInfoModal(profileUid); // Обновляем карточку игрока
       }
     }).catch(function(e) {
       customAlert('Ошибка удаления: ' + e.message);
@@ -1166,12 +1136,13 @@ function deleteHistoryMatch(docId, profileUid) {
   });
 }
 
-// --- БЛОК 2: СГОРАНИЕ ELO ЗА 7 ДНЕЙ (ВКЛЮЧАЯ НОВИЧКОВ) ---
-window.applyEloDecay = function() {
+// --- МЕХАНИКА ELO DECAY (РУЧНОЙ ЗАПУСК С ЗАЩИТОЙ) ---
+function applyEloDecay() {
   if (!isSuperAdmin()) return;
 
-  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Все, кто не играл последние 7 дней (включая новичков без матчей), получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
+  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Те, кто не играл последние 7 дней, получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
   
+  // Возвращаем окну подтверждения красные цвета
   var btn = document.querySelector('#confirm-modal .btn-join');
   var title = document.querySelector('#confirm-modal h3');
   var box = document.querySelector('#confirm-modal .modal-box');
@@ -1179,22 +1150,25 @@ window.applyEloDecay = function() {
   if (title) { title.innerText = "Списание рейтинга"; title.style.color = "var(--accent-red)"; }
   if (box) { box.style.borderColor = "var(--accent-red)"; }
 
-  var adminModal = document.getElementById('admin-modal');
-  if (adminModal) adminModal.style.display = 'none';
-
   openConfirmModal(confirmMsg, function() {
-    customAlert("⏳ Анализируем активность игроков за 7 дней...");
+    customAlert("⏳ Анализируем историю матчей за 7 дней...");
 
-    var now = Date.now();
-    var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+    // 1. Вычисляем временную метку "7 дней назад"
+    var sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
 
+    // 2. Ищем все матчи, сыгранные за эти 7 дней
     db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
       var activeUids = new Set();
+      
+      // Собираем UID всех, кто играл
       snap.forEach(function(doc) {
         var m = doc.data();
-        if (m.participants) { m.participants.forEach(function(uid) { activeUids.add(uid); }); }
+        if (m.participants) {
+          m.participants.forEach(function(uid) { activeUids.add(uid); });
+        }
       });
 
+      // 3. Получаем всех пользователей базы
       db.collection('users').get().then(function(usersSnap) {
         var batch = db.batch();
         var penalizedCount = 0;
@@ -1204,49 +1178,61 @@ window.applyEloDecay = function() {
           var u = uDoc.data();
           var uid = uDoc.id;
 
+          // Пропускаем новичков, которые еще вообще не сыграли ни одного матча
+          if (!u.matches || u.matches === 0) return;
+
+          // Если игрок ЕСТЬ в списке активных - молодец, пропускаем
           if (activeUids.has(uid)) return;
 
-          // Проверка на свежерегов (чтобы не штрафовать сразу)
-          var regDate = u.createdAt || u.timestamp || 0;
-          if (regDate) {
-            var regTime = typeof parseTime === 'function' ? parseTime(regDate) : Number(regDate);
-            if (now - regTime < 7 * 24 * 60 * 60 * 1000) return;
-          }
-
+          // Если игрока НЕТ в списке активных, проверяем, когда мы штрафовали его в последний раз
           var lastPenalty = u.lastPenaltyDate || 0;
-          if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
+          
+          // Защита: штрафуем только если с прошлого штрафа прошло минимум 6 дней
+          // (6 дней вместо 7, чтобы не было проблем со сдвигом часов, если вы нажмете кнопку чуть раньше)
+          if (Date.now() - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
             var currentElo = parseInt(u.elo, 10) || 1000;
-            var newElo = Math.max(100, currentElo - 50); 
+            var newElo = Math.max(100, currentElo - 50); // Не даем рейтингу упасть ниже 100
+
             batch.set(db.collection('users').doc(uid), {
               elo: newElo,
-              lastPenaltyDate: now,
-              lastEloDelta: -50
+              lastPenaltyDate: Date.now(), // Запоминаем дату штрафа
+              lastEloDelta: -50 // Чтобы в профиле красиво горело красным 📉
             }, { merge: true });
+
             penalizedCount++;
             penalizedNames.push(cleanHtml(u.name));
           }
         });
 
+        // 4. Применяем изменения и отправляем отчет
         if (penalizedCount > 0) {
           batch.commit().then(function() {
             customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
-            var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\nСледующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n• " + penalizedNames.join('\n• ') + "\n\n<i>Пора расчехлять ракетки!</i> 🏓";
+            
+            // Отправляем веселое сообщение в Telegram чат
+            var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
+                            "Следующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n" +
+                            "• " + penalizedNames.join('\n• ') + "\n\n" +
+                            "<i>Пора расчехлять ракетки и возвращать позиции!</i> 🏓";
             sendTelegramAlert(tgMessage);
+            
+            closeAdminMenu();
           }).catch(function(e) { customAlert("❌ Ошибка при списании: " + e.message); });
         } else {
-          customAlert("✅ Все неактивные игроки уже оштрафованы, остальные играли на этой неделе!");
+          customAlert("✅ Проверка завершена. Все лентяи уже оштрафованы, остальные — активно играют!");
+          closeAdminMenu();
         }
+
       }).catch(function(e) { customAlert("❌ Ошибка базы пользователей: " + e.message); });
     }).catch(function(e) { customAlert("❌ Ошибка истории матчей: " + e.message); });
   });
-};
+}
 
-// --- БЛОК 3: МОДАЛЬНЫЕ ОКНА С ПОДДЕРЖКОЙ HTML ---
 var confirmCallback = null;
 
 function openConfirmModal(htmlText, onConfirm) {
   var el = document.getElementById('confirm-modal-text');
-  if (el) el.innerHTML = htmlText; // <-- ИСПОЛЬЗУЕТСЯ HTML
+  if (el) el.innerHTML = htmlText;
   confirmCallback = onConfirm;
   var modal = document.getElementById('confirm-modal');
   if (modal) modal.style.display = 'flex';
@@ -1259,54 +1245,8 @@ function closeConfirmModal() {
 }
 
 function executeConfirm() {
-  if (typeof confirmCallback === 'function') confirmCallback();
+  if (typeof confirmCallback === 'function') {
+    confirmCallback();
+  }
   closeConfirmModal();
 }
-
-// --- БЛОК 4: АВТО-ОБНОВЛЕНИЕ ДАТЫ ПОСЛЕДНЕЙ ИГРЫ В ГЛАВНОМ МЕНЮ ---
-var mainProfileDateLoaded = false;
-setInterval(function() {
-  var targetEl = document.getElementById('main-profile-last-played');
-  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  
-  if (!mainProfileDateLoaded && targetEl && targetEl.innerHTML.includes('Загрузка') && myUid) {
-    mainProfileDateLoaded = true; 
-    
-    db.collection('matches_history').get().then(function(snap) {
-      var myMatches = [];
-      snap.forEach(function(docX) {
-        var mx = docX.data();
-        var isPart = (mx.participants && mx.participants.indexOf(myUid) !== -1) || 
-                     (mx.p1Uid === myUid || mx.p2Uid === myUid) ||
-                     (mx.team1Uids && mx.team1Uids.indexOf(myUid) !== -1) ||
-                     (mx.team2Uids && mx.team2Uids.indexOf(myUid) !== -1);
-        if (isPart) myMatches.push(mx);
-      });
-
-      if (myMatches.length === 0) {
-        targetEl.innerHTML = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
-        return;
-      }
-
-      myMatches.sort(function(a, b) {
-        var tA = typeof parseTime === 'function' ? parseTime(a.timestamp) : (a.timestamp || 0);
-        var tB = typeof parseTime === 'function' ? parseTime(b.timestamp) : (b.timestamp || 0);
-        return tB - tA;
-      });
-
-      var lastTs = typeof parseTime === 'function' ? parseTime(myMatches[0].timestamp) : myMatches[0].timestamp;
-      var mDate = new Date(lastTs);
-      var day = ('0' + mDate.getDate()).slice(-2);
-      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
-      
-      var today = new Date(); today.setHours(0,0,0,0);
-      var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
-      var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
-      
-      var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (' + diffDays + ' дн. назад)';
-      var color = diffDays >= 7 ? 'var(--accent-red)' : 'var(--text-muted)';
-      
-      targetEl.innerHTML = day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px; color:' + color + ';">' + daysText + '</span>';
-    });
-  }
-}, 1000);
