@@ -1092,12 +1092,12 @@ function deleteHistoryMatch(docId, profileUid) {
 }
 
 // --- МЕХАНИКА ELO DECAY (РУЧНОЙ ЗАПУСК С ЗАЩИТОЙ) ---
+// --- МЕХАНИКА ELO DECAY (СГОРАНИЕ РЕЙТИНГА ЗА НЕАКТИВНОСТЬ, ВКЛЮЧАЯ НОВИЧКОВ) ---
 function applyEloDecay() {
   if (!isSuperAdmin()) return;
 
-  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Те, кто не играл последние 7 дней, получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
+  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Все, кто не играл последние 7 дней (включая новичков без матчей), получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
   
-  // Возвращаем окну подтверждения красные цвета
   var btn = document.querySelector('#confirm-modal .btn-join');
   var title = document.querySelector('#confirm-modal h3');
   var box = document.querySelector('#confirm-modal .modal-box');
@@ -1106,16 +1106,15 @@ function applyEloDecay() {
   if (box) { box.style.borderColor = "var(--accent-red)"; }
 
   openConfirmModal(confirmMsg, function() {
-    customAlert("⏳ Анализируем историю матчей за 7 дней...");
+    customAlert("⏳ Анализируем активность игроков за 7 дней...");
 
-    // 1. Вычисляем временную метку "7 дней назад"
-    var sevenDaysAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+    var now = Date.now();
+    var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
 
-    // 2. Ищем все матчи, сыгранные за эти 7 дней
+    // 1. Собираем список тех, кто играл за последние 7 дней
     db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
       var activeUids = new Set();
       
-      // Собираем UID всех, кто играл
       snap.forEach(function(doc) {
         var m = doc.data();
         if (m.participants) {
@@ -1123,7 +1122,7 @@ function applyEloDecay() {
         }
       });
 
-      // 3. Получаем всех пользователей базы
+      // 2. Проверяем всех игроков в базе
       db.collection('users').get().then(function(usersSnap) {
         var batch = db.batch();
         var penalizedCount = 0;
@@ -1133,25 +1132,27 @@ function applyEloDecay() {
           var u = uDoc.data();
           var uid = uDoc.id;
 
-          // Пропускаем новичков, которые еще вообще не сыграли ни одного матча
-          if (!u.matches || u.matches === 0) return;
-
-          // Если игрок ЕСТЬ в списке активных - молодец, пропускаем
+          // Если игрок играл за последние 7 дней — пропускаем
           if (activeUids.has(uid)) return;
 
-          // Если игрока НЕТ в списке активных, проверяем, когда мы штрафовали его в последний раз
+          // Проверяем дату регистрации или дату последнего штрафа
+          // Если аккаунт создан меньше 7 дней назад и еще не штрафовался — даем неделю на раскачку
+          var regDate = u.createdAt ? (typeof parseTime === 'function' ? parseTime(u.createdAt) : u.createdAt) : 0;
+          if (regDate && (now - regDate < 7 * 24 * 60 * 60 * 1000) && !u.lastPenaltyDate) {
+            return;
+          }
+
           var lastPenalty = u.lastPenaltyDate || 0;
           
-          // Защита: штрафуем только если с прошлого штрафа прошло минимум 6 дней
-          // (6 дней вместо 7, чтобы не было проблем со сдвигом часов, если вы нажмете кнопку чуть раньше)
-          if (Date.now() - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
+          // Защита: не чаще раза в 6 дней
+          if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
             var currentElo = parseInt(u.elo, 10) || 1000;
-            var newElo = Math.max(100, currentElo - 50); // Не даем рейтингу упасть ниже 100
+            var newElo = Math.max(100, currentElo - 50); // Минимальный порог 100 Эло
 
             batch.set(db.collection('users').doc(uid), {
               elo: newElo,
-              lastPenaltyDate: Date.now(), // Запоминаем дату штрафа
-              lastEloDelta: -50 // Чтобы в профиле красиво горело красным 📉
+              lastPenaltyDate: now,
+              lastEloDelta: -50
             }, { merge: true });
 
             penalizedCount++;
@@ -1159,12 +1160,11 @@ function applyEloDecay() {
           }
         });
 
-        // 4. Применяем изменения и отправляем отчет
+        // 3. Сохраняем изменения и шлем отчет
         if (penalizedCount > 0) {
           batch.commit().then(function() {
             customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
             
-            // Отправляем веселое сообщение в Telegram чат
             var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
                             "Следующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n" +
                             "• " + penalizedNames.join('\n• ') + "\n\n" +
@@ -1174,7 +1174,7 @@ function applyEloDecay() {
             closeAdminMenu();
           }).catch(function(e) { customAlert("❌ Ошибка при списании: " + e.message); });
         } else {
-          customAlert("✅ Проверка завершена. Все лентяи уже оштрафованы, остальные — активно играют!");
+          customAlert("✅ Все неактивные игроки уже оштрафованы, остальные играли на этой неделе!");
           closeAdminMenu();
         }
 
