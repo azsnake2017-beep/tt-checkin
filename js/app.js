@@ -1267,3 +1267,26 @@ function applyEloDecay() {
     }).catch(function(e) { customAlert("❌ Ошибка истории матчей: " + e.message); });
   });
 }
+
+var confirmCallback = null;
+
+function openConfirmModal(htmlText, onConfirm) {
+  var el = document.getElementById('confirm-modal-text');
+  if (el) el.innerHTML = htmlText;
+  confirmCallback = onConfirm;
+  var modal = document.getElementById('confirm-modal');
+  if (modal) modal.style.display = 'flex';
+}
+
+function closeConfirmModal() {
+  var modal = document.getElementById('confirm-modal');
+  if (modal) modal.style.display = 'none';
+  confirmCallback = null;
+}
+
+function executeConfirm() {
+  if (typeof confirmCallback === 'function') {
+    confirmCallback();
+  }
+  closeConfirmModal();
+}
