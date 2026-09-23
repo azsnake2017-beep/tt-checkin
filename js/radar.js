@@ -8,39 +8,44 @@ function loadParkWeather() {
   var cachedTime = localStorage.getItem('tt_weather_cache_ts');
   if (cachedW && cachedTime && (Date.now() - parseInt(cachedTime, 10) < 600000)) {
     container.innerHTML = cachedW;
+    return;
   }
 
-  var controller = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  var signal = controller ? controller.signal : null;
-  var timeoutId = setTimeout(function() { if (controller) controller.abort(); }, 5000);
+  // Защита от бесконечного зависания запроса при блокировках сети
+  var fetchPromise = fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto');
+  var timeoutPromise = new Promise(function(_, reject) {
+    setTimeout(function() { reject(new Error('Weather timeout')); }, 4000);
+  });
 
-  fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto', { signal: signal })
+  Promise.race([fetchPromise, timeoutPromise])
   .then(function(res) { return res.json(); })
   .then(function(data) {
-    clearTimeout(timeoutId);
     try {
-        var c = data.current, d = data.daily;
-        if (!c) throw new Error("No current");
-        var getW = function(code) { 
-          if(code <= 3) return code == 0 ? "☀️ Ясно" : "⛅️ Облачно"; 
-          if(code <= 67) return "🌧 Дождь"; 
-          if(code <= 77) return "❄️ Снег"; 
-          return "🌧 Ливень"; 
-        };
-        var tmrStr = '';
-        if (d && d.weather_code && d.weather_code.length > 1 && d.temperature_2m_min && d.temperature_2m_max) {
-            tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea; margin-top: 4px;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
-        }
-        var weatherHtml = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
-        container.innerHTML = weatherHtml;
-        localStorage.setItem('tt_weather_cache', weatherHtml);
-        localStorage.setItem('tt_weather_cache_ts', Date.now().toString());
+      var c = data.current, d = data.daily;
+      if (!c) throw new Error("No current");
+      var getW = function(code) { 
+        if(code <= 3) return code == 0 ? "☀️ Ясно" : "⛅️ Облачно"; 
+        if(code <= 67) return "🌧 Дождь"; 
+        if(code <= 77) return "❄️ Снег"; 
+        return "🌧 Ливень"; 
+      };
+      var tmrStr = '';
+      if (d && d.weather_code && d.weather_code.length > 1 && d.temperature_2m_min && d.temperature_2m_max) {
+          tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea; margin-top: 4px;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
+      }
+      var weatherHtml = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
+      container.innerHTML = weatherHtml;
+      localStorage.setItem('tt_weather_cache', weatherHtml);
+      localStorage.setItem('tt_weather_cache_ts', Date.now().toString());
     } catch (innerE) { 
-      if (!cachedW) container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице 🌳</span></div>'; 
+      container.innerHTML = '<div class="weather-badge"><span>Парк: столы на открытом воздухе 🌳</span></div>'; 
     }
   }).catch(function(e) { 
-    clearTimeout(timeoutId);
-    if (!cachedW) container.innerHTML = '<div class="weather-badge"><span>Парк: столы на улице 🌳</span></div>'; 
+    if (cachedW) {
+      container.innerHTML = cachedW;
+    } else {
+      container.innerHTML = '<div class="weather-badge"><span>Парк: столы на открытом воздухе 🌳</span></div>';
+    }
   });
 }
 
