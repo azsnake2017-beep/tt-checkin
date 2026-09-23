@@ -550,6 +550,7 @@ function showUserInfoModal(uid) {
     document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки</span>';
   });
 }
+
 function openTournamentModal(tourId) { 
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
   if (currentEditingTourId) { btn.innerText = 'Сохранить изменения'; db.collection('tournaments').doc(currentEditingTourId).get().then(function(doc) { if (doc.exists) { var d = doc.data(); document.getElementById('tour-title').value = d.title || ''; document.getElementById('tour-date').value = d.rawDate || ''; document.getElementById('tour-desc').value = d.desc || ''; } }); } 
