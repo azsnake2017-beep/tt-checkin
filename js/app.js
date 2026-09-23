@@ -1093,97 +1093,7 @@ function deleteHistoryMatch(docId, profileUid) {
 
 // --- МЕХАНИКА ELO DECAY (РУЧНОЙ ЗАПУСК С ЗАЩИТОЙ) ---
 // --- МЕХАНИКА ELO DECAY (СГОРАНИЕ РЕЙТИНГА ЗА НЕАКТИВНОСТЬ, ВКЛЮЧАЯ НОВИЧКОВ) ---
-function applyEloDecay() {
-  if (!isSuperAdmin()) return;
 
-  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Все, кто не играл последние 7 дней (включая новичков без матчей), получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
-  
-  var btn = document.querySelector('#confirm-modal .btn-join');
-  var title = document.querySelector('#confirm-modal h3');
-  var box = document.querySelector('#confirm-modal .modal-box');
-  if (btn) { btn.innerText = "Запустить списание"; btn.style.background = "var(--accent-red)"; }
-  if (title) { title.innerText = "Списание рейтинга"; title.style.color = "var(--accent-red)"; }
-  if (box) { box.style.borderColor = "var(--accent-red)"; }
-
-  openConfirmModal(confirmMsg, function() {
-    customAlert("⏳ Анализируем активность игроков за 7 дней...");
-
-    var now = Date.now();
-    var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
-
-    // 1. Собираем список тех, кто играл за последние 7 дней
-    db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
-      var activeUids = new Set();
-      
-      snap.forEach(function(doc) {
-        var m = doc.data();
-        if (m.participants) {
-          m.participants.forEach(function(uid) { activeUids.add(uid); });
-        }
-      });
-
-      // 2. Проверяем всех игроков в базе
-      db.collection('users').get().then(function(usersSnap) {
-        var batch = db.batch();
-        var penalizedCount = 0;
-        var penalizedNames = [];
-
-        usersSnap.forEach(function(uDoc) {
-          var u = uDoc.data();
-          var uid = uDoc.id;
-
-          // Если игрок играл за последние 7 дней — пропускаем
-          if (activeUids.has(uid)) return;
-
-          // Проверяем дату регистрации или дату последнего штрафа
-          // Если аккаунт создан меньше 7 дней назад и еще не штрафовался — даем неделю на раскачку
-          var regDate = u.createdAt ? (typeof parseTime === 'function' ? parseTime(u.createdAt) : u.createdAt) : 0;
-          if (regDate && (now - regDate < 7 * 24 * 60 * 60 * 1000) && !u.lastPenaltyDate) {
-            return;
-          }
-
-          var lastPenalty = u.lastPenaltyDate || 0;
-          
-          // Защита: не чаще раза в 6 дней
-          if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
-            var currentElo = parseInt(u.elo, 10) || 1000;
-            var newElo = Math.max(100, currentElo - 50); // Минимальный порог 100 Эло
-
-            batch.set(db.collection('users').doc(uid), {
-              elo: newElo,
-              lastPenaltyDate: now,
-              lastEloDelta: -50
-            }, { merge: true });
-
-            penalizedCount++;
-            penalizedNames.push(cleanHtml(u.name));
-          }
-        });
-
-        // 3. Сохраняем изменения и шлем отчет
-        if (penalizedCount > 0) {
-          batch.commit().then(function() {
-            customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
-            
-            var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
-                            "Следующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n" +
-                            "• " + penalizedNames.join('\n• ') + "\n\n" +
-                            "<i>Пора расчехлять ракетки и возвращать позиции!</i> 🏓";
-            sendTelegramAlert(tgMessage);
-            
-            closeAdminMenu();
-          }).catch(function(e) { customAlert("❌ Ошибка при списании: " + e.message); });
-        } else {
-          customAlert("✅ Все неактивные игроки уже оштрафованы, остальные играли на этой неделе!");
-          closeAdminMenu();
-        }
-
-      }).catch(function(e) { customAlert("❌ Ошибка базы пользователей: " + e.message); });
-    }).catch(function(e) { customAlert("❌ Ошибка истории матчей: " + e.message); });
-  });
-}
-
-var confirmCallback = null;
 
 function openConfirmModal(htmlText, onConfirm) {
   var el = document.getElementById('confirm-modal-text');
@@ -1258,3 +1168,99 @@ setInterval(function() {
     });
   }
 }, 1000);
+
+// --- МЕХАНИКА ELO DECAY (ШТРАФЫ ЗА НЕАКТИВНОСТЬ, ВКЛЮЧАЯ НОВИЧКОВ) ---
+window.applyEloDecay = function() {
+  if (!isSuperAdmin()) return;
+
+  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Все, кто не играл последние 7 дней (<b>включая новичков</b>, которые не сыграли ни одного матча), получат штраф <b>-50 Эло</b>.</span>';
+  
+  // Перекрашиваем окно в красный
+  var btn = document.querySelector('#confirm-modal .btn-join');
+  var title = document.querySelector('#confirm-modal h3');
+  var box = document.querySelector('#confirm-modal .modal-box');
+  if (btn) { btn.innerText = "Запустить списание"; btn.style.background = "var(--accent-red)"; }
+  if (title) { title.innerText = "Списание рейтинга"; title.style.color = "var(--accent-red)"; }
+  if (box) { box.style.borderColor = "var(--accent-red)"; }
+
+  // Прячем админ-панель
+  var adminModal = document.getElementById('admin-modal');
+  if (adminModal) adminModal.style.display = 'none';
+
+  openConfirmModal(confirmMsg, function() {
+    customAlert("⏳ Анализируем активность абсолютно всех игроков...");
+
+    var now = Date.now();
+    var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+
+    // 1. Ищем тех, кто ИГРАЛ за последние 7 дней
+    db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
+      var activeUids = new Set();
+      
+      snap.forEach(function(doc) {
+        var m = doc.data();
+        if (m.participants) {
+          m.participants.forEach(function(uid) { activeUids.add(uid); });
+        }
+      });
+
+      // 2. Идем по ВСЕМ пользователям в базе
+      db.collection('users').get().then(function(usersSnap) {
+        var batch = db.batch();
+        var penalizedCount = 0;
+        var penalizedNames = [];
+
+        usersSnap.forEach(function(uDoc) {
+          var u = uDoc.data();
+          var uid = uDoc.id;
+
+          // Если игрок играл на этой неделе — он молодец, пропускаем
+          if (activeUids.has(uid)) return;
+
+          // Проверка на свежерегов: если аккаунт создан меньше 7 дней назад, даем время на раскачку
+          var regDate = u.createdAt || u.timestamp || 0;
+          if (regDate) {
+            var regTime = typeof parseTime === 'function' ? parseTime(regDate) : Number(regDate);
+            if (now - regTime < 7 * 24 * 60 * 60 * 1000) {
+              return; // Аккаунту меньше недели, прощаем
+            }
+          }
+
+          var lastPenalty = u.lastPenaltyDate || 0;
+          
+          // Проверяем, прошло ли 6 дней с момента последнего штрафа (защита от случайных кликов админа)
+          if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
+            var currentElo = parseInt(u.elo, 10) || 1000;
+            var newElo = Math.max(100, currentElo - 50); // Меньше 100 Эло не опускаем
+
+            batch.set(db.collection('users').doc(uid), {
+              elo: newElo,
+              lastPenaltyDate: now,
+              lastEloDelta: -50
+            }, { merge: true });
+
+            penalizedCount++;
+            penalizedNames.push(cleanHtml(u.name));
+          }
+        });
+
+        // 3. Применяем изменения
+        if (penalizedCount > 0) {
+          batch.commit().then(function() {
+            customAlert("✅ Штраф применен к " + penalizedCount + " игрокам (включая новичков)!");
+            
+            var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
+                            "Следующие игроки не выходили к столу более 7 дней и получают штраф (<b>-50 Эло</b>):\n\n" +
+                            "• " + penalizedNames.join('\n• ') + "\n\n" +
+                            "<i>Пора расчехлять ракетки!</i> 🏓";
+            sendTelegramAlert(tgMessage);
+            
+          }).catch(function(e) { customAlert("❌ Ошибка при списании: " + e.message); });
+        } else {
+          customAlert("✅ Проверка завершена. Штрафовать некого, все активны!");
+        }
+
+      }).catch(function(e) { customAlert("❌ Ошибка базы пользователей: " + e.message); });
+    }).catch(function(e) { customAlert("❌ Ошибка истории матчей: " + e.message); });
+  });
+};
