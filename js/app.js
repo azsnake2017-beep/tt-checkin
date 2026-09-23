@@ -1216,18 +1216,21 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(loadParkWeather, 600000); 
 });
 
-// Функция тихого удаления матча из истории (без изменения рейтинга)
+// Функция тихого удаления матча из истории (в стилистике приложения)
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
   
-  if (!confirm('Удалить этот матч из истории?\n\n(Рейтинги игроков не изменятся, удалится только карточка матча)')) return;
+  // Используем красивое встроенное окно приложения вместо системного confirm
+  var confirmText = 'Удалить этот матч из истории?<br><br><span style="font-size: 12px; opacity: 0.8;">(Рейтинги игроков не изменятся, удалится только карточка матча)</span>';
   
-  db.collection('matches_history').doc(docId).delete().then(function() {
-    customAlert('✅ Матч удален из истории');
-    if (profileUid) {
-      showUserInfoModal(profileUid); // Обновляем карточку игрока, чтобы матч сразу исчез
-    }
-  }).catch(function(e) {
-    customAlert('Ошибка удаления: ' + e.message);
+  openConfirmModal(confirmText, function() {
+    db.collection('matches_history').doc(docId).delete().then(function() {
+      customAlert('✅ Матч удален из истории');
+      if (profileUid) {
+        showUserInfoModal(profileUid); // Обновляем карточку игрока
+      }
+    }).catch(function(e) {
+      customAlert('Ошибка удаления: ' + e.message);
+    });
   });
 }
