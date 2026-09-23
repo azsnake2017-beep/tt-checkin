@@ -1,8 +1,8 @@
-// test-logic.js — Автотест модульной архитектуры
+// test-logic.js — Модульный автотест клуба ЧМЗ
 const fs = require('fs');
 const path = require('path');
 
-console.log('🔍 Запуск автотестов...\n');
+console.log('🔍 Запуск модульных автотестов...\n');
 
 const files = [
   'index.html',
