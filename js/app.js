@@ -1009,3 +1009,105 @@ document.addEventListener('DOMContentLoaded', function() {
   setInterval(monitorSessions, 60000); 
   setInterval(loadParkWeather, 600000); 
 });
+
+// --- ОБНОВЛЁННАЯ ЛОГИКА АНОНСОВ ВСТРЕЧ (С ДАТОЙ И ФИРМЕННЫМ СТИЛЕМ) ---
+
+function openAnnouncementModal(loc) { 
+  if(!isSuperAdmin()) return; 
+  document.getElementById('announcement-target-loc').value = loc; 
+  
+  var aData = announcementsData[loc];
+  var dateInput = document.getElementById('announcement-date');
+  var descInput = document.getElementById('announcement-textarea');
+
+  if (aData && typeof aData === 'object') {
+      dateInput.value = aData.date || '';
+      descInput.value = aData.desc || '';
+  } else {
+      dateInput.value = '';
+      descInput.value = aData || ''; // Обратная совместимость со старыми текстовыми анонсами
+  }
+  
+  document.getElementById('announcement-modal').style.display = 'flex'; 
+}
+
+function closeAnnouncementModal() { 
+  document.getElementById('announcement-modal').style.display = 'none'; 
+}
+
+function saveAnnouncement() { 
+  var loc = document.getElementById('announcement-target-loc').value;
+  var dateStr = document.getElementById('announcement-date').value.trim();
+  var descStr = document.getElementById('announcement-textarea').value.trim();
+  
+  // Если всё пусто — значит администратор хочет удалить анонс
+  if (!dateStr && !descStr) return deleteAnnouncement();
+
+  var obj = {}; 
+  obj[loc] = { date: dateStr, desc: descStr }; // Сохраняем как структуру
+  
+  db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
+      closeAnnouncementModal(); 
+      
+      // Формируем красивое фирменное сообщение для бота
+      var locNameStr = loc === 'park' ? 'Парке им. Тищенко 🌳' : 'ДК «Восток» 🏛';
+      var tgText = "📢 <b>АНОНС ВСТРЕЧИ!</b>\n\n📍 Место: <b>" + locNameStr + "</b>\n";
+      
+      if (dateStr) tgText += "🗓 Время: <b>" + dateStr + "</b>\n";
+      if (descStr) tgText += "\n📝 " + descStr + "\n";
+      
+      tgText += "\n<i>Записывайтесь в приложении (кнопка «Буду позже»), чтобы мы понимали количество игроков!</i> 👇";
+      
+      sendTelegramAlert(tgText);
+  });
+}
+
+function deleteAnnouncement() { 
+  if(!isSuperAdmin()) return; 
+  var loc = document.getElementById('announcement-target-loc').value; 
+  var obj = {}; obj[loc] = null; // Удаляем объект из базы
+  
+  db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
+      closeAnnouncementModal(); 
+      customAlert("✅ Анонс успешно удален");
+  });
+}
+
+// --- ОБНОВЛЁННЫЙ СЛУШАТЕЛЬ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ АНОНСОВ ---
+// Эта часть должна заменить вызов db.collection('settings').doc('announcements') 
+// внутри document.addEventListener('DOMContentLoaded', ...) в файле app.js
+
+document.addEventListener('DOMContentLoaded', function() {
+  // ... ваш остальной код инициализации профиля и базы ...
+
+  try {
+    db.collection('settings').doc('announcements').onSnapshot(function(doc) {
+      try {
+        announcementsData = doc.data() || { park: null, vostok: null };
+        ['park','vostok'].forEach(function(loc) {
+          var badgeBox = document.getElementById('announcement-box-' + loc);
+          var textBox = document.getElementById('announcement-text-' + loc);
+          
+          if(badgeBox && textBox) { 
+              var aData = announcementsData[loc];
+              if(aData) { 
+                  if (typeof aData === 'object') {
+                      var resHtml = '';
+                      if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
+                      if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
+                      textBox.innerHTML = resHtml;
+                  } else {
+                      // Старый формат (просто строка)
+                      textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); 
+                  }
+                  badgeBox.style.display = 'flex'; 
+              } else { 
+                  badgeBox.style.display = 'none'; 
+              } 
+          }
+        });
+      } catch(e) { console.error(e); }
+    }, function(err) {});
+  } catch(e) {}
+
+});
