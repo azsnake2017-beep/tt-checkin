@@ -459,7 +459,7 @@ function closeUserInfoModal() {
 
 
 function showUserInfoModal(uid) {
-  if(!uid) return;
+  if (!uid) return;
   document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
   document.getElementById('info-modal-content-area').innerHTML = "Загрузка данных профиля...";
   document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
@@ -480,20 +480,19 @@ function showUserInfoModal(uid) {
 
     var u = d.data() || {};
     var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
-    
-    // 1. Устанавливаем имя и больше НИКОГДА его не перезаписываем
     var safeName = u.name ? cleanHtml(u.name) : "Игрок";
     document.getElementById('info-modal-title').innerHTML = "👤 " + safeName + " " + adminTag;
     
     var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + uid + '</span></div>' : '';
     
-    // 2. Собираем историю матчей
+    // 1. Сбор истории матчей со всеми вариантами полей
     var userMatches = [];
     allMatchesSnap.forEach(function(docX) {
       try {
         var mx = docX.data() || {};
         mx.docId = docX.id; 
         var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
+                     (mx.p1Uid === uid || mx.p2Uid === uid) ||
                      (mx.proposerUid === uid || mx.opponentUid === uid) ||
                      (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
                      (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
@@ -502,16 +501,16 @@ function showUserInfoModal(uid) {
     });
 
     userMatches.sort(function(a, b) { 
-      var timeA = a.timestamp || 0;
-      var timeB = b.timestamp || 0;
+      var timeA = typeof parseTime === 'function' ? parseTime(a.timestamp) : (Number(a.timestamp) || 0);
+      var timeB = typeof parseTime === 'function' ? parseTime(b.timestamp) : (Number(b.timestamp) || 0);
       return timeB - timeA; 
     });
 
-    // 3. Вычисляем дату последней игры
+    // 2. Расчет даты последней игры
     var lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
     if (userMatches.length > 0) {
       try {
-        var lastTs = userMatches[0].timestamp;
+        var lastTs = typeof parseTime === 'function' ? parseTime(userMatches[0].timestamp) : Number(userMatches[0].timestamp);
         if (lastTs) {
           var mDate = new Date(lastTs);
           var day = ('0' + mDate.getDate()).slice(-2);
@@ -543,7 +542,7 @@ function showUserInfoModal(uid) {
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
     var eloDisplay = parseInt(u.elo, 10) || 1000;
     
-    // 4. Отрисовываем статистику
+    // 3. Вывод данных профиля
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
@@ -553,50 +552,65 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
     
-    // 5. Изолированная отрисовка истории (капсула безопасности)
-    try {
-      if (typeof renderUserHistoryList === 'function') {
-        renderUserHistoryList(userMatches, uid);
-      } else {
-        throw new Error("Функция отрисовки не найдена");
-      }
-    } catch(renderErr) {
-      console.log("Включаем резервную отрисовку истории");
-      // Резервный список с правильными полями из вашей БД
-      var hHtml = '';
-      userMatches.slice(0, 15).forEach(function(m) {
-        var dateStr = '';
-        if (m.timestamp) {
-          var dt = new Date(m.timestamp);
-          dateStr = ('0' + dt.getDate()).slice(-2) + '.' + ('0' + (dt.getMonth() + 1)).slice(-2);
-        }
-        var isDoubles = m.type === 'doubles';
-        var resText = '';
-        
-        if (isDoubles) {
-          resText = 'Парный: ' + (m.scoreTeam1 || 0) + ':' + (m.scoreTeam2 || 0);
-        } else {
-          var isProposer = (m.proposerUid === uid);
-          var myScore = isProposer ? m.scoreProposer : m.scoreOpponent;
-          var oppScore = isProposer ? m.scoreOpponent : m.scoreProposer;
-          var oppName = isProposer ? m.opponentName : m.proposerName;
-          
-          var win = Number(myScore) > Number(oppScore);
-          var badge = win ? '<span style="color:#059669; font-weight:700;">▲ В</span>' : '<span style="color:#94a3b8; font-weight:700;">▼ П</span>';
-          resText = badge + ' ' + (myScore || 0) + ':' + (oppScore || 0) + ' против ' + cleanHtml(oppName || 'Соперника');
-        }
-        
-        hHtml += '<div style="display:flex; justify-content:space-between; font-size:12px; padding:6px 8px; background:rgba(255,255,255,0.03); border-radius:6px; margin-bottom:4px;">' +
-                 '<span>' + resText + '</span><span style="color:var(--text-muted); font-size:11px;">' + dateStr + '</span></div>';
-      });
-      document.getElementById('info-modal-history').innerHTML = hHtml || '<span class="empty-note">Матчей пока нет</span>';
+    // 4. Отрисовка списка матчей с поддержкой всех форматов БД и кнопкой корзины для админа
+    var historyContainer = document.getElementById('info-modal-history');
+    if (userMatches.length === 0) {
+      historyContainer.innerHTML = '<span class="empty-note">Матчей пока нет</span>';
+      return;
     }
 
+    var hHtml = '';
+    userMatches.forEach(function(m) {
+      var dateStr = '';
+      var ts = typeof parseTime === 'function' ? parseTime(m.timestamp) : Number(m.timestamp);
+      if (ts) {
+        var dt = new Date(ts);
+        dateStr = ('0' + dt.getDate()).slice(-2) + '.' + ('0' + (dt.getMonth() + 1)).slice(-2);
+      }
+
+      var isDoubles = (m.type === 'doubles');
+      var lineText = '';
+
+      if (isDoubles) {
+        var sT1 = (m.scoreTeam1 !== undefined) ? m.scoreTeam1 : (m.score1 || 0);
+        var sT2 = (m.scoreTeam2 !== undefined) ? m.scoreTeam2 : (m.score2 || 0);
+        lineText = '👥 Парный матч: <b>' + sT1 + ' : ' + sT2 + '</b>';
+      } else {
+        // Одиночный матч: проверяем и p1/p2, и proposer/opponent
+        var isP1 = (m.p1Uid === uid || m.proposerUid === uid);
+        var myScore = isP1 ? (m.score1 !== undefined ? m.score1 : m.scoreProposer) : (m.score2 !== undefined ? m.score2 : m.scoreOpponent);
+        var oppScore = isP1 ? (m.score2 !== undefined ? m.score2 : m.scoreOpponent) : (m.score1 !== undefined ? m.score1 : m.scoreProposer);
+        var oppName = isP1 ? (m.p2Name || m.opponentName) : (m.p1Name || m.proposerName);
+
+        myScore = Number(myScore) || 0;
+        oppScore = Number(oppScore) || 0;
+        var isWin = myScore > oppScore;
+
+        var badge = isWin 
+          ? '<span style="color:#059669; font-weight:700;">▲ В</span>' 
+          : '<span style="color:#94a3b8; font-weight:700;">▼ П</span>';
+
+        lineText = badge + ' <b>' + myScore + ':' + oppScore + '</b> против ' + cleanHtml(oppName || 'Соперник');
+      }
+
+      var delBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && m.docId)
+        ? '<button onclick="deleteHistoryMatch(\'' + m.docId + '\', \'' + uid + '\')" style="background:none; border:none; color:var(--accent-red); cursor:pointer; font-size:12px; padding:0 4px;" title="Удалить матч">🗑️</button>'
+        : '';
+
+      hHtml += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:4px;">' +
+                 '<div style="display:flex; align-items:center; gap:6px;">' + lineText + '</div>' +
+                 '<div style="display:flex; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-size:11px;">' + dateStr + '</span>' + delBtn + '</div>' +
+               '</div>';
+    });
+
+    historyContainer.innerHTML = hHtml;
   }).catch(function(e) {
-    // В случае глобальной ошибки - просто игнорируем, чтобы не портить заголовок
-    console.log("Глобальная ошибка карточки:", e);
+    document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки</span>';
   });
 }
+
+
+
 
 function openTournamentModal(tourId) { 
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
