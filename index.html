@@ -11,7 +11,6 @@
   <link rel="dns-prefetch" href="https://telegram.org">
   <link rel="dns-prefetch" href="https://api.open-meteo.com">
 
-  <!-- Стили приложения -->
   <link rel="stylesheet" href="style.css">
 
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
@@ -101,7 +100,7 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 2: РАДАР (КАРТОЧКИ ТЕПЕРЬ СВЁРНУТЫ ПО УМОЛЧАНИЮ) -->
+  <!-- ЭКРАН 2: РАДАР (ПО УМОЛЧАНИЮ СВЁРНУТ) -->
   <div id="view-radar" class="main-view">
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
@@ -136,7 +135,7 @@
       </div>
       <div class="card-body-collapse">
         <div class="event-badge" id="announcement-box-vostok" style="display: none;"><span id="announcement-text-vostok"></span></div>
-        <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс</button>
+        <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс встречи</button>
         <div class="section-label" style="margin-top: 6px;">Сейчас играют:</div>
         <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
         <div class="section-label">Собираются прийти:</div>
@@ -238,7 +237,7 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
     <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
-    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-flex; justify-content: center; align-items: center; margin: 0 auto;" id="qr-canvas-container"></div>
+    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;"><img id="qr-code-img" src="" alt="QR Code" width="180" height="180" style="display: block;" /></div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
       <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
@@ -262,25 +261,26 @@
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО АНОНСА ВСТРЕЧИ (ОБНОВЛЁННОЕ) -->
+<!-- МОДАЛЬНОЕ ОКНО АНОНСА ВСТРЕЧИ ДК ВОСТОК / ПАРК -->
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
-    <h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс встречи</h3>
+    <h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс встречи клуба</h3>
     
-    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Дата и время:</div>
-    <input type="text" id="announcement-date" class="input-name" placeholder="Напр.: Суббота в 18:00" />
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Дата и время встречи:</div>
+    <input type="text" id="announcement-date" class="input-name" placeholder="Например: Воскресенье, 17:00" />
     
-    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Описание (доп. инфо):</div>
-    <textarea id="announcement-textarea" class="textarea-announcement" placeholder="Формат игры, взносы, детали..."></textarea>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Описание встречи / Условия:</div>
+    <textarea id="announcement-textarea" class="textarea-announcement" placeholder="Формат турнира, лесенка, свободные столы..."></textarea>
     
     <input type="hidden" id="announcement-target-loc" value="" />
     
-    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveAnnouncement()">Опубликовать в чат</button>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveAnnouncement()">Опубликовать и отправить в чат</button>
     <button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary);" onclick="deleteAnnouncement()">Удалить анонс</button>
     <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
   </div>
 </div>
 
+<!-- МОДАЛЬНОЕ ОКНО ЗАПИСИ МАТЧА (1x1 и 2x2) -->
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3>
@@ -290,14 +290,17 @@
       <button class="tab-btn" id="btn-match-type-doubles" onclick="setMatchModalType('doubles')">👥 Парный (2x2)</button>
     </div>
 
+    <!-- Поля для одиночного матча -->
     <div id="match-fields-singles" style="display: flex; flex-direction: column; gap: 6px;">
       <div style="font-size: 11px; text-align: left; color: var(--text-muted); font-weight: 700;">СОПЕРНИК:</div>
       <select id="match-opponent-select" class="input-select"></select>
     </div>
 
+    <!-- Поля для парного матча -->
     <div id="match-fields-doubles" style="display: none; flex-direction: column; gap: 8px;">
       <div style="font-size: 11px; text-align: left; color: var(--accent-green); font-weight: 700;">ВАШ НАПАРНИК (КОМАНДА 1):</div>
       <select id="match-partner-select" class="input-select"></select>
+
       <div style="font-size: 11px; text-align: left; color: var(--accent-red); font-weight: 700; margin-top: 2px;">СОПЕРНИКИ (КОМАНДА 2):</div>
       <select id="match-opp1-select" class="input-select"></select>
       <select id="match-opp2-select" class="input-select"></select>
@@ -385,7 +388,7 @@
       <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 1)">3 : 1</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>
-      <button class="score-btn tour-score-btn" onclick="selectScore(1, 3)">1 : 3</button>
+      <button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>
       <button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>
     </div>
     <input type="hidden" id="tour-match-id-val" />
@@ -397,6 +400,7 @@
   </div>
 </div>
 
+<!-- ПОДКЛЮЧЕНИЕ МОДУЛЕЙ -->
 <script src="js/config.js"></script>
 <script src="js/matches.js"></script>
 <script src="js/radar.js"></script>
