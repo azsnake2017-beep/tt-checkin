@@ -1,4 +1,4 @@
-// js/config.js — Базовые настройки, утилиты, карточки и константы
+// js/config.js — Утилиты, анимации, переключатели и автономные модули
 
 function checkBrowserCompatibility() {
   var isSupported = true;
@@ -181,7 +181,7 @@ function switchTab(tab) {
   }
 }
 
-// Плавное переключение шторки с сохранением в память
+// Плавное переключение шторки карточек с памятью состояния
 function toggleCard(loc) { 
   var c = document.getElementById('card-' + loc);
   if (!c) return;
@@ -189,7 +189,7 @@ function toggleCard(loc) {
   localStorage.setItem('tt_card_' + loc, isExpanded ? '1' : '0');
 }
 
-// Восстановление состояния шторки при открытии
+// Восстановление состояния шторки при запуске приложения
 function restoreCardStates() {
   ['park', 'vostok'].forEach(function(loc) {
     var c = document.getElementById('card-' + loc);
@@ -289,7 +289,7 @@ function shareModalUrl() {
   }
 }
 
-// НАДЁЖНЫЙ ВЫВОД QR-КОДОВ (ОСНОВНОЙ + РЕЗЕРВНЫЙ FALLBACK)
+// ПУЛНЕПРОБИВАЕМЫЕ ЛОКАЛЬНЫЕ QR-КОДЫ (РАБОТАЮТ БЕЗ VPN)
 function openQrModal(type) {
   var targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
   var title = "QR-код приложения";
@@ -310,13 +310,23 @@ function openQrModal(type) {
   document.getElementById('qr-modal-desc').innerText = desc;
   document.getElementById('qr-url-text').innerText = targetUrl;
 
-  var img = document.getElementById('qr-code-img');
-  if (img) {
-    img.src = 'https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=' + encodeURIComponent(targetUrl);
-    img.onerror = function() {
-      this.onerror = null;
-      this.src = 'https://quickchart.io/qr?text=' + encodeURIComponent(targetUrl) + '&size=180';
-    };
+  var container = document.getElementById('qr-canvas-container');
+  if(container) {
+    container.innerHTML = ''; // Очистка контейнера перед перерисовкой
+
+    // Генерация QR-кода прямо в браузере клиента (0 сетевых запросов к внешним API)
+    if (window.QRCode) {
+      new QRCode(container, {
+        text: targetUrl,
+        width: 180,
+        height: 180,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.M
+      });
+    } else {
+      container.innerHTML = '<i>Библиотека QR не загружена</i>';
+    }
   }
 
   document.getElementById('qr-modal').style.display = 'flex';
@@ -324,6 +334,8 @@ function openQrModal(type) {
 
 function closeQrModal() { 
   document.getElementById('qr-modal').style.display = 'none'; 
+  var container = document.getElementById('qr-canvas-container');
+  if (container) container.innerHTML = '';
 }
 
 function openExternalLink(url) {
