@@ -1,4 +1,4 @@
-// js/radar.js — Логика столов, чекинов, таймеров и погоды
+// js/radar.js — Логика столов, чекинов, таймеров и отказоустойчивой погоды
 
 function loadParkWeather() {
   var container = document.getElementById('weather-park'); 
@@ -11,10 +11,10 @@ function loadParkWeather() {
     return;
   }
 
-  // Защита от бесконечного зависания запроса к Open-Meteo
+  // Защита от бесконечного зависания запроса к Open-Meteo без VPN
   var fetchPromise = fetch('https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto');
   var timeoutPromise = new Promise(function(_, reject) {
-    setTimeout(function() { reject(new Error('Weather timeout')); }, 4000); // Ждем максимум 4 секунды
+    setTimeout(function() { reject(new Error('Weather timeout')); }, 4000); // 4 секунды максимум
   });
 
   Promise.race([fetchPromise, timeoutPromise])
