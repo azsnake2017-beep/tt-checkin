@@ -481,53 +481,66 @@ function showUserInfoModal(uid) {
     
     var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
-    // 1. СНАЧАЛА СОБИРАЕМ ИСТОРИЮ (чтобы узнать дату последней игры)
+    // 1. СНАЧАЛА СОБИРАЕМ ИСТОРИЮ
     var userMatches = [];
     allMatchesSnap.forEach(function(docX) {
-      var mx = docX.data() || {};
-      mx.docId = docX.id; 
-      var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
-                   (mx.p1Uid === uid || mx.p2Uid === uid) ||
-                   (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
-                   (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
-      if (isPart) { userMatches.push(mx); }
+      try {
+        var mx = docX.data() || {};
+        mx.docId = docX.id; 
+        var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
+                     (mx.p1Uid === uid || mx.p2Uid === uid) ||
+                     (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
+                     (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
+        if (isPart) { userMatches.push(mx); }
+      } catch(e) {} // Защита от битых карточек в базе
     });
 
-    // Сортируем матчи от новых к старым
-    userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+    // Безопасная сортировка
+    userMatches.sort(function(a, b) { 
+      var timeA = parseTime(a.timestamp) || 0;
+      var timeB = parseTime(b.timestamp) || 0;
+      return timeB - timeA; 
+    });
 
-    // Вычисляем дату последней игры и "умный" текст (Сегодня/Вчера)
+    // 2. ВЫЧИСЛЯЕМ ПОСЛЕДНЮЮ ИГРУ
     var lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
     if (userMatches.length > 0) {
-      var lastTs = parseTime(userMatches[0].timestamp);
-      var mDate = new Date(lastTs);
-      
-      var day = ('0' + mDate.getDate()).slice(-2);
-      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
-      var year = mDate.getFullYear();
-      
-      // Считаем разницу в днях, отбрасывая часы, чтобы расчет был точным
-      var today = new Date();
-      today.setHours(0,0,0,0);
-      var matchDay = new Date(lastTs);
-      matchDay.setHours(0,0,0,0);
-      var diffDays = Math.round((today - matchDay) / (1000 * 60 * 60 * 24));
-      
-      var daysText = "";
-      if (diffDays === 0) {
-        daysText = " (Сегодня)";
-      } else if (diffDays === 1) {
-        daysText = " (Вчера)";
-      } else {
-        // Если прошло больше 6 дней, подсвечиваем красным (предупреждение об Elo Decay)
-        var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
-        daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
+      try {
+        var lastTs = parseTime(userMatches[0].timestamp);
+        if (lastTs) {
+          var mDate = new Date(lastTs);
+          
+          var day = ('0' + mDate.getDate()).slice(-2);
+          var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+          var year = mDate.getFullYear();
+          
+          var today = new Date();
+          today.setHours(0,0,0,0);
+          var matchDay = new Date(lastTs);
+          matchDay.setHours(0,0,0,0);
+          
+          var diffDays = Math.round((today.getTime() - matchDay.getTime()) / (1000 * 60 * 60 * 24));
+          
+          var daysText = "";
+          if (diffDays === 0) {
+            daysText = " (Сегодня)";
+          } else if (diffDays === 1) {
+            daysText = " (Вчера)";
+          } else if (diffDays > 1) {
+            var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
+            daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
+          } else {
+            daysText = ""; // На случай если дата в будущем
+          }
+          
+          lastMatchStr = day + '.' + month + '.' + year + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
+        }
+      } catch (err) {
+        lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Неизвестно</span>';
       }
-      
-      lastMatchStr = day + '.' + month + '.' + year + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
     }
 
-    // 2. ГОТОВИМ ОСТАЛЬНЫЕ ДАННЫЕ
+    // 3. ГОТОВИМ ОСТАЛЬНЫЕ ДАННЫЕ
     var mins = (ld.exists && ld.data()) ? (ld.data().totalMinutes || 0) : 0;
     var wins = parseInt(u.wins, 10) || 0;
     var losses = parseInt(u.losses, 10) || 0;
@@ -546,13 +559,12 @@ function showUserInfoModal(uid) {
 
     var eloDisplay = parseInt(u.elo, 10) || 1000;
     
-    // 3. ОТРИСОВЫВАЕМ КАРТОЧКУ (Здесь добавлено поле "Последняя игра")
+    // 4. ОТРИСОВЫВАЕМ КАРТОЧКУ
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + getPlayerStatus(eloDisplay) + '</span></div>' +
       
-      // Наша новая строчка, визуально немного отделенная
       '<div style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--accent-sky);">' + lastMatchStr + '</span></div>' +
       
       '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
@@ -569,10 +581,18 @@ function showUserInfoModal(uid) {
       invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
     } else { invContainer.style.display = 'none'; }
 
-    // Отрисовываем историю (функция renderUserHistoryList остается без изменений)
-    renderUserHistoryList(userMatches, uid);
+    // Безопасно рендерим историю
+    try {
+      renderUserHistoryList(userMatches, uid);
+    } catch (e) {
+      document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка отображения истории</span>';
+    }
+
   }).catch(function(e) {
-    closeUserInfoModal();
+    // Если произошла глобальная ошибка, мы не блокируем интерфейс, а разрешаем его закрыть
+    document.getElementById('info-modal-title').innerHTML = "👤 Ошибка загрузки";
+    document.getElementById('info-modal-content-area').innerHTML = "Не удалось загрузить данные. Попробуйте позже.";
+    document.getElementById('info-modal-history').innerHTML = "";
   });
 }
 
