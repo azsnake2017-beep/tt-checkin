@@ -5,23 +5,33 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#0b1120" id="meta-theme-color">
   
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-touch-fullscreen" content="yes">
+  
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
-  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
+  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://telegram.org">
 
-  <!-- Стили приложения -->
   <link rel="stylesheet" href="style.css">
 
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  
-  <!-- Автономная локальная библиотека генерации QR-кодов (Работает без VPN) -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <!-- Асинхронная загрузка внешних SDK (не блокирует отрисовку сайта) -->
+  <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
+  <!-- Официальные сервера Google (gstatic) работают в России быстрее всего -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- Локальные модули приложения (загрузятся сразу после Firebase) -->
+  <script defer src="js/config.js"></script>
+  <script defer src="js/matches.js"></script>
+  <script defer src="js/radar.js"></script>
+  <script defer src="js/app.js"></script>
 </head>
 <body data-theme="dark">
 
@@ -62,12 +72,13 @@
     </div>
   </div>
 
+  <!-- ЭКРАН АВТОРИЗАЦИИ -->
   <div class="auth-overlay-card" id="mandatory-auth-screen">
     <h2>🔐 Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
     <div class="auth-methods-box">
-      <div id="telegram-login-container" style="min-height: 40px; display: flex; align-items: center; justify-content: center;"></div>
-      <button class="btn-auth-provider" onclick="loginWithGoogle()">
+      <div id="telegram-login-container" style="min-height: 44px; display: flex; align-items: center; justify-content: center; flex-direction: column; width: 100%;"></div>
+      <button class="btn-auth-provider" onclick="loginWithGoogle()" style="margin-top: 4px;">
         <span>🌐</span> Войти через Google
       </button>
       <div class="auth-vpn-note">
@@ -76,6 +87,7 @@
     </div>
   </div>
 
+  <!-- ЭКРАН 1: ПРОФИЛЬ -->
   <div id="view-profile" class="main-view active">
     <div class="profile-card">
       <div class="profile-top-row">
@@ -103,6 +115,7 @@
     </div>
   </div>
 
+  <!-- ЭКРАН 2: РАДАР -->
   <div id="view-radar" class="main-view">
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
@@ -156,12 +169,12 @@
     </div>
   </div>
 
+  <!-- ЭКРАН 3: РЕЙТИНГИ И ИСТОРИЯ МАТЧЕЙ -->
   <div id="view-ratings" class="main-view">
     <button class="btn-match-quick" onclick="handleMatchClick()" style="margin-top: 0;">
       <span>⚔️</span><span>Записать результат матча</span>
     </button>
     <div id="pending-matches-container"></div>
-    
     <div id="recent-matches-container"></div>
 
     <div class="tabs-container">
@@ -180,6 +193,7 @@
     </div>
   </div>
 
+  <!-- ЭКРАН 4: ТУРНИРЫ -->
   <div id="view-tournaments" class="main-view">
     <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
       <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
@@ -243,10 +257,7 @@
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
     <p style="font-size: 13px; color: var(--text-muted);" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
-    
-    <!-- Автономный контейнер для генерации QR-кода -->
-    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-block; margin: 0 auto;" id="qr-canvas-container"></div>
-    
+    <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-flex; justify-content: center; align-items: center; margin: 0 auto;" id="qr-canvas-container"></div>
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all;" id="qr-url-text"></div>
     <div style="display: flex; gap: 8px; margin-top: 4px;">
       <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
@@ -273,15 +284,11 @@
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 18px; color: var(--accent-amber);">📢 Анонс встречи клуба</h3>
-    
     <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Дата и время встречи:</div>
     <input type="text" id="announcement-date" class="input-name" placeholder="Например: Воскресенье, 17:00" />
-    
     <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Описание встречи / Условия:</div>
     <textarea id="announcement-textarea" class="textarea-announcement" placeholder="Формат турнира, лесенка, свободные столы..."></textarea>
-    
     <input type="hidden" id="announcement-target-loc" value="" />
-    
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 8px;" onclick="saveAnnouncement()">Опубликовать и отправить в чат</button>
     <button class="btn btn-leave" style="background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary);" onclick="deleteAnnouncement()">Удалить анонс</button>
     <button class="btn-cancel-modal" onclick="closeAnnouncementModal()">Отмена</button>
@@ -291,17 +298,14 @@
 <div class="modal-overlay" id="match-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 18px; color: var(--accent-purple);">⚔️ Запись матча</h3>
-    
     <div class="tabs-container" style="margin-bottom: 4px;">
       <button class="tab-btn active" id="btn-match-type-singles" onclick="setMatchModalType('singles')">👤 Одиночный (1x1)</button>
       <button class="tab-btn" id="btn-match-type-doubles" onclick="setMatchModalType('doubles')">👥 Парный (2x2)</button>
     </div>
-
     <div id="match-fields-singles" style="display: flex; flex-direction: column; gap: 6px;">
       <div style="font-size: 11px; text-align: left; color: var(--text-muted); font-weight: 700;">СОПЕРНИК:</div>
       <select id="match-opponent-select" class="input-select"></select>
     </div>
-
     <div id="match-fields-doubles" style="display: none; flex-direction: column; gap: 8px;">
       <div style="font-size: 11px; text-align: left; color: var(--accent-green); font-weight: 700;">ВАШ НАПАРНИК (КОМАНДА 1):</div>
       <select id="match-partner-select" class="input-select"></select>
@@ -309,7 +313,6 @@
       <select id="match-opp1-select" class="input-select"></select>
       <select id="match-opp2-select" class="input-select"></select>
     </div>
-
     <div style="font-size: 11px; text-align: left; color: var(--text-muted); font-weight: 700; margin-top: 4px;">ИТОГОВЫЙ СЧЁТ:</div>
     <div class="score-picker">
       <button class="score-btn reg-score-btn active" onclick="selectScore(3, 0)">3 : 0</button>
@@ -403,12 +406,6 @@
     <button class="btn-cancel-modal" onclick="closeTourMatchModal()">Отмена</button>
   </div>
 </div>
-
-<!-- ПОДКЛЮЧЕНИЕ МОДУЛЕЙ -->
-<script src="js/config.js"></script>
-<script src="js/matches.js"></script>
-<script src="js/radar.js"></script>
-<script src="js/app.js"></script>
 
 </body>
 </html>
