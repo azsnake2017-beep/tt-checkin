@@ -1,141 +1,4 @@
-// js/app.js — Авторизация, турниры и точка старта приложения
-
-function isUserVerified() {
-  var tgUser = null;
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-      tgUser = window.Telegram.WebApp.initDataUnsafe.user;
-  }
-  var tgId = tgUser ? tgUser.id : null;
-  var localId = localStorage.getItem('tt_member_id');
-  var localMatch = false;
-  if (localId && (localId.indexOf('tg_') === 0 || localId.indexOf('google_') === 0)) { localMatch = true; }
-  return !!(tgId || localMatch);
-}
-
-function getVerifiedUserId() {
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-      if (window.Telegram.WebApp.initDataUnsafe.user.id) {
-          return 'tg_' + window.Telegram.WebApp.initDataUnsafe.user.id;
-      }
-  }
-  var id = localStorage.getItem('tt_member_id');
-  if (id && (id.indexOf('tg_') === 0 || id.indexOf('google_') === 0)) return id;
-  return null;
-}
-
-function isSuperAdmin() {
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initDataUnsafe && window.Telegram.WebApp.initDataUnsafe.user) {
-      if (window.Telegram.WebApp.initDataUnsafe.user.username && window.Telegram.WebApp.initDataUnsafe.user.username.toLowerCase() === 'azsnake') {
-          return true;
-      }
-  }
-  var uid = getVerifiedUserId();
-  return uid ? (ADMIN_UIDS.indexOf(uid) !== -1) : false;
-}
-
-window.onTelegramAuth = function(user) {
-  var uid = 'tg_' + user.id; 
-  var defaultName = (user.first_name + (user.last_name ? ' ' + user.last_name : '')).trim() || user.username || "Игрок";
-  var savedId = localStorage.getItem('tt_member_id');
-  var savedName = localStorage.getItem('tt_name');
-  var uiName = (savedId === uid && savedName) ? savedName : defaultName;
-  
-  localStorage.setItem('tt_member_id', uid);
-  
-  currentUserProfile = { uid: uid, name: uiName, elo: 1000, isVerified: true, totalMinutes: currentUserProfile.totalMinutes || 0 };
-  var authScreen = document.getElementById('mandatory-auth-screen');
-  if (authScreen) authScreen.style.display = 'none';
-  subscribeToUserLeaderboard(uid);
-  updateProfileDisplay();
-  renderAll();
-
-  syncUserProfile(uid, defaultName, 'tg');
-};
-
-function loginWithGoogle() {
-  firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider()).then(function(res) {
-    if (res && res.user) {
-      var uid = 'google_' + res.user.uid; 
-      var defaultName = res.user.displayName || res.user.email.split('@')[0];
-      var savedId = localStorage.getItem('tt_member_id');
-      var savedName = localStorage.getItem('tt_name');
-      var uiName = (savedId === uid && savedName) ? savedName : defaultName;
-      
-      localStorage.setItem('tt_member_id', uid);
-      
-      currentUserProfile = { uid: uid, name: uiName, elo: 1000, isVerified: true, totalMinutes: currentUserProfile.totalMinutes || 0 };
-      var authScreen = document.getElementById('mandatory-auth-screen');
-      if (authScreen) authScreen.style.display = 'none';
-      subscribeToUserLeaderboard(uid);
-      updateProfileDisplay();
-      renderAll();
-
-      syncUserProfile(uid, defaultName, 'google');
-    }
-  }).catch(function(e) { customAlert("Ошибка входа: " + e.message); });
-}
-
-function logoutProfile() {
-  firebase.auth().signOut().then(function(){}).catch(function(){});
-  localStorage.removeItem('tt_member_id'); 
-  localStorage.removeItem('tt_name');
-  window.location.reload();
-}
-
-function subscribeToUserLeaderboard(uid) {
-  if (!uid) return;
-  if (currentUserLeaderboardUnsubscribe) currentUserLeaderboardUnsubscribe();
-  currentUserLeaderboardUnsubscribe = db.collection('leaderboard').doc(uid).onSnapshot(function(doc) {
-      if (doc.exists && doc.data()) {
-        currentUserProfile.totalMinutes = doc.data().totalMinutes || 0;
-      } else {
-        currentUserProfile.totalMinutes = 0;
-      }
-      updateProfileDisplay();
-  }, function(err) {});
-}
-
-function syncUserProfile(uid, defaultName, platform) {
-  var ref = db.collection('users').doc(uid);
-  ref.get().then(function(snap) {
-    if (!snap.exists) {
-      var userData = { 
-        uid: uid, name: defaultName, platform: platform, 
-        elo: 1000, matches: 0, wins: 0, losses: 0, winStreak: 0, lastEloDelta: 0, 
-        tournamentsPlayed: 0, medals: {gold:0, silver:0, bronze:0}, 
-        isVerified: true, createdAt: Date.now() 
-      };
-      ref.set(userData).then(function() {
-          db.collection('users').get().then(function(usersSnap) { 
-              sendTelegramAlert("🎉 <b>Новое пополнение в клубе!</b>\n\nВ приложении зарегистрировался новый участник: <b>" + cleanHtml(defaultName) + "</b>\n\n📈 Теперь нас в рейтинге: <b>" + usersSnap.size + "</b> человек!"); 
-          }).catch(function(){});
-      });
-      finishSync(uid, userData);
-    } else { 
-        var snapData = snap.data() || {};
-        var currentTm = currentUserProfile.totalMinutes || 0;
-        for (var k in snapData) { currentUserProfile[k] = snapData[k]; }
-        currentUserProfile.totalMinutes = currentTm;
-        finishSync(uid, currentUserProfile);
-    }
-  }).catch(function(e) {
-    finishSync(uid, currentUserProfile);
-  });
-}
-
-function finishSync(uid, userData) {
-    var tm = currentUserProfile.totalMinutes || 0;
-    for (var k in userData) { currentUserProfile[k] = userData[k]; }
-    currentUserProfile.totalMinutes = tm;
-    
-    var authScreen = document.getElementById('mandatory-auth-screen');
-    if (authScreen) authScreen.style.display = 'none';
-    
-    subscribeToUserLeaderboard(uid); 
-    updateProfileDisplay();
-    if (currentUserProfile.name) localStorage.setItem('tt_name', currentUserProfile.name); 
-    renderAll();
-}
+// js/app.js — Управление профилем, турниры, анонсы встреч и запуск
 
 function initUserProfile() {
   var authScreen = document.getElementById('mandatory-auth-screen');
@@ -221,7 +84,8 @@ function showAuthRequired(authScreen) {
 
 function updateProfileDisplay() {
   if (!currentUserProfile.uid) return;
-  var adminTag = isSuperAdmin() ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
+  var isAdmin = isSuperAdmin();
+  var adminTag = isAdmin ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
   var customBadge = getCustomBadge(currentUserProfile.uid);
   var elo = parseInt(currentUserProfile.elo, 10) || 1000;
 
@@ -263,7 +127,15 @@ function updateProfileDisplay() {
     } else { invContainer.style.display = 'none'; }
   }
 
-  var btnAddTour = document.getElementById('btn-add-tournament'); if (btnAddTour) btnAddTour.style.display = isSuperAdmin() ? 'block' : 'none';
+  var btnAddTour = document.getElementById('btn-add-tournament'); 
+  if (btnAddTour) btnAddTour.style.display = isAdmin ? 'block' : 'none';
+  
+  var btnEditAnnPark = document.getElementById('btn-edit-announcement-park');
+  if (btnEditAnnPark) btnEditAnnPark.style.display = isAdmin ? 'block' : 'none';
+  
+  var btnEditAnnVostok = document.getElementById('btn-edit-announcement-vostok');
+  if (btnEditAnnVostok) btnEditAnnVostok.style.display = isAdmin ? 'block' : 'none';
+
   var bEdit = document.getElementById('btn-edit-profile'); if (bEdit) bEdit.style.display = 'block';
   var bLogout = document.getElementById('btn-logout'); if (bLogout) bLogout.style.display = 'block';
 }
@@ -381,22 +253,64 @@ function sendClubStatsBroadcast() {
   });
 }
 
-function openAnnouncementModal(loc) { if(!isSuperAdmin()) return; document.getElementById('announcement-target-loc').value = loc; document.getElementById('announcement-textarea').value = announcementsData[loc] || ''; document.getElementById('announcement-modal').style.display = 'flex'; }
-function closeAnnouncementModal() { document.getElementById('announcement-modal').style.display = 'none'; }
-function saveAnnouncement() { 
-    var loc = document.getElementById('announcement-target-loc').value, txt = document.getElementById('announcement-textarea').value.trim(); 
-    var obj = {}; obj[loc] = txt;
-    db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
-        closeAnnouncementModal(); if(txt) sendTelegramAlert("📢 <b>Обновление информации " + LOCATION_NAMES[loc] + "</b>\n\n" + cleanHtml(txt));
-    });
+// --- УПРАВЛЕНИЕ АНОНСАМИ С ДАТОЙ И ОПИСАНИЕМ ---
+function openAnnouncementModal(loc) { 
+  if(!isSuperAdmin()) return; 
+  document.getElementById('announcement-target-loc').value = loc; 
+  
+  var aData = announcementsData[loc];
+  var dateInput = document.getElementById('announcement-date');
+  var descInput = document.getElementById('announcement-textarea');
+
+  if (aData && typeof aData === 'object') {
+      dateInput.value = aData.date || '';
+      descInput.value = aData.desc || '';
+  } else {
+      dateInput.value = '';
+      descInput.value = aData || '';
+  }
+  
+  document.getElementById('announcement-modal').style.display = 'flex'; 
 }
+
+function closeAnnouncementModal() { 
+  document.getElementById('announcement-modal').style.display = 'none'; 
+}
+
+function saveAnnouncement() { 
+  var loc = document.getElementById('announcement-target-loc').value;
+  var dateStr = document.getElementById('announcement-date').value.trim();
+  var descStr = document.getElementById('announcement-textarea').value.trim();
+  
+  if (!dateStr && !descStr) return deleteAnnouncement();
+
+  var obj = {}; 
+  obj[loc] = { date: dateStr, desc: descStr };
+  
+  db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
+      closeAnnouncementModal(); 
+      
+      var locNameStr = loc === 'park' ? 'Парке им. Тищенко 🌳' : 'ДК «Восток» 🏛';
+      var tgText = "📢 <b>АНОНС ВСТРЕЧИ КЛУБА!</b>\n\n📍 Место: <b>" + locNameStr + "</b>\n";
+      
+      if (dateStr) tgText += "🗓 <b>Дата и время:</b> " + cleanHtml(dateStr) + "\n";
+      if (descStr) tgText += "\n📝 " + cleanHtml(descStr) + "\n";
+      
+      tgText += "\n<i>Заходите в приложение, чтобы спланировать визит и занять стол!</i> 🏓";
+      
+      sendTelegramAlert(tgText);
+  });
+}
+
 function deleteAnnouncement() { 
-    if(!isSuperAdmin()) return; 
-    var loc = document.getElementById('announcement-target-loc').value; 
-    var obj = {}; obj[loc] = "";
-    db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
-        closeAnnouncementModal(); customAlert("✅ Анонс удален");
-    });
+  if(!isSuperAdmin()) return; 
+  var loc = document.getElementById('announcement-target-loc').value; 
+  var obj = {}; obj[loc] = null;
+  
+  db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
+      closeAnnouncementModal(); 
+      customAlert("✅ Анонс успешно удален");
+  });
 }
 
 function showUserInfoModal(uid) {
@@ -562,7 +476,7 @@ function toggleTourReaction(id, type) {
       return t.get(ref).then(function(doc) {
           if (!doc.exists) return; var data = doc.data(), likes = data.likes || [], dislikes = data.dislikes || [];
           if (type === 'like') { if (likes.indexOf(uid) !== -1) { likes = likes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); dislikes = dislikes.filter(function(u) { return u !== uid; }); } } 
-          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { dislikes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
+          else { if (dislikes.indexOf(uid) !== -1) { dislikes = dislikes.filter(function(u) { return u !== uid; }); } else { likes.push(uid); likes = likes.filter(function(u) { return u !== uid; }); } }
           t.update(ref, { likes: likes, dislikes: dislikes });
       });
   }).catch(function(e) {});
@@ -580,6 +494,7 @@ function joinTournament(id, title) {
       });
   }).then(function() { if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert("🏆 Игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> зарегистрировался на турнир <b>" + title + "</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!"); } }).catch(function(e) {});
 }
+
 function leaveTournament(id) {
   var uid = getVerifiedUserId(); if (!uid) return;
   var ref = db.collection('tournaments').doc(id);
@@ -887,6 +802,7 @@ function listenTournaments() {
 function listenRatings() {
   db.collection('users').onSnapshot(function(snap) {
     var listEl = document.getElementById('rating-list');
+    if (!listEl) return;
     if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
     
     var users = [];
@@ -933,6 +849,7 @@ function listenRatings() {
 function listenLeaderboard() {
   db.collection('leaderboard').onSnapshot(function(snap) {
     var listEl = document.getElementById('leaderboard-list');
+    if (!listEl) return;
     if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
     
     var items = [];
@@ -960,7 +877,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 
-// ГЛАВНЫЙ СТАРТ ПРИЛОЖЕНИЯ (ПОСЛЕ ПОЛНОЙ ГОТОВНОСТИ DOM)
+// ТОЧКА ВХОДА (ПОСЛЕ ПОЛНОЙ ГОТОВНОСТИ DOM)
 document.addEventListener('DOMContentLoaded', function() {
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
@@ -992,97 +909,6 @@ document.addEventListener('DOMContentLoaded', function() {
   try {
     db.collection('settings').doc('announcements').onSnapshot(function(doc) {
       try {
-        announcementsData = doc.data() || {park:"", vostok:""};
-        ['park','vostok'].forEach(function(loc) {
-          var b = document.getElementById('announcement-box-'+loc), t = document.getElementById('announcement-text-'+loc);
-          if(b && t) { 
-              if(announcementsData[loc]) { 
-                  t.innerHTML = cleanHtml(announcementsData[loc]).replace(/\n/g,'<br>'); b.style.display = 'flex'; 
-              } else { b.style.display = 'none'; } 
-          }
-        });
-      } catch(e) {}
-    }, function(err) {});
-  } catch(e) {}
-
-  setInterval(renderAll, 30000); 
-  setInterval(monitorSessions, 60000); 
-  setInterval(loadParkWeather, 600000); 
-});
-
-// --- ОБНОВЛЁННАЯ ЛОГИКА АНОНСОВ ВСТРЕЧ (С ДАТОЙ И ФИРМЕННЫМ СТИЛЕМ) ---
-
-function openAnnouncementModal(loc) { 
-  if(!isSuperAdmin()) return; 
-  document.getElementById('announcement-target-loc').value = loc; 
-  
-  var aData = announcementsData[loc];
-  var dateInput = document.getElementById('announcement-date');
-  var descInput = document.getElementById('announcement-textarea');
-
-  if (aData && typeof aData === 'object') {
-      dateInput.value = aData.date || '';
-      descInput.value = aData.desc || '';
-  } else {
-      dateInput.value = '';
-      descInput.value = aData || ''; // Обратная совместимость со старыми текстовыми анонсами
-  }
-  
-  document.getElementById('announcement-modal').style.display = 'flex'; 
-}
-
-function closeAnnouncementModal() { 
-  document.getElementById('announcement-modal').style.display = 'none'; 
-}
-
-function saveAnnouncement() { 
-  var loc = document.getElementById('announcement-target-loc').value;
-  var dateStr = document.getElementById('announcement-date').value.trim();
-  var descStr = document.getElementById('announcement-textarea').value.trim();
-  
-  // Если всё пусто — значит администратор хочет удалить анонс
-  if (!dateStr && !descStr) return deleteAnnouncement();
-
-  var obj = {}; 
-  obj[loc] = { date: dateStr, desc: descStr }; // Сохраняем как структуру
-  
-  db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
-      closeAnnouncementModal(); 
-      
-      // Формируем красивое фирменное сообщение для бота
-      var locNameStr = loc === 'park' ? 'Парке им. Тищенко 🌳' : 'ДК «Восток» 🏛';
-      var tgText = "📢 <b>АНОНС ВСТРЕЧИ!</b>\n\n📍 Место: <b>" + locNameStr + "</b>\n";
-      
-      if (dateStr) tgText += "🗓 Время: <b>" + dateStr + "</b>\n";
-      if (descStr) tgText += "\n📝 " + descStr + "\n";
-      
-      tgText += "\n<i>Записывайтесь в приложении (кнопка «Буду позже»), чтобы мы понимали количество игроков!</i> 👇";
-      
-      sendTelegramAlert(tgText);
-  });
-}
-
-function deleteAnnouncement() { 
-  if(!isSuperAdmin()) return; 
-  var loc = document.getElementById('announcement-target-loc').value; 
-  var obj = {}; obj[loc] = null; // Удаляем объект из базы
-  
-  db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
-      closeAnnouncementModal(); 
-      customAlert("✅ Анонс успешно удален");
-  });
-}
-
-// --- ОБНОВЛЁННЫЙ СЛУШАТЕЛЬ ДАННЫХ ДЛЯ ОТОБРАЖЕНИЯ АНОНСОВ ---
-// Эта часть должна заменить вызов db.collection('settings').doc('announcements') 
-// внутри document.addEventListener('DOMContentLoaded', ...) в файле app.js
-
-document.addEventListener('DOMContentLoaded', function() {
-  // ... ваш остальной код инициализации профиля и базы ...
-
-  try {
-    db.collection('settings').doc('announcements').onSnapshot(function(doc) {
-      try {
         announcementsData = doc.data() || { park: null, vostok: null };
         ['park','vostok'].forEach(function(loc) {
           var badgeBox = document.getElementById('announcement-box-' + loc);
@@ -1097,7 +923,6 @@ document.addEventListener('DOMContentLoaded', function() {
                       if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
                       textBox.innerHTML = resHtml;
                   } else {
-                      // Старый формат (просто строка)
                       textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); 
                   }
                   badgeBox.style.display = 'flex'; 
@@ -1106,8 +931,11 @@ document.addEventListener('DOMContentLoaded', function() {
               } 
           }
         });
-      } catch(e) { console.error(e); }
+      } catch(e) {}
     }, function(err) {});
   } catch(e) {}
 
+  setInterval(renderAll, 30000); 
+  setInterval(monitorSessions, 60000); 
+  setInterval(loadParkWeather, 600000); 
 });
