@@ -152,6 +152,11 @@ function switchNavTab(tabId) {
   if(navEl) navEl.classList.add('active');
   window.scrollTo(0, 0); 
   localStorage.setItem('tt_active_tab', tabId);
+  
+  // При переходе на экран радара гарантированно обновляем видимость админских кнопок
+  if (tabId === 'radar' && typeof updateAdminControls === 'function') {
+    updateAdminControls();
+  }
 }
 function initNavTab() {
   var savedTab = localStorage.getItem('tt_active_tab') || 'profile';
