@@ -529,6 +529,78 @@ function showUserInfoModal(uid) {
           }
           lastMatchStr = day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
         }
+function showUserInfoModal(uid) {
+  if (!uid) return;
+  document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
+  document.getElementById('info-modal-content-area').innerHTML = "Загрузка данных профиля...";
+  document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
+  
+  var modal = document.getElementById('user-info-modal');
+  if (modal) modal.style.display = 'flex';
+  
+  Promise.all([
+    db.collection('users').doc(uid).get(),
+    db.collection('leaderboard').doc(uid).get(),
+    db.collection('matches_history').get()
+  ]).then(function(docs) {
+    var d = docs[0], ld = docs[1], allMatchesSnap = docs[2];
+    if (!d.exists) { 
+      if (modal) modal.style.display = 'none'; 
+      return; 
+    }
+
+    var u = d.data() || {};
+    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
+    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
+    
+    var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
+    
+    // Сбор всех матчей пользователя
+    var userMatches = [];
+    allMatchesSnap.forEach(function(docX) {
+      try {
+        var mx = docX.data() || {};
+        mx.docId = docX.id; 
+        var isPart = (mx.participants && mx.participants.indexOf(uid) !== -1) || 
+                     (mx.p1Uid === uid || mx.p2Uid === uid) ||
+                     (mx.proposerUid === uid || mx.opponentUid === uid) ||
+                     (mx.winnerUid === uid || mx.loserUid === uid) ||
+                     (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) ||
+                     (mx.team2Uids && mx.team2Uids.indexOf(uid) !== -1);
+        if (isPart) { userMatches.push(mx); }
+      } catch(err) {}
+    });
+
+    userMatches.sort(function(a, b) { 
+      var timeA = typeof parseTime === 'function' ? parseTime(a.timestamp) : (Number(a.timestamp) || 0);
+      var timeB = typeof parseTime === 'function' ? parseTime(b.timestamp) : (Number(b.timestamp) || 0);
+      return timeB - timeA; 
+    });
+
+    // Расчет даты последней игры
+    var lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+    if (userMatches.length > 0) {
+      try {
+        var lastTs = typeof parseTime === 'function' ? parseTime(userMatches[0].timestamp) : Number(userMatches[0].timestamp);
+        if (lastTs) {
+          var mDate = new Date(lastTs);
+          var day = ('0' + mDate.getDate()).slice(-2);
+          var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+          
+          var today = new Date(); today.setHours(0,0,0,0);
+          var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
+          var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+          
+          var daysText = "";
+          if (diffDays === 0) daysText = " (Сегодня)";
+          else if (diffDays === 1) daysText = " (Вчера)";
+          else if (diffDays > 1) {
+            var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
+            daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
+          }
+          lastMatchStr = day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span>';
+        }
       } catch(err) {}
     }
 
@@ -541,8 +613,16 @@ function showUserInfoModal(uid) {
     var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
     var eloDisplay = parseInt(u.elo, 10) || 1000;
+
+    var mContainer = document.getElementById('info-modal-medals');
+    if (mContainer) {
+      var m = u.medals || { gold:0, silver:0, bronze:0 };
+      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
+        mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
+        mContainer.style.display = 'flex';
+      } else { mContainer.style.display = 'none'; }
+    }
     
-    // 3. Вывод данных профиля
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
@@ -551,65 +631,76 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins + ' м') + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
-    
-    // 4. Отрисовка списка матчей с поддержкой всех форматов БД и кнопкой корзины для админа
-    var historyContainer = document.getElementById('info-modal-history');
-    if (userMatches.length === 0) {
-      historyContainer.innerHTML = '<span class="empty-note">Матчей пока нет</span>';
-      return;
+
+    var invContainer = document.getElementById('info-modal-inventory');
+    if (invContainer) {
+      if (u.blade || u.rubberL || u.rubberR) {
+        var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
+        if (u.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+        if (u.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+        if (u.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+        invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
+      } else { invContainer.style.display = 'none'; }
     }
 
-    var hHtml = '';
-    userMatches.forEach(function(m) {
-      var dateStr = '';
-      var ts = typeof parseTime === 'function' ? parseTime(m.timestamp) : Number(m.timestamp);
-      if (ts) {
-        var dt = new Date(ts);
-        dateStr = ('0' + dt.getDate()).slice(-2) + '.' + ('0' + (dt.getMonth() + 1)).slice(-2);
-      }
-
-      var isDoubles = (m.type === 'doubles');
-      var lineText = '';
-
-      if (isDoubles) {
-        var sT1 = (m.scoreTeam1 !== undefined) ? m.scoreTeam1 : (m.score1 || 0);
-        var sT2 = (m.scoreTeam2 !== undefined) ? m.scoreTeam2 : (m.score2 || 0);
-        lineText = '👥 Парный матч: <b>' + sT1 + ' : ' + sT2 + '</b>';
+    // Изолированная отрисовка истории
+    try {
+      if (typeof renderUserHistoryList === 'function') {
+        renderUserHistoryList(userMatches, uid);
       } else {
-        // Одиночный матч: проверяем и p1/p2, и proposer/opponent
-        var isP1 = (m.p1Uid === uid || m.proposerUid === uid);
-        var myScore = isP1 ? (m.score1 !== undefined ? m.score1 : m.scoreProposer) : (m.score2 !== undefined ? m.score2 : m.scoreOpponent);
-        var oppScore = isP1 ? (m.score2 !== undefined ? m.score2 : m.scoreOpponent) : (m.score1 !== undefined ? m.score1 : m.scoreProposer);
-        var oppName = isP1 ? (m.p2Name || m.opponentName) : (m.p1Name || m.proposerName);
-
-        myScore = Number(myScore) || 0;
-        oppScore = Number(oppScore) || 0;
-        var isWin = myScore > oppScore;
-
-        var badge = isWin 
-          ? '<span style="color:#059669; font-weight:700;">▲ В</span>' 
-          : '<span style="color:#94a3b8; font-weight:700;">▼ П</span>';
-
-        lineText = badge + ' <b>' + myScore + ':' + oppScore + '</b> против ' + cleanHtml(oppName || 'Соперник');
+        throw new Error("renderUserHistoryList is undefined");
       }
+    } catch(errRender) {
+      var histEl = document.getElementById('info-modal-history');
+      if (userMatches.length === 0) {
+        histEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>';
+      } else {
+        var hHtml = '';
+        userMatches.forEach(function(m) {
+          var dateStr = '';
+          var ts = typeof parseTime === 'function' ? parseTime(m.timestamp) : Number(m.timestamp);
+          if (ts) {
+            var dt = new Date(ts);
+            dateStr = ('0' + dt.getDate()).slice(-2) + '.' + ('0' + (dt.getMonth() + 1)).slice(-2);
+          }
+          var isDoubles = (m.type === 'doubles');
+          var lineText = '';
 
-      var delBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && m.docId)
-        ? '<button onclick="deleteHistoryMatch(\'' + m.docId + '\', \'' + uid + '\')" style="background:none; border:none; color:var(--accent-red); cursor:pointer; font-size:12px; padding:0 4px;" title="Удалить матч">🗑️</button>'
-        : '';
+          if (isDoubles) {
+            var s1 = m.scoreTeam1 != null ? m.scoreTeam1 : (m.score1 != null ? m.score1 : 0);
+            var s2 = m.scoreTeam2 != null ? m.scoreTeam2 : (m.score2 != null ? m.score2 : 0);
+            lineText = '👥 Парный матч: <b>' + s1 + ':' + s2 + '</b>';
+          } else {
+            var isP1 = (m.p1Uid === uid || m.proposerUid === uid || m.winnerUid === uid);
+            var sA = m.score1 != null ? m.score1 : (m.p1Score != null ? m.p1Score : (m.scoreProposer != null ? m.scoreProposer : m.winnerScore));
+            var sB = m.score2 != null ? m.score2 : (m.p2Score != null ? m.p2Score : (m.scoreOpponent != null ? m.scoreOpponent : m.loserScore));
+            var myScore = isP1 ? sA : sB;
+            var oppScore = isP1 ? sB : sA;
+            var oppName = isP1 ? (m.p2Name || m.opponentName || m.loserName) : (m.p1Name || m.proposerName || m.winnerName);
 
-      hHtml += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:4px;">' +
-                 '<div style="display:flex; align-items:center; gap:6px;">' + lineText + '</div>' +
-                 '<div style="display:flex; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-size:11px;">' + dateStr + '</span>' + delBtn + '</div>' +
-               '</div>';
-    });
+            var win = Number(myScore) > Number(oppScore);
+            var badge = win ? '<span style="color:#059669; font-weight:700;">▲ В</span>' : '<span style="color:#94a3b8; font-weight:700;">▼ П</span>';
+            lineText = badge + ' <b>' + (myScore || 0) + ':' + (oppScore || 0) + '</b> против ' + cleanHtml(oppName || 'Соперник');
+          }
 
-    historyContainer.innerHTML = hHtml;
+          var delBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && m.docId)
+            ? '<button onclick="deleteHistoryMatch(\'' + m.docId + '\', \'' + uid + '\')" style="background:none; border:none; color:var(--accent-red); cursor:pointer; font-size:12px; padding:0 4px;" title="Удалить матч">🗑️</button>'
+            : '';
+
+          hHtml += '<div style="display:flex; justify-content:space-between; align-items:center; font-size:12px; padding:8px 10px; background:rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.05); border-radius:8px; margin-bottom:4px;">' +
+                     '<div style="display:flex; align-items:center; gap:6px;">' + lineText + '</div>' +
+                     '<div style="display:flex; align-items:center; gap:8px;"><span style="color:var(--text-muted); font-size:11px;">' + dateStr + '</span>' + delBtn + '</div>' +
+                   '</div>';
+        });
+        histEl.innerHTML = hHtml;
+      }
+    }
+
   }).catch(function(e) {
-    document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки</span>';
+    var histEl = document.getElementById('info-modal-history');
+    if (histEl) histEl.innerHTML = '<span class="empty-note">Не удалось загрузить данные</span>';
   });
 }
-
-
 
 
 function openTournamentModal(tourId) { 
