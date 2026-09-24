@@ -554,30 +554,48 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
 
-    // Фоновая загрузка истории
-    db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(snaps) {
+   // --- ФОНОВАЯ ЗАГРУЗКА ИСТОРИИ С DOCID ДЛЯ УДАЛЕНИЯ ---
+    db.collection('matches_history').get().then(function(allSnaps) {
         var matches = [];
-        snaps.forEach(function(docX) { matches.push(docX.data()); });
-        processMatchesData(matches, uid);
-    }).catch(function() {
-        db.collection('matches_history').get().then(function(allSnaps) {
-            var matches = [];
-            allSnaps.forEach(function(docX) {
-              var mx = docX.data();
-              if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) matches.push(mx);
-            });
-            processMatchesData(matches, uid);
-        }).catch(function() {
-            document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Матчи не найдены</span>';
-            var dynRow = document.getElementById('dynamic-last-match-date');
-            if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
+        allSnaps.forEach(function(docX) {
+          var mx = docX.data();
+          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) {
+            mx.docId = docX.id; // <--- ДОБАВЬТЕ ЭТУ СТРОКУ СЮДА
+            matches.push(mx);
+          }
         });
-    });
 
-  }).catch(function(e) {
-    closeUserInfoModal();
-  });
-}
+        var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+        if (matches.length > 0) {
+          matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+          try {
+            var lastTs = parseTime(matches[0].timestamp);
+            if (lastTs) {
+              var mDate = new Date(lastTs);
+              var day = ('0' + mDate.getDate()).slice(-2);
+              var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+              
+              var today = new Date(); today.setHours(0,0,0,0);
+              var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
+              var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+              
+              var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (<span style="' + (diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);') + '">' + diffDays + ' дн. назад</span>)';
+              lastMatchStr = '<span style="font-weight: 600; color: var(--accent-sky);">' + day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span></span>';
+            }
+          } catch(e) {}
+        }
+        
+        var dynRow = document.getElementById('dynamic-last-match-date');
+        if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
+
+        if (typeof renderUserHistoryList === 'function') {
+            renderUserHistoryList(matches, uid);
+        }
+    }).catch(function(err) {
+        document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
+        var dynRow = document.getElementById('dynamic-last-match-date');
+        if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
+    });
 
 // Вспомогательная функция для истории
 function processMatchesData(matches, uid) {
