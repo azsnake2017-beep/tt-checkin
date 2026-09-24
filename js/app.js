@@ -451,14 +451,13 @@ function deleteAnnouncement() {
   });
 }
 
-// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ПЛАВНЫМ СКРОЛЛОМ ---
+// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
 function showUserInfoModal(uid) {
   if(!uid) return;
   document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
   document.getElementById('info-modal-content-area').innerHTML = "Загрузка данных профиля...";
   document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
   
-  // Кэшируем и скрываем внешние блоки до загрузки
   var mMedals = document.getElementById('info-modal-medals');
   if(mMedals) mMedals.style.display = 'none';
   
@@ -468,8 +467,14 @@ function showUserInfoModal(uid) {
   var modal = document.getElementById('user-info-modal');
   if (modal) modal.style.display = 'flex';
   
+  // КРИТИЧЕСКИЙ ФИКС: Запрашиваем свежие данные строго с сервера, чтобы инвентарь был актуальным
+  var userPromise = db.collection('users').doc(uid).get({ source: 'server' }).catch(function() {
+      // Фолбэк на кэш только если пропал интернет
+      return db.collection('users').doc(uid).get(); 
+  });
+
   Promise.all([
-    db.collection('users').doc(uid).get(),
+    userPromise,
     db.collection('leaderboard').doc(uid).get(),
     db.collection('matches_history').get()
   ]).then(function(docs) {
@@ -541,7 +546,6 @@ function showUserInfoModal(uid) {
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
     var eloDisplay = parseInt(u.elo, 10) || 1000;
     
-    // --- ОТРИСОВКА МЕДАЛЕЙ ---
     if (mMedals) {
       var m = u.medals || { gold:0, silver:0, bronze:0 };
       if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
@@ -550,8 +554,38 @@ function showUserInfoModal(uid) {
       } else { mMedals.style.display = 'none'; }
     }
     
-    // Отрисовываем карточку
-    document.getElementById('info-modal-content-area').innerHTML = uidHtml +
+    // --- ГАРАНТИРОВАННАЯ ОТРИСОВКА ИНВЕНТАРЯ ---
+    var invHtml = '';
+    var hasInventory = u.blade || u.rubberL || u.rubberR;
+    
+    if (hasInventory) {
+      invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
+      
+      if (typeof getInventoryRowHtml === 'function') {
+        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки');
+        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки');
+        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки');
+      } else {
+        // Защита, если ваша функция красивого вывода почему-то не подгрузилась
+        if (u.blade) invHtml += '<div style="font-size: 12px; margin-top:4px;">🏓 Основание: <b>' + cleanHtml(u.blade) + '</b></div>';
+        if (u.rubberL) invHtml += '<div style="font-size: 12px; margin-top:4px;">🔴 Накладка L: <b>' + cleanHtml(u.rubberL) + '</b></div>';
+        if (u.rubberR) invHtml += '<div style="font-size: 12px; margin-top:4px;">⚫ Накладка R: <b>' + cleanHtml(u.rubberR) + '</b></div>';
+      }
+    }
+
+    var inventoryInjected = false;
+    if (mInv) {
+      if (hasInventory) {
+        mInv.innerHTML = invHtml; 
+        mInv.className = 'inventory-box'; 
+        mInv.style.display = 'flex';
+      } else { 
+        mInv.style.display = 'none'; 
+      }
+      inventoryInjected = true;
+    }
+    
+    var contentHtml = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
@@ -560,22 +594,14 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
     
-    // --- ОТРИСОВКА РАКЕТКИ (ВОССТАНОВЛЕНА) ---
-    if (mInv) {
-      if (u.blade || u.rubberL || u.rubberR) {
-        var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-        if (u.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        mInv.innerHTML = invHtml; 
-        mInv.className = 'inventory-box'; 
-        mInv.style.display = 'flex';
-      } else { 
-        mInv.style.display = 'none'; 
-      }
+    // Если контейнер mInv случайно удалился из HTML, рисуем ракетку прямо внутри основного синего блока
+    if (!inventoryInjected && hasInventory) {
+        contentHtml += '<div class="inventory-box" style="display: flex; margin-top: 8px;">' + invHtml + '</div>';
     }
 
-    // Родная функция отрисовки истории со всеми вашими стилями и корзиной (защищена от падений)
+    document.getElementById('info-modal-content-area').innerHTML = contentHtml;
+    
+    // Родная функция отрисовки истории со всеми вашими стилями и корзиной
     try {
       renderUserHistoryList(userMatches, uid);
     } catch(err) {
@@ -583,11 +609,7 @@ function showUserInfoModal(uid) {
     }
 
   }).catch(function(e) {
-    // Не ломаем имя в заголовке в случае ошибки!
-    var histEl = document.getElementById('info-modal-history');
-    if (histEl) {
-        histEl.innerHTML = '<span class="empty-note">Ошибка загрузки профиля</span>';
-    }
+    document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Ошибка загрузки профиля</span>';
   });
 }
 
