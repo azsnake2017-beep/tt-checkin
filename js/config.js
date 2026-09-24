@@ -244,6 +244,10 @@ try {
   db.settings({ experimentalForceLongPolling: true });
 } catch(e) {}
 
+// Глобальная память для анти-спам фильтра
+window.recentTgAlerts = {};
+window.lastTableAlertTime = 0;
+
 function canSendTgAlert(actionType) {
   var now = Date.now();
   var lastTime = localStorage.getItem('tt_last_alert_' + actionType);
@@ -253,7 +257,34 @@ function canSendTgAlert(actionType) {
 }
 
 function sendTelegramAlert(text) {
-  if (!GOOGLE_GATEWAY_URL) return;
+  if (!GOOGLE_GATEWAY_URL || !text) return;
+
+  var now = Date.now();
+  
+  // 1. Очищаем старые записи из памяти (старше 60 секунд)
+  for (var key in window.recentTgAlerts) {
+    if (now - window.recentTgAlerts[key] > 60000) delete window.recentTgAlerts[key];
+  }
+
+  // 2. Жесткая блокировка идентичных сообщений (отсекает дубли подтверждения матчей)
+  if (window.recentTgAlerts[text] && (now - window.recentTgAlerts[text] < 60000)) {
+    console.log("Анти-спам: дублирующее сообщение заблокировано");
+    return; 
+  }
+
+  // 3. Защита от прыжков по столам (чекины и уходы чаще чем раз в 2 минуты не спамят в чат)
+  var isTableAlert = text.indexOf('уже у стола') !== -1 || text.indexOf('покинул стол') !== -1;
+  if (isTableAlert) {
+     if (now - window.lastTableAlertTime < 120000) {
+        console.log("Анти-спам: блокировка частой смены столов");
+        return;
+     }
+     window.lastTableAlertTime = now;
+  }
+
+  window.recentTgAlerts[text] = now;
+
+  // 4. Оригинальная логика отправки через Google Gateway
   var targetUrl = GOOGLE_GATEWAY_URL + '?text=' + encodeURIComponent(text);
   if (window.fetch) {
     fetch(targetUrl, { mode: 'no-cors' }).catch(function() {
