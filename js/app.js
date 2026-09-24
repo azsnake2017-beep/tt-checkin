@@ -451,44 +451,46 @@ function deleteAnnouncement() {
   });
 }
 
-// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
+// КАРТОЧКА ИГРОКА (ПАРАЛЛЕЛЬНЫЙ ЗАПРОС + КЛИЕНТСКАЯ СОРТИРОВКА И ИНВЕНТАРЬ)
 function showUserInfoModal(uid) {
   if(!uid) return;
-  var modal = document.getElementById('user-info-modal');
-  var titleEl = document.getElementById('info-modal-title');
-  var contentEl = document.getElementById('info-modal-content-area');
-  var historyEl = document.getElementById('info-modal-history');
+  document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
+  document.getElementById('info-modal-content-area').innerHTML = "Загрузка данных профиля...";
+  document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
+  document.getElementById('info-modal-medals').style.display = 'none';
+  document.getElementById('info-modal-inventory').style.display = 'none';
+  document.getElementById('user-info-modal').style.display = 'flex';
   
-  if(titleEl) titleEl.innerHTML = "👤 Загрузка..."; 
-  if(contentEl) contentEl.innerHTML = "Загрузка данных профиля...";
-  if(historyEl) historyEl.innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
-  
-  // Скрываем старые внешние контейнеры, так как теперь все рисуем внутри основного блока
-  var mMedals = document.getElementById('info-modal-medals');
-  if(mMedals) mMedals.style.display = 'none';
-  var mInv = document.getElementById('info-modal-inventory');
-  if(mInv) mInv.style.display = 'none';
-  
-  if(modal) modal.style.display = 'flex';
-  
+  // Обход кэша: используем source: 'server', фолбэк на обычный get() если нет сети
+  var userPromise = db.collection('users').doc(uid).get({ source: 'server' }).catch(function() {
+      return db.collection('users').doc(uid).get(); 
+  });
+
   Promise.all([
-    db.collection('users').doc(uid).get(),
+    userPromise,
     db.collection('leaderboard').doc(uid).get()
   ]).then(function(docs) {
     var d = docs[0];
     var ld = docs[1];
 
     if (!d.exists) { 
-      if(modal) modal.style.display = 'none'; 
+      closeUserInfoModal(); 
       return; 
     }
 
     var u = d.data() || {};
+    
+    // ФИКС ДЛЯ СВОЕЙ КАРТОЧКИ: Подтягиваем локальные данные, если база немного отстает
+    var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+    if (uid === myUid && typeof currentUserProfile !== 'undefined') {
+      if (!u.blade && currentUserProfile.blade) u.blade = currentUserProfile.blade;
+      if (!u.rubberL && currentUserProfile.rubberL) u.rubberL = currentUserProfile.rubberL;
+      if (!u.rubberR && currentUserProfile.rubberR) u.rubberR = currentUserProfile.rubberR;
+    }
 
-    // 1. УНИКАЛЬНЫЕ ПЛАШКИ (Как у вас, в самом верху рядом с именем)
     var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
-    if(titleEl) titleEl.innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
+    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
     
     var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
@@ -500,50 +502,51 @@ function showUserInfoModal(uid) {
     var lastDelta = parseInt(u.lastEloDelta, 10) || 0;
     var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
-    var eloDisplay = parseInt(u.elo, 10) || 1000;
 
-    // 2. АВТОНОМНЫЙ БЛОК РАКЕТКИ (Больше не зависит от сторонних функций)
-    var invHtml = '';
-    if (u.blade || u.rubberL || u.rubberR) {
-        invHtml = '<div style="margin-top: 12px; padding: 12px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; display: flex; flex-direction: column; gap: 6px;">' +
-                  '<div style="font-size: 11px; font-weight: 700; color: var(--accent-sky); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed rgba(56, 189, 248, 0.2); padding-bottom: 6px; margin-bottom: 4px;">🏓 Инвентарь игрока:</div>';
-        if (u.blade) invHtml += '<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-muted);">Основание:</span><b style="color:var(--text);">' + cleanHtml(u.blade) + '</b></div>';
-        if (u.rubberL) invHtml += '<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-muted);">Накладка слева:</span><b style="color:var(--text);">' + cleanHtml(u.rubberL) + '</b></div>';
-        if (u.rubberR) invHtml += '<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-muted);">Накладка справа:</span><b style="color:var(--text);">' + cleanHtml(u.rubberR) + '</b></div>';
-        invHtml += '</div>';
-    }
-
-    // 3. МЕДАЛИ ТУРНИРОВ (Если они есть)
-    var medalsHtml = '';
+    var mContainer = document.getElementById('info-modal-medals');
     var m = u.medals || { gold:0, silver:0, bronze:0 };
     if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-      medalsHtml = '<div style="display:flex; justify-content:center; gap:10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); padding:8px; border-radius:8px; margin-bottom:8px;">' +
-                   '<div style="font-size:13px; font-weight:700;">🏆 ' + (u.tournamentsPlayed || 0) + '</div>' +
-                   '<div style="font-size:13px; font-weight:700;">🥇 ' + (m.gold || 0) + '</div>' +
-                   '<div style="font-size:13px; font-weight:700;">🥈 ' + (m.silver || 0) + '</div>' +
-                   '<div style="font-size:13px; font-weight:700;">🥉 ' + (m.bronze || 0) + '</div>' +
-                   '</div>';
+      mContainer.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
+      mContainer.style.display = 'flex';
+    } else { 
+      mContainer.style.display = 'none'; 
     }
 
-    // 4. СБОРКА И ВСТАВКА ВСЕЙ КАРТОЧКИ (вместе с ракеткой)
-    if(contentEl) {
-      contentEl.innerHTML = medalsHtml + uidHtml +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
-        '<div id="dynamic-last-match-date" style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted);">Загрузка...</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins + ' м') + '</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' +
-        invHtml; 
+    var eloDisplay = u.elo !== undefined ? u.elo : 1000;
+    
+    // Вставляем основу карточки + ПЛАВАЮЩИЙ БЛОК ДЛЯ ДАТЫ
+    document.getElementById('info-modal-content-area').innerHTML = uidHtml +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
+      '<div id="dynamic-last-match-date" style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted);">Загрузка...</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
+    
+    // --- 100% ОРИГИНАЛЬНЫЙ КОД ИНВЕНТАРЯ ИЗ ВАШЕГО СТАРОГО ФАЙЛА ---
+    var invContainer = document.getElementById('info-modal-inventory');
+    if (u.blade || u.rubberL || u.rubberR) {
+      var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
+      if (u.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+      if (u.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+      if (u.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+      invContainer.innerHTML = invHtml; 
+      invContainer.className = 'inventory-box'; 
+      invContainer.style.display = 'flex';
+    } else { 
+      invContainer.style.display = 'none'; 
     }
 
-    // 5. ИСТОРИЯ МАТЧЕЙ (Включая расчет дней для "Последней игры")
+    // --- ФОНОВАЯ АСИНХРОННАЯ ЗАГРУЗКА ИСТОРИИ (С поддержкой 2x2 и Последней игры) ---
     db.collection('matches_history').get().then(function(allSnaps) {
         var matches = [];
         allSnaps.forEach(function(docX) {
           var mx = docX.data();
-          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) matches.push(mx);
+          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) {
+            mx.docId = docX.id;
+            matches.push(mx);
+          }
         });
 
         var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
@@ -569,10 +572,13 @@ function showUserInfoModal(uid) {
         var dynRow = document.getElementById('dynamic-last-match-date');
         if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
 
-        if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
-
-    }).catch(function() {
-        if(historyEl) historyEl.innerHTML = '<span class="empty-note">Матчи не найдены</span>';
+        if (typeof renderUserHistoryList === 'function') {
+            renderUserHistoryList(matches, uid);
+        }
+    }).catch(function(err) {
+        document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
+        var dynRow = document.getElementById('dynamic-last-match-date');
+        if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
     });
 
   }).catch(function(e) {
