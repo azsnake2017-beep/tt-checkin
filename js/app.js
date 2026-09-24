@@ -1518,3 +1518,86 @@ setInterval(function() {
     });
   }
 }, 1000);
+
+// ==========================================
+// РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
+// ==========================================
+
+// ВНИМАНИЕ: Укажите здесь юзернейм вашего бота (без @)
+var BOT_USERNAME = "tennis_club_chmz_bot"; 
+
+// 1. Показать QR-код
+function showRefQrModal() {
+  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  if (!myUid) {
+    alert("Сначала необходимо авторизоваться!");
+    return;
+  }
+  
+  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
+  var qrContainer = document.getElementById("ref-qrcode");
+  qrContainer.innerHTML = ""; // Очищаем старый код
+  
+  // Генерируем QR-код
+  new QRCode(qrContainer, {
+    text: refLink,
+    width: 200,
+    height: 200,
+    colorDark : "#000000",
+    colorLight : "#ffffff",
+    correctLevel : QRCode.CorrectLevel.H
+  });
+
+  document.getElementById('ref-qr-modal').style.display = 'flex';
+}
+
+// Закрыть окно
+function closeRefQrModal() {
+  document.getElementById('ref-qr-modal').style.display = 'none';
+}
+
+// 2. Поделиться ссылкой через Telegram
+function shareMyRefLink() {
+  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
+  var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
+
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
+    var shareUrl = "https://t.me/share/url?url=" + encodeURIComponent(refLink) + "&text=" + encodeURIComponent(inviteText);
+    window.Telegram.WebApp.openTelegramLink(shareUrl);
+  } else if (navigator.clipboard) {
+    navigator.clipboard.writeText(refLink).then(function() {
+      alert("Ссылка скопирована! Отправьте её другу:\n" + refLink);
+    });
+  }
+}
+
+// 3. Запись пригласившего (Срабатывает при входе новичка)
+function processReferralBonus(newUserId) {
+  try {
+    if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe) return;
+    var startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
+    
+    // Если есть параметр, он не равен себе, и еще не привязан локально
+    if (startParam && startParam !== newUserId && !localStorage.getItem('ref_linked_' + newUserId)) {
+      var userRef = db.collection('users').doc(newUserId);
+      userRef.get().then(function(uDoc) {
+        var data = uDoc.data() || {};
+        // Если у новичка еще нет записи "кто пригласил"
+        if (!data.invitedBy) {
+          userRef.set({
+            invitedBy: startParam,
+            refConfirmed: false // По умолчанию не подтвержден
+          }, { merge: true }).then(function() {
+            // Начисляем инвайтеру "неподтвержденного" игрока
+            db.collection('users').doc(startParam).set({
+              pendingInvitesCount: firebase.firestore.FieldValue.increment(1)
+            }, { merge: true });
+            localStorage.setItem('ref_linked_' + newUserId, 'true');
+          });
+        }
+      });
+    }
+  } catch (err) {}
+}
+
