@@ -1074,7 +1074,8 @@ function listenTournaments() {
 }
 
 function listenRatings() {
-  db.collection('users').onSnapshot(function(snap) {
+  // Сначала пытаемся взять данные из кэша телефона для моментального отображения без ожидания сети
+  db.collection('users').onSnapshot({ includeMetadataChanges: true }, function(snap) {
     var listEl = document.getElementById('rating-list');
     if (!listEl) return;
     if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Сыграйте первый матч!</span>'; return; }
