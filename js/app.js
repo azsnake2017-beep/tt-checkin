@@ -554,7 +554,6 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
 
-    // Фоновая загрузка истории
 // --- ФОНОВАЯ ЗАГРУЗКА ИСТОРИИ С DOCID ДЛЯ УДАЛЕНИЯ ---
     db.collection('matches_history').get().then(function(allSnaps) {
         var matches = [];
@@ -596,7 +595,6 @@ function showUserInfoModal(uid) {
         document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
         var dynRow = document.getElementById('dynamic-last-match-date');
         if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
-    });
     });
 
   }).catch(function(e) {
