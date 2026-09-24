@@ -151,14 +151,19 @@ function switchNavTab(tabId) {
   if(viewEl) viewEl.classList.add('active');
   if(navEl) navEl.classList.add('active');
   window.scrollTo(0, 0); 
-  localStorage.setItem('tt_active_tab', tabId);
+  
+  // Сохраняем вкладку только на время текущей сессии
+  sessionStorage.setItem('tt_session_tab', tabId);
   
   if (tabId === 'radar' && typeof updateAdminControls === 'function') {
     updateAdminControls();
   }
 }
+
 function initNavTab() {
-  var savedTab = localStorage.getItem('tt_active_tab') || 'profile';
+  // Пытаемся получить вкладку из текущей сессии (при обновлении страницы). 
+  // Если это свежий запуск приложения (сессия пуста) — открываем 'profile'.
+  var savedTab = sessionStorage.getItem('tt_session_tab') || 'profile';
   switchNavTab(savedTab);
 }
 
