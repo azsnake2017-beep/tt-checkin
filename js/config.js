@@ -245,6 +245,13 @@ if (!firebase.apps.length) {
 }
 var db = firebase.firestore();
 
+// Включаем офлайн-кэш для мгновенной загрузки данных из памяти устройства
+db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
+    if (err.code == 'unimplemented') {
+        // Браузер не поддерживает persistence (например, режим инкогнито)
+    }
+});
+
 try {
   db.settings({ experimentalForceLongPolling: true });
 } catch(e) {}
