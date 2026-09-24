@@ -451,8 +451,6 @@ function deleteAnnouncement() {
   });
 }
 
-// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ПЛАВНЫМ СКРОЛЛОМ ---
-// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
 // --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
 function showUserInfoModal(uid) {
   if (!uid) return;
@@ -468,7 +466,7 @@ function showUserInfoModal(uid) {
   if (contentEl) contentEl.innerHTML = "Загрузка данных профиля...";
   if (historyEl) historyEl.innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
   if (medalsEl) medalsEl.style.display = 'none';
-  if (invEl) invEl.style.display = 'none';
+  if (invEl) invEl.style.display = 'none'; // Скрываем старый внешний блок навсегда
   
   if (modal) modal.style.display = 'flex';
   
@@ -480,19 +478,19 @@ function showUserInfoModal(uid) {
     var d = docs[0], ld = docs[1], allMatchesSnap = docs[2];
 
     if (!d.exists) { 
-      if (modal) modal.style.display = 'none'; 
+      if(modal) modal.style.display = 'none'; 
       return; 
     }
 
     var u = d.data() || {};
-    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     
     if (titleEl) titleEl.innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
     
     var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
-    // --- СОБИРАЕМ ИСТОРИЮ ---
+    // --- ИСТОРИЯ И ДАТА ПОСЛЕДНЕЙ ИГРЫ ---
     var userMatches = [];
     allMatchesSnap.forEach(function(docX) {
       var mx = docX.data() || {};
@@ -508,7 +506,6 @@ function showUserInfoModal(uid) {
 
     userMatches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
 
-    // --- РАСЧЕТ ДАТЫ ПОСЛЕДНЕЙ ИГРЫ ---
     var lastMatchStr = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
     if (userMatches.length > 0) {
       try {
@@ -552,18 +549,27 @@ function showUserInfoModal(uid) {
         medalsEl.style.display = 'flex';
       } else { medalsEl.style.display = 'none'; }
     }
-    
-    // --- ИНВЕНТАРЬ (Встраивается прямо в блок данных) ---
-    var invBlockHtml = '';
-    if (u.blade || u.rubberL || u.rubberR) {
-      invBlockHtml = '<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--card-border); display: flex; flex-direction: column; gap: 6px;">' +
-        '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Ракетка:</div>';
-      if (u.blade) invBlockHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-      if (u.rubberL) invBlockHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-      if (u.rubberR) invBlockHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-      invBlockHtml += '</div>';
-    }
 
+    // --- ИНВЕНТАРЬ (Ракетка) ---
+    var invHtml = '';
+    if (u.blade || u.rubberL || u.rubberR) {
+      // Создаем блок ракетки с красивой пунктирной линией сверху
+      invHtml += '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 6px;">';
+      invHtml += '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Ракетка:</div>';
+      
+      if (typeof getInventoryRowHtml === 'function') {
+        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+      } else {
+        // Резервный вывод, если функция getInventoryRowHtml не подгрузилась
+        if (u.blade) invHtml += '<div style="font-size: 12px;">🏓 <span style="color: var(--text-muted);">Основание:</span> <b>' + cleanHtml(u.blade) + '</b></div>';
+        if (u.rubberL) invHtml += '<div style="font-size: 12px;">🔴 <span style="color: var(--text-muted);">Накладка L:</span> <b>' + cleanHtml(u.rubberL) + '</b></div>';
+        if (u.rubberR) invHtml += '<div style="font-size: 12px;">⚫ <span style="color: var(--text-muted);">Накладка R:</span> <b>' + cleanHtml(u.rubberR) + '</b></div>';
+      }
+      invHtml += '</div>';
+    }
+    
     // --- ОСНОВНОЙ КОНТЕНТ ---
     if (contentEl) {
       contentEl.innerHTML = uidHtml +
@@ -574,12 +580,14 @@ function showUserInfoModal(uid) {
         '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins + ' м') + '</span></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' +
-        invBlockHtml;
+        invHtml; // Добавляем ракетку прямо сюда!
     }
 
     // --- ИСТОРИЯ МАТЧЕЙ ---
     try {
-      renderUserHistoryList(userMatches, uid);
+      if (typeof renderUserHistoryList === 'function') {
+        renderUserHistoryList(userMatches, uid);
+      }
     } catch(errRender) {
       if (historyEl) historyEl.innerHTML = '<span class="empty-note">Не удалось отобразить список</span>';
     }
