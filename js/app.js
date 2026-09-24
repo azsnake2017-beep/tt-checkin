@@ -548,7 +548,48 @@ function showUserInfoModal(uid) {
                   renderRow('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса') +
                   '</div>';
     }
+// (Этот код вставляется сразу после генерации invHtml)
+    
+    // Подтвержденные (>=3 матчей) и ожидающие
+    var confirmedInvites = Math.max(0, parseInt(u.confirmedInvitesCount, 10) || 0);
+    var pendingInvites = Math.max(0, parseInt(u.pendingInvitesCount, 10) || 0);
 
+    // Плашка Амбассадора при 5+ подтвержденных
+    var ambassadorBadge = (confirmedInvites >= 5) 
+      ? '<span class="platform-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; margin-left: 4px; font-weight: 700; border: none; padding: 2px 7px; border-radius: 6px; font-size: 11px;">Амбассадор 🤝</span>' 
+      : '';
+
+    // Обновляем заголовок, чтобы туда попала плашка Амбассадора
+    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
+    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + ambassadorBadge;
+
+    var invitesHtml = '';
+    if (confirmedInvites > 0 || pendingInvites > 0) {
+      var pendingStr = pendingInvites > 0 
+        ? '<span style="color: var(--text-muted); opacity: 0.45; font-size: 12px; margin-left: 5px;" title="Ожидают квалификации (сыграно менее 3 матчей)">(+' + pendingInvites + ' ожид.)</span>' 
+        : '';
+        
+      invitesHtml = '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;">' +
+                      '<span style="color: var(--text-muted);">Добавил участников:</span>' +
+                      '<div>' +
+                        '<span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' +
+                        pendingStr +
+                        '<span style="margin-left: 4px;">🤝</span>' +
+                      '</div>' +
+                    '</div>';
+    }
+
+    document.getElementById('info-modal-content-area').innerHTML = uidHtml +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
+      '<div id="dynamic-last-match-date" style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted);">Загрузка...</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
+      invitesHtml +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
+      invHtml;
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
