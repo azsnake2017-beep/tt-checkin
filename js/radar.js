@@ -78,8 +78,13 @@ function recordTrainingTime(uid, name, durationMinutes) {
   }).catch(function(e) {});
 }
 
+window.isTableActionRunning = false; // Блокиратор двойных кликов
+
 function checkIn(loc) {
   var uid = getVerifiedUserId(); if (!uid) return;
+  if (window.isTableActionRunning) return; // Защита от тройного нажатия
+  window.isTableActionRunning = true;
+
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   var now = Date.now(), otherLoc = loc === 'park' ? 'vostok' : 'park'; var finalList = [];
   
@@ -104,11 +109,15 @@ function checkIn(loc) {
       if (canSendTgAlert('status_checkin_' + loc + '_' + uid)) {
           sendTelegramAlert("🏓 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> уже у стола " + LOCATION_NAMES[loc] + "!" + buildBlockquoteList(finalList, "Сейчас за столом") + "\n\nКто составит компанию?");
       }
-  }).catch(function(e) {});
+      window.isTableActionRunning = false; // Снимаем блокировку
+  }).catch(function(e) { window.isTableActionRunning = false; });
 }
 
 function leave(loc) {
   var uid = getVerifiedUserId(); if (!uid) return; 
+  if (window.isTableActionRunning) return; // Защита от тройного нажатия
+  window.isTableActionRunning = true;
+
   var spentMins = 0, spentStr = "", finalList = [];
   
   db.runTransaction(function(t) {
@@ -136,7 +145,8 @@ function leave(loc) {
       if (canSendTgAlert('status_leave_' + loc + '_' + uid)) {
           sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> закончил тренировку и покинул стол " + LOCATION_NAMES[loc] + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
       }
-  }).catch(function(e) {});
+      window.isTableActionRunning = false; // Снимаем блокировку
+  }).catch(function(e) { window.isTableActionRunning = false; });
 }
 
 function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
