@@ -304,7 +304,7 @@ function confirmMatch(matchId) {
         // СОХРАНЕНИЕ ИСТОРИИ ВНУТРИ BATCH (гарантия сохранения при закрытии вкладки)
         var historyRef = db.collection('matches_history').doc();
         batch.set(historyRef, { 
-          type: 'singles',
+          type: 'singles', 
           p1Uid: m.proposerUid, 
           p1Name: m.proposerName, 
           p1Score: m.scoreProposer, 
@@ -317,6 +317,13 @@ function confirmMatch(matchId) {
 
         batch.commit().then(function() {
           window.isProcessingMatch = false; // Снимаем блокировку
+
+          // --- ТРИГГЕР КВАЛИФИКАЦИИ РЕФЕРАЛОВ (1х1) ---
+          if (typeof checkReferralQualification === 'function') {
+            checkReferralQualification(m.proposerUid);
+            checkReferralQualification(m.opponentUid);
+          }
+
           var winnerName = isPWin ? m.proposerName : m.opponentName;
           var loserName = isPWin ? m.opponentName : m.proposerName;
           var wScore = isPWin ? m.scoreProposer : m.scoreOpponent;
@@ -424,6 +431,15 @@ function confirmMatch(matchId) {
 
         batch.commit().then(function() {
           window.isProcessingMatch = false; // Снимаем блокировку
+
+          // --- ТРИГГЕР КВАЛИФИКАЦИИ РЕФЕРАЛОВ (2х2) ---
+          if (typeof checkReferralQualification === 'function') {
+            checkReferralQualification(m.team1Uids[0]);
+            checkReferralQualification(m.team1Uids[1]);
+            checkReferralQualification(m.team2Uids[0]);
+            checkReferralQualification(m.team2Uids[1]);
+          }
+
           var winTeam = isTeam1Win ? m.team1Names : m.team2Names;
           var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
           var wScore = isTeam1Win ? m.scoreTeam1 : m.scoreTeam2;
@@ -542,4 +558,28 @@ function listenRecentMatches() {
       container.innerHTML = html;
     } catch(e) {}
   }, function(err) {});
+}
+
+// --- ПРОВЕРКА КВАЛИФИКАЦИИ АМБАССАДОРА ---
+function checkReferralQualification(userId) {
+  if (!userId) return;
+  var userRef = db.collection('users').doc(userId);
+  
+  userRef.get().then(function(doc) {
+    if (!doc.exists) return;
+    var u = doc.data();
+    var matchesPlayed = parseInt(u.matches, 10) || 0;
+    
+    // Если игрок был приглашен, еще не подтвержден и сыграл 3 или более матчей
+    if (u.invitedBy && !u.refConfirmed && matchesPlayed >= 3) {
+      // 1. Ставим флаг подтверждения новичку
+      userRef.update({ refConfirmed: true }).then(function() {
+        // 2. Перекидываем счетчик у пригласившего
+        db.collection('users').doc(u.invitedBy).update({
+          confirmedInvitesCount: firebase.firestore.FieldValue.increment(1),
+          pendingInvitesCount: firebase.firestore.FieldValue.increment(-1)
+        });
+      });
+    }
+  });
 }
