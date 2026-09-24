@@ -147,6 +147,11 @@ function finishSync(uid, userData) {
     updateAdminControls();
     if (currentUserProfile.name) localStorage.setItem('tt_name', currentUserProfile.name); 
     renderAll();
+    
+    // ВЫЗЫВАЕМ ПРОВЕРКУ РЕФЕРАЛА ПРИ КАЖДОМ ВХОДЕ
+    if (typeof processReferralBonus === 'function') {
+        processReferralBonus(uid, currentUserProfile.name);
+    }
 }
 
 function initUserProfile() {
