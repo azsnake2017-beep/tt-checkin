@@ -519,21 +519,29 @@ function showUserInfoModal(uid) {
 
     var eloDisplay = u.elo !== undefined ? u.elo : 1000;
     
-    // ВСТРОЕННЫЙ ИНВЕНТАРЬ (Теперь он не может скрыться под стилями)
+// 2. АККУРАТНЫЙ БЛОК РАКЕТКИ С ВЫРАВНИВАНИЕМ
     var invHtml = '';
     if (u.blade || u.rubberL || u.rubberR) {
-      invHtml = '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255,255,255,0.1); display: flex; flex-direction: column; gap: 6px;">' +
-                '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Ракетка:</div>';
-      if (typeof getInventoryRowHtml === 'function') {
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки');
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки');
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки');
-      } else {
-        if (u.blade) invHtml += '<div style="font-size: 12px; margin-top:4px;">🏓 Основание: <b>' + cleanHtml(u.blade) + '</b></div>';
-        if (u.rubberL) invHtml += '<div style="font-size: 12px; margin-top:4px;">🔴 Накладка L: <b>' + cleanHtml(u.rubberL) + '</b></div>';
-        if (u.rubberR) invHtml += '<div style="font-size: 12px; margin-top:4px;">⚫ Накладка R: <b>' + cleanHtml(u.rubberR) + '</b></div>';
-      }
-      invHtml += '</div>';
+        var renderRow = function(icon, label, val, searchPrefix) {
+            if (!val) return '';
+            var searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchPrefix + ' ' + val);
+            return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; min-height: 24px;">' +
+                     '<div style="display: flex; align-items: center; gap: 6px; color: var(--text-muted); flex-shrink: 0;">' +
+                       '<span>' + icon + '</span><span>' + label + '</span>' +
+                     '</div>' +
+                     '<div style="display: flex; align-items: center; gap: 6px; min-width: 0; justify-content: flex-end; text-align: right;">' +
+                       '<b style="color: var(--text); font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="' + cleanHtml(val) + '">' + cleanHtml(val) + '</b>' +
+                       '<button class="btn-info" style="width: 20px; height: 20px; font-size: 10px; padding: 0; flex-shrink: 0;" onclick="openExternalLink(\'' + searchUrl + '\')">i</button>' +
+                     '</div>' +
+                   '</div>';
+        };
+
+        invHtml = '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 6px;">' +
+                  '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Ракетка:</div>' +
+                  renderRow('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса') +
+                  renderRow('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса') +
+                  renderRow('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса') +
+                  '</div>';
     }
 
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
