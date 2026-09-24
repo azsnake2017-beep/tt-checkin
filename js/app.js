@@ -614,101 +614,79 @@ function renderUserHistoryFromSnaps(snaps, uid) {
   renderUserHistoryList(matches, uid);
 }
 
-// ВАША ОРИГИНАЛЬНАЯ ИСТОРИЯ (ОСТАВЛЕНА БЕЗ ИЗМЕНЕНИЙ, ДОБАВЛЕНА ТОЛЬКО ЗАЩИТА ОТ ПАДЕНИЙ)
+// --- КРАСИВАЯ ИСТОРИЯ МАТЧЕЙ В КАРТОЧКЕ ИГРОКА (1x1 и 2x2 как в ленте) ---
 function renderUserHistoryList(matches, uid) {
   var hEl = document.getElementById('info-modal-history');
+  if (!hEl) return;
+
   if (!matches || matches.length === 0) { 
     hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; 
     return; 
   }
   
+  // Сортировка от новых к старым и срез до 10 матчей
+  matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
   var recentMatches = matches.slice(0, 10);
-  var h = '';
+  var html = '';
   
-  recentMatches.forEach(function(mx) {
+  recentMatches.forEach(function(m) {
     try {
-      var isDoubles = mx.type === 'doubles';
-      var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
+      var isDoubles = m.type === 'doubles';
+      var s1 = isDoubles ? m.team1Score : m.p1Score;
+      var s2 = isDoubles ? m.team2Score : m.p2Score;
       
-      var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
-      var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
-
-      var myS = isTeam1 ? s1 : s2;
-      var opS = isTeam1 ? s2 : s1;
-
-      var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
-      
-      // Спокойные, аккуратные стили без свечения
-      var winStyle = 'color: #059669; font-weight: 600;';
-      var loseStyle = 'color: var(--text-muted); font-weight: 400;';
-      
-      var myStyle = isWin ? winStyle : loseStyle;
-      var opStyle = !isWin ? winStyle : loseStyle;
-      
-      // Аккуратные геометрические стрелочки (не системные эмодзи)
-      var myEmoji = isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
-      var opEmoji = !isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
-
-      var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
-      var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px;">2x2</span>' : '<span class="badge-mode badge-mode-singles" style="margin-right: 6px;">1x1</span>';
-      
-      var leftContentHtml = '';
-
+      // Определяем, победил ли текущий игрок в этом матче
+      var isMyTeamWin = false;
       if (isDoubles) {
-          var tArr = isTeam1 ? mx.team1NamesArr : mx.team2NamesArr;
-          var tUids = isTeam1 ? mx.team1Uids : mx.team2Uids;
-          var myPartner = null, myPartnerUid = null;
-          if (tArr && tUids) {
-              if (tUids[0] === uid) { myPartner = tArr[1]; myPartnerUid = tUids[1]; }
-              else { myPartner = tArr[0]; myPartnerUid = tUids[0]; }
-          }
-          
-          var partnerHtml = myPartner ? '<span class="clickable-name" style="'+myStyle+'" onclick="showUserInfoModal(\''+escapeJS(myPartnerUid)+'\')">' + cleanHtml(myPartner) + '</span>' : '<span style="'+myStyle+'">Неизвестно</span>';
-          
-          var opArr = isTeam1 ? mx.team2NamesArr : mx.team1NamesArr;
-          var opUids = isTeam1 ? mx.team2Uids : mx.team1Uids;
-          var opHtml = '';
-          if (opArr && opUids && opArr.length > 1) {
-              opHtml = '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUids[0])+'\')">' + cleanHtml(opArr[0]) + '</span>' +
-                       ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ' +
-                       '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUids[1])+'\')">' + cleanHtml(opArr[1]) + '</span>';
-          } else {
-              var opN = isTeam1 ? mx.team2Names : mx.team1Names;
-              opHtml = '<span style="'+opStyle+'">' + cleanHtml(opN || "Неизвестные игроки").replace(/ & /g, ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ') + '</span>';
-          }
-
-          leftContentHtml = '<div style="margin-bottom: 4px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">в паре с:</span> ' + myEmoji + partnerHtml + '</div>' +
-                            '<div style="line-height: 1.4; word-break: break-word;"><span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
-
+        var isTeam1 = m.team1Uids && m.team1Uids.indexOf(uid) !== -1;
+        isMyTeamWin = isTeam1 ? (s1 > s2) : (s2 > s1);
       } else {
-          var opUid = isTeam1 ? mx.p2Uid : mx.p1Uid;
-          var opName = isTeam1 ? mx.p2Name : mx.p1Name;
-          var opHtml = '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUid)+'\')">' + cleanHtml(opName || "Неизвестно") + '</span>';
-          
-          leftContentHtml = '<div style="line-height: 1.4; word-break: break-word; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
+        var isP1 = m.p1Uid === uid;
+        isMyTeamWin = isP1 ? (s1 > s2) : (s2 > s1);
       }
 
-      var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
+      var p1Color = isMyTeamWin && ((isDoubles && m.team1Uids.indexOf(uid) !== -1) || (!isDoubles && m.p1Uid === uid)) ? 'color: #10b981;' : '';
+      var p2Color = isMyTeamWin && ((isDoubles && m.team2Uids.indexOf(uid) !== -1) || (!isDoubles && m.p2Uid === uid)) ? 'color: #10b981;' : '';
 
-      h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
-             '<div style="flex: 1; min-width: 0;">' + 
-               leftContentHtml +
-               '<div style="color:var(--text-muted);font-size:10px; margin-top:6px;">' + dtStr + '</div>' +
-             '</div>' +
-             '<div style="display: flex; align-items: center;">' +
-               '<div style="font-weight:700; font-size: 16px; white-space: nowrap; flex-shrink: 0; background: var(--row-bg); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">' +
-                 '<span style="' + myStyle + '">' + myS + '</span>' +
-                 '<span style="color:var(--text-muted); opacity: 0.5; margin: 0 4px;">:</span>' +
-                 '<span style="' + opStyle + '">' + opS + '</span>' +
-               '</div>' +
-               adminDelBtn +
-             '</div>' +
-           '</div>';
-    } catch(err) {
-      console.log("Ошибка рендера строки матча", err);
+      var d = new Date(parseTime(m.timestamp));
+      var day = ('0' + d.getDate()).slice(-2);
+      var month = ('0' + (d.getMonth() + 1)).slice(-2);
+      var hours = ('0' + d.getHours()).slice(-2);
+      var minutes = ('0' + d.getMinutes()).slice(-2);
+      var timeStr = day + '.' + month + '.' + d.getFullYear() + ' ' + hours + ':' + minutes;
+      
+      var badgeHtml = isDoubles ? '<span class="badge-mode badge-mode-doubles">2x2</span> ' : '<span class="badge-mode badge-mode-singles">1x1</span> ';
+
+      var leftSideHtml = '';
+      var rightSideHtml = '';
+
+      if (isDoubles) {
+        leftSideHtml = '<span style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; ' + p1Color + '">' + cleanHtml(m.team1Names) + '</span>';
+        rightSideHtml = '<span style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 600; ' + p2Color + '">' + cleanHtml(m.team2Names) + '</span>';
+      } else {
+        leftSideHtml = '<span class="clickable-name" style="text-align:right; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p1Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p1Uid) + '\')">' + cleanHtml(m.p1Name) + '</span>';
+        rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
+      }
+
+      // Аккуратная админская кнопка удаления матча (без изменения Эло)
+      var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && m.docId) ? 
+        '<div style="margin-left: 6px; cursor: pointer; font-size: 13px; opacity: 0.6; flex-shrink: 0;" onclick="deleteHistoryMatch(\'' + escapeJS(m.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
+
+      html += '<div style="background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 8px 10px; display: flex; flex-direction: column; font-size: 13px; margin-bottom: 6px;">' +
+                '<div style="display: flex; justify-content: space-between; align-items: center;">' +
+                  '<div style="display:flex; flex:1; justify-content: flex-end; overflow: hidden;">' + leftSideHtml + '</div>' +
+                  '<div style="font-weight: 800; font-size: 14px; background: var(--row-bg); border-radius: 6px; padding: 2px 8px; margin: 0 8px; white-space: nowrap;">' + s1 + ' : ' + s2 + '</div>' +
+                  '<div style="display:flex; flex:1; justify-content: flex-start; overflow: hidden;">' + rightSideHtml + '</div>' +
+                  adminDelBtn +
+                '</div>' +
+                '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">' + badgeHtml + timeStr + '</div>' +
+              '</div>';
+    } catch(errRow) {
+      console.log("Ошибка рендера строки матча", errRow);
     }
   });
-  hEl.innerHTML = h;
+  
+  hEl.innerHTML = html;
 }
 
 function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
