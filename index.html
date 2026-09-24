@@ -12,30 +12,17 @@
   
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
   
-  <!-- 1. ПРИНУДИТЕЛЬНАЯ ПРЕДЗАГРУЗКА КАРТИНОК (Появятся мгновенно) -->
+  <!-- ПРИНУДИТЕЛЬНАЯ ЗАГРУЗКА ЛОГОТИПОВ (Появятся моментально) -->
   <link rel="preload" as="image" href="logo.webp">
   <link rel="preload" as="image" href="App.webp">
 
+  <!-- Ускорение сетевых запросов -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://telegram.org">
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-
-  <script async src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-  <!-- 2. БЫСТРЫЕ ЗЕРКАЛА FIREBASE (Обход замедлений gstatic в РФ) -->
-  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
-  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
-
-  <!-- ВАШИ СКРИПТЫ -->
-  <script defer src="js/config.js"></script>
-  <script defer src="js/matches.js"></script>
-  <script defer src="js/radar.js"></script>
-  <script defer src="js/app.js?v=2"></script>
 </head>
 <body data-theme="dark">
 
@@ -437,5 +424,24 @@
   </div>
 </div>
 
+  <!-- ... здесь заканчиваются все ваши модальные окна (qr-modal, match-modal и т.д.) ... -->
+
+  <!-- 1. Сторонние библиотеки -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- 2. Firebase (Используем быстрые зеркала cdn.jsdelivr.net для работы без VPN) -->
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- 3. Ваши локальные модули (Грузятся строго по очереди) -->
+  <script src="js/config.js"></script>
+  <script src="js/matches.js"></script>
+  <script src="js/radar.js"></script>
+  <script src="js/app.js?v=5"></script>
+
+</body>
+</html>
 </body>
 </html>
