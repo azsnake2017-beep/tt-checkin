@@ -1602,19 +1602,45 @@ function closeRefQrModal() {
   document.getElementById('ref-qr-modal').style.display = 'none';
 }
 
-// 2. Поделиться ссылкой через Telegram
+// 2. Поделиться ссылкой через стандартное меню смартфона/ПК (Web Share API)
 function shareMyRefLink() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
+  if (!myUid) {
+    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
+    else alert("Сначала необходимо авторизоваться!");
+    return;
+  }
+
+  // ВНИМАНИЕ: Укажите здесь юзернейм вашего бота (без @)
+  var botUsername = "tennis_club_chmz_bot"; 
+  var refLink = "https://t.me/" + botUsername + "?startapp=" + encodeURIComponent(myUid);
+  var inviteTitle = "Клуб настольного тенниса ЧМЗ";
   var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
 
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.openTelegramLink) {
-    var shareUrl = "https://t.me/share/url?url=" + encodeURIComponent(refLink) + "&text=" + encodeURIComponent(inviteText);
-    window.Telegram.WebApp.openTelegramLink(shareUrl);
-  } else if (navigator.clipboard) {
-    navigator.clipboard.writeText(refLink).then(function() {
-      alert("Ссылка скопирована! Отправьте её другу:\n" + refLink);
+  // Вызов нативного окна "Поделиться" (iOS, Android, macOS, Windows)
+  if (navigator.share) {
+    navigator.share({
+      title: inviteTitle,
+      text: inviteText,
+      url: refLink
+    }).then(function() {
+      console.log('Успешно поделились ссылкой');
+    }).catch(function(error) {
+      console.log('Шаринг отменен или произошла ошибка:', error);
     });
+  } 
+  // Резервный вариант для старых браузеров (копирование в буфер обмена)
+  else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
+      if (typeof customAlert === 'function') {
+        customAlert("Ссылка скопирована!\nОтправьте её будущему участнику.");
+      } else {
+        alert("Ссылка скопирована в буфер обмена!");
+      }
+    });
+  } else {
+    // Самый старый резервный вариант
+    prompt("Скопируйте ссылку для добавления участника:", refLink);
   }
 }
 
