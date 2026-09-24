@@ -451,7 +451,7 @@ function deleteAnnouncement() {
   });
 }
 
-// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ПЛАВНЫМ СКРОЛЛОМ ---
+// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
 function showUserInfoModal(uid) {
   if(!uid) return;
   var modal = document.getElementById('user-info-modal');
@@ -463,8 +463,7 @@ function showUserInfoModal(uid) {
   if(contentEl) contentEl.innerHTML = "Загрузка данных профиля...";
   if(historyEl) historyEl.innerHTML = '<span class="empty-note">Загрузка матчей...</span>';
   
-  // Принудительно глушим старые проблемные контейнеры (если они есть в HTML), 
-  // так как теперь мы будем рисовать всё в основном блоке
+  // Скрываем старые внешние контейнеры, так как теперь все рисуем внутри основного блока
   var mMedals = document.getElementById('info-modal-medals');
   if(mMedals) mMedals.style.display = 'none';
   var mInv = document.getElementById('info-modal-inventory');
@@ -480,21 +479,13 @@ function showUserInfoModal(uid) {
     var ld = docs[1];
 
     if (!d.exists) { 
-      if (modal) modal.style.display = 'none'; 
+      if(modal) modal.style.display = 'none'; 
       return; 
     }
 
     var u = d.data() || {};
 
-    // Защита: если открываем себя, и база пуста (сетевой лаг) - берем из локальной памяти
-    var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-    if (uid === myUid && typeof currentUserProfile !== 'undefined') {
-      if (!u.blade && currentUserProfile.blade) u.blade = currentUserProfile.blade;
-      if (!u.rubberL && currentUserProfile.rubberL) u.rubberL = currentUserProfile.rubberL;
-      if (!u.rubberR && currentUserProfile.rubberR) u.rubberR = currentUserProfile.rubberR;
-    }
-
-    // 1. УНИКАЛЬНЫЕ ПЛАШКИ (Всегда вверху рядом с именем)
+    // 1. УНИКАЛЬНЫЕ ПЛАШКИ (Как у вас, в самом верху рядом с именем)
     var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     if(titleEl) titleEl.innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
@@ -511,38 +502,31 @@ function showUserInfoModal(uid) {
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
     var eloDisplay = parseInt(u.elo, 10) || 1000;
 
-    // 2. ГЕНЕРАЦИЯ МЕДАЛЕЙ
+    // 2. АВТОНОМНЫЙ БЛОК РАКЕТКИ (Больше не зависит от сторонних функций)
+    var invHtml = '';
+    if (u.blade || u.rubberL || u.rubberR) {
+        invHtml = '<div style="margin-top: 12px; padding: 12px; background: rgba(56, 189, 248, 0.05); border: 1px solid rgba(56, 189, 248, 0.2); border-radius: 12px; display: flex; flex-direction: column; gap: 6px;">' +
+                  '<div style="font-size: 11px; font-weight: 700; color: var(--accent-sky); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed rgba(56, 189, 248, 0.2); padding-bottom: 6px; margin-bottom: 4px;">🏓 Инвентарь игрока:</div>';
+        if (u.blade) invHtml += '<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-muted);">Основание:</span><b style="color:var(--text);">' + cleanHtml(u.blade) + '</b></div>';
+        if (u.rubberL) invHtml += '<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-muted);">Накладка слева:</span><b style="color:var(--text);">' + cleanHtml(u.rubberL) + '</b></div>';
+        if (u.rubberR) invHtml += '<div style="display:flex; justify-content:space-between; font-size:13px;"><span style="color:var(--text-muted);">Накладка справа:</span><b style="color:var(--text);">' + cleanHtml(u.rubberR) + '</b></div>';
+        invHtml += '</div>';
+    }
+
+    // 3. МЕДАЛИ ТУРНИРОВ (Если они есть)
     var medalsHtml = '';
     var m = u.medals || { gold:0, silver:0, bronze:0 };
     if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-      medalsHtml = '<div class="medals-box" style="display:flex; justify-content:center; gap:10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); padding:8px; border-radius:8px; margin-bottom:8px;">' +
-                   '<div class="medal-item" style="font-size:13px; font-weight:700;">🏆 ' + (u.tournamentsPlayed || 0) + '</div>' +
-                   '<div class="medal-item" style="font-size:13px; font-weight:700;">🥇 ' + (m.gold || 0) + '</div>' +
-                   '<div class="medal-item" style="font-size:13px; font-weight:700;">🥈 ' + (m.silver || 0) + '</div>' +
-                   '<div class="medal-item" style="font-size:13px; font-weight:700;">🥉 ' + (m.bronze || 0) + '</div>' +
+      medalsHtml = '<div style="display:flex; justify-content:center; gap:10px; background:rgba(245,158,11,0.1); border:1px solid rgba(245,158,11,0.2); padding:8px; border-radius:8px; margin-bottom:8px;">' +
+                   '<div style="font-size:13px; font-weight:700;">🏆 ' + (u.tournamentsPlayed || 0) + '</div>' +
+                   '<div style="font-size:13px; font-weight:700;">🥇 ' + (m.gold || 0) + '</div>' +
+                   '<div style="font-size:13px; font-weight:700;">🥈 ' + (m.silver || 0) + '</div>' +
+                   '<div style="font-size:13px; font-weight:700;">🥉 ' + (m.bronze || 0) + '</div>' +
                    '</div>';
     }
 
-    // 3. ГАРАНТИРОВАННАЯ ГЕНЕРАЦИЯ РАКЕТКИ
-    var invHtml = '';
-    if (u.blade || u.rubberL || u.rubberR) {
-      invHtml = '<div class="inventory-box" style="margin-top: 8px; background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px;">' +
-                '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-      
-      if (typeof getInventoryRowHtml === 'function') {
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-      } else {
-        if (u.blade) invHtml += '<div style="font-size:12px;">🏓 Основание: <b>'+cleanHtml(u.blade)+'</b></div>';
-        if (u.rubberL) invHtml += '<div style="font-size:12px;">🔴 Накладка L: <b>'+cleanHtml(u.rubberL)+'</b></div>';
-        if (u.rubberR) invHtml += '<div style="font-size:12px;">⚫ Накладка R: <b>'+cleanHtml(u.rubberR)+'</b></div>';
-      }
-      invHtml += '</div>';
-    }
-
-    // 4. СБОРКА И ВСТАВКА ВСЕЙ КАРТОЧКИ РАЗОМ
-    if (contentEl) {
+    // 4. СБОРКА И ВСТАВКА ВСЕЙ КАРТОЧКИ (вместе с ракеткой)
+    if(contentEl) {
       contentEl.innerHTML = medalsHtml + uidHtml +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
@@ -551,69 +535,49 @@ function showUserInfoModal(uid) {
         '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins + ' м') + '</span></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' +
-        invHtml; // Ракетка вставляется железобетонно
+        invHtml; 
     }
 
-    // 5. АСИНХРОННАЯ ЗАГРУЗКА ИСТОРИИ (Работает в фоне)
-    db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(snaps) {
+    // 5. ИСТОРИЯ МАТЧЕЙ (Включая расчет дней для "Последней игры")
+    db.collection('matches_history').get().then(function(allSnaps) {
         var matches = [];
-        snaps.forEach(function(docX) { matches.push(docX.data()); });
-        processLoadedMatches(matches, uid);
-    }).catch(function() {
-        db.collection('matches_history').get().then(function(allSnaps) {
-            var matches = [];
-            allSnaps.forEach(function(docX) {
-              var mx = docX.data();
-              if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) {
-                matches.push(mx);
-              }
-            });
-            processLoadedMatches(matches, uid);
-        }).catch(function() {
-            if(historyEl) historyEl.innerHTML = '<span class="empty-note">Матчи не найдены</span>';
-            var dynRow = document.getElementById('dynamic-last-match-date');
-            if(dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+        allSnaps.forEach(function(docX) {
+          var mx = docX.data();
+          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) matches.push(mx);
         });
+
+        var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
+        if (matches.length > 0) {
+          matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+          try {
+            var lastTs = parseTime(matches[0].timestamp);
+            if (lastTs) {
+              var mDate = new Date(lastTs);
+              var day = ('0' + mDate.getDate()).slice(-2);
+              var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+              
+              var today = new Date(); today.setHours(0,0,0,0);
+              var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
+              var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+              
+              var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (<span style="' + (diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);') + '">' + diffDays + ' дн. назад</span>)';
+              lastMatchStr = '<span style="font-weight: 600; color: var(--accent-sky);">' + day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span></span>';
+            }
+          } catch(e) {}
+        }
+        
+        var dynRow = document.getElementById('dynamic-last-match-date');
+        if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
+
+        if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
+
+    }).catch(function() {
+        if(historyEl) historyEl.innerHTML = '<span class="empty-note">Матчи не найдены</span>';
     });
 
   }).catch(function(e) {
     closeUserInfoModal();
   });
-}
-
-// Вспомогательная функция для расчета времени и отрисовки истории
-function processLoadedMatches(matches, uid) {
-  var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
-  
-  if (matches.length > 0) {
-    matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
-    try {
-      var lastTs = parseTime(matches[0].timestamp);
-      if (lastTs) {
-        var mDate = new Date(lastTs);
-        var day = ('0' + mDate.getDate()).slice(-2);
-        var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
-        
-        var today = new Date(); today.setHours(0,0,0,0);
-        var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
-        var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
-        
-        var daysText = "";
-        if (diffDays === 0) daysText = " (Сегодня)";
-        else if (diffDays === 1) daysText = " (Вчера)";
-        else if (diffDays > 1) {
-          var colorText = diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);';
-          daysText = ' (<span style="' + colorText + '">' + diffDays + ' дн. назад</span>)';
-        }
-        lastMatchStr = '<span style="font-weight: 600; color: var(--accent-sky);">' + day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span></span>';
-      }
-    } catch(e) {}
-  }
-  
-  var row = document.getElementById('dynamic-last-match-date');
-  if (row) row.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
-
-  if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
 }
 
 function renderUserHistoryFromSnaps(snaps, uid) {
