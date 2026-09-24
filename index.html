@@ -11,26 +11,31 @@
   <meta name="apple-touch-fullscreen" content="yes">
   
   <title>Клуб любителей настольного тенниса ЧМЗ</title>
+  
+  <!-- 1. ПРИНУДИТЕЛЬНАЯ ПРЕДЗАГРУЗКА КАРТИНОК (Появятся мгновенно) -->
   <link rel="preload" as="image" href="logo.webp">
-  <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
+  <link rel="preload" as="image" href="App.webp">
+
+  <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://telegram.org">
 
-  <!-- ПОДКЛЮЧЕНИЕ PWA-МАНИФЕСТА -->
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 
   <script async src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <!-- 2. БЫСТРЫЕ ЗЕРКАЛА FIREBASE (Обход замедлений gstatic в РФ) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
+  <!-- ВАШИ СКРИПТЫ -->
   <script defer src="js/config.js"></script>
   <script defer src="js/matches.js"></script>
   <script defer src="js/radar.js"></script>
-  <script defer src="js/app.js?v=1"></script>
+  <script defer src="js/app.js?v=2"></script>
 </head>
 <body data-theme="dark">
 
