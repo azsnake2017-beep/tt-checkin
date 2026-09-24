@@ -554,7 +554,8 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
 
-   // --- ФОНОВАЯ ЗАГРУЗКА ИСТОРИИ С DOCID ДЛЯ УДАЛЕНИЯ ---
+    // Фоновая загрузка истории
+// --- ФОНОВАЯ ЗАГРУЗКА ИСТОРИИ С DOCID ДЛЯ УДАЛЕНИЯ ---
     db.collection('matches_history').get().then(function(allSnaps) {
         var matches = [];
         allSnaps.forEach(function(docX) {
@@ -596,6 +597,12 @@ function showUserInfoModal(uid) {
         var dynRow = document.getElementById('dynamic-last-match-date');
         if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
     });
+    });
+
+  }).catch(function(e) {
+    closeUserInfoModal();
+  });
+}
 
 // Вспомогательная функция для истории
 function processMatchesData(matches, uid) {
