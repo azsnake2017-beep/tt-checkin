@@ -210,29 +210,30 @@ function promptRejectMatch(matchId) {
 
 function listenPendingMatches() {
   var myUid = getVerifiedUserId(); if (!myUid) return;
-  db.collection('pending_matches').where('targetUids', 'array-contains', myUid).onSnapshot(function(snap) {
+  // Используем лимит и оптимизированный индекс для мгновенного ответа
+  db.collection('pending_matches').where('targetUids', 'array-contains', myUid).limit(10).onSnapshot({ includeMetadataChanges: true }, function(snap) {
     try {
       var c = document.getElementById('pending-matches-container'); 
+      if (!c) return;
       if (snap.empty) { c.innerHTML = ''; return; }
       var html = '';
       snap.forEach(function(doc) { 
-        var m = doc.data(); 
-        var isDoubles = m.type === 'doubles';
-        var title = isDoubles ? '👥 Подтверждение парного матча 2х2' : '⚔️ Подтверждение матча от <b>' + cleanHtml(m.proposerName) + '</b>';
-        var scoreText = isDoubles 
-          ? ('Счёт: <b>' + cleanHtml(m.team2Names) + '</b> ' + m.scoreTeam2 + ' : ' + m.scoreTeam1 + ' <b>' + cleanHtml(m.team1Names) + '</b>')
-          : ('Счёт: Вы <b>' + m.scoreOpponent + ' : ' + m.scoreProposer + '</b> ' + cleanHtml(m.proposerName));
+          var m = doc.data(); 
+          var isDoubles = m.type === 'doubles';
+          var title = isDoubles ? '👥 Подтверждение парного матча 2х2' : '⚔️ Подтверждение матча от <b>' + cleanHtml(m.proposerName) + '</b>';
+          var scoreText = isDoubles 
+            ? ('Счёт: <b>' + cleanHtml(m.team2Names) + '</b> ' + m.scoreTeam2 + ' : ' + m.scoreTeam1 + ' <b>' + cleanHtml(m.team1Names) + '</b>')
+            : ('Счёт: Вы <b>' + m.scoreOpponent + ' : ' + m.scoreProposer + '</b> ' + cleanHtml(m.proposerName));
 
-        html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px;">' +
-                  '<div style="font-size: 13px; font-weight: 600; color: #9333ea;">' + title + '</div>' +
-                  '<div style="font-size: 13px;">' + scoreText + '</div>' +
-                  '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
-                  '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
-                    // ЗДЕСЬ МЫ ЗАМЕНИЛИ ПРЯМОЙ ВЫЗОВ НА PROMPT
-                    '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="promptConfirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
-                    '<button class="btn btn-leave" style="padding: 8px;" onclick="promptRejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
-                  '</div>' +
-                '</div>'; 
+          html += '<div style="background: rgba(168, 85, 247, 0.1); border: 1px solid var(--accent-purple); padding: 12px; border-radius: 14px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px;">' +
+                    '<div style="font-size: 13px; font-weight: 600; color: #9333ea;">' + title + '</div>' +
+                    '<div style="font-size: 13px;">' + scoreText + '</div>' +
+                    '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
+                    '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
+                      '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
+                      '<button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
+                    '</div>' +
+                  '</div>'; 
       });
       c.innerHTML = html;
     } catch(e) {}
