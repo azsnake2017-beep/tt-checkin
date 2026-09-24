@@ -453,10 +453,10 @@ function deleteAnnouncement() {
 
 // --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ПЛАВНЫМ СКРОЛЛОМ ---
 // --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
+// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ И ИНВЕНТАРЕМ ---
 function showUserInfoModal(uid) {
   if (!uid) return;
   
-  // Кэшируем элементы для надежности
   var titleEl = document.getElementById('info-modal-title');
   var contentEl = document.getElementById('info-modal-content-area');
   var historyEl = document.getElementById('info-modal-history');
@@ -480,17 +480,17 @@ function showUserInfoModal(uid) {
     var d = docs[0], ld = docs[1], allMatchesSnap = docs[2];
 
     if (!d.exists) { 
-      if(modal) modal.style.display = 'none'; 
+      if (modal) modal.style.display = 'none'; 
       return; 
     }
 
     var u = d.data() || {};
-    var adminTag = ADMIN_UIDS.indexOf(uid) !== -1 ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
-    var customBadge = getCustomBadge(uid);
+    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     
     if (titleEl) titleEl.innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
     
-    var uidHtml = isSuperAdmin() ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
+    var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
     // --- СОБИРАЕМ ИСТОРИЮ ---
     var userMatches = [];
@@ -553,34 +553,30 @@ function showUserInfoModal(uid) {
       } else { medalsEl.style.display = 'none'; }
     }
     
+    // --- ИНВЕНТАРЬ (Встраивается прямо в блок данных) ---
+    var invBlockHtml = '';
+    if (u.blade || u.rubberL || u.rubberR) {
+      invBlockHtml = '<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--card-border); display: flex; flex-direction: column; gap: 6px;">' +
+        '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">Ракетка:</div>';
+      if (u.blade) invBlockHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
+      if (u.rubberL) invBlockHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
+      if (u.rubberR) invBlockHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
+      invBlockHtml += '</div>';
+    }
+
     // --- ОСНОВНОЙ КОНТЕНТ ---
     if (contentEl) {
       contentEl.innerHTML = uidHtml +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + getPlayerStatus(eloDisplay) + '</span></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--accent-sky);">' + lastMatchStr + '</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
+        '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins + ' м') + '</span></div>' +
         '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
-        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>';
+        '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' +
+        invBlockHtml;
     }
 
-    // --- ИНВЕНТАРЬ (ВОССТАНОВЛЕН СТРОГО КАК В ВАШЕМ ФАЙЛЕ) ---
-    if (invEl) {
-      if (u.blade || u.rubberL || u.rubberR) {
-        var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-        if (u.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', u.blade, 'Основание для ракетки настольного тенниса');
-        if (u.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', u.rubberL, 'Накладка для ракетки настольного тенниса');
-        if (u.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса');
-        
-        invEl.innerHTML = invHtml; 
-        invEl.className = 'inventory-box'; 
-        invEl.style.display = 'flex';
-      } else { 
-        invEl.style.display = 'none'; 
-      }
-    }
-    
     // --- ИСТОРИЯ МАТЧЕЙ ---
     try {
       renderUserHistoryList(userMatches, uid);
