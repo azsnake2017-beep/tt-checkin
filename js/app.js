@@ -1577,8 +1577,8 @@ function shareMyRefLink() {
   }
 }
 
-// 3. Запись пригласившего (Срабатывает при входе новичка)
-function processReferralBonus(newUserId) {
+// 3. Запись пригласившего и отправка уведомления в чат
+function processReferralBonus(newUserId, newUserName) {
   try {
     if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe) return;
     var startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
@@ -1599,10 +1599,15 @@ function processReferralBonus(newUserId) {
               pendingInvitesCount: firebase.firestore.FieldValue.increment(1)
             }, { merge: true });
             localStorage.setItem('ref_linked_' + newUserId, 'true');
+            
+            // --- ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ В ТЕЛЕГРАМ ЧАТ ---
+            db.collection('users').doc(startParam).get().then(function(inviterDoc) {
+               var inviterName = inviterDoc.exists ? (inviterDoc.data().name || "Игрок") : "Участник";
+               sendTelegramAlert("🤝 <b>Новый игрок по приглашению!</b>\n\nВ клуб вступил участник: <b>" + cleanHtml(newUserName || "Новичок") + "</b>\nЕго пригласил: <b>" + cleanHtml(inviterName) + "</b>\n\n<i>Осталось сыграть 3 матча для подтверждения квалификации!</i>");
+            });
           });
         }
       });
     }
   } catch (err) {}
 }
-
