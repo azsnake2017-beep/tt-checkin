@@ -389,26 +389,50 @@ window.clearBounty = function(silent) {
   });
 };
 
-// Добавьте этот кусок внутрь document.addEventListener('DOMContentLoaded', ...) рядом с бустом:
+// Глобальная функция для открытия профиля жертвы при клике на баннер
+  window.openBountyProfile = function() {
+    if (window.currentBountyTargetUid && typeof openUserInfoModal === 'function') {
+      openUserInfoModal(window.currentBountyTargetUid);
+    }
+  };
+
+  // Слушатель ивента Охоты на чемпиона (Bounty)
   try {
     db.collection('settings').doc('bounty').onSnapshot(function(doc) {
       var banner = document.getElementById('global-bounty-banner');
       var nameEl = document.getElementById('global-bounty-name');
+      var tagEl = document.getElementById('global-bounty-tag');
       
       if (doc.exists && doc.data().uid) {
         window.currentBountyTargetUid = doc.data().uid;
-        window.currentBountyTargetName = doc.data().name;
-        if (banner && nameEl) {
-          nameEl.innerText = window.currentBountyTargetName;
-          banner.style.display = 'block';
-        }
+        
+        // Показываем баннер с базовым именем, пока грузятся полные данные
+        if (banner) banner.style.display = 'block';
+        if (nameEl) nameEl.innerText = doc.data().name;
+        
+        // Подтягиваем актуальные данные игрока, чтобы достать плашку "Учитель"
+        db.collection('users').doc(window.currentBountyTargetUid).get().then(function(uDoc) {
+          if (uDoc.exists) {
+            var uData = uDoc.data();
+            
+            // Проверяем наличие персонального тега (ищем в возможных полях базы)
+            if (tagEl) {
+              var customTag = uData.customTag || uData.roleTag || uData.title || (uData.isAdmin ? "Админ 🛡️" : "");
+              if (customTag) {
+                tagEl.innerHTML = customTag;
+                tagEl.style.display = 'inline-block';
+              } else {
+                tagEl.style.display = 'none';
+              }
+            }
+          }
+        });
       } else {
         window.currentBountyTargetUid = null;
-        window.currentBountyTargetName = "";
         if (banner) banner.style.display = 'none';
       }
     });
-  } catch(e) {}
+  } catch(e) { console.error("Ошибка слушателя Охоты:", e); }
 
 
 function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
