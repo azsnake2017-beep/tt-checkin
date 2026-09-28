@@ -81,7 +81,7 @@
     </div>
   </div>
 <!-- БАННЕР ОХОТЫ НА ЧЕМПИОНА (WANTED) -->
-  <div id="global-bounty-banner" style="display: none; background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border-bottom: 2px solid #ef4444; color: #fff; text-align: center; padding: 12px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); margin-bottom: 10px; position: relative; overflow: hidden;">
+  <div id="global-bounty-banner" style="display: none; background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border-bottom: 2px solid #ef4444; color: #fff; text-align: center; padding: 12px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); margin-bottom: 10px; position: relative; overflow: hidden; z-index: 50;">
     <!-- Фоновая мишень -->
     <div style="position: absolute; right: -5px; top: -15px; font-size: 60px; opacity: 0.15; transform: rotate(15deg); pointer-events: none;">🎯</div>
     
@@ -93,8 +93,8 @@
          onmousedown="this.style.opacity='0.7'" onmouseup="this.style.opacity='1'" onmouseleave="this.style.opacity='1'">
       <span style="font-size: 14px; margin-right: 8px;">👤</span>
       <span style="font-size: 16px; font-weight: 900; color: #fde047; text-shadow: 0 2px 4px rgba(0,0,0,0.5);" id="global-bounty-name">ЗАГРУЗКА...</span>
-      <!-- Место под плашку "Учитель" -->
-      <span id="global-bounty-tag" style="display: none; background: #eab308; color: #000; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 8px;"></span>
+      <!-- Сюда JS будет подставлять красивые клубные плашки (Учитель, Админ и т.д.) -->
+      <span id="global-bounty-tag" style="display: none; margin-left: 8px; align-items: center;"></span>
       <span style="font-size: 12px; color: #fca5a5; margin-left: 8px;">ℹ️</span>
     </div>
 
