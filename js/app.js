@@ -335,7 +335,77 @@ function saveCustomNameWithCheck() {
   }).catch(function(e) { customAlert("Не удалось сохранить профиль: " + e.message); });
 }
 
-function openAdminMenu() { document.getElementById('admin-modal').style.display = 'flex'; }
+// Заменяем стандартное открытие админки
+function openAdminMenu() { 
+  document.getElementById('admin-modal').style.display = 'flex'; 
+  
+  // Подгружаем топ игроков для охоты
+  if (isSuperAdmin()) {
+    db.collection('users').orderBy('elo', 'desc').limit(30).get().then(function(snap) {
+      var sel = document.getElementById('admin-bounty-select');
+      if (!sel) return;
+      sel.innerHTML = '<option value="">-- Выберите цель --</option>';
+      snap.forEach(function(doc) {
+        var d = doc.data();
+        sel.innerHTML += '<option value="' + doc.id + '">' + cleanHtml(d.name) + ' (' + (d.elo || 1000) + ')</option>';
+      });
+    });
+  }
+}
+
+// ==========================================
+// ИВЕНТ: ОХОТА НА ЧЕМПИОНА
+// ==========================================
+window.currentBountyTargetUid = null;
+window.currentBountyTargetName = "";
+
+window.saveBounty = function() {
+  if (!isSuperAdmin()) return;
+  var sel = document.getElementById('admin-bounty-select');
+  var targetUid = sel.value;
+  var targetText = sel.options[sel.selectedIndex].text.split(' (')[0];
+  if (!targetUid) return customAlert("Выберите игрока!");
+
+  db.collection('settings').doc('bounty').set({ uid: targetUid, name: targetText }, { merge: true }).then(function() {
+    sendTelegramAlert("🎯 <b>ОБЪЯВЛЕНА ОХОТА НА ЧЕМПИОНА!</b>\n\nАдминистрация назначила награду за голову игрока: <b>" + targetText + "</b>!\n\nТот, кто первым сможет обыграть его в формате 1х1, получит моментальный бонус <b>+100 Эло</b> (помимо обычных очков за матч).\n\n<i>Охота открыта! Ракетки к бою!</i> 🩸");
+    customAlert("✅ Охота на " + targetText + " объявлена!");
+    closeAdminMenu();
+  });
+};
+
+window.clearBounty = function(silent) {
+  if (!isSuperAdmin()) return;
+  db.collection('settings').doc('bounty').delete().then(function() {
+    if (!silent) {
+      sendTelegramAlert("🛑 <b>Охота отменена.</b> Назначенная награда отозвана.");
+      customAlert("✅ Охота отменена!");
+      closeAdminMenu();
+    }
+  });
+};
+
+// Добавьте этот кусок внутрь document.addEventListener('DOMContentLoaded', ...) рядом с бустом:
+  try {
+    db.collection('settings').doc('bounty').onSnapshot(function(doc) {
+      var banner = document.getElementById('global-bounty-banner');
+      var nameEl = document.getElementById('global-bounty-name');
+      
+      if (doc.exists && doc.data().uid) {
+        window.currentBountyTargetUid = doc.data().uid;
+        window.currentBountyTargetName = doc.data().name;
+        if (banner && nameEl) {
+          nameEl.innerText = window.currentBountyTargetName;
+          banner.style.display = 'block';
+        }
+      } else {
+        window.currentBountyTargetUid = null;
+        window.currentBountyTargetName = "";
+        if (banner) banner.style.display = 'none';
+      }
+    });
+  } catch(e) {}
+
+
 function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
 function sendAdminBroadcast() {
   if(!isSuperAdmin()) return; var t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
