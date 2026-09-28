@@ -1566,6 +1566,28 @@ setInterval(function() {
 }, 1000);
 
 // ==========================================
+// СИСТЕМА ИВЕНТОВ: БУСТ РЕЙТИНГА (ELO BOOST)
+// ==========================================
+window.currentEloMultiplier = 1;
+
+// Сохранение коэффициента админом
+window.saveEloBoost = function() {
+  if (!isSuperAdmin()) return;
+  var val = parseInt(document.getElementById('admin-elo-boost').value, 10) || 1;
+  
+  db.collection('settings').doc('elo_boost').set({ multiplier: val }, { merge: true }).then(function() {
+    var msg = val > 1 
+      ? "🚀 <b>Включен Ивент: БУСТ РЕЙТИНГА x" + val + "!</b>\n\nТеперь за победу в любых матчах начисляется в " + val + " раз больше очков Эло! За поражение рейтинг отнимается как обычно.\n\nСамое время бросить вызов сильным соперникам и взлететь в таблице! 🏓"
+      : "🛑 <b>Буст рейтинга отключен.</b>\n\nНачисление очков Эло вернулось в стандартный режим (x1).";
+    
+    sendTelegramAlert(msg);
+    customAlert("✅ Успешно! Буст рейтинга установлен на x" + val);
+    closeAdminMenu();
+  }).catch(function(e) { customAlert("Ошибка: " + e.message); });
+};
+
+
+// ==========================================
 // РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
 // ==========================================
 
