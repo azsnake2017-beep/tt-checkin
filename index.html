@@ -87,13 +87,15 @@
     
     <div style="font-size: 11px; font-weight: 800; color: #fca5a5; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">🩸 Открыта охота на чемпиона</div>
     
-    <!-- КЛИКАБЕЛЬНАЯ ПЛАШКА С ИМЕНЕМ ИГРОКА -->
-    <div onclick="if(window.currentBountyTargetUid && typeof openUserInfoModal === 'function') openUserInfoModal(window.currentBountyTargetUid);" 
-         style="display: inline-flex; align-items: center; justify-content: center; gap: 8px; background: rgba(0,0,0,0.5); border: 1px solid #ef4444; padding: 6px 14px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; transition: 0.2s;"
+    <!-- КЛИКАБЕЛЬНАЯ ПЛАШКА С ИМЕНЕМ И ПЕРСОНАЛЬНЫМ ТЕГОМ -->
+    <div onclick="openBountyProfile()" 
+         style="display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border: 1px solid #ef4444; padding: 6px 14px; border-radius: 8px; cursor: pointer; margin-bottom: 10px; transition: 0.2s;"
          onmousedown="this.style.opacity='0.7'" onmouseup="this.style.opacity='1'" onmouseleave="this.style.opacity='1'">
-      <span style="font-size: 14px;">👤</span>
-      <span style="font-size: 16px; font-weight: 900; color: #fde047; text-shadow: 0 2px 4px rgba(0,0,0,0.5);" id="global-bounty-name">ЗАГРУЗКА ИГРОКА...</span>
-      <span style="font-size: 12px; color: #fca5a5; margin-left: 2px;">ℹ️</span>
+      <span style="font-size: 14px; margin-right: 8px;">👤</span>
+      <span style="font-size: 16px; font-weight: 900; color: #fde047; text-shadow: 0 2px 4px rgba(0,0,0,0.5);" id="global-bounty-name">ЗАГРУЗКА...</span>
+      <!-- Место под плашку "Учитель" -->
+      <span id="global-bounty-tag" style="display: none; background: #eab308; color: #000; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-left: 8px;"></span>
+      <span style="font-size: 12px; color: #fca5a5; margin-left: 8px;">ℹ️</span>
     </div>
 
     <div style="font-size: 12px; font-weight: 600;">Награда за победу (1х1): <span style="background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 4px; box-shadow: 0 0 8px rgba(239,68,68,0.8);">+100 ЭЛО</span></div>
