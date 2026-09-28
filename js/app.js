@@ -390,49 +390,50 @@ window.clearBounty = function(silent) {
 };
 
 // Глобальная функция для открытия профиля жертвы при клике на баннер
-  window.openBountyProfile = function() {
-    if (window.currentBountyTargetUid && typeof openUserInfoModal === 'function') {
-      openUserInfoModal(window.currentBountyTargetUid);
-    }
-  };
+window.openBountyProfile = function() {
+  if (window.currentBountyTargetUid && typeof showUserInfoModal === 'function') {
+    showUserInfoModal(window.currentBountyTargetUid); // Исправлено на showUserInfoModal
+  }
+};
 
-  // Слушатель ивента Охоты на чемпиона (Bounty)
-  try {
-    db.collection('settings').doc('bounty').onSnapshot(function(doc) {
-      var banner = document.getElementById('global-bounty-banner');
-      var nameEl = document.getElementById('global-bounty-name');
-      var tagEl = document.getElementById('global-bounty-tag');
+// Слушатель ивента Охоты на чемпиона (Bounty)
+try {
+  db.collection('settings').doc('bounty').onSnapshot(function(doc) {
+    var banner = document.getElementById('global-bounty-banner');
+    var nameEl = document.getElementById('global-bounty-name');
+    var tagEl = document.getElementById('global-bounty-tag');
+    
+    if (doc.exists && doc.data().uid) {
+      var targetUid = doc.data().uid;
+      window.currentBountyTargetUid = targetUid;
+      window.currentBountyTargetName = doc.data().name;
       
-      if (doc.exists && doc.data().uid) {
-        window.currentBountyTargetUid = doc.data().uid;
+      if (banner) banner.style.display = 'block';
+      if (nameEl) nameEl.innerText = window.currentBountyTargetName;
+      
+      // Подтягиваем РОДНЫЕ плашки клуба (Учитель, Админ и т.д.) через ваши же функции
+      if (tagEl) {
+        var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(targetUid) !== -1) ? '<span class="platform-badge badge-admin" style="font-size:11px;">Админ ⭐</span>' : '';
+        var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(targetUid) : '';
         
-        // Показываем баннер с базовым именем, пока грузятся полные данные
-        if (banner) banner.style.display = 'block';
-        if (nameEl) nameEl.innerText = doc.data().name;
-        
-        // Подтягиваем актуальные данные игрока, чтобы достать плашку "Учитель"
-        db.collection('users').doc(window.currentBountyTargetUid).get().then(function(uDoc) {
-          if (uDoc.exists) {
-            var uData = uDoc.data();
-            
-            // Проверяем наличие персонального тега (ищем в возможных полях базы)
-            if (tagEl) {
-              var customTag = uData.customTag || uData.roleTag || uData.title || (uData.isAdmin ? "Админ 🛡️" : "");
-              if (customTag) {
-                tagEl.innerHTML = customTag;
-                tagEl.style.display = 'inline-block';
-              } else {
-                tagEl.style.display = 'none';
-              }
-            }
-          }
-        });
-      } else {
-        window.currentBountyTargetUid = null;
-        if (banner) banner.style.display = 'none';
+        var combinedTags = (adminTag + " " + customBadge).trim();
+        if (combinedTags) {
+          tagEl.innerHTML = combinedTags;
+          tagEl.style.display = 'inline-flex';
+          tagEl.style.gap = '4px';
+          tagEl.style.background = 'transparent'; // Сбрасываем фон, так как у плашек он свой
+          tagEl.style.padding = '0';
+        } else {
+          tagEl.style.display = 'none';
+        }
       }
-    });
-  } catch(e) { console.error("Ошибка слушателя Охоты:", e); }
+    } else {
+      window.currentBountyTargetUid = null;
+      window.currentBountyTargetName = "";
+      if (banner) banner.style.display = 'none';
+    }
+  });
+} catch(e) { console.error("Ошибка слушателя Охоты:", e); }
 
 
 function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
@@ -1333,30 +1334,7 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   } catch(e) {}
-  // Слушатель ивента Охоты на чемпиона (Bounty)
-  try {
-    db.collection('settings').doc('bounty').onSnapshot(function(doc) {
-      var banner = document.getElementById('global-bounty-banner');
-      var nameEl = document.getElementById('global-bounty-name');
-      
-      if (doc.exists && doc.data().uid) {
-        window.currentBountyTargetUid = doc.data().uid;
-        window.currentBountyTargetName = doc.data().name;
-        
-        if (banner && nameEl) {
-          nameEl.innerText = window.currentBountyTargetName;
-          banner.style.display = 'block'; // Показываем кровавый баннер
-        }
-      } else {
-        window.currentBountyTargetUid = null;
-        window.currentBountyTargetName = "";
-        
-        if (banner) {
-          banner.style.display = 'none'; // Прячем баннер, если охоты нет
-        }
-      }
-    });
-  } catch(e) { console.error("Ошибка слушателя Охоты:", e); }
+
   // Мягкое раскрытие Telegram Mini App без перекрывающего крестика
   if (window.Telegram && window.Telegram.WebApp) {
     try {
