@@ -240,7 +240,7 @@ function listenPendingMatches() {
   });
 }
 
-// --- ПОДТВЕРЖДЕНИЕ МАТЧА (С УЧЕТОМ БУСТОВ И DOTA-СТРИКОВ) ---
+// --- ПОДТВЕРЖДЕНИЕ МАТЧА (С УЧЕТОМ БУСТОВ, DOTA-СТРИКОВ И ОХОТЫ НА ЧЕМПИОНА) ---
 function confirmMatch(matchId) {
   if (window.isProcessingMatch) return;
   window.isProcessingMatch = true;
@@ -270,6 +270,9 @@ function confirmMatch(matchId) {
     var mult = window.currentEloMultiplier || 1;
 
     if (m.type !== 'doubles') {
+      // ==========================================
+      // ОДИНОЧНЫЙ МАТЧ (1х1)
+      // ==========================================
       var pRef = db.collection('users').doc(m.proposerUid);
       var oRef = db.collection('users').doc(m.opponentUid);
 
@@ -290,14 +293,32 @@ function confirmMatch(matchId) {
         var pStreakBonus = isPWin ? getDotaStreakBonus(pWinStreak) : 0;
         var oStreakBonus = !isPWin ? getDotaStreakBonus(oWinStreak) : 0;
 
-        // 3. Базовая математика Эло с учетом глобального БУСТА админа
+        // 3. Логика Охоты на чемпиона (Bounty)
+        var isBountyClaimed = false;
+        var pBountyBonus = 0;
+        var oBountyBonus = 0;
+        
+        if (window.currentBountyTargetUid) {
+          // Если инициатор матча выиграл у объявленной цели
+          if (isPWin && m.opponentUid === window.currentBountyTargetUid) {
+             pBountyBonus = 100;
+             isBountyClaimed = true;
+          } 
+          // Если оппонент выиграл у объявленной цели
+          else if (!isPWin && m.proposerUid === window.currentBountyTargetUid) {
+             oBountyBonus = 100;
+             isBountyClaimed = true;
+          }
+        }
+
+        // 4. Базовая математика Эло с учетом глобального БУСТА админа
         var absDelta = Math.abs(calculateElo(pElo, oElo, isPWin ? 1 : 0, 32));
         var winDelta = (absDelta * mult); 
         var loseDelta = absDelta;
 
-        // 4. Итоговое начисление: Буст + Стрик
-        var p1Gain = isPWin ? (winDelta + pStreakBonus) : -loseDelta;
-        var p2Gain = !isPWin ? (winDelta + oStreakBonus) : -loseDelta;
+        // 5. Итоговое начисление: База + Буст + Стрик + НАГРАДА ОХОТНИКА
+        var p1Gain = isPWin ? (winDelta + pStreakBonus + pBountyBonus) : -loseDelta;
+        var p2Gain = !isPWin ? (winDelta + oStreakBonus + oBountyBonus) : -loseDelta;
         
         var newPElo = Math.max(100, pElo + p1Gain);
         var newOElo = Math.max(100, oElo + p2Gain);
@@ -305,14 +326,21 @@ function confirmMatch(matchId) {
         var batch = db.batch();
         batch.set(pRef, { elo: newPElo, lastEloDelta: p1Gain, winStreak: pWinStreak, matches: (parseInt(pData.matches, 10) || 0) + 1, wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), losses: (parseInt(pData.losses, 10) || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
         batch.set(oRef, { elo: newOElo, lastEloDelta: p2Gain, winStreak: oWinStreak, matches: (parseInt(oData.matches, 10) || 0) + 1, wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), losses: (parseInt(oData.losses, 10) || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+        
         batch.delete(matchRef);
         
+        // ЕСЛИ НАГРАДА ЗАБРАНА — ЗАКРЫВАЕМ ОХОТУ АВТОМАТИЧЕСКИ
+        if (isBountyClaimed) {
+           batch.delete(db.collection('settings').doc('bounty'));
+        }
+
         var historyRef = db.collection('matches_history').doc();
         batch.set(historyRef, { type: 'singles', p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
 
         batch.commit().then(function() {
           window.isProcessingMatch = false; 
 
+          // Триггер квалификации для реферальной системы
           if (typeof checkReferralQualification === 'function') {
             checkReferralQualification(m.proposerUid);
             checkReferralQualification(m.opponentUid);
@@ -320,24 +348,33 @@ function confirmMatch(matchId) {
 
           var winnerName = isPWin ? m.proposerName : m.opponentName;
           var loserName = isPWin ? m.opponentName : m.proposerName;
-          var humorComment = getMatchHumor(isPWin ? m.scoreProposer : m.scoreOpponent, isPWin ? m.scoreOpponent : m.scoreProposer, winnerName, loserName);
+          
+          // Особый комментарий, если чемпион повержен
+          var humorComment = isBountyClaimed 
+              ? "🩸 <b>ОХОТНИК ЗАБРАЛ НАГРАДУ!</b> " + cleanHtml(winnerName) + " свергнул чемпиона и сорвал куш в +100 Эло! Это исторический момент!" 
+              : getMatchHumor(isPWin ? m.scoreProposer : m.scoreOpponent, isPWin ? m.scoreOpponent : m.scoreProposer, winnerName, loserName);
           
           var boostTag = mult > 1 ? " 🚀 <b>(БУСТ x" + mult + ")</b>" : "";
           var p1StreakTag = pStreakBonus > 0 ? " 🔥 (Стрик +" + pStreakBonus + ")" : "";
           var p2StreakTag = oStreakBonus > 0 ? " 🔥 (Стрик +" + oStreakBonus + ")" : "";
+          var p1BountyTag = pBountyBonus > 0 ? " 🎯 <b>(ОХОТНИК +100)</b>" : "";
+          var p2BountyTag = oBountyBonus > 0 ? " 🎯 <b>(ОХОТНИК +100)</b>" : "";
 
           sendTelegramAlert(
             "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
             "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
             "<i>" + humorComment + "</i>\n\n" +
             "<blockquote>📊 <b>Новый рейтинг Эло:</b>" + boostTag + "\n" +
-            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (p1Gain > 0 ? "+" : "") + p1Gain + ")" + p1StreakTag + "\n" +
-            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (p2Gain > 0 ? "+" : "") + p2Gain + ")" + p2StreakTag + "</blockquote>"
+            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (p1Gain > 0 ? "+" : "") + p1Gain + ")" + p1StreakTag + p1BountyTag + "\n" +
+            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (p2Gain > 0 ? "+" : "") + p2Gain + ")" + p2StreakTag + p2BountyTag + "</blockquote>"
           );
         }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
 
     } else {
+      // ==========================================
+      // ПАРНЫЙ МАТЧ (2х2)
+      // ==========================================
       var t1aRef = db.collection('users').doc(m.team1Uids[0]);
       var t1bRef = db.collection('users').doc(m.team1Uids[1]);
       var t2aRef = db.collection('users').doc(m.team2Uids[0]);
@@ -365,6 +402,7 @@ function confirmMatch(matchId) {
         var streak2a = !isTeam1Win ? ((parseInt(d2a.winStreak, 10) || 0) + 1) : 0;
         var streak2b = !isTeam1Win ? ((parseInt(d2b.winStreak, 10) || 0) + 1) : 0;
 
+        // Базовый расчет с глобальным бустом (Охоты на чемпиона в парных матчах нет)
         var absDelta = Math.abs(calculateElo(team1AvgElo, team2AvgElo, isTeam1Win ? 1 : 0, 24));
         var winDelta = absDelta * mult;
         var loseDelta = absDelta;
@@ -395,6 +433,7 @@ function confirmMatch(matchId) {
         batch.commit().then(function() {
           window.isProcessingMatch = false; 
 
+          // Триггер квалификации для реферальной системы
           if (typeof checkReferralQualification === 'function') {
             checkReferralQualification(m.team1Uids[0]);
             checkReferralQualification(m.team1Uids[1]);
