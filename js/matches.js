@@ -240,11 +240,12 @@ function listenPendingMatches() {
   });
 }
 
+// --- ПОДТВЕРЖДЕНИЕ МАТЧА (С УЧЕТОМ БУСТОВ И DOTA-СТРИКОВ) ---
 function confirmMatch(matchId) {
   if (window.isProcessingMatch) return;
   window.isProcessingMatch = true;
   
-  var myUid = getVerifiedUserId(); 
+  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
   if (!myUid) { window.isProcessingMatch = false; return; }
   
   var container = document.getElementById('pending-matches-container');
@@ -252,11 +253,20 @@ function confirmMatch(matchId) {
 
   var matchRef = db.collection('pending_matches').doc(matchId);
   
+  // Функция расчета Dota-подобного стрик-бонуса
+  var getDotaStreakBonus = function(streak) {
+      if (streak >= 10) return 35; // Rampage!
+      if (streak >= 7) return 20;  // Godlike
+      if (streak >= 5) return 10;  // Mega Kill
+      if (streak >= 3) return 5;   // Killing Spree
+      return 0;
+  };
+
   matchRef.get().then(function(matchDoc) {
     if (!matchDoc.exists) { window.isProcessingMatch = false; return; }
     var m = matchDoc.data();
     
-    // Получаем текущий коэффициент буста
+    // Получаем текущий коэффициент буста из админки (по умолчанию 1)
     var mult = window.currentEloMultiplier || 1;
 
     if (m.type !== 'doubles') {
@@ -272,50 +282,33 @@ function confirmMatch(matchId) {
         var pElo = parseInt(pData.elo, 10) || 1000;
         var oElo = parseInt(oData.elo, 10) || 1000;
         
-        // Математика Эло с учетом БУСТА
-        var absDelta = Math.abs(calculateElo(pElo, oElo, isPWin ? 1 : 0, 32));
-        var winDelta = absDelta * mult; // Умножаем только победу
-        var loseDelta = absDelta;       // Поражение списывается стандартно
-
-        var p1Gain = isPWin ? winDelta : -loseDelta;
-        var p2Gain = !isPWin ? winDelta : -loseDelta;
-        
-        var newPElo = Math.max(100, pElo + p1Gain);
-        var newOElo = Math.max(100, oElo + p2Gain);
-        
+        // 1. Считаем новые стрики побед
         var pWinStreak = isPWin ? ((parseInt(pData.winStreak, 10) || 0) + 1) : 0;
         var oWinStreak = isPWin ? 0 : ((parseInt(oData.winStreak, 10) || 0) + 1);
 
+        // 2. Рассчитываем индивидуальные бонусы за стрик
+        var pStreakBonus = isPWin ? getDotaStreakBonus(pWinStreak) : 0;
+        var oStreakBonus = !isPWin ? getDotaStreakBonus(oWinStreak) : 0;
+
+        // 3. Базовая математика Эло с учетом глобального БУСТА админа
+        var absDelta = Math.abs(calculateElo(pElo, oElo, isPWin ? 1 : 0, 32));
+        var winDelta = (absDelta * mult); 
+        var loseDelta = absDelta;
+
+        // 4. Итоговое начисление: Буст + Стрик
+        var p1Gain = isPWin ? (winDelta + pStreakBonus) : -loseDelta;
+        var p2Gain = !isPWin ? (winDelta + oStreakBonus) : -loseDelta;
+        
+        var newPElo = Math.max(100, pElo + p1Gain);
+        var newOElo = Math.max(100, oElo + p2Gain);
+
         var batch = db.batch();
-        batch.set(pRef, { 
-          elo: newPElo, 
-          lastEloDelta: p1Gain, 
-          winStreak: pWinStreak, 
-          matches: (parseInt(pData.matches, 10) || 0) + 1, 
-          wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), 
-          losses: (parseInt(pData.losses, 10) || 0) + (isPWin ? 0 : 1), 
-          updatedAt: Date.now() 
-        }, { merge: true });
-
-        batch.set(oRef, { 
-          elo: newOElo, 
-          lastEloDelta: p2Gain, 
-          winStreak: oWinStreak, 
-          matches: (parseInt(oData.matches, 10) || 0) + 1, 
-          wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), 
-          losses: (parseInt(oData.losses, 10) || 0) + (isPWin ? 1 : 0), 
-          updatedAt: Date.now() 
-        }, { merge: true });
-
+        batch.set(pRef, { elo: newPElo, lastEloDelta: p1Gain, winStreak: pWinStreak, matches: (parseInt(pData.matches, 10) || 0) + 1, wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), losses: (parseInt(pData.losses, 10) || 0) + (isPWin ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        batch.set(oRef, { elo: newOElo, lastEloDelta: p2Gain, winStreak: oWinStreak, matches: (parseInt(oData.matches, 10) || 0) + 1, wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), losses: (parseInt(oData.losses, 10) || 0) + (isPWin ? 1 : 0), updatedAt: Date.now() }, { merge: true });
         batch.delete(matchRef);
         
         var historyRef = db.collection('matches_history').doc();
-        batch.set(historyRef, { 
-          type: 'singles', 
-          p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, 
-          p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, 
-          participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() 
-        });
+        batch.set(historyRef, { type: 'singles', p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() });
 
         batch.commit().then(function() {
           window.isProcessingMatch = false; 
@@ -328,15 +321,18 @@ function confirmMatch(matchId) {
           var winnerName = isPWin ? m.proposerName : m.opponentName;
           var loserName = isPWin ? m.opponentName : m.proposerName;
           var humorComment = getMatchHumor(isPWin ? m.scoreProposer : m.scoreOpponent, isPWin ? m.scoreOpponent : m.scoreProposer, winnerName, loserName);
+          
           var boostTag = mult > 1 ? " 🚀 <b>(БУСТ x" + mult + ")</b>" : "";
+          var p1StreakTag = pStreakBonus > 0 ? " 🔥 (Стрик +" + pStreakBonus + ")" : "";
+          var p2StreakTag = oStreakBonus > 0 ? " 🔥 (Стрик +" + oStreakBonus + ")" : "";
 
           sendTelegramAlert(
             "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
             "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
             "<i>" + humorComment + "</i>\n\n" +
             "<blockquote>📊 <b>Новый рейтинг Эло:</b>" + boostTag + "\n" +
-            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (p1Gain > 0 ? "+" : "") + p1Gain + ")\n" +
-            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (p2Gain > 0 ? "+" : "") + p2Gain + ")</blockquote>"
+            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (p1Gain > 0 ? "+" : "") + p1Gain + ")" + p1StreakTag + "\n" +
+            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (p2Gain > 0 ? "+" : "") + p2Gain + ")" + p2StreakTag + "</blockquote>"
           );
         }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
@@ -363,34 +359,38 @@ function confirmMatch(matchId) {
 
         var isTeam1Win = m.scoreTeam1 > m.scoreTeam2;
         
-        // Математика Эло с учетом БУСТА
+        // Индивидуальные стрики игроков в команде
+        var streak1a = isTeam1Win ? ((parseInt(d1a.winStreak, 10) || 0) + 1) : 0;
+        var streak1b = isTeam1Win ? ((parseInt(d1b.winStreak, 10) || 0) + 1) : 0;
+        var streak2a = !isTeam1Win ? ((parseInt(d2a.winStreak, 10) || 0) + 1) : 0;
+        var streak2b = !isTeam1Win ? ((parseInt(d2b.winStreak, 10) || 0) + 1) : 0;
+
         var absDelta = Math.abs(calculateElo(team1AvgElo, team2AvgElo, isTeam1Win ? 1 : 0, 24));
         var winDelta = absDelta * mult;
         var loseDelta = absDelta;
 
-        var t1Gain = isTeam1Win ? winDelta : -loseDelta;
-        var t2Gain = !isTeam1Win ? winDelta : -loseDelta;
+        // Рассчитываем итоговый gain для каждого с учетом его ЛИЧНОГО стрик-бонуса
+        var gain1a = isTeam1Win ? (winDelta + getDotaStreakBonus(streak1a)) : -loseDelta;
+        var gain1b = isTeam1Win ? (winDelta + getDotaStreakBonus(streak1b)) : -loseDelta;
+        var gain2a = !isTeam1Win ? (winDelta + getDotaStreakBonus(streak2a)) : -loseDelta;
+        var gain2b = !isTeam1Win ? (winDelta + getDotaStreakBonus(streak2b)) : -loseDelta;
 
-        var newElo1a = Math.max(100, elo1a + t1Gain);
-        var newElo1b = Math.max(100, elo1b + t1Gain);
-        var newElo2a = Math.max(100, elo2a + t2Gain);
-        var newElo2b = Math.max(100, elo2b + t2Gain);
+        var newElo1a = Math.max(100, elo1a + gain1a);
+        var newElo1b = Math.max(100, elo1b + gain1b);
+        var newElo2a = Math.max(100, elo2a + gain2a);
+        var newElo2b = Math.max(100, elo2b + gain2b);
 
         var batch = db.batch();
 
-        batch.set(t1aRef, { elo: newElo1a, lastEloDelta: t1Gain, winStreak: isTeam1Win ? ((parseInt(d1a.winStreak, 10) || 0) + 1) : 0, matches: (parseInt(d1a.matches, 10) || 0) + 1, wins: (parseInt(d1a.wins, 10) || 0) + (isTeam1Win ? 1 : 0), losses: (parseInt(d1a.losses, 10) || 0) + (isTeam1Win ? 0 : 1), updatedAt: Date.now() }, { merge: true });
-        batch.set(t1bRef, { elo: newElo1b, lastEloDelta: t1Gain, winStreak: isTeam1Win ? ((parseInt(d1b.winStreak, 10) || 0) + 1) : 0, matches: (parseInt(d1b.matches, 10) || 0) + 1, wins: (parseInt(d1b.wins, 10) || 0) + (isTeam1Win ? 1 : 0), losses: (parseInt(d1b.losses, 10) || 0) + (isTeam1Win ? 0 : 1), updatedAt: Date.now() }, { merge: true });
-        batch.set(t2aRef, { elo: newElo2a, lastEloDelta: t2Gain, winStreak: isTeam1Win ? 0 : ((parseInt(d2a.winStreak, 10) || 0) + 1), matches: (parseInt(d2a.matches, 10) || 0) + 1, wins: (parseInt(d2a.wins, 10) || 0) + (isTeam1Win ? 0 : 1), losses: (parseInt(d2a.losses, 10) || 0) + (isTeam1Win ? 1 : 0), updatedAt: Date.now() }, { merge: true });
-        batch.set(t2bRef, { elo: newElo2b, lastEloDelta: t2Gain, winStreak: isTeam1Win ? 0 : ((parseInt(d2b.winStreak, 10) || 0) + 1), matches: (parseInt(d2b.matches, 10) || 0) + 1, wins: (parseInt(d2b.wins, 10) || 0) + (isTeam1Win ? 0 : 1), losses: (parseInt(d2b.losses, 10) || 0) + (isTeam1Win ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+        batch.set(t1aRef, { elo: newElo1a, lastEloDelta: gain1a, winStreak: streak1a, matches: (parseInt(d1a.matches, 10) || 0) + 1, wins: (parseInt(d1a.wins, 10) || 0) + (isTeam1Win ? 1 : 0), losses: (parseInt(d1a.losses, 10) || 0) + (isTeam1Win ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        batch.set(t1bRef, { elo: newElo1b, lastEloDelta: gain1b, winStreak: streak1b, matches: (parseInt(d1b.matches, 10) || 0) + 1, wins: (parseInt(d1b.wins, 10) || 0) + (isTeam1Win ? 1 : 0), losses: (parseInt(d1b.losses, 10) || 0) + (isTeam1Win ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        batch.set(t2aRef, { elo: newElo2a, lastEloDelta: gain2a, winStreak: streak2a, matches: (parseInt(d2a.matches, 10) || 0) + 1, wins: (parseInt(d2a.wins, 10) || 0) + (isTeam1Win ? 0 : 1), losses: (parseInt(d2a.losses, 10) || 0) + (isTeam1Win ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+        batch.set(t2bRef, { elo: newElo2b, lastEloDelta: gain2b, winStreak: streak2b, matches: (parseInt(d2b.matches, 10) || 0) + 1, wins: (parseInt(d2b.wins, 10) || 0) + (isTeam1Win ? 0 : 1), losses: (parseInt(d2b.losses, 10) || 0) + (isTeam1Win ? 1 : 0), updatedAt: Date.now() }, { merge: true });
 
         batch.delete(matchRef);
 
         var historyRefD = db.collection('matches_history').doc();
-        batch.set(historyRefD, { 
-          type: 'doubles', team1Uids: m.team1Uids, team1Names: m.team1Names, team1NamesArr: m.team1NamesArr, 
-          team2Uids: m.team2Uids, team2Names: m.team2Names, team2NamesArr: m.team2NamesArr, 
-          team1Score: m.scoreTeam1, team2Score: m.scoreTeam2, participants: m.team1Uids.concat(m.team2Uids), timestamp: Date.now() 
-        });
+        batch.set(historyRefD, { type: 'doubles', team1Uids: m.team1Uids, team1Names: m.team1Names, team1NamesArr: m.team1NamesArr, team2Uids: m.team2Uids, team2Names: m.team2Names, team2NamesArr: m.team2NamesArr, team1Score: m.scoreTeam1, team2Score: m.scoreTeam2, participants: m.team1Uids.concat(m.team2Uids), timestamp: Date.now() });
 
         batch.commit().then(function() {
           window.isProcessingMatch = false; 
@@ -406,16 +406,21 @@ function confirmMatch(matchId) {
           var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
           var humorComment = getMatchHumor(isTeam1Win ? m.scoreTeam1 : m.scoreTeam2, isTeam1Win ? m.scoreTeam2 : m.scoreTeam1, winTeam, loseTeam);
           var boostTag = mult > 1 ? " 🚀 <b>(БУСТ x" + mult + ")</b>" : "";
+          
+          var tag1a = getDotaStreakBonus(streak1a) > 0 ? " 🔥(+" + getDotaStreakBonus(streak1a) + ")" : "";
+          var tag1b = getDotaStreakBonus(streak1b) > 0 ? " 🔥(+" + getDotaStreakBonus(streak1b) + ")" : "";
+          var tag2a = getDotaStreakBonus(streak2a) > 0 ? " 🔥(+" + getDotaStreakBonus(streak2a) + ")" : "";
+          var tag2b = getDotaStreakBonus(streak2b) > 0 ? " 🔥(+" + getDotaStreakBonus(streak2b) + ")" : "";
 
           sendTelegramAlert(
             "👥 <b>Парный матч 2х2 подтверждён!</b>\n\n" +
             "🏓 <b>" + cleanHtml(m.team1Names) + "</b>  <code>" + m.scoreTeam1 + " : " + m.scoreTeam2 + "</code>  <b>" + cleanHtml(m.team2Names) + "</b>\n\n" +
             "<i>" + humorComment + "</i>\n\n" +
-            "<blockquote>📊 <b>Новый рейтинг Эло участников:</b>" + boostTag + "\n" +
-            "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (t1Gain > 0 ? "+" : "") + t1Gain + ")\n" +
-            "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (t1Gain > 0 ? "+" : "") + t1Gain + ")\n" +
-            "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (t2Gain > 0 ? "+" : "") + t2Gain + ")\n" +
-            "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (t2Gain > 0 ? "+" : "") + t2Gain + ")</blockquote>"
+            "<blockquote>📊 <b>Новый рейтинг:</b>" + boostTag + "\n" +
+            "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (gain1a > 0 ? "+" : "") + gain1a + ")" + tag1a + "\n" +
+            "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (gain1b > 0 ? "+" : "") + gain1b + ")" + tag1b + "\n" +
+            "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (gain2a > 0 ? "+" : "") + gain2a + ")" + tag2a + "\n" +
+            "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (gain2b > 0 ? "+" : "") + gain2b + ")" + tag2b + "</blockquote>"
           );
         }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
