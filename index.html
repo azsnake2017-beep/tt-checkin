@@ -244,6 +244,24 @@
     
     <!-- КНОПКА: СГОРАНИЕ ЭЛО (Ручной режим) -->
     <button class="btn btn-join" style="background: rgba(225,29,72,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; margin-top: 6px;" onclick="applyEloDecay()">📉 Списать -50 Эло за неактивность (7 дней)</button>
+
+    <!-- КНОПКА: БУСТ РЕЙТИНГА -->
+    <div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
+      <h4 style="font-size: 14px; color: var(--accent-gold); margin-bottom: 8px;">🚀 Ивент: Буст рейтинга (Умножение побед)</h4>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <select id="admin-elo-boost" class="input-select" style="flex: 1; margin: 0; background: var(--list-bg);">
+          <option value="1">x1 (Обычный режим)</option>
+          <option value="2">x2 (Двойной Эло)</option>
+          <option value="3">x3 (Тройной Эло)</option>
+          <option value="5">x5 (Безумие)</option>
+          <option value="10">x10 (Мега-буст)</option>
+        </select>
+        <button class="btn btn-join" style="width: auto; padding: 10px 14px; margin: 0; background: var(--accent-gold); color: #000;" onclick="saveEloBoost()">Включить</button>
+      </div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.3;">
+        Умножаются только очки за победу. При поражении рейтинг списывается стандартно (-1x).
+      </div>
+    </div>
     
     <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
