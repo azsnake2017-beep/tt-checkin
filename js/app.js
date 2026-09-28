@@ -1200,13 +1200,37 @@ function listenLeaderboard() {
 
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
 document.addEventListener('DOMContentLoaded', function() {
-// Слушатель ивента Буста рейтинга
+// Слушатель ивента Буста рейтинга с визуализацией для игроков
   try {
     db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
       if (doc.exists) {
-        window.currentEloMultiplier = parseInt(doc.data().multiplier, 10) || 1;
+        var mult = parseInt(doc.data().multiplier, 10) || 1;
+        window.currentEloMultiplier = mult;
+        
+        // 1. Обновляем селект в админке
         var selectEl = document.getElementById('admin-elo-boost');
-        if (selectEl) selectEl.value = window.currentEloMultiplier;
+        if (selectEl) selectEl.value = mult;
+        
+        // 2. Управляем интерфейсом игроков
+        var banner = document.getElementById('global-boost-banner');
+        var bannerVal = document.getElementById('global-boost-value');
+        var btnBadge = document.getElementById('match-btn-boost-badge');
+        
+        if (mult > 1) {
+          // Если буст включен — показываем яркие уведомления
+          if (banner) { 
+            banner.style.display = 'block'; 
+            bannerVal.innerText = 'x' + mult; 
+          }
+          if (btnBadge) { 
+            btnBadge.style.display = 'block'; 
+            btnBadge.innerText = '🔥 x' + mult; 
+          }
+        } else {
+          // Если обычный режим (х1) — прячем всё, чтобы не отвлекать
+          if (banner) banner.style.display = 'none';
+          if (btnBadge) btnBadge.style.display = 'none';
+        }
       }
     });
   } catch(e) {}
