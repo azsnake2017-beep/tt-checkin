@@ -241,7 +241,6 @@ function listenPendingMatches() {
 }
 
 function confirmMatch(matchId) {
-  // ЗАЩИТА: Блокируем двойные нажатия
   if (window.isProcessingMatch) return;
   window.isProcessingMatch = true;
   
@@ -257,6 +256,9 @@ function confirmMatch(matchId) {
     if (!matchDoc.exists) { window.isProcessingMatch = false; return; }
     var m = matchDoc.data();
     
+    // Получаем текущий коэффициент буста
+    var mult = window.currentEloMultiplier || 1;
+
     if (m.type !== 'doubles') {
       var pRef = db.collection('users').doc(m.proposerUid);
       var oRef = db.collection('users').doc(m.opponentUid);
@@ -270,10 +272,16 @@ function confirmMatch(matchId) {
         var pElo = parseInt(pData.elo, 10) || 1000;
         var oElo = parseInt(oData.elo, 10) || 1000;
         
-        // Математика Эло: используем строго абсолютное значение дельты, чтобы избежать путаницы с минусами
+        // Математика Эло с учетом БУСТА
         var absDelta = Math.abs(calculateElo(pElo, oElo, isPWin ? 1 : 0, 32));
-        var newPElo = Math.max(100, pElo + (isPWin ? absDelta : -absDelta));
-        var newOElo = Math.max(100, oElo + (isPWin ? -absDelta : absDelta));
+        var winDelta = absDelta * mult; // Умножаем только победу
+        var loseDelta = absDelta;       // Поражение списывается стандартно
+
+        var p1Gain = isPWin ? winDelta : -loseDelta;
+        var p2Gain = !isPWin ? winDelta : -loseDelta;
+        
+        var newPElo = Math.max(100, pElo + p1Gain);
+        var newOElo = Math.max(100, oElo + p2Gain);
         
         var pWinStreak = isPWin ? ((parseInt(pData.winStreak, 10) || 0) + 1) : 0;
         var oWinStreak = isPWin ? 0 : ((parseInt(oData.winStreak, 10) || 0) + 1);
@@ -281,7 +289,7 @@ function confirmMatch(matchId) {
         var batch = db.batch();
         batch.set(pRef, { 
           elo: newPElo, 
-          lastEloDelta: isPWin ? absDelta : -absDelta, 
+          lastEloDelta: p1Gain, 
           winStreak: pWinStreak, 
           matches: (parseInt(pData.matches, 10) || 0) + 1, 
           wins: (parseInt(pData.wins, 10) || 0) + (isPWin ? 1 : 0), 
@@ -291,7 +299,7 @@ function confirmMatch(matchId) {
 
         batch.set(oRef, { 
           elo: newOElo, 
-          lastEloDelta: isPWin ? -absDelta : absDelta, 
+          lastEloDelta: p2Gain, 
           winStreak: oWinStreak, 
           matches: (parseInt(oData.matches, 10) || 0) + 1, 
           wins: (parseInt(oData.wins, 10) || 0) + (isPWin ? 0 : 1), 
@@ -301,24 +309,17 @@ function confirmMatch(matchId) {
 
         batch.delete(matchRef);
         
-        // СОХРАНЕНИЕ ИСТОРИИ ВНУТРИ BATCH (гарантия сохранения при закрытии вкладки)
         var historyRef = db.collection('matches_history').doc();
         batch.set(historyRef, { 
           type: 'singles', 
-          p1Uid: m.proposerUid, 
-          p1Name: m.proposerName, 
-          p1Score: m.scoreProposer, 
-          p2Uid: m.opponentUid, 
-          p2Name: m.opponentName, 
-          p2Score: m.scoreOpponent, 
-          participants: [m.proposerUid, m.opponentUid], 
-          timestamp: Date.now() 
+          p1Uid: m.proposerUid, p1Name: m.proposerName, p1Score: m.scoreProposer, 
+          p2Uid: m.opponentUid, p2Name: m.opponentName, p2Score: m.scoreOpponent, 
+          participants: [m.proposerUid, m.opponentUid], timestamp: Date.now() 
         });
 
         batch.commit().then(function() {
-          window.isProcessingMatch = false; // Снимаем блокировку
+          window.isProcessingMatch = false; 
 
-          // --- ТРИГГЕР КВАЛИФИКАЦИИ РЕФЕРАЛОВ (1х1) ---
           if (typeof checkReferralQualification === 'function') {
             checkReferralQualification(m.proposerUid);
             checkReferralQualification(m.opponentUid);
@@ -326,17 +327,16 @@ function confirmMatch(matchId) {
 
           var winnerName = isPWin ? m.proposerName : m.opponentName;
           var loserName = isPWin ? m.opponentName : m.proposerName;
-          var wScore = isPWin ? m.scoreProposer : m.scoreOpponent;
-          var lScore = isPWin ? m.scoreOpponent : m.scoreProposer;
-          var humorComment = getMatchHumor(wScore, lScore, winnerName, loserName);
+          var humorComment = getMatchHumor(isPWin ? m.scoreProposer : m.scoreOpponent, isPWin ? m.scoreOpponent : m.scoreProposer, winnerName, loserName);
+          var boostTag = mult > 1 ? " 🚀 <b>(БУСТ x" + mult + ")</b>" : "";
 
           sendTelegramAlert(
             "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
             "🏓 <b>" + cleanHtml(m.proposerName) + "</b>  <code>" + m.scoreProposer + " : " + m.scoreOpponent + "</code>  <b>" + cleanHtml(m.opponentName) + "</b>\n\n" +
             "<i>" + humorComment + "</i>\n\n" +
-            "<blockquote>📊 <b>Новый рейтинг Эло:</b>\n" +
-            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (isPWin ? "+" : "") + (isPWin ? absDelta : -absDelta) + ")\n" +
-            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (!isPWin ? "+" : "") + (!isPWin ? absDelta : -absDelta) + ")</blockquote>"
+            "<blockquote>📊 <b>Новый рейтинг Эло:</b>" + boostTag + "\n" +
+            "• " + cleanHtml(m.proposerName) + ": <b>" + newPElo + "</b> (" + (p1Gain > 0 ? "+" : "") + p1Gain + ")\n" +
+            "• " + cleanHtml(m.opponentName) + ": <b>" + newOElo + "</b> (" + (p2Gain > 0 ? "+" : "") + p2Gain + ")</blockquote>"
           );
         }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
@@ -362,77 +362,39 @@ function confirmMatch(matchId) {
         var team2AvgElo = (elo2a + elo2b) / 2;
 
         var isTeam1Win = m.scoreTeam1 > m.scoreTeam2;
+        
+        // Математика Эло с учетом БУСТА
         var absDelta = Math.abs(calculateElo(team1AvgElo, team2AvgElo, isTeam1Win ? 1 : 0, 24));
+        var winDelta = absDelta * mult;
+        var loseDelta = absDelta;
 
-        var newElo1a = Math.max(100, elo1a + (isTeam1Win ? absDelta : -absDelta));
-        var newElo1b = Math.max(100, elo1b + (isTeam1Win ? absDelta : -absDelta));
-        var newElo2a = Math.max(100, elo2a + (isTeam1Win ? -absDelta : absDelta));
-        var newElo2b = Math.max(100, elo2b + (isTeam1Win ? -absDelta : absDelta));
+        var t1Gain = isTeam1Win ? winDelta : -loseDelta;
+        var t2Gain = !isTeam1Win ? winDelta : -loseDelta;
+
+        var newElo1a = Math.max(100, elo1a + t1Gain);
+        var newElo1b = Math.max(100, elo1b + t1Gain);
+        var newElo2a = Math.max(100, elo2a + t2Gain);
+        var newElo2b = Math.max(100, elo2b + t2Gain);
 
         var batch = db.batch();
 
-        batch.set(t1aRef, {
-          elo: newElo1a,
-          lastEloDelta: isTeam1Win ? absDelta : -absDelta,
-          winStreak: isTeam1Win ? ((parseInt(d1a.winStreak, 10) || 0) + 1) : 0,
-          matches: (parseInt(d1a.matches, 10) || 0) + 1,
-          wins: (parseInt(d1a.wins, 10) || 0) + (isTeam1Win ? 1 : 0),
-          losses: (parseInt(d1a.losses, 10) || 0) + (isTeam1Win ? 0 : 1),
-          updatedAt: Date.now()
-        }, { merge: true });
-
-        batch.set(t1bRef, {
-          elo: newElo1b,
-          lastEloDelta: isTeam1Win ? absDelta : -absDelta,
-          winStreak: isTeam1Win ? ((parseInt(d1b.winStreak, 10) || 0) + 1) : 0,
-          matches: (parseInt(d1b.matches, 10) || 0) + 1,
-          wins: (parseInt(d1b.wins, 10) || 0) + (isTeam1Win ? 1 : 0),
-          losses: (parseInt(d1b.losses, 10) || 0) + (isTeam1Win ? 0 : 1),
-          updatedAt: Date.now()
-        }, { merge: true });
-
-        batch.set(t2aRef, {
-          elo: newElo2a,
-          lastEloDelta: isTeam1Win ? -absDelta : absDelta,
-          winStreak: isTeam1Win ? 0 : ((parseInt(d2a.winStreak, 10) || 0) + 1),
-          matches: (parseInt(d2a.matches, 10) || 0) + 1,
-          wins: (parseInt(d2a.wins, 10) || 0) + (isTeam1Win ? 0 : 1),
-          losses: (parseInt(d2a.losses, 10) || 0) + (isTeam1Win ? 1 : 0),
-          updatedAt: Date.now()
-        }, { merge: true });
-
-        batch.set(t2bRef, {
-          elo: newElo2b,
-          lastEloDelta: isTeam1Win ? -absDelta : absDelta,
-          winStreak: isTeam1Win ? 0 : ((parseInt(d2b.winStreak, 10) || 0) + 1),
-          matches: (parseInt(d2b.matches, 10) || 0) + 1,
-          wins: (parseInt(d2b.wins, 10) || 0) + (isTeam1Win ? 0 : 1),
-          losses: (parseInt(d2b.losses, 10) || 0) + (isTeam1Win ? 1 : 0),
-          updatedAt: Date.now()
-        }, { merge: true });
+        batch.set(t1aRef, { elo: newElo1a, lastEloDelta: t1Gain, winStreak: isTeam1Win ? ((parseInt(d1a.winStreak, 10) || 0) + 1) : 0, matches: (parseInt(d1a.matches, 10) || 0) + 1, wins: (parseInt(d1a.wins, 10) || 0) + (isTeam1Win ? 1 : 0), losses: (parseInt(d1a.losses, 10) || 0) + (isTeam1Win ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        batch.set(t1bRef, { elo: newElo1b, lastEloDelta: t1Gain, winStreak: isTeam1Win ? ((parseInt(d1b.winStreak, 10) || 0) + 1) : 0, matches: (parseInt(d1b.matches, 10) || 0) + 1, wins: (parseInt(d1b.wins, 10) || 0) + (isTeam1Win ? 1 : 0), losses: (parseInt(d1b.losses, 10) || 0) + (isTeam1Win ? 0 : 1), updatedAt: Date.now() }, { merge: true });
+        batch.set(t2aRef, { elo: newElo2a, lastEloDelta: t2Gain, winStreak: isTeam1Win ? 0 : ((parseInt(d2a.winStreak, 10) || 0) + 1), matches: (parseInt(d2a.matches, 10) || 0) + 1, wins: (parseInt(d2a.wins, 10) || 0) + (isTeam1Win ? 0 : 1), losses: (parseInt(d2a.losses, 10) || 0) + (isTeam1Win ? 1 : 0), updatedAt: Date.now() }, { merge: true });
+        batch.set(t2bRef, { elo: newElo2b, lastEloDelta: t2Gain, winStreak: isTeam1Win ? 0 : ((parseInt(d2b.winStreak, 10) || 0) + 1), matches: (parseInt(d2b.matches, 10) || 0) + 1, wins: (parseInt(d2b.wins, 10) || 0) + (isTeam1Win ? 0 : 1), losses: (parseInt(d2b.losses, 10) || 0) + (isTeam1Win ? 1 : 0), updatedAt: Date.now() }, { merge: true });
 
         batch.delete(matchRef);
 
-        // История внутрь транзакции
         var historyRefD = db.collection('matches_history').doc();
         batch.set(historyRefD, { 
-          type: 'doubles',
-          team1Uids: m.team1Uids,
-          team1Names: m.team1Names,
-          team1NamesArr: m.team1NamesArr,
-          team2Uids: m.team2Uids,
-          team2Names: m.team2Names,
-          team2NamesArr: m.team2NamesArr,
-          team1Score: m.scoreTeam1,
-          team2Score: m.scoreTeam2,
-          participants: m.team1Uids.concat(m.team2Uids),
-          timestamp: Date.now() 
+          type: 'doubles', team1Uids: m.team1Uids, team1Names: m.team1Names, team1NamesArr: m.team1NamesArr, 
+          team2Uids: m.team2Uids, team2Names: m.team2Names, team2NamesArr: m.team2NamesArr, 
+          team1Score: m.scoreTeam1, team2Score: m.scoreTeam2, participants: m.team1Uids.concat(m.team2Uids), timestamp: Date.now() 
         });
 
         batch.commit().then(function() {
-          window.isProcessingMatch = false; // Снимаем блокировку
+          window.isProcessingMatch = false; 
 
-          // --- ТРИГГЕР КВАЛИФИКАЦИИ РЕФЕРАЛОВ (2х2) ---
           if (typeof checkReferralQualification === 'function') {
             checkReferralQualification(m.team1Uids[0]);
             checkReferralQualification(m.team1Uids[1]);
@@ -442,19 +404,18 @@ function confirmMatch(matchId) {
 
           var winTeam = isTeam1Win ? m.team1Names : m.team2Names;
           var loseTeam = isTeam1Win ? m.team2Names : m.team1Names;
-          var wScore = isTeam1Win ? m.scoreTeam1 : m.scoreTeam2;
-          var lScore = isTeam1Win ? m.scoreTeam2 : m.scoreTeam1;
-          var humorComment = getMatchHumor(wScore, lScore, winTeam, loseTeam);
+          var humorComment = getMatchHumor(isTeam1Win ? m.scoreTeam1 : m.scoreTeam2, isTeam1Win ? m.scoreTeam2 : m.scoreTeam1, winTeam, loseTeam);
+          var boostTag = mult > 1 ? " 🚀 <b>(БУСТ x" + mult + ")</b>" : "";
 
           sendTelegramAlert(
             "👥 <b>Парный матч 2х2 подтверждён!</b>\n\n" +
             "🏓 <b>" + cleanHtml(m.team1Names) + "</b>  <code>" + m.scoreTeam1 + " : " + m.scoreTeam2 + "</code>  <b>" + cleanHtml(m.team2Names) + "</b>\n\n" +
             "<i>" + humorComment + "</i>\n\n" +
-            "<blockquote>📊 <b>Новый рейтинг Эло участников:</b>\n" +
-            "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (isTeam1Win ? "+" : "") + (isTeam1Win ? absDelta : -absDelta) + ")\n" +
-            "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (isTeam1Win ? "+" : "") + (isTeam1Win ? absDelta : -absDelta) + ")\n" +
-            "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (!isTeam1Win ? "+" : "") + (!isTeam1Win ? absDelta : -absDelta) + ")\n" +
-            "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (!isTeam1Win ? "+" : "") + (!isTeam1Win ? absDelta : -absDelta) + ")</blockquote>"
+            "<blockquote>📊 <b>Новый рейтинг Эло участников:</b>" + boostTag + "\n" +
+            "• " + cleanHtml(m.team1NamesArr[0]) + ": <b>" + newElo1a + "</b> (" + (t1Gain > 0 ? "+" : "") + t1Gain + ")\n" +
+            "• " + cleanHtml(m.team1NamesArr[1]) + ": <b>" + newElo1b + "</b> (" + (t1Gain > 0 ? "+" : "") + t1Gain + ")\n" +
+            "• " + cleanHtml(m.team2NamesArr[0]) + ": <b>" + newElo2a + "</b> (" + (t2Gain > 0 ? "+" : "") + t2Gain + ")\n" +
+            "• " + cleanHtml(m.team2NamesArr[1]) + ": <b>" + newElo2b + "</b> (" + (t2Gain > 0 ? "+" : "") + t2Gain + ")</blockquote>"
           );
         }).catch(function(e) { window.isProcessingMatch = false; customAlert("Ошибка сохранения: " + e.message); });
       });
