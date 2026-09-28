@@ -1200,6 +1200,17 @@ function listenLeaderboard() {
 
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
 document.addEventListener('DOMContentLoaded', function() {
+// Слушатель ивента Буста рейтинга
+  try {
+    db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
+      if (doc.exists) {
+        window.currentEloMultiplier = parseInt(doc.data().multiplier, 10) || 1;
+        var selectEl = document.getElementById('admin-elo-boost');
+        if (selectEl) selectEl.value = window.currentEloMultiplier;
+      }
+    });
+  } catch(e) {}
+  
   // Мягкое раскрытие Telegram Mini App без перекрывающего крестика
   if (window.Telegram && window.Telegram.WebApp) {
     try {
