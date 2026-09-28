@@ -1309,7 +1309,30 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
   } catch(e) {}
-  
+  // Слушатель ивента Охоты на чемпиона (Bounty)
+  try {
+    db.collection('settings').doc('bounty').onSnapshot(function(doc) {
+      var banner = document.getElementById('global-bounty-banner');
+      var nameEl = document.getElementById('global-bounty-name');
+      
+      if (doc.exists && doc.data().uid) {
+        window.currentBountyTargetUid = doc.data().uid;
+        window.currentBountyTargetName = doc.data().name;
+        
+        if (banner && nameEl) {
+          nameEl.innerText = window.currentBountyTargetName;
+          banner.style.display = 'block'; // Показываем кровавый баннер
+        }
+      } else {
+        window.currentBountyTargetUid = null;
+        window.currentBountyTargetName = "";
+        
+        if (banner) {
+          banner.style.display = 'none'; // Прячем баннер, если охоты нет
+        }
+      }
+    });
+  } catch(e) { console.error("Ошибка слушателя Охоты:", e); }
   // Мягкое раскрытие Telegram Mini App без перекрывающего крестика
   if (window.Telegram && window.Telegram.WebApp) {
     try {
