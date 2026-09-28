@@ -269,10 +269,7 @@
       </div>
     </div>
     
-    <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
-  </div>
-</div>
-<!-- КНОПКА: ОХОТА НА ЧЕМПИОНА -->
+    <!-- КНОПКА: ОХОТА НА ЧЕМПИОНА (ТЕПЕРЬ ОНА ВНУТРИ АДМИНКИ) -->
     <div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
       <h4 style="font-size: 14px; color: var(--accent-red); margin-bottom: 8px;">🎯 Ивент: Охота на чемпиона</h4>
       <div style="display: flex; gap: 8px; align-items: center;">
@@ -283,15 +280,8 @@
       </div>
       <button class="btn btn-leave" style="margin-top: 8px; width: 100%; padding: 6px;" onclick="clearBounty()">❌ Отменить охоту</button>
     </div>
-<!-- Окно подтверждения действий -->
-<div class="modal-overlay" id="confirm-modal" style="z-index: 1100;">
-  <div class="modal-box" style="border-color: var(--accent-red); padding: 24px;">
-    <h3 style="font-size: 18px; margin-bottom: 8px; color: var(--accent-red);">Внимание</h3>
-    <p id="confirm-modal-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px;"></p>
-    <div style="display: flex; gap: 8px;">
-      <button class="btn btn-join" style="background: var(--accent-red); flex: 1;" onclick="executeConfirm()">Да, удалить</button>
-      <button class="btn btn-leave" style="flex: 1;" onclick="closeConfirmModal()">Отмена</button>
-    </div>
+    
+    <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
 </div>
 
