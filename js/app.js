@@ -339,9 +339,9 @@ function saveCustomNameWithCheck() {
 function openAdminMenu() { 
   document.getElementById('admin-modal').style.display = 'flex'; 
   
-  // Подгружаем топ игроков для охоты
+  // Подгружаем ВСЕХ игроков для охоты (лимит убран)
   if (isSuperAdmin()) {
-    db.collection('users').orderBy('elo', 'desc').limit(30).get().then(function(snap) {
+    db.collection('users').orderBy('elo', 'desc').get().then(function(snap) {
       var sel = document.getElementById('admin-bounty-select');
       if (!sel) return;
       sel.innerHTML = '<option value="">-- Выберите цель --</option>';
@@ -354,27 +354,33 @@ function openAdminMenu() {
 }
 
 // ==========================================
-// ИВЕНТ: ОХОТА НА ЧЕМПИОНА
+// ИВЕНТ: МУЛЬТИ-ОХОТА НА ЧЕМПИОНА
 // ==========================================
-window.currentBountyTargetUid = null;
-window.currentBountyTargetName = "";
+window.currentBountyTargets = {};
+
+window.openBountyProfile = function(uid) {
+  if (uid && typeof showUserInfoModal === 'function') {
+    showUserInfoModal(uid);
+  }
+};
 
 window.saveBounty = function() {
   if (!isSuperAdmin()) return;
   var sel = document.getElementById('admin-bounty-select');
   var targetUid = sel.value;
-  var targetText = sel.options[sel.selectedIndex].text.split(' (')[0];
   if (!targetUid) return customAlert("Выберите игрока!");
+  var targetText = sel.options[sel.selectedIndex].text.split(' (')[0];
 
-  db.collection('settings').doc('bounty').set({ uid: targetUid, name: targetText }, { merge: true }).then(function() {
-    var msg = "🎯 <b>ВНИМАНИЕ! СЕЗОН ОХОТЫ ОТКРЫТ!</b> 🎯\n\n" +
-              "Кажется, кто-то слишком долго засиделся на вершине и начал забывать вкус поражения. Администрация официально назначает награду за голову игрока: <b>" + targetText + "</b>!\n\n" +
-              "💰 <b>Награда: +100 Эло</b> тому, кто первым сможет обыграть его в честном матче 1х1!\n\n" +
-              "<i>" + targetText + ", советуем надеть каску и не поворачиваться спиной. А остальным — расчехляйте ваши самые злые шипы и тензоры! Кто заберет куш?</i> 🩸🐺";
-              
-    sendTelegramAlert(msg);
-    customAlert("✅ Охота на " + targetText + " объявлена!");
-    closeAdminMenu();
+  db.collection('settings').doc('bounty').get().then(function(doc) {
+    var targets = (doc.exists && doc.data().targets) ? doc.data().targets : {};
+    targets[targetUid] = targetText; // Добавляем новую цель
+
+    db.collection('settings').doc('bounty').set({ targets: targets }, { merge: true }).then(function() {
+      var msg = "🎯 <b>СЕЗОН ОХОТЫ РАСШИРЯЕТСЯ!</b> 🎯\n\nВ списке разыскиваемых пополнение. Назначена награда за голову: <b>" + targetText + "</b>!\n\n💰 <b>Награда: +100 Эло</b> за победу (1х1).\n\n<i>Кто заберет куш?</i> 🩸🐺";
+      sendTelegramAlert(msg);
+      customAlert("✅ " + targetText + " добавлен в список розыска!");
+      closeAdminMenu();
+    });
   });
 };
 
@@ -382,55 +388,70 @@ window.clearBounty = function(silent) {
   if (!isSuperAdmin()) return;
   db.collection('settings').doc('bounty').delete().then(function() {
     if (!silent) {
-      sendTelegramAlert("🛑 <b>Охота отменена.</b> Назначенная награда отозвана.");
-      customAlert("✅ Охота отменена!");
+      sendTelegramAlert("🛑 <b>Охота отменена.</b> Все награды отозваны.");
+      customAlert("✅ Все охоты отменены!");
       closeAdminMenu();
     }
   });
 };
 
-// Глобальная функция для открытия профиля жертвы при клике на баннер
-window.openBountyProfile = function() {
-  if (window.currentBountyTargetUid && typeof showUserInfoModal === 'function') {
-    showUserInfoModal(window.currentBountyTargetUid); // Исправлено на showUserInfoModal
-  }
-};
-
-// Слушатель ивента Охоты на чемпиона (Bounty)
+// Слушатель ивента Охоты (мульти-рендер плашек)
 try {
   db.collection('settings').doc('bounty').onSnapshot(function(doc) {
     var banner = document.getElementById('global-bounty-banner');
-    var nameEl = document.getElementById('global-bounty-name');
-    var tagEl = document.getElementById('global-bounty-tag');
+    var container = document.getElementById('bounty-targets-container');
     
-    if (doc.exists && doc.data().uid) {
-      var targetUid = doc.data().uid;
-      window.currentBountyTargetUid = targetUid;
-      window.currentBountyTargetName = doc.data().name;
+    if (doc.exists && doc.data().targets && Object.keys(doc.data().targets).length > 0) {
+      window.currentBountyTargets = doc.data().targets;
       
       if (banner) banner.style.display = 'block';
-      if (nameEl) nameEl.innerText = window.currentBountyTargetName;
-      
-      // Подтягиваем РОДНЫЕ плашки клуба (Учитель, Админ и т.д.) через ваши же функции
-      if (tagEl) {
-        var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(targetUid) !== -1) ? '<span class="platform-badge badge-admin" style="font-size:11px;">Админ ⭐</span>' : '';
-        var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(targetUid) : '';
+      if (container) {
+        container.innerHTML = ''; 
         
-        var combinedTags = (adminTag + " " + customBadge).trim();
-        if (combinedTags) {
-          tagEl.innerHTML = combinedTags;
-          tagEl.style.display = 'inline-flex';
-          tagEl.style.gap = '4px';
-          tagEl.style.background = 'transparent'; // Сбрасываем фон, так как у плашек он свой
-          tagEl.style.padding = '0';
-        } else {
-          tagEl.style.display = 'none';
-        }
+        Object.keys(window.currentBountyTargets).forEach(function(uid) {
+          var name = window.currentBountyTargets[uid];
+          
+          var badge = document.createElement('div');
+          badge.style = "display: inline-flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.5); border: 1px solid #ef4444; padding: 6px 14px; border-radius: 8px; cursor: pointer; transition: 0.2s;";
+          badge.onmousedown = function(){ this.style.opacity='0.7'; };
+          badge.onmouseup = function(){ this.style.opacity='1'; };
+          badge.onmouseleave = function(){ this.style.opacity='1'; };
+          badge.onclick = function() { window.openBountyProfile(uid); };
+          
+          badge.innerHTML = '<span style="font-size: 14px; margin-right: 8px;">👤</span>' +
+                            '<span style="font-size: 14px; font-weight: 900; color: #fde047; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">' + cleanHtml(name) + '</span>' +
+                            '<span id="bounty-tag-' + uid + '" style="display: none; margin-left: 8px; align-items: center;"></span>';
+          
+          container.appendChild(badge);
+
+          // Подтягиваем плашки
+          db.collection('users').doc(uid).get().then(function(uDoc) {
+            if (uDoc.exists) {
+              var uData = uDoc.data();
+              var tagEl = document.getElementById('bounty-tag-' + uid);
+              if (tagEl) {
+                var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="font-size:10px; padding: 2px 4px;">Админ ⭐</span>' : '';
+                var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
+                var dbTag = uData.tag || uData.role || uData.status || uData.customTag || uData.roleTag || uData.title || "";
+                var dbTagHtml = dbTag ? '<span style="background: #eab308; color: #000; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px;">' + cleanHtml(dbTag) + '</span>' : '';
+
+                var combinedTags = (adminTag + " " + customBadge + " " + dbTagHtml).trim();
+                if (combinedTags) {
+                  tagEl.innerHTML = combinedTags;
+                  tagEl.style.display = 'inline-flex';
+                  tagEl.style.gap = '4px';
+                  tagEl.style.background = 'transparent';
+                  tagEl.style.padding = '0';
+                }
+              }
+            }
+          });
+        });
       }
     } else {
-      window.currentBountyTargetUid = null;
-      window.currentBountyTargetName = "";
+      window.currentBountyTargets = {};
       if (banner) banner.style.display = 'none';
+      if (container) container.innerHTML = '';
     }
   });
 } catch(e) { console.error("Ошибка слушателя Охоты:", e); }
