@@ -237,6 +237,11 @@ function showAuthRequired(authScreen) {
       script.setAttribute('data-request-access', 'write');
       container.appendChild(script);
     }
+    
+    // ВАЖНО: Моментально убиваем экран загрузки, чтобы показать кнопки входа новичкам
+    if (typeof window.setAppProgress === 'function') {
+        window.setAppProgress(100, 'Ожидание авторизации...');
+    }
     renderAll();
 }
 
