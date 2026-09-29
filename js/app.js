@@ -1335,46 +1335,65 @@ function openNewsLink(url) {
   }
 }
 
+// ==========================================
+// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ (XML Парсер)
+// ==========================================
+function openNewsLink(url) {
+  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+    window.Telegram.WebApp.openLink(url);
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
 function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  // Используем Google News RSS по запросу "настольный теннис" + бесплатный прокси rss2json
-  var rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=настольный+теннис&hl=ru&gl=RU&ceid=RU:ru');
-  var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + rssUrl + '&api_key='; 
+  // Надежный прокси для обхода блокировок (AllOrigins)
+  var rssUrl = 'https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru';
+  var apiUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl);
 
   fetch(apiUrl)
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      if (data.status === 'ok' && data.items && data.items.length > 0) {
+      // Разбираем сырой XML-код новостей прямо в браузере
+      var parser = new DOMParser();
+      var xmlDoc = parser.parseFromString(data.contents, "text/xml");
+      var items = xmlDoc.querySelectorAll("item");
+      
+      if (items && items.length > 0) {
         var html = '';
-        // Берем 15 самых свежих новостей
-        var articles = data.items.slice(0, 15);
+        var maxItems = Math.min(items.length, 15); // Берем 15 новостей
         
-        articles.forEach(function(item) {
-          var date = new Date(item.pubDate.replace(/-/g, '/'));
+        for (var i = 0; i < maxItems; i++) {
+          var titleRaw = items[i].querySelector("title").textContent;
+          var link = items[i].querySelector("link").textContent;
+          var pubDate = items[i].querySelector("pubDate").textContent;
+          
+          var date = new Date(pubDate);
           var day = ('0' + date.getDate()).slice(-2);
           var month = ('0' + (date.getMonth() + 1)).slice(-2);
           var dateStr = day + '.' + month + '.' + date.getFullYear();
           
-          // Google News отдает заголовок в формате "Новость - Название СМИ". Разделяем их.
-          var titleParts = item.title.split(' - ');
+          var titleParts = titleRaw.split(' - ');
           var source = titleParts.length > 1 ? cleanHtml(titleParts.pop()) : 'СМИ';
           var title = cleanHtml(titleParts.join(' - '));
 
-          html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; cursor: pointer;" onclick="openNewsLink(\'' + item.link + '\')">' +
+          html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + link + '\')">' +
                     '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 ' + source + ' • ' + dateStr + '</div>' +
                     '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
                     '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
                   '</div>';
-        });
+        }
         container.innerHTML = html;
       } else {
-        container.innerHTML = '<span class="empty-note">Не удалось загрузить новости</span>';
+        container.innerHTML = '<span class="empty-note">Новостей пока нет. Проверьте позже.</span>';
       }
     })
     .catch(function(e) {
-      container.innerHTML = '<span class="empty-note">Ошибка сети при загрузке новостей</span>';
+      container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Не удалось загрузить ленту новостей</span>';
+      console.error("Ошибка загрузки новостей:", e);
     });
 }
 
