@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ (Sports.ru)
+// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ (Sports.ru + rss2json)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1339,36 +1339,23 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  // Прямой RSS-канал настольного тенниса от Sports.ru (работает стабильно)
+  // Прямой RSS-канал Sports.ru через надежный конвертер (отдает готовый JSON без ошибок парсинга)
   var rssUrl = 'https://www.sports.ru/table-tennis/rss/all.xml';
-  var apiUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl);
+  var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
 
   fetch(apiUrl)
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      if (!data || !data.contents) throw new Error("Пустой ответ от прокси");
-      
-      var parser = new DOMParser();
-      var xmlDoc = parser.parseFromString(data.contents, "text/xml");
-      var items = xmlDoc.querySelectorAll("item");
-      
-      if (items && items.length > 0) {
+      if (data.status === 'ok' && data.items && data.items.length > 0) {
         var html = '';
-        var maxItems = Math.min(items.length, 15);
+        var articles = data.items.slice(0, 15); // Берем 15 последних новостей
         
-        for (var i = 0; i < maxItems; i++) {
-          var titleEl = items[i].querySelector("title");
-          var linkEl = items[i].querySelector("link");
-          var dateEl = items[i].querySelector("pubDate");
-          
-          if (!titleEl || !linkEl) continue;
-          
-          var title = cleanHtml(titleEl.textContent);
-          var link = linkEl.textContent;
+        articles.forEach(function(item) {
+          // Форматируем дату
           var dateStr = "Сегодня";
-          
-          if (dateEl) {
-            var date = new Date(dateEl.textContent);
+          if (item.pubDate) {
+            // Исправление формата даты для iOS/Safari
+            var date = new Date(item.pubDate.replace(/-/g, '/'));
             if (!isNaN(date.getTime())) {
               var day = ('0' + date.getDate()).slice(-2);
               var month = ('0' + (date.getMonth() + 1)).slice(-2);
@@ -1376,23 +1363,26 @@ function loadTableTennisNews() {
             }
           }
 
-          html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + link + '\')">' +
+          // Очищаем заголовок
+          var title = cleanHtml(item.title);
+          
+          html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + item.link + '\')">' +
                     '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Sports.ru • ' + dateStr + '</div>' +
                     '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
                     '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
                   '</div>';
-        }
+        });
+        
         container.innerHTML = html;
       } else {
-        throw new Error("Нет новостей в ленте");
+        container.innerHTML = '<span class="empty-note">Новостей пока нет. Проверьте позже.</span>';
       }
     })
     .catch(function(e) {
-      container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Ошибка связи. Попробуйте обновить страницу.</span>';
+      container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Ошибка загрузки ленты. Попробуйте обновить страницу.</span>';
       console.error("Ошибка загрузки новостей:", e);
     });
 }
-
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
 
