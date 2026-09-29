@@ -1435,16 +1435,16 @@ document.addEventListener('DOMContentLoaded', function() {
         try { listenTournaments(); } catch(e) {}
         try { loadParkWeather(); } catch(e) {}
         
-        setTimeout(function() {
+       setTimeout(function() {
           setAppProgress(100, 'Готово!');
           setTimeout(monitorSessions, 1000);
           setInterval(renderAll, 30000); 
           setInterval(monitorSessions, 60000); 
           setInterval(loadParkWeather, 600000); 
-        }, 50); 
-      }, 50); 
-    }, 50); 
-  }, 50); 
+        }, 500); // 0.5 сек на финише, чтобы дочитать шутку
+      }, 500); // 0.5 сек на загрузку тяжелых баз
+    }, 600); // 0.6 сек на инициализацию радара
+  }, 100); 
 });
 // Функция тихого удаления матча из истории (в стилистике приложения)
 function deleteHistoryMatch(docId, profileUid) {
