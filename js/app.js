@@ -1346,54 +1346,95 @@ function openNewsLink(url) {
   }
 }
 
+// ==========================================
+// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ ИЗ ЯНДЕКСА (С Кэшем)
+// ==========================================
+function openNewsLink(url) {
+  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+    window.Telegram.WebApp.openLink(url);
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
 function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  // Надежный прокси для обхода блокировок (AllOrigins)
-  var rssUrl = 'https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru';
+  var cacheKey = 'tt_yandex_news_cache_html';
+  var cacheTimeKey = 'tt_yandex_news_cache_time';
+  var now = Date.now();
+  var cachedHtml = localStorage.getItem(cacheKey);
+  var cachedTime = localStorage.getItem(cacheTimeKey);
+
+  // 1. Проверяем кэш (актуален 3 часа)
+  if (cachedHtml && cachedTime && (now - parseInt(cachedTime) < 3 * 60 * 60 * 1000)) {
+    container.innerHTML = cachedHtml;
+    return; 
+  }
+
+  // 2. Запрос через RSS Яндекс.Новостей по запросу "настольный теннис"
+  var rssUrl = 'https://news.yandex.ru/yandsearch?text=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&rpt=nnews&rss=inf';
   var apiUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl);
 
   fetch(apiUrl)
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      // Разбираем сырой XML-код новостей прямо в браузере
+      if (!data || !data.contents) throw new Error("Пустой ответ");
+      
       var parser = new DOMParser();
       var xmlDoc = parser.parseFromString(data.contents, "text/xml");
       var items = xmlDoc.querySelectorAll("item");
       
       if (items && items.length > 0) {
         var html = '';
-        var maxItems = Math.min(items.length, 15); // Берем 15 новостей
+        var maxItems = Math.min(items.length, 15);
         
         for (var i = 0; i < maxItems; i++) {
-          var titleRaw = items[i].querySelector("title").textContent;
-          var link = items[i].querySelector("link").textContent;
-          var pubDate = items[i].querySelector("pubDate").textContent;
+          var titleEl = items[i].querySelector("title");
+          var linkEl = items[i].querySelector("link");
+          var dateEl = items[i].querySelector("pubDate");
           
-          var date = new Date(pubDate);
-          var day = ('0' + date.getDate()).slice(-2);
-          var month = ('0' + (date.getMonth() + 1)).slice(-2);
-          var dateStr = day + '.' + month + '.' + date.getFullYear();
+          if (!titleEl || !linkEl) continue;
           
-          var titleParts = titleRaw.split(' - ');
-          var source = titleParts.length > 1 ? cleanHtml(titleParts.pop()) : 'СМИ';
-          var title = cleanHtml(titleParts.join(' - '));
+          var title = cleanHtml(titleEl.textContent);
+          var link = linkEl.textContent;
+          var dateStr = "Спорт";
+          
+          if (dateEl) {
+            var date = new Date(dateEl.textContent);
+            if (!isNaN(date.getTime())) {
+              var day = ('0' + date.getDate()).slice(-2);
+              var month = ('0' + (date.getMonth() + 1)).slice(-2);
+              dateStr = day + '.' + month + '.' + date.getFullYear();
+            }
+          }
 
           html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + link + '\')">' +
-                    '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 ' + source + ' • ' + dateStr + '</div>' +
+                    '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Яндекс.Новости • ' + dateStr + '</div>' +
                     '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
                     '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
                   '</div>';
         }
-        container.innerHTML = html;
+        
+        if (html) {
+          container.innerHTML = html;
+          localStorage.setItem(cacheKey, html);
+          localStorage.setItem(cacheTimeKey, now.toString());
+        } else {
+          throw new Error("Нет валидных элементов");
+        }
       } else {
-        container.innerHTML = '<span class="empty-note">Новостей пока нет. Проверьте позже.</span>';
+        throw new Error("Элементы не найдены");
       }
     })
     .catch(function(e) {
-      container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Не удалось загрузить ленту новостей</span>';
-      console.error("Ошибка загрузки новостей:", e);
+      if (cachedHtml) {
+        container.innerHTML = cachedHtml;
+      } else {
+        container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Не удалось загрузить новости из Яндекс.</span>';
+      }
+      console.error("Ошибка загрузки новостей Яндекса:", e);
     });
 }
 
