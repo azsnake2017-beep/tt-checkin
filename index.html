@@ -488,19 +488,20 @@
   <!-- ... здесь заканчиваются все ваши модальные окна (qr-modal, match-modal и т.д.) ... -->
 
   <!-- 1. Сторонние библиотеки -->
-  <script src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+  <script defer src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 
-  <!-- 2. Firebase (Используем быстрые зеркала cdn.jsdelivr.net для работы без VPN) -->
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
+  <!-- 2. Firebase -->
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/firebase@10.12.0/firebase-auth-compat.js"></script>
 
-  <!-- 3. Ваши локальные модули (Грузятся строго по очереди) -->
-  <script src="js/config.js"></script>
-  <script src="js/matches.js"></script>
-  <script src="js/radar.js"></script>
-  <script src="js/app.js?v=5"></script>
+  <!-- 3. Ваши локальные модули -->
+  <script defer src="js/config.js"></script>
+  <script defer src="js/matches.js"></script>
+  <script defer src="js/radar.js"></script>
+  <script defer src="js/app.js?v=7"></script>
+  
 <!-- Модальное окно для реферального QR-кода -->
 <div id="ref-qr-modal" class="modal-overlay" style="display: none; align-items: center; justify-content: center; z-index: 10000; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8);">
   <div style="background: var(--card-bg, #1e293b); padding: 20px; border-radius: 16px; text-align: center; width: 280px; border: 1px solid var(--card-border, rgba(255,255,255,0.1)); position: relative;">
