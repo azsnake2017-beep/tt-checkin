@@ -293,21 +293,24 @@ function confirmMatch(matchId) {
         var pStreakBonus = isPWin ? getDotaStreakBonus(pWinStreak) : 0;
         var oStreakBonus = !isPWin ? getDotaStreakBonus(oWinStreak) : 0;
 
-        // 3. Логика Охоты на чемпиона (Bounty)
+// 3. Логика Мульти-Охоты (Bounty)
         var isBountyClaimed = false;
         var pBountyBonus = 0;
         var oBountyBonus = 0;
+        var claimedTargetUid = null;
         
-        if (window.currentBountyTargetUid) {
+        if (window.currentBountyTargets && Object.keys(window.currentBountyTargets).length > 0) {
           // Если инициатор матча выиграл у объявленной цели
-          if (isPWin && m.opponentUid === window.currentBountyTargetUid) {
+          if (isPWin && window.currentBountyTargets[m.opponentUid]) {
              pBountyBonus = 100;
              isBountyClaimed = true;
+             claimedTargetUid = m.opponentUid;
           } 
           // Если оппонент выиграл у объявленной цели
-          else if (!isPWin && m.proposerUid === window.currentBountyTargetUid) {
+          else if (!isPWin && window.currentBountyTargets[m.proposerUid]) {
              oBountyBonus = 100;
              isBountyClaimed = true;
+             claimedTargetUid = m.proposerUid;
           }
         }
 
@@ -329,9 +332,11 @@ function confirmMatch(matchId) {
         
         batch.delete(matchRef);
         
-        // ЕСЛИ НАГРАДА ЗАБРАНА — ЗАКРЫВАЕМ ОХОТУ АВТОМАТИЧЕСКИ
-        if (isBountyClaimed) {
-           batch.delete(db.collection('settings').doc('bounty'));
+        // ЕСЛИ НАГРАДА ЗАБРАНА — ВЫЧЕРКИВАЕМ ИМЕННО ЭТОГО ИГРОКА ИЗ РОЗЫСКА
+        if (isBountyClaimed && claimedTargetUid) {
+           var bountyUpdateObj = {};
+           bountyUpdateObj['targets.' + claimedTargetUid] = firebase.firestore.FieldValue.delete();
+           batch.update(db.collection('settings').doc('bounty'), bountyUpdateObj);
         }
 
         var historyRef = db.collection('matches_history').doc();
