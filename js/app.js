@@ -1324,6 +1324,59 @@ function listenLeaderboard() {
     listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
   }, function(err) {});
 }
+// ==========================================
+// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ
+// ==========================================
+function openNewsLink(url) {
+  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
+    window.Telegram.WebApp.openLink(url);
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+function loadTableTennisNews() {
+  var container = document.getElementById('news-container');
+  if (!container) return;
+
+  // Используем Google News RSS по запросу "настольный теннис" + бесплатный прокси rss2json
+  var rssUrl = encodeURIComponent('https://news.google.com/rss/search?q=настольный+теннис&hl=ru&gl=RU&ceid=RU:ru');
+  var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + rssUrl + '&api_key='; 
+
+  fetch(apiUrl)
+    .then(function(res) { return res.json(); })
+    .then(function(data) {
+      if (data.status === 'ok' && data.items && data.items.length > 0) {
+        var html = '';
+        // Берем 15 самых свежих новостей
+        var articles = data.items.slice(0, 15);
+        
+        articles.forEach(function(item) {
+          var date = new Date(item.pubDate.replace(/-/g, '/'));
+          var day = ('0' + date.getDate()).slice(-2);
+          var month = ('0' + (date.getMonth() + 1)).slice(-2);
+          var dateStr = day + '.' + month + '.' + date.getFullYear();
+          
+          // Google News отдает заголовок в формате "Новость - Название СМИ". Разделяем их.
+          var titleParts = item.title.split(' - ');
+          var source = titleParts.length > 1 ? cleanHtml(titleParts.pop()) : 'СМИ';
+          var title = cleanHtml(titleParts.join(' - '));
+
+          html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; cursor: pointer;" onclick="openNewsLink(\'' + item.link + '\')">' +
+                    '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 ' + source + ' • ' + dateStr + '</div>' +
+                    '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
+                    '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
+                  '</div>';
+        });
+        container.innerHTML = html;
+      } else {
+        container.innerHTML = '<span class="empty-note">Не удалось загрузить новости</span>';
+      }
+    })
+    .catch(function(e) {
+      container.innerHTML = '<span class="empty-note">Ошибка сети при загрузке новостей</span>';
+    });
+}
 
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
@@ -1434,6 +1487,7 @@ document.addEventListener('DOMContentLoaded', function() {
         try { listenLeaderboard(); } catch(e) {}
         try { listenTournaments(); } catch(e) {}
         try { loadParkWeather(); } catch(e) {}
+        try { loadTableTennisNews(); } catch(e) {}
         
        setTimeout(function() {
           setAppProgress(100, 'Готово!');
