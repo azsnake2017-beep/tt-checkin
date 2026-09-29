@@ -1325,29 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ
-// ==========================================
-function openNewsLink(url) {
-  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-    window.Telegram.WebApp.openLink(url);
-  } else {
-    window.open(url, '_blank');
-  }
-}
-
-// ==========================================
-// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ (XML Парсер)
-// ==========================================
-function openNewsLink(url) {
-  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-    window.Telegram.WebApp.openLink(url);
-  } else {
-    window.open(url, '_blank');
-  }
-}
-
-// ==========================================
-// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ ИЗ ЯНДЕКСА (С Кэшем)
+// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ (Sports.ru)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1361,26 +1339,14 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_yandex_news_cache_html';
-  var cacheTimeKey = 'tt_yandex_news_cache_time';
-  var now = Date.now();
-  var cachedHtml = localStorage.getItem(cacheKey);
-  var cachedTime = localStorage.getItem(cacheTimeKey);
-
-  // 1. Проверяем кэш (актуален 3 часа)
-  if (cachedHtml && cachedTime && (now - parseInt(cachedTime) < 3 * 60 * 60 * 1000)) {
-    container.innerHTML = cachedHtml;
-    return; 
-  }
-
-  // 2. Запрос через RSS Яндекс.Новостей по запросу "настольный теннис"
-  var rssUrl = 'https://news.yandex.ru/yandsearch?text=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&rpt=nnews&rss=inf';
+  // Прямой RSS-канал настольного тенниса от Sports.ru (работает стабильно)
+  var rssUrl = 'https://www.sports.ru/table-tennis/rss/all.xml';
   var apiUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(rssUrl);
 
   fetch(apiUrl)
     .then(function(res) { return res.json(); })
     .then(function(data) {
-      if (!data || !data.contents) throw new Error("Пустой ответ");
+      if (!data || !data.contents) throw new Error("Пустой ответ от прокси");
       
       var parser = new DOMParser();
       var xmlDoc = parser.parseFromString(data.contents, "text/xml");
@@ -1399,7 +1365,7 @@ function loadTableTennisNews() {
           
           var title = cleanHtml(titleEl.textContent);
           var link = linkEl.textContent;
-          var dateStr = "Спорт";
+          var dateStr = "Сегодня";
           
           if (dateEl) {
             var date = new Date(dateEl.textContent);
@@ -1411,30 +1377,19 @@ function loadTableTennisNews() {
           }
 
           html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + link + '\')">' +
-                    '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Яндекс.Новости • ' + dateStr + '</div>' +
+                    '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Sports.ru • ' + dateStr + '</div>' +
                     '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
                     '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
                   '</div>';
         }
-        
-        if (html) {
-          container.innerHTML = html;
-          localStorage.setItem(cacheKey, html);
-          localStorage.setItem(cacheTimeKey, now.toString());
-        } else {
-          throw new Error("Нет валидных элементов");
-        }
+        container.innerHTML = html;
       } else {
-        throw new Error("Элементы не найдены");
+        throw new Error("Нет новостей в ленте");
       }
     })
     .catch(function(e) {
-      if (cachedHtml) {
-        container.innerHTML = cachedHtml;
-      } else {
-        container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Не удалось загрузить новости из Яндекс.</span>';
-      }
-      console.error("Ошибка загрузки новостей Яндекса:", e);
+      container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Ошибка связи. Попробуйте обновить страницу.</span>';
+      console.error("Ошибка загрузки новостей:", e);
     });
 }
 
