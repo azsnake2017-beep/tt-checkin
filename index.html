@@ -257,13 +257,25 @@
   </div>
 
 </div>
-
+<!-- ЭКРАН 5: НОВОСТИ -->
+  <div id="view-news" class="main-view" style="display: none;">
+    <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+        <h2 style="font-size: 18px; color: #3b82f6;">📰 Мир настольного тенниса</h2>
+      </div>
+      <div id="news-container" style="display: flex; flex-direction: column; gap: 10px;">
+        <span class="empty-note">Сбор свежих новостей...</span>
+      </div>
+    </div>
+  </div>
+  
 <!-- BOTTOM NAVIGATION -->
 <div class="bottom-nav">
   <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></a>
   <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')"><span class="nav-icon">📍</span><span>Радар</span></a>
   <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')"><span class="nav-icon">🏆</span><span>Рейтинг</span></a>
   <a class="nav-item" id="nav-tournaments" onclick="switchNavTab('tournaments')"><span class="nav-icon">⚔️</span><span>Турниры</span></a>
+  <a class="nav-item" id="nav-news" onclick="switchNavTab('news')"><span class="nav-icon">📰</span><span>Новости</span></a>
 </div>
 
 <!-- МОДАЛЬНЫЕ ОКНА -->
