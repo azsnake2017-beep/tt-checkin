@@ -238,10 +238,11 @@ function showAuthRequired(authScreen) {
       container.appendChild(script);
     }
     
-    // ВАЖНО: Моментально убиваем экран загрузки, чтобы показать кнопки входа новичкам
+    // Моментально убираем экран загрузки для новичков
     if (typeof window.setAppProgress === 'function') {
         window.setAppProgress(100, 'Ожидание авторизации...');
     }
+    
     renderAll();
 }
 
@@ -1324,117 +1325,127 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 
-// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
+// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
-// Слушатель ивента Буста рейтинга с визуализацией для игроков
-  try {
-    db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
-      if (doc.exists) {
-        var mult = parseInt(doc.data().multiplier, 10) || 1;
-        window.currentEloMultiplier = mult;
-        
-        // 1. Обновляем селект в админке
-        var selectEl = document.getElementById('admin-elo-boost');
-        if (selectEl) selectEl.value = mult;
-        
-        // 2. Управляем интерфейсом игроков
-        var banner = document.getElementById('global-boost-banner');
-        var bannerVal = document.getElementById('global-boost-value');
-        var btnBadge = document.getElementById('match-btn-boost-badge');
-        
-        if (mult > 1) {
-          // Если буст включен — показываем яркие уведомления
-          if (banner) { 
-            banner.style.display = 'block'; 
-            bannerVal.innerText = 'x' + mult; 
-          }
-          if (btnBadge) { 
-            btnBadge.style.display = 'block'; 
-            btnBadge.innerText = '🔥 x' + mult; 
-          }
-        } else {
-          // Если обычный режим (х1) — прячем всё, чтобы не отвлекать
-          if (banner) banner.style.display = 'none';
-          if (btnBadge) btnBadge.style.display = 'none';
-        }
-      }
-    });
-  } catch(e) {}
 
-  // Мягкое раскрытие Telegram Mini App без перекрывающего крестика
+  // База шуток и советов
+  var ttJokes = [
+    "💡 Совет: Работа ног — 80% успеха в настольном теннисе.",
+    "🏓 Настольный теннис — это шахматы в движении. Только времени подумать нет.",
+    "💡 Совет: Смотри на мяч, а не на ракетку соперника!",
+    "🏆 Если мяч попал в край — это мастерство. Если сопернику — это повезло.",
+    "💡 Совет: Не забывай дышать во время долгих розыгрышей.",
+    "🗣 Главное не как ты ударишь, а как громко крикнешь «ЧО!» после выигранного очка.",
+    "💡 Совет: Подавай так, чтобы соперник думал о смысле жизни, а не о приеме.",
+    "🩹 Единственный спорт, где можно получить травму, случайно наступив на мячик.",
+    "🏓 Не бывает плохих ракеток, бывает мало тренировок... хотя кого мы обманываем?",
+    "💡 Совет: Главное правило — купить накладки как у Ма Луна и надеяться на чудо."
+  ];
+
+  var randomJoke = ttJokes[Math.floor(Math.random() * ttJokes.length)];
+  var jokeEl = document.getElementById('preloader-joke');
+  if (jokeEl) jokeEl.innerText = randomJoke;
+  
+  window.setAppProgress = function(percent, text) {
+    var bar = document.getElementById('preloader-bar');
+    var txt = document.getElementById('preloader-text');
+    if (bar) bar.style.width = percent + '%';
+    if (txt && text) txt.innerText = text;
+    if (percent >= 100) {
+      setTimeout(function() {
+        var loader = document.getElementById('app-preloader');
+        if (loader) loader.classList.add('hidden');
+      }, 200); // Плавно прячем почти мгновенно
+    }
+  };
+
+  setAppProgress(15, 'Загрузка интерфейса...');
+
   if (window.Telegram && window.Telegram.WebApp) {
-    try {
-      window.Telegram.WebApp.ready();
-      if (typeof window.Telegram.WebApp.expand === 'function') {
-        window.Telegram.WebApp.expand();
-      }
-    } catch(e) {}
+    try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
   }
-
-  // Восстановление состояния шторок локаций из памяти устройства
   try { restoreCardStates(); } catch(e) {}
-
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
-  try { initUserProfile(); } catch(e) {}
-  try { updateAdminControls(); } catch(e) {}
-  try { listenRatings(); } catch(e) {}
-  try { listenLeaderboard(); } catch(e) {}
-  try { listenTournaments(); } catch(e) {}
-  try { listenPendingMatches(); } catch(e) {}
-  try { listenRecentMatches(); } catch(e) {}
-  try { loadParkWeather(); } catch(e) {}
-  
-  setTimeout(monitorSessions, 1000);
-  
-  ['park', 'vostok'].forEach(function(loc) {
-    try {
-      db.collection('locations').doc(loc).onSnapshot(function(doc) { 
-          try { 
-              var data = doc.data() || {}; 
-              locationsData[loc].plans = data.plans || []; 
-              locationsData[loc].players = (data.players || []).map(function(p) { 
-                return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p; 
-              }); 
-              renderAll(); 
-          } catch(e){} 
-      }, function(err) {});
-    } catch(e) {}
-  });
 
-  // Слушатель анонсов встреч (только для ДК «Восток»)
-  try {
-    db.collection('settings').doc('announcements').onSnapshot(function(doc) {
+  setTimeout(function() {
+    setAppProgress(40, 'Проверка профиля...');
+    try { initUserProfile(); } catch(e) {}
+    
+    setTimeout(function() {
+      setAppProgress(70, 'Синхронизация радара...');
+      
+      try { updateAdminControls(); } catch(e) {}
+      try { listenPendingMatches(); } catch(e) {}
+      
+      ['park', 'vostok'].forEach(function(loc) {
+        try {
+          db.collection('locations').doc(loc).onSnapshot(function(doc) { 
+              try { 
+                  var data = doc.data() || {}; 
+                  locationsData[loc].plans = data.plans || []; 
+                  locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p; }); 
+                  renderAll(); 
+              } catch(e){} 
+          }, function(err) {});
+        } catch(e) {}
+      });
+
       try {
-        announcementsData = doc.data() || { vostok: null };
-        var badgeBox = document.getElementById('announcement-box-vostok');
-        var textBox = document.getElementById('announcement-text-vostok');
-        
-        if (badgeBox && textBox) { 
-            var aData = announcementsData.vostok;
-            if (aData) { 
-                if (typeof aData === 'object') {
-                    var resHtml = '';
-                    if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
-                    if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
-                    textBox.innerHTML = resHtml;
-                } else {
-                    textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); 
-                }
-                badgeBox.style.display = 'flex'; 
-            } else { 
-                badgeBox.style.display = 'none'; 
-            } 
-        }
+        db.collection('settings').doc('announcements').onSnapshot(function(doc) {
+          try {
+            announcementsData = doc.data() || { vostok: null };
+            var badgeBox = document.getElementById('announcement-box-vostok');
+            var textBox = document.getElementById('announcement-text-vostok');
+            if (badgeBox && textBox) { 
+                var aData = announcementsData.vostok;
+                if (aData) { 
+                    if (typeof aData === 'object') {
+                        var resHtml = '';
+                        if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
+                        if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
+                        textBox.innerHTML = resHtml;
+                    } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
+                    badgeBox.style.display = 'flex'; 
+                } else { badgeBox.style.display = 'none'; } 
+            }
+          } catch(e) {}
+        });
       } catch(e) {}
-    }, function(err) {});
-  } catch(e) {}
 
-  setInterval(renderAll, 30000); 
-  setInterval(monitorSessions, 60000); 
-  setInterval(loadParkWeather, 600000); 
+      setTimeout(function() {
+        setAppProgress(90, 'Загрузка рейтингов...');
+        
+        try {
+          db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
+            if (doc.exists) {
+              var mult = parseInt(doc.data().multiplier, 10) || 1;
+              window.currentEloMultiplier = mult;
+              var selectEl = document.getElementById('admin-elo-boost'); if (selectEl) selectEl.value = mult;
+              var banner = document.getElementById('global-boost-banner'), btnBadge = document.getElementById('match-btn-boost-badge');
+              if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } } 
+              else { if (banner) banner.style.display = 'none'; if (btnBadge) btnBadge.style.display = 'none'; }
+            }
+          });
+        } catch(e) {}
+
+        try { listenRecentMatches(); } catch(e) {}
+        try { listenRatings(); } catch(e) {}
+        try { listenLeaderboard(); } catch(e) {}
+        try { listenTournaments(); } catch(e) {}
+        try { loadParkWeather(); } catch(e) {}
+        
+        setTimeout(function() {
+          setAppProgress(100, 'Готово!');
+          setTimeout(monitorSessions, 1000);
+          setInterval(renderAll, 30000); 
+          setInterval(monitorSessions, 60000); 
+          setInterval(loadParkWeather, 600000); 
+        }, 50); 
+      }, 50); 
+    }, 50); 
+  }, 50); 
 });
-
 // Функция тихого удаления матча из истории (в стилистике приложения)
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
