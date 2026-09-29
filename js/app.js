@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// АВТОМАТИЧЕСКАЯ ЗАГРУЗКА НОВОСТЕЙ (Sports.ru + rss2json)
+// ПРОФЕССИОНАЛЬНАЯ ЗАГРУЗКА НОВОСТЕЙ (Firebase Архитектура)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1339,49 +1339,73 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  // Прямой RSS-канал Sports.ru через надежный конвертер (отдает готовый JSON без ошибок парсинга)
-  var rssUrl = 'https://www.sports.ru/table-tennis/rss/all.xml';
-  var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+  // Создаем новую коллекцию для кэша прямо в вашей базе
+  var newsRef = db.collection('cache').doc('sports_news');
 
-  fetch(apiUrl)
-    .then(function(res) { return res.json(); })
-    .then(function(data) {
-      if (data.status === 'ok' && data.items && data.items.length > 0) {
-        var html = '';
-        var articles = data.items.slice(0, 15); // Берем 15 последних новостей
-        
-        articles.forEach(function(item) {
-          // Форматируем дату
-          var dateStr = "Сегодня";
-          if (item.pubDate) {
-            // Исправление формата даты для iOS/Safari
-            var date = new Date(item.pubDate.replace(/-/g, '/'));
-            if (!isNaN(date.getTime())) {
-              var day = ('0' + date.getDate()).slice(-2);
-              var month = ('0' + (date.getMonth() + 1)).slice(-2);
-              dateStr = day + '.' + month + '.' + date.getFullYear();
-            }
-          }
+  // Подписываемся на документ. Это дает МОМЕНТАЛЬНУЮ загрузку из вашей базы!
+  newsRef.onSnapshot(function(doc) {
+    var now = Date.now();
+    var needsUpdate = true;
 
-          // Очищаем заголовок
-          var title = cleanHtml(item.title);
-          
-          html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + item.link + '\')">' +
-                    '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Sports.ru • ' + dateStr + '</div>' +
-                    '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
-                    '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
-                  '</div>';
-        });
-        
-        container.innerHTML = html;
-      } else {
-        container.innerHTML = '<span class="empty-note">Новостей пока нет. Проверьте позже.</span>';
+    if (doc.exists) {
+      var data = doc.data();
+      if (data.html) {
+        container.innerHTML = data.html; // Рендерим для пользователя моментально
       }
-    })
-    .catch(function(e) {
-      container.innerHTML = '<span class="empty-note" style="color: #ef4444;">Ошибка загрузки ленты. Попробуйте обновить страницу.</span>';
-      console.error("Ошибка загрузки новостей:", e);
-    });
+      // Если новостям меньше 3 часов — обновлять базу не нужно
+      if (data.updatedAt && (now - data.updatedAt < 3 * 60 * 60 * 1000)) {
+        needsUpdate = false;
+      }
+    }
+
+    // Запрашиваем внешнюю ленту ТОЛЬКО если база пустая или новости устарели (раз в 3 часа)
+    if (needsUpdate) {
+      // Бронируем обновление на 1 минуту вперед, чтобы 10 игроков не начали качать то же самое
+      newsRef.set({ updatedAt: now + 60000 }, { merge: true }).catch(function(){});
+
+      var rssUrl = 'https://www.sports.ru/table-tennis/rss/all.xml';
+      var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
+
+      fetch(apiUrl)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (data.status === 'ok' && data.items && data.items.length > 0) {
+            var html = '';
+            var articles = data.items.slice(0, 15);
+            
+            articles.forEach(function(item) {
+              var dateStr = "Сегодня";
+              if (item.pubDate) {
+                var date = new Date(item.pubDate.replace(/-/g, '/'));
+                if (!isNaN(date.getTime())) {
+                  var day = ('0' + date.getDate()).slice(-2);
+                  var month = ('0' + (date.getMonth() + 1)).slice(-2);
+                  dateStr = day + '.' + month + '.' + date.getFullYear();
+                }
+              }
+
+              var title = cleanHtml(item.title);
+              
+              html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + item.link + '\')">' +
+                        '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Sports.ru • ' + dateStr + '</div>' +
+                        '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
+                        '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
+                      '</div>';
+            });
+            
+            // Сохраняем готовый HTML в ОБЩУЮ БАЗУ FIREBASE.
+            // Теперь все игроки клуба моментально увидят новости без запросов в интернет!
+            newsRef.set({ html: html, updatedAt: Date.now() }).catch(function(){});
+          }
+        })
+        .catch(function(e) { console.log("Фоновое обновление отложено (ошибка сети)"); });
+    }
+  }, function(err) {
+    // Если Firebase еще пустой и ругается
+    if(container.innerHTML === '' || container.innerHTML.includes('Сбор')) {
+       container.innerHTML = '<span class="empty-note">Новости скоро появятся...</span>';
+    }
+  });
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
