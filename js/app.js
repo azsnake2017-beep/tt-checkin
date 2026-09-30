@@ -1347,11 +1347,14 @@ function renderNewsCards(articles, container) {
   container.innerHTML = html;
 }
 
+// ==========================================
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Для обычных браузеров и Telegram)
+// ==========================================
 function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v16';
+  var cacheKey = 'tt_ultimate_news_cache_v19';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1364,36 +1367,25 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск в печати... 🏓</div>';
   }
 
-  // Отложенный старт, чтобы не тормозить интерфейс приложения
   setTimeout(function() {
-    // Теперь мы используем прямые RSS-ссылки без посредника rss2json
-   var sources = [
-      // 🇷🇺 Крупнейшие российские спортивные порталы
+    var sources = [
       { name: 'Sports.ru', rss: 'https://www.sports.ru/table-tennis/rss/all.xml' },
       { name: 'Sportbox', rss: 'https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss' },
-      
-      // 🌍 Официальные мировые новости (Международная федерация ITTF)
-      { name: 'ITTF World', rss: 'https://www.ittf.com/feed/' },
-      
-      // 🌐 Мировые и локальные агрегаторы (Через Bing RSS, чтобы обходить блокировки Google)
-      // Ищем все новости, где упоминается WTT (World Table Tennis)
-      { name: 'Турниры WTT', rss: 'https://www.bing.com/news/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' },
-      // Ищем все общие свежие упоминания настольного тенниса в сети
-      { name: 'Пинг-Понг', rss: 'https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' }
+      { name: 'Турниры WTT', rss: 'https://www.bing.com/news/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' }
     ];
 
-    var nowTs = Date.now();
     var pendingRequests = sources.length;
     var newItemsFound = false;
 
     sources.forEach(function(source) {
-      // Используем свободный шлюз AllOrigins, у которого нет жестких лимитов на обновления
-      var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(source.rss) + '&_t=' + nowTs;
+      // Используем надежный CORS-прокси codetabs, который не блокируется обычными браузерами
+      var proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(source.rss);
       
-      var fetchPromise = fetch(proxyUrl, { cache: 'no-store' })
+      // Специально убрали настройки кэша, чтобы браузер не блокировал запрос (CORS preflight)
+      var fetchPromise = fetch(proxyUrl)
         .then(function(res) { return res.text(); })
         .then(function(xmlText) {
-            // Встроенный парсер: мы сами обрабатываем сырой текст прямо в телефоне
+            // Браузер сам парсит XML без дополнительных JSON-оболочек
             var parser = new DOMParser();
             var xmlDoc = parser.parseFromString(xmlText, "text/xml");
             var items = xmlDoc.querySelectorAll("item");
@@ -1439,21 +1431,19 @@ function loadTableTennisNews() {
              });
            }
         })
-        .catch(function(e) {
-           console.log("Ошибка сети при загрузке: " + source.name);
-        })
+        .catch(function(e) { console.log("Ошибка загрузки:", source.name); })
         .finally(function() {
            pendingRequests--;
            if (pendingRequests === 0) {
              if (newItemsFound) {
                allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20); // Оставляем 20 самых свежих
+               allArticles = allArticles.slice(0, 20); // Оставляем 20 свежих
                localStorage.setItem(cacheKey, JSON.stringify(allArticles));
                renderNewsCards(allArticles, container);
              } else if (allArticles.length === 0 && !cachedData) {
                 container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
-                                      '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Сеть временно недоступна</div>' +
-                                      '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Проверьте подключение к интернету.</div>' +
+                                      '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Блокировка браузером</div>' +
+                                      '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Ваш браузер или блокировщик рекламы запретил загрузку.</div>' +
                                       '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
                                       '</div>';
              }
