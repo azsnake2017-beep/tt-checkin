@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ПРОФЕССИОНАЛЬНАЯ ЗАГРУЗКА НОВОСТЕЙ (Firebase Архитектура)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Мульти-источники + Дедубликация)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1335,76 +1335,119 @@ function openNewsLink(url) {
   }
 }
 
+// Вспомогательная функция для красивой отрисовки новостей
+function renderNewsCards(articles, container) {
+  if (!articles || articles.length === 0) return;
+  var html = '';
+  var todayStart = new Date().setHours(0, 0, 0, 0);
+
+  articles.forEach(function(a) {
+    var d = new Date(a.date);
+    var isToday = d.getTime() >= todayStart;
+    var dateStr = isToday 
+      ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
+      : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
+
+    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;" onclick="openNewsLink(\'' + a.link + '\')" onmousedown="this.style.opacity=\'0.7\'" onmouseup="this.style.opacity=\'1\'">' +
+              '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
+                '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
+                '<div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">' + dateStr + '</div>' +
+              '</div>' +
+              '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 10px;">' + cleanHtml(a.title) + '</div>' +
+              '<div style="font-size: 11px; color: #3b82f6; text-align: right; font-weight: 700;">Читать полностью ↗</div>' +
+            '</div>';
+  });
+  container.innerHTML = html;
+}
+
 function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  // Создаем новую коллекцию для кэша прямо в вашей базе
-  var newsRef = db.collection('cache').doc('sports_news');
+  var cacheKey = 'tt_pro_news_cache';
+  var cachedData = localStorage.getItem(cacheKey);
 
-  // Подписываемся на документ. Это дает МОМЕНТАЛЬНУЮ загрузку из вашей базы!
-  newsRef.onSnapshot(function(doc) {
-    var now = Date.now();
-    var needsUpdate = true;
+  // 1. МОМЕНТАЛЬНЫЙ РЕНДЕР ИЗ ПАМЯТИ ТЕЛЕФОНА (0 задержек)
+  if (cachedData) {
+    try {
+      renderNewsCards(JSON.parse(cachedData), container);
+    } catch(e) {}
+  } else {
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск печатается... 🏓</div>';
+  }
 
-    if (doc.exists) {
-      var data = doc.data();
-      if (data.html) {
-        container.innerHTML = data.html; // Рендерим для пользователя моментально
-      }
-      // Если новостям меньше 3 часов — обновлять базу не нужно
-      if (data.updatedAt && (now - data.updatedAt < 3 * 60 * 60 * 1000)) {
-        needsUpdate = false;
-      }
-    }
+  // 2. ФОНОВЫЙ СБОР ИЗ РАЗНЫХ ИСТОЧНИКОВ
+  var sources = [
+    { name: 'Sports.ru', url: 'https://www.sports.ru/table-tennis/rss/all.xml' },
+    { name: 'Google News', url: 'https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru' }
+  ];
 
-    // Запрашиваем внешнюю ленту ТОЛЬКО если база пустая или новости устарели (раз в 3 часа)
-    if (needsUpdate) {
-      // Бронируем обновление на 1 минуту вперед, чтобы 10 игроков не начали качать то же самое
-      newsRef.set({ updatedAt: now + 60000 }, { merge: true }).catch(function(){});
-
-      var rssUrl = 'https://www.sports.ru/table-tennis/rss/all.xml';
-      var apiUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rssUrl);
-
-      fetch(apiUrl)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (data.status === 'ok' && data.items && data.items.length > 0) {
-            var html = '';
-            var articles = data.items.slice(0, 15);
+  var allArticles = [];
+  
+  // Создаем независимые запросы. Если один упадет, другие продолжат работу!
+  var fetchPromises = sources.map(function(source) {
+    var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(source.url);
+    
+    return fetch(proxyUrl)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+         if (!data || !data.contents) return;
+         var parser = new DOMParser();
+         var xmlDoc = parser.parseFromString(data.contents, "text/xml");
+         var items = xmlDoc.querySelectorAll("item");
+         
+         // Берем по 15 новостей с каждого источника
+         for (var i = 0; i < Math.min(items.length, 15); i++) {
+            var item = items[i];
+            var titleEl = item.querySelector("title");
+            var linkEl = item.querySelector("link");
+            var pubDateEl = item.querySelector("pubDate");
             
-            articles.forEach(function(item) {
-              var dateStr = "Сегодня";
-              if (item.pubDate) {
-                var date = new Date(item.pubDate.replace(/-/g, '/'));
-                if (!isNaN(date.getTime())) {
-                  var day = ('0' + date.getDate()).slice(-2);
-                  var month = ('0' + (date.getMonth() + 1)).slice(-2);
-                  dateStr = day + '.' + month + '.' + date.getFullYear();
-                }
-              }
+            if (titleEl && linkEl) {
+              var rawTitle = titleEl.textContent;
+              // Очищаем заголовки Google News от приписки СМИ
+              var cleanTitle = rawTitle.split(' - ')[0].trim();
+              var sourceName = rawTitle.split(' - ').length > 1 ? rawTitle.split(' - ').pop().trim() : source.name;
 
-              var title = cleanHtml(item.title);
-              
-              html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="openNewsLink(\'' + item.link + '\')">' +
-                        '<div style="font-size: 10px; color: var(--accent-sky); font-weight: 700; text-transform: uppercase; margin-bottom: 4px;">📰 Sports.ru • ' + dateStr + '</div>' +
-                        '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.3; margin-bottom: 8px;">' + title + '</div>' +
-                        '<div style="font-size: 12px; color: var(--text-muted); text-align: right;">Читать статью ↗</div>' +
-                      '</div>';
-            });
-            
-            // Сохраняем готовый HTML в ОБЩУЮ БАЗУ FIREBASE.
-            // Теперь все игроки клуба моментально увидят новости без запросов в интернет!
-            newsRef.set({ html: html, updatedAt: Date.now() }).catch(function(){});
-          }
-        })
-        .catch(function(e) { console.log("Фоновое обновление отложено (ошибка сети)"); });
-    }
-  }, function(err) {
-    // Если Firebase еще пустой и ругается
-    if(container.innerHTML === '' || container.innerHTML.includes('Сбор')) {
-       container.innerHTML = '<span class="empty-note">Новости скоро появятся...</span>';
-    }
+              allArticles.push({
+                title: cleanTitle,
+                link: linkEl.textContent,
+                source: sourceName,
+                date: pubDateEl ? new Date(pubDateEl.textContent).getTime() : Date.now()
+              });
+            }
+         }
+      }).catch(function(e) { 
+        // Молча игнорируем ошибку одного источника, чтобы не сломать остальные
+        console.warn("Сбой на источнике:", source.name); 
+      });
+  });
+
+  // 3. РАБОТА ГЛАВНОГО РЕДАКТОРА (Сборка, сортировка, удаление дубликатов)
+  Promise.all(fetchPromises).then(function() {
+    if (allArticles.length === 0) return; // Если интернета нет вообще, оставляем старые новости
+
+    // Сортируем все собранные новости строго по времени (самые свежие сверху)
+    allArticles.sort(function(a, b) { return b.date - a.date; });
+
+    var uniqueArticles = [];
+    var titleSignatures = new Set();
+
+    allArticles.forEach(function(article) {
+      // Создаем "цифровой отпечаток" новости: убираем знаки препинания и приводим к мелкому шрифту
+      // Если отпечатки совпадают, значит об этом уже написали - удаляем дубликат!
+      var signature = article.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 35);
+      
+      if (!titleSignatures.has(signature) && uniqueArticles.length < 15) {
+        titleSignatures.add(signature);
+        uniqueArticles.push(article);
+      }
+    });
+
+    // 4. ТИХАЯ ПУБЛИКАЦИЯ
+    // Сохраняем готовую газету в память телефона и незаметно обновляем экран
+    localStorage.setItem(cacheKey, JSON.stringify(uniqueArticles));
+    renderNewsCards(uniqueArticles, container);
   });
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
