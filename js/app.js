@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Каскадная загрузка + 5 источников)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (С защитой от зависаний без VPN)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1335,7 +1335,6 @@ function openNewsLink(url) {
   }
 }
 
-// Вспомогательная функция для красивой отрисовки новостей
 function renderNewsCards(articles, container) {
   if (!articles || articles.length === 0) return;
   var html = '';
@@ -1367,18 +1366,15 @@ function loadTableTennisNews() {
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
-  // 1. МОМЕНТАЛЬНЫЙ РЕНДЕР ИЗ ПАМЯТИ ТЕЛЕФОНА (0 миллисекунд)
   if (cachedData) {
     try {
       allArticles = JSON.parse(cachedData);
       renderNewsCards(allArticles, container);
     } catch(e) {}
   } else {
-    // Если кэш совсем пустой (самый первый в жизни вход)
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
   }
 
-  // 2. ПЯТЬ НЕЗАВИСИМЫХ ИСТОЧНИКОВ
   var sources = [
     { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
     { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
@@ -1389,22 +1385,27 @@ function loadTableTennisNews() {
 
   var currentSourceIndex = 0;
 
-  // 3. ПООЧЕРЕДНАЯ КАСКАДНАЯ ЗАГРУЗКА (чтобы серверы не заблокировали нас за DDoS)
   function fetchNextSource() {
-    if (currentSourceIndex >= sources.length) return; // Все источники опрошены
+    if (currentSourceIndex >= sources.length) return; 
     
     var source = sources[currentSourceIndex];
     currentSourceIndex++;
 
-    fetch(source.url)
-      .then(function(res) { return res.json(); })
+    // СЕКРЕТ СКОРОСТИ: Жесткий таймер на 3 секунды
+    var fetchPromise = fetch(source.url).then(function(res) { return res.json(); });
+    var timeoutPromise = new Promise(function(resolve, reject) {
+      setTimeout(function() { reject(new Error('timeout')); }, 3000);
+    });
+
+    // Promise.race запускает запрос и таймер одновременно. Кто первый - тот и победил.
+    Promise.race([fetchPromise, timeoutPromise])
       .then(function(data) {
          if (data.status === 'ok' && data.items) {
            var newItemsFound = false;
            
            data.items.slice(0, 10).forEach(function(item) {
               var rawTitle = item.title || "";
-              var cleanTitle = rawTitle.split(' - ')[0].trim(); // Убираем приписки СМИ
+              var cleanTitle = rawTitle.split(' - ')[0].trim();
               var sourceName = rawTitle.split(' - ').length > 1 ? rawTitle.split(' - ').pop().trim() : source.name;
 
               var dateMs = Date.now();
@@ -1413,13 +1414,11 @@ function loadTableTennisNews() {
                 if (!isNaN(parsedDate.getTime())) dateMs = parsedDate.getTime();
               }
 
-              // Умная дедубликация: сравниваем статьи по "цифровому отпечатку" заголовка
               var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
               var isDuplicate = allArticles.some(function(a) {
                 return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
               });
 
-              // Если новость уникальная — добавляем
               if (!isDuplicate) {
                 allArticles.push({
                   title: cleanTitle,
@@ -1431,28 +1430,23 @@ function loadTableTennisNews() {
               }
            });
 
-           // Если этот источник дал новые уникальные статьи:
            if (newItemsFound) {
-             // 1. Сортируем все новости от самых свежих к старым
              allArticles.sort(function(a, b) { return b.date - a.date; });
-             // 2. Оставляем только Топ-20 самых свежих во всём мире
              allArticles = allArticles.slice(0, 20);
-             // 3. Сохраняем в кэш и перерисовываем в прямом эфире!
              localStorage.setItem(cacheKey, JSON.stringify(allArticles));
              renderNewsCards(allArticles, container);
            }
          }
-         // Запускаем следующий источник с паузой 400мс (имитация человека, защита от бана)
-         setTimeout(fetchNextSource, 400);
+         setTimeout(fetchNextSource, 200);
       })
       .catch(function(e) {
-         // Если один источник упал, просто тихо идем к следующему
-         setTimeout(fetchNextSource, 400);
+         // Источник заблокирован (без VPN) или тупит сеть — мгновенно пропускаем его
+         setTimeout(fetchNextSource, 100);
       });
   }
 
-  // Запуск каскадной цепи
-  fetchNextSource();
+  // Запускаем сбор новостей не сразу, а через 1.5 секунды, чтобы дать приложению полностью загрузиться
+  setTimeout(fetchNextSource, 1500);
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
