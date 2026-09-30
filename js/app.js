@@ -1351,7 +1351,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v14';
+  var cacheKey = 'tt_ultimate_news_cache_v15';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1364,12 +1364,13 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск в печати... 🏓</div>';
   }
 
-  // ОТЛОЖЕННЫЙ ФОНОВЫЙ СБОР
+  // Отложенный старт, чтобы не тормозить интерфейс приложения
   setTimeout(function() {
+    // Теперь мы используем прямые RSS-ссылки без посредника rss2json
     var sources = [
-      { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
-      { name: 'Мир НТ', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://ttw.ru/feed/') },
-      { name: 'Sportbox', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss') }
+      { name: 'Sports.ru', rss: 'https://www.sports.ru/table-tennis/rss/all.xml' },
+      { name: 'Мир НТ', rss: 'https://ttw.ru/feed/' },
+      { name: 'Sportbox', rss: 'https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss' }
     ];
 
     var nowTs = Date.now();
@@ -1377,14 +1378,33 @@ function loadTableTennisNews() {
     var newItemsFound = false;
 
     sources.forEach(function(source) {
-      // Убрали искусственный сброс кэша (_t), чтобы не злить анти-спам систему агрегатора
-      var proxyUrl = source.url;
+      // Используем свободный шлюз AllOrigins, у которого нет жестких лимитов на обновления
+      var proxyUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(source.rss) + '&_t=' + nowTs;
       
-      var fetchPromise = fetch(proxyUrl, { cache: 'no-cache' }).then(function(res) { 
-        return res.json(); 
-      });
+      var fetchPromise = fetch(proxyUrl, { cache: 'no-store' })
+        .then(function(res) { return res.text(); })
+        .then(function(xmlText) {
+            // Встроенный парсер: мы сами обрабатываем сырой текст прямо в телефоне
+            var parser = new DOMParser();
+            var xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            var items = xmlDoc.querySelectorAll("item");
+            var parsedItems = [];
+            
+            for (var i = 0; i < Math.min(items.length, 10); i++) {
+                var node = items[i];
+                var tNode = node.querySelector("title");
+                var lNode = node.querySelector("link");
+                var pdNode = node.querySelector("pubDate");
+                
+                parsedItems.push({
+                   title: tNode ? tNode.textContent : '',
+                   link: lNode ? lNode.textContent : '',
+                   pubDate: pdNode ? pdNode.textContent : ''
+                });
+            }
+            return { status: 'ok', items: parsedItems };
+        });
       
-      // Даем серверу 8 секунд на ответ (особенно важно для первой загрузки новых сайтов)
       var timeoutPromise = new Promise(function(_, reject) { 
         setTimeout(function() { reject(new Error('timeout')); }, 8000);
       });
@@ -1392,8 +1412,9 @@ function loadTableTennisNews() {
       Promise.race([fetchPromise, timeoutPromise])
         .then(function(data) {
            if (data.status === 'ok' && data.items) {
-             data.items.slice(0, 10).forEach(function(item) {
+             data.items.forEach(function(item) {
                 var cleanTitle = (item.title || "").split(' - ')[0].trim();
+                if (!cleanTitle) return;
                 var sourceName = (item.title || "").split(' - ').length > 1 ? (item.title || "").split(' - ').pop().trim() : source.name;
                 var dateMs = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).getTime() : Date.now();
 
@@ -1410,26 +1431,27 @@ function loadTableTennisNews() {
            }
         })
         .catch(function(e) {
+           console.log("Ошибка сети при загрузке: " + source.name);
         })
         .finally(function() {
            pendingRequests--;
            if (pendingRequests === 0) {
              if (newItemsFound) {
                allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20);
+               allArticles = allArticles.slice(0, 20); // Оставляем 20 самых свежих
                localStorage.setItem(cacheKey, JSON.stringify(allArticles));
                renderNewsCards(allArticles, container);
              } else if (allArticles.length === 0 && !cachedData) {
                 container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
-                                        '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Агрегатор временно недоступен</div>' +
-                                        '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Провайдер блокирует фоновое обновление.</div>' +
-                                        '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
+                                      '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Сеть временно недоступна</div>' +
+                                      '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Проверьте подключение к интернету.</div>' +
+                                      '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
                                       '</div>';
              }
            }
         });
     });
-  }, 4000); 
+  }, 1500); 
 }
 
 // ==========================================
