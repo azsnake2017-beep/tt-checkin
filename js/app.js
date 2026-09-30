@@ -1448,9 +1448,15 @@ document.addEventListener('DOMContentLoaded', function() {
 
   setAppProgress(30, 'Загрузка интерфейса...');
 
-  if (window.Telegram && window.Telegram.WebApp) {
-    try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
-  }
+ // Гибкое ожидание Telegram (не блокирует интерфейс)
+  var tgAttempts = 0;
+  var tgCheck = setInterval(function() {
+    if (window.Telegram && window.Telegram.WebApp) {
+      try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
+      clearInterval(tgCheck);
+    }
+    if (++tgAttempts > 20) clearInterval(tgCheck); // Сдаемся через 2 секунды, если зашли через Chrome
+  }, 100);
 
   // 1. Отрисовываем базовый UI моментально
   try { restoreCardStates(); } catch(e) {}
