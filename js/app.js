@@ -1442,11 +1442,11 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
         var loader = document.getElementById('app-preloader');
         if (loader) loader.classList.add('hidden');
-      }, 400); // Плавно прячем лоадер
+      }, 150); // Плавно прячем лоадер почти мгновенно
     }
   };
 
-  setAppProgress(20, 'Загрузка интерфейса...');
+  setAppProgress(30, 'Загрузка интерфейса...');
 
   if (window.Telegram && window.Telegram.WebApp) {
     try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
@@ -1457,9 +1457,9 @@ document.addEventListener('DOMContentLoaded', function() {
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
 
-  setAppProgress(60, 'Синхронизация данных...');
+  setAppProgress(70, 'Подключение...');
 
-  // 2. Инициируем Firebase-запросы (они асинхронны и не блокируют экран)
+  // 2. Инициируем Firebase-запросы (они асинхронны, но мы пока запускаем только самые важные)
   try { initUserProfile(); } catch(e) {}
   try { updateAdminControls(); } catch(e) {}
   try { listenPendingMatches(); } catch(e) {}
@@ -1477,61 +1477,66 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch(e) {}
   });
 
-  try {
-    db.collection('settings').doc('announcements').onSnapshot(function(doc) {
-      try {
-        announcementsData = doc.data() || { vostok: null };
-        var badgeBox = document.getElementById('announcement-box-vostok');
-        var textBox = document.getElementById('announcement-text-vostok');
-        if (badgeBox && textBox) { 
-            var aData = announcementsData.vostok;
-            if (aData) { 
-                if (typeof aData === 'object') {
-                    var resHtml = '';
-                    if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
-                    if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
-                    textBox.innerHTML = resHtml;
-                } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
-                badgeBox.style.display = 'flex'; 
-            } else { badgeBox.style.display = 'none'; } 
-        }
-      } catch(e) {}
-    });
-  } catch(e) {}
-
-  try {
-    db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
-      if (doc.exists) {
-        var mult = parseInt(doc.data().multiplier, 10) || 1;
-        window.currentEloMultiplier = mult;
-        var selectEl = document.getElementById('admin-elo-boost'); if (selectEl) selectEl.value = mult;
-        var banner = document.getElementById('global-boost-banner'), btnBadge = document.getElementById('match-btn-boost-badge');
-        if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } } 
-        else { if (banner) banner.style.display = 'none'; if (btnBadge) btnBadge.style.display = 'none'; }
-      }
-    });
-  } catch(e) {}
-
-  try { listenRecentMatches(); } catch(e) {}
-  try { listenRatings(); } catch(e) {}
-  try { listenLeaderboard(); } catch(e) {}
-  try { listenTournaments(); } catch(e) {}
-
   // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
   setAppProgress(100, 'Готово!');
   
-  // 4. Фоновые таймеры
-  setTimeout(monitorSessions, 1000);
-  setInterval(renderAll, 30000); 
-  setInterval(monitorSessions, 60000); 
-  
-  // 5. Тяжелые внешние API запускаем только спустя 3 секунды.
+  // 4. ВСЕ ТЯЖЕЛЫЕ БАЗЫ ГРУЗЯТСЯ ПАРАЛЛЕЛЬНО В ФОНЕ (ЧЕРЕЗ setTimeOut)
+  // Это освобождает Chrome от "заморозки" экрана
   setTimeout(function() {
-     if (typeof loadParkWeather === 'function') { try { loadParkWeather(); } catch(e) {} }
-     try { loadTableTennisNews(); } catch(e) {}
-     if (typeof loadParkWeather === 'function') { setInterval(loadParkWeather, 600000); }
-  }, 3000);
+      try {
+        db.collection('settings').doc('announcements').onSnapshot(function(doc) {
+          try {
+            announcementsData = doc.data() || { vostok: null };
+            var badgeBox = document.getElementById('announcement-box-vostok');
+            var textBox = document.getElementById('announcement-text-vostok');
+            if (badgeBox && textBox) { 
+                var aData = announcementsData.vostok;
+                if (aData) { 
+                    if (typeof aData === 'object') {
+                        var resHtml = '';
+                        if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
+                        if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
+                        textBox.innerHTML = resHtml;
+                    } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
+                    badgeBox.style.display = 'flex'; 
+                } else { badgeBox.style.display = 'none'; } 
+            }
+          } catch(e) {}
+        });
+      } catch(e) {}
 
+      try {
+        db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
+          if (doc.exists) {
+            var mult = parseInt(doc.data().multiplier, 10) || 1;
+            window.currentEloMultiplier = mult;
+            var selectEl = document.getElementById('admin-elo-boost'); if (selectEl) selectEl.value = mult;
+            var banner = document.getElementById('global-boost-banner'), btnBadge = document.getElementById('match-btn-boost-badge');
+            if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } } 
+            else { if (banner) banner.style.display = 'none'; if (btnBadge) btnBadge.style.display = 'none'; }
+          }
+        });
+      } catch(e) {}
+
+      try { listenRecentMatches(); } catch(e) {}
+      try { listenRatings(); } catch(e) {}
+      try { listenLeaderboard(); } catch(e) {}
+      try { listenTournaments(); } catch(e) {}
+
+      setTimeout(monitorSessions, 1000);
+      setInterval(renderAll, 30000); 
+      setInterval(monitorSessions, 60000); 
+
+      // Погода стартует, когда экран уже свободен
+      if (typeof loadParkWeather === 'function') { 
+          try { loadParkWeather(); } catch(e) {} 
+          setInterval(loadParkWeather, 600000); 
+      }
+      
+      // Тяжелые новости стартуют с микро-задержкой, чтобы не драться с Firebase
+      setTimeout(function() { try { loadTableTennisNews(); } catch(e) {} }, 1500);
+      
+  }, 100); 
 });
 
 // Функция тихого удаления матча из истории (в стилистике приложения)
@@ -1741,7 +1746,7 @@ function renderUserHistoryList(matches, uid) {
             leftContentHtml = '<div style="line-height: 1.4; word-break: break-word; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
         }
 
-        var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️️</div>' : '';
+        var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑</div>' : '';
 
         h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
                '<div style="flex: 1; min-width: 0;">' + 
@@ -1825,7 +1830,7 @@ window.saveEloBoost = function() {
     } else if (val === 3) {
       msg = "🔥 <b>ИВЕНТ: ТРОЙНОЙ БУСТ (х3)!</b>\n\nСтавки повышаются! За победу теперь начисляется в 3 раза больше Эло. Одна удачная серия побед может сделать вас чемпионом клуба.\n\n<i>Ракетки к бою, начинается жара!</i> ☄️";
     } else if (val === 5) {
-      msg = "😱 <b>ИВЕНТ: БЕШЕНОЕ ЭЛО (х5)!</b>\n\nАдмин сошел с ума! Включен ПЯТИКРАТНЫЙ множитель за победу! Сейчас можно взлететь в топ-10 за пару часов или мощно осадить фаворитов.\n\n<i>Предупреждение: возможны прожженные накладки от скорости игры!</i> ☢️️";
+      msg = "😱 <b>ИВЕНТ: БЕШЕНОЕ ЭЛО (х5)!</b>\n\nАдмин сошел с ума! Включен ПЯТИКРАТНЫЙ множитель за победу! Сейчас можно взлететь в топ-10 за пару часов или мощно осадить фаворитов.\n\n<i>Предупреждение: возможны прожженные накладки от скорости игры!</i> ☢";
     } else if (val === 10) {
       msg = "🤯 <b>ИВЕНТ: МЕГА-БУСТ x10 (АБСОЛЮТНОЕ БЕЗУМИЕ)!</b>\n\nРейтинговая экономика сломана! Каждая победа приносит ДЕСЯТИКРАТНОЕ количество очков. Сегодня новички могут обойти легенд спорта.\n\n<i>Бросайте все дела, такое бывает раз в жизни! Мяч на вашей стороне!</i> 🌋";
     } else {
