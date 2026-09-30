@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (С разворачиванием внутри приложения)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Плавное разворачивание + Текст)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1335,23 +1335,33 @@ function openNewsLink(url) {
   }
 }
 
-// Функция для разворачивания/сворачивания новости
+// Плавное разворачивание (Анимация высоты)
 window.toggleNewsExpand = function(cardEl) {
   var bodyEl = cardEl.querySelector('.news-body');
   var toggleText = cardEl.querySelector('.news-toggle-text');
   
-  if (bodyEl.style.display === 'none') {
-    bodyEl.style.display = 'block';
+  if (!cardEl.classList.contains('expanded')) {
+    cardEl.classList.add('expanded');
+    // Высчитываем реальную высоту текста для плавной анимации
+    bodyEl.style.maxHeight = bodyEl.scrollHeight + 50 + "px"; 
+    bodyEl.style.opacity = "1";
+    bodyEl.style.marginTop = "10px";
+    bodyEl.style.paddingTop = "10px";
+    bodyEl.style.borderTopColor = "rgba(59, 130, 246, 0.2)";
     toggleText.innerHTML = 'Свернуть ⬆️';
     cardEl.style.background = 'rgba(59, 130, 246, 0.05)';
   } else {
-    bodyEl.style.display = 'none';
+    cardEl.classList.remove('expanded');
+    bodyEl.style.maxHeight = "0";
+    bodyEl.style.opacity = "0";
+    bodyEl.style.marginTop = "0";
+    bodyEl.style.paddingTop = "0";
+    bodyEl.style.borderTopColor = "transparent";
     toggleText.innerHTML = 'Развернуть ⬇️';
     cardEl.style.background = 'transparent';
   }
 };
 
-// Вспомогательная функция для красивой отрисовки новостей
 function renderNewsCards(articles, container) {
   if (!articles || articles.length === 0) return;
   var html = '';
@@ -1364,19 +1374,18 @@ function renderNewsCards(articles, container) {
       ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
       : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
 
-    var descText = a.desc ? a.desc : 'Подробности по ссылке...';
+    var descText = a.desc ? a.desc : 'Полный текст статьи доступен на сайте источника...';
 
-    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.3s;" onclick="toggleNewsExpand(this)">' +
+    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s ease;" onclick="toggleNewsExpand(this)">' +
               '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
                 '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
                 '<div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">' + dateStr + '</div>' +
               '</div>' +
               '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 4px;">' + cleanHtml(a.title) + '</div>' +
               
-              // СКРЫТЫЙ БЛОК (Описание + Кнопка)
-              '<div class="news-body" style="display: none; margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(59, 130, 246, 0.2);">' +
+              // Скрытый блок новостей с CSS-анимацией (изначально max-height: 0)
+              '<div class="news-body" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px dashed transparent; margin-top: 0; padding-top: 0;">' +
                  '<div style="font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 12px;">' + cleanHtml(descText) + '</div>' +
-                 // event.stopPropagation() не дает карточке свернуться при клике на саму кнопку источника
                  '<button class="btn btn-join" style="width: 100%; font-size: 12px; padding: 8px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid #3b82f6;" onclick="event.stopPropagation(); openNewsLink(\'' + escapeJS(a.link) + '\')">🔗 Читать в источнике</button>' +
               '</div>' +
               
@@ -1390,11 +1399,11 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache';
+  // ВАЖНО: Новый ключ кэша, чтобы пробить старую память браузера и загрузить тексты новостей!
+  var cacheKey = 'tt_news_cache_v3';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
-  // 1. МОМЕНТАЛЬНЫЙ РЕНДЕР ИЗ ПАМЯТИ
   if (cachedData) {
     try {
       allArticles = JSON.parse(cachedData);
@@ -1404,7 +1413,6 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
   }
 
-  // 2. ИСТОЧНИКИ
   var sources = [
     { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
     { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
@@ -1415,7 +1423,6 @@ function loadTableTennisNews() {
 
   var currentSourceIndex = 0;
 
-  // 3. ПООЧЕРЕДНАЯ КАСКАДНАЯ ЗАГРУЗКА
   function fetchNextSource() {
     if (currentSourceIndex >= sources.length) return; 
     
@@ -1439,12 +1446,17 @@ function loadTableTennisNews() {
                 if (!isNaN(parsedDate.getTime())) dateMs = parsedDate.getTime();
               }
 
-              // Вытаскиваем и очищаем текст новости (удаляем HTML теги из RSS-ленты)
+              // Вытаскиваем и очищаем текст новости от мусорных HTML тегов
               var rawDesc = item.description || item.content || "";
               var tmp = document.createElement("DIV");
               tmp.innerHTML = rawDesc;
               var cleanDesc = tmp.textContent || tmp.innerText || "";
-              // Если новость слишком длинная, обрезаем, чтобы не перегружать интерфейс
+              cleanDesc = cleanDesc.replace(/\s+/g, ' ').trim();
+              
+              // Google News часто присылает пустоту или фразу "Читать далее", отсекаем их
+              if (cleanDesc.length < 20 || cleanDesc.indexOf("Читать далее") !== -1) {
+                cleanDesc = "";
+              }
               if (cleanDesc.length > 350) cleanDesc = cleanDesc.substring(0, 350) + '...';
 
               var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
@@ -1455,7 +1467,7 @@ function loadTableTennisNews() {
               if (!isDuplicate) {
                 allArticles.push({
                   title: cleanTitle,
-                  desc: cleanDesc.trim(), // Сохраняем вытянутое описание
+                  desc: cleanDesc, // Текст теперь точно сохраняется!
                   link: item.link,
                   source: sourceName,
                   date: dateMs
