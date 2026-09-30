@@ -238,7 +238,6 @@ function showAuthRequired(authScreen) {
       container.appendChild(script);
     }
     
-    // Моментально убираем экран загрузки для новичков
     if (typeof window.setAppProgress === 'function') {
         window.setAppProgress(100, 'Ожидание авторизации...');
     }
@@ -341,11 +340,9 @@ function saveCustomNameWithCheck() {
   }).catch(function(e) { customAlert("Не удалось сохранить профиль: " + e.message); });
 }
 
-// Заменяем стандартное открытие админки
 function openAdminMenu() { 
   document.getElementById('admin-modal').style.display = 'flex'; 
   
-  // Подгружаем ВСЕХ игроков для охоты (лимит убран)
   if (isSuperAdmin()) {
     db.collection('users').orderBy('elo', 'desc').get().then(function(snap) {
       var sel = document.getElementById('admin-bounty-select');
@@ -379,7 +376,7 @@ window.saveBounty = function() {
 
   db.collection('settings').doc('bounty').get().then(function(doc) {
     var targets = (doc.exists && doc.data().targets) ? doc.data().targets : {};
-    targets[targetUid] = targetText; // Добавляем новую цель
+    targets[targetUid] = targetText;
 
     db.collection('settings').doc('bounty').set({ targets: targets }, { merge: true }).then(function() {
       var msg = "🎯 <b>СЕЗОН ОХОТЫ РАСШИРЯЕТСЯ!</b> 🎯\n\nВ списке разыскиваемых пополнение. Назначена награда за голову: <b>" + targetText + "</b>!\n\n💰 <b>Награда: +100 Эло</b> за победу (1х1).\n\n<i>Кто заберет куш?</i> 🩸🐺";
@@ -401,7 +398,6 @@ window.clearBounty = function(silent) {
   });
 };
 
-// Слушатель ивента Охоты (мульти-рендер плашек)
 try {
   db.collection('settings').doc('bounty').onSnapshot(function(doc) {
     var banner = document.getElementById('global-bounty-banner');
@@ -430,7 +426,6 @@ try {
           
           container.appendChild(badge);
 
-          // Подтягиваем плашки
           db.collection('users').doc(uid).get().then(function(uDoc) {
             if (uDoc.exists) {
               var uData = uDoc.data();
@@ -582,6 +577,7 @@ function deleteAnnouncement() {
       customAlert("✅ Анонс успешно удален");
   });
 }
+
 // --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ, ИНВЕНТАРЕМ И ПЛАШКАМИ ---
 function showUserInfoModal(uid) {
   if(!uid) return;
@@ -597,7 +593,6 @@ function showUserInfoModal(uid) {
   var modal = document.getElementById('user-info-modal');
   if (modal) modal.style.display = 'flex';
   
-  // Принудительный обход кэша для свежих данных о ракетке
   var userPromise = db.collection('users').doc(uid).get({ source: 'server' }).catch(function() {
       return db.collection('users').doc(uid).get(); 
   });
@@ -615,7 +610,6 @@ function showUserInfoModal(uid) {
 
     var u = d.data() || {};
     
-    // Подтягиваем локальные данные, если это ваш профиль и сервер запаздывает
     var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
     if (uid === myUid && typeof currentUserProfile !== 'undefined') {
       if (!u.blade && currentUserProfile.blade) u.blade = currentUserProfile.blade;
@@ -623,7 +617,6 @@ function showUserInfoModal(uid) {
       if (!u.rubberR && currentUserProfile.rubberR) u.rubberR = currentUserProfile.rubberR;
     }
 
-    // УНИКАЛЬНЫЕ ПЛАШКИ (Теперь они гарантированно в шапке!)
     var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
@@ -651,7 +644,6 @@ function showUserInfoModal(uid) {
 
     var eloDisplay = u.elo !== undefined ? u.elo : 1000;
     
-// 2. АККУРАТНЫЙ БЛОК РАКЕТКИ С ВЫРАВНИВАНИЕМ
     var invHtml = '';
     if (u.blade || u.rubberL || u.rubberR) {
         var renderRow = function(icon, label, val, searchPrefix) {
@@ -675,18 +667,14 @@ function showUserInfoModal(uid) {
                   renderRow('⚫', 'Накладка R:', u.rubberR, 'Накладка для ракетки настольного тенниса') +
                   '</div>';
     }
-// (Этот код вставляется сразу после генерации invHtml)
     
-    // Подтвержденные (>=3 матчей) и ожидающие
     var confirmedInvites = Math.max(0, parseInt(u.confirmedInvitesCount, 10) || 0);
     var pendingInvites = Math.max(0, parseInt(u.pendingInvitesCount, 10) || 0);
 
-    // Плашка Амбассадора при 5+ подтвержденных
     var ambassadorBadge = (confirmedInvites >= 5) 
       ? '<span class="platform-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; margin-left: 4px; font-weight: 700; border: none; padding: 2px 7px; border-radius: 6px; font-size: 11px;">Амбассадор 🤝</span>' 
       : '';
 
-    // Обновляем заголовок, чтобы туда попала плашка Амбассадора
     var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + ambassadorBadge;
@@ -717,23 +705,13 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
-    document.getElementById('info-modal-content-area').innerHTML = uidHtml +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
-      '<div id="dynamic-last-match-date" style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted);">Загрузка...</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
-      invHtml;
 
-// --- ФОНОВАЯ ЗАГРУЗКА ИСТОРИИ С DOCID ДЛЯ УДАЛЕНИЯ ---
     db.collection('matches_history').get().then(function(allSnaps) {
         var matches = [];
         allSnaps.forEach(function(docX) {
           var mx = docX.data();
           if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) {
-            mx.docId = docX.id; // <--- ДОБАВЬТЕ ЭТУ СТРОКУ СЮДА
+            mx.docId = docX.id;
             matches.push(mx);
           }
         });
@@ -775,7 +753,6 @@ function showUserInfoModal(uid) {
   });
 }
 
-// Вспомогательная функция для истории
 function processMatchesData(matches, uid) {
     var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
     if (matches.length > 0) {
@@ -803,14 +780,12 @@ function processMatchesData(matches, uid) {
     if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
 }
 
-
 function renderUserHistoryFromSnaps(snaps, uid) {
   var matches = [];
   snaps.forEach(function(docX) { matches.push(docX.data()); });
   renderUserHistoryList(matches, uid);
 }
 
-// --- КРАСИВАЯ ИСТОРИЯ МАТЧЕЙ В КАРТОЧКЕ ИГРОКА (1x1 и 2x2 как в ленте) ---
 function renderUserHistoryList(matches, uid) {
   var hEl = document.getElementById('info-modal-history');
   if (!hEl) return;
@@ -820,7 +795,6 @@ function renderUserHistoryList(matches, uid) {
     return; 
   }
   
-  // Сортировка от новых к старым и срез до 10 матчей
   matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
   var recentMatches = matches.slice(0, 10);
   var html = '';
@@ -831,7 +805,6 @@ function renderUserHistoryList(matches, uid) {
       var s1 = isDoubles ? m.team1Score : m.p1Score;
       var s2 = isDoubles ? m.team2Score : m.p2Score;
       
-      // Определяем, победил ли текущий игрок в этом матче
       var isMyTeamWin = false;
       if (isDoubles) {
         var isTeam1 = m.team1Uids && m.team1Uids.indexOf(uid) !== -1;
@@ -864,7 +837,6 @@ function renderUserHistoryList(matches, uid) {
         rightSideHtml = '<span class="clickable-name" style="text-align:left; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; ' + p2Color + '" onclick="showUserInfoModal(\'' + escapeJS(m.p2Uid) + '\')">' + cleanHtml(m.p2Name) + '</span>';
       }
 
-      // Аккуратная админская кнопка удаления матча (без изменения Эло)
       var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && m.docId) ? 
         '<div style="margin-left: 6px; cursor: pointer; font-size: 13px; opacity: 0.6; flex-shrink: 0;" onclick="deleteHistoryMatch(\'' + escapeJS(m.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
 
@@ -1247,7 +1219,6 @@ function listenTournaments() {
 }
 
 function listenRatings() {
-  // Сначала пытаемся взять данные из кэша телефона для моментального отображения без ожидания сети
   db.collection('users').onSnapshot({ includeMetadataChanges: true }, function(snap) {
     var listEl = document.getElementById('rating-list');
     if (!listEl) return;
@@ -1324,6 +1295,7 @@ function listenLeaderboard() {
     listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
   }, function(err) {});
 }
+
 // ==========================================
 // ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Асинхронный, Параллельный)
 // ==========================================
@@ -1362,11 +1334,10 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v9'; // Новый ключ для чистой загрузки
+  var cacheKey = 'tt_ultimate_news_cache_v9';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
-  // 1. СИНХРОННЫЙ РЕНДЕР ИЗ ПАМЯТИ (Мгновенно, без интернета)
   if (cachedData) {
     try {
       allArticles = JSON.parse(cachedData);
@@ -1376,7 +1347,7 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск в печати... 🏓</div>';
   }
 
-  // 2. ОТЛОЖЕННЫЙ ФОНОВЫЙ СБОР (Через 4 сек, не мешает приложению)
+  // ОТЛОЖЕННЫЙ ФОНОВЫЙ СБОР
   setTimeout(function() {
     var sources = [
       { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
@@ -1389,13 +1360,12 @@ function loadTableTennisNews() {
     var pendingRequests = sources.length;
     var newItemsFound = false;
 
-    // Запускаем запросы параллельно
     sources.forEach(function(source) {
       var proxyUrl = source.url + '&_t=' + nowTs + Math.floor(Math.random() * 1000);
       
       var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
       var timeoutPromise = new Promise(function(_, reject) { 
-        setTimeout(function() { reject(new Error('timeout')); }, 2500); // 2.5 секунды - оптимальный лимит!
+        setTimeout(function() { reject(new Error('timeout')); }, 2500);
       });
 
       Promise.race([fetchPromise, timeoutPromise])
@@ -1419,19 +1389,16 @@ function loadTableTennisNews() {
            }
         })
         .catch(function(e) {
-           // Если без VPN источник упал - скрипт молча игнорирует его
         })
         .finally(function() {
            pendingRequests--;
-           // Когда все источники ответили (или упали по таймауту)
            if (pendingRequests === 0) {
              if (newItemsFound) {
                allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20); // Топ-20 свежих
+               allArticles = allArticles.slice(0, 20);
                localStorage.setItem(cacheKey, JSON.stringify(allArticles));
                renderNewsCards(allArticles, container);
              } else if (allArticles.length === 0 && !cachedData) {
-                // Если зашли в первый раз и провайдер всё заблокировал - красивая заглушка-переходник
                 container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
                                         '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Агрегатор временно недоступен</div>' +
                                         '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Провайдер блокирует фоновое обновление.</div>' +
@@ -1441,12 +1408,14 @@ function loadTableTennisNews() {
            }
         });
     });
-  }, 4000); // 4 секунды задержки: приложение загружается мгновенно
+  }, 4000); 
 }
-// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
+
+// ==========================================
+// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ АСИНХРОННАЯ ЗАГРУЗКА
+// ==========================================
 document.addEventListener('DOMContentLoaded', function() {
 
-  // База шуток и советов
   var ttJokes = [
     "💡 Совет: Работа ног — 80% успеха в настольном теннисе.",
     "🏓 Настольный теннис — это шахматы в движении. Только времени подумать нет.",
@@ -1473,103 +1442,102 @@ document.addEventListener('DOMContentLoaded', function() {
       setTimeout(function() {
         var loader = document.getElementById('app-preloader');
         if (loader) loader.classList.add('hidden');
-      }, 200); // Плавно прячем почти мгновенно
+      }, 400); // Плавно прячем лоадер
     }
   };
 
-  setAppProgress(15, 'Загрузка интерфейса...');
+  setAppProgress(20, 'Загрузка интерфейса...');
 
   if (window.Telegram && window.Telegram.WebApp) {
     try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
   }
+
+  // 1. Отрисовываем базовый UI моментально
   try { restoreCardStates(); } catch(e) {}
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
 
-  setTimeout(function() {
-    setAppProgress(40, 'Проверка профиля...');
-    try { initUserProfile(); } catch(e) {}
-    
-    setTimeout(function() {
-      setAppProgress(70, 'Синхронизация радара...');
-      
-      try { updateAdminControls(); } catch(e) {}
-      try { listenPendingMatches(); } catch(e) {}
-      
-      ['park', 'vostok'].forEach(function(loc) {
-        try {
-          db.collection('locations').doc(loc).onSnapshot(function(doc) { 
-              try { 
-                  var data = doc.data() || {}; 
-                  locationsData[loc].plans = data.plans || []; 
-                  locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p; }); 
-                  renderAll(); 
-              } catch(e){} 
-          }, function(err) {});
-        } catch(e) {}
-      });
+  setAppProgress(60, 'Синхронизация данных...');
 
+  // 2. Инициируем Firebase-запросы (они асинхронны и не блокируют экран)
+  try { initUserProfile(); } catch(e) {}
+  try { updateAdminControls(); } catch(e) {}
+  try { listenPendingMatches(); } catch(e) {}
+  
+  ['park', 'vostok'].forEach(function(loc) {
+    try {
+      db.collection('locations').doc(loc).onSnapshot(function(doc) { 
+          try { 
+              var data = doc.data() || {}; 
+              locationsData[loc].plans = data.plans || []; 
+              locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p; }); 
+              renderAll(); 
+          } catch(e){} 
+      }, function(err) {});
+    } catch(e) {}
+  });
+
+  try {
+    db.collection('settings').doc('announcements').onSnapshot(function(doc) {
       try {
-        db.collection('settings').doc('announcements').onSnapshot(function(doc) {
-          try {
-            announcementsData = doc.data() || { vostok: null };
-            var badgeBox = document.getElementById('announcement-box-vostok');
-            var textBox = document.getElementById('announcement-text-vostok');
-            if (badgeBox && textBox) { 
-                var aData = announcementsData.vostok;
-                if (aData) { 
-                    if (typeof aData === 'object') {
-                        var resHtml = '';
-                        if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
-                        if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
-                        textBox.innerHTML = resHtml;
-                    } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
-                    badgeBox.style.display = 'flex'; 
-                } else { badgeBox.style.display = 'none'; } 
-            }
-          } catch(e) {}
-        });
+        announcementsData = doc.data() || { vostok: null };
+        var badgeBox = document.getElementById('announcement-box-vostok');
+        var textBox = document.getElementById('announcement-text-vostok');
+        if (badgeBox && textBox) { 
+            var aData = announcementsData.vostok;
+            if (aData) { 
+                if (typeof aData === 'object') {
+                    var resHtml = '';
+                    if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
+                    if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
+                    textBox.innerHTML = resHtml;
+                } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
+                badgeBox.style.display = 'flex'; 
+            } else { badgeBox.style.display = 'none'; } 
+        }
       } catch(e) {}
+    });
+  } catch(e) {}
 
-      setTimeout(function() {
-        setAppProgress(90, 'Загрузка рейтингов...');
-        
-        try {
-          db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
-            if (doc.exists) {
-              var mult = parseInt(doc.data().multiplier, 10) || 1;
-              window.currentEloMultiplier = mult;
-              var selectEl = document.getElementById('admin-elo-boost'); if (selectEl) selectEl.value = mult;
-              var banner = document.getElementById('global-boost-banner'), btnBadge = document.getElementById('match-btn-boost-badge');
-              if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } } 
-              else { if (banner) banner.style.display = 'none'; if (btnBadge) btnBadge.style.display = 'none'; }
-            }
-          });
-        } catch(e) {}
+  try {
+    db.collection('settings').doc('elo_boost').onSnapshot(function(doc) {
+      if (doc.exists) {
+        var mult = parseInt(doc.data().multiplier, 10) || 1;
+        window.currentEloMultiplier = mult;
+        var selectEl = document.getElementById('admin-elo-boost'); if (selectEl) selectEl.value = mult;
+        var banner = document.getElementById('global-boost-banner'), btnBadge = document.getElementById('match-btn-boost-badge');
+        if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } } 
+        else { if (banner) banner.style.display = 'none'; if (btnBadge) btnBadge.style.display = 'none'; }
+      }
+    });
+  } catch(e) {}
 
-        try { listenRecentMatches(); } catch(e) {}
-        try { listenRatings(); } catch(e) {}
-        try { listenLeaderboard(); } catch(e) {}
-        try { listenTournaments(); } catch(e) {}
-        try { loadParkWeather(); } catch(e) {}
-        try { loadTableTennisNews(); } catch(e) {}
-        
-       setTimeout(function() {
-          setAppProgress(100, 'Готово!');
-          setTimeout(monitorSessions, 1000);
-          setInterval(renderAll, 30000); 
-          setInterval(monitorSessions, 60000); 
-          setInterval(loadParkWeather, 600000); 
-        }, 500); // 0.5 сек на финише, чтобы дочитать шутку
-      }, 500); // 0.5 сек на загрузку тяжелых баз
-    }, 600); // 0.6 сек на инициализацию радара
-  }, 100); 
+  try { listenRecentMatches(); } catch(e) {}
+  try { listenRatings(); } catch(e) {}
+  try { listenLeaderboard(); } catch(e) {}
+  try { listenTournaments(); } catch(e) {}
+
+  // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
+  setAppProgress(100, 'Готово!');
+  
+  // 4. Фоновые таймеры
+  setTimeout(monitorSessions, 1000);
+  setInterval(renderAll, 30000); 
+  setInterval(monitorSessions, 60000); 
+  
+  // 5. Тяжелые внешние API запускаем только спустя 3 секунды.
+  setTimeout(function() {
+     if (typeof loadParkWeather === 'function') { try { loadParkWeather(); } catch(e) {} }
+     try { loadTableTennisNews(); } catch(e) {}
+     if (typeof loadParkWeather === 'function') { setInterval(loadParkWeather, 600000); }
+  }, 3000);
+
 });
+
 // Функция тихого удаления матча из истории (в стилистике приложения)
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
   
-  // Принудительно возвращаем окну красные стили для предупреждения об удалении
   var btn = document.querySelector('#confirm-modal .btn-join');
   var title = document.querySelector('#confirm-modal h3');
   var box = document.querySelector('#confirm-modal .modal-box');
@@ -1598,7 +1566,6 @@ window.applyEloDecay = function() {
 
   var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Все, кто не играл последние 7 дней (включая новичков), получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
   
-  // Возвращаем окну подтверждения красные цвета
   var btn = document.querySelector('#confirm-modal .btn-join');
   var title = document.querySelector('#confirm-modal h3');
   var box = document.querySelector('#confirm-modal .modal-box');
@@ -1612,11 +1579,9 @@ window.applyEloDecay = function() {
     var now = Date.now();
     var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
 
-    // 1. Ищем все матчи, сыгранные за эти 7 дней
     db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
       var activeUids = new Set();
       
-      // Собираем UID всех, кто играл
       snap.forEach(function(doc) {
         var m = doc.data();
         if (m.participants) {
@@ -1624,7 +1589,6 @@ window.applyEloDecay = function() {
         }
       });
 
-      // 2. Получаем всех пользователей базы
       db.collection('users').get().then(function(usersSnap) {
         var batch = db.batch();
         var penalizedCount = 0;
@@ -1634,10 +1598,8 @@ window.applyEloDecay = function() {
           var u = uDoc.data();
           var uid = uDoc.id;
 
-          // Если игрок ЕСТЬ в списке активных - молодец, пропускаем
           if (activeUids.has(uid)) return;
 
-          // Проверка на свежерегов: если аккаунт создан меньше 7 дней назад, даем время на раскачку
           var regDate = u.createdAt || u.timestamp || 0;
           if (regDate) {
             var regTime = typeof parseTime === 'function' ? parseTime(regDate) : Number(regDate);
@@ -1648,15 +1610,14 @@ window.applyEloDecay = function() {
 
           var lastPenalty = u.lastPenaltyDate || 0;
           
-          // Защита: штрафуем только если с прошлого штрафа прошло минимум 6 дней
           if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
             var currentElo = parseInt(u.elo, 10) || 1000;
-            var newElo = Math.max(100, currentElo - 50); // Не даем рейтингу упасть ниже 100
+            var newElo = Math.max(100, currentElo - 50);
 
             batch.set(db.collection('users').doc(uid), {
               elo: newElo,
-              lastPenaltyDate: now, // Запоминаем дату штрафа
-              lastEloDelta: -50 // Чтобы в профиле красиво горело красным 📉
+              lastPenaltyDate: now, 
+              lastEloDelta: -50 
             }, { merge: true });
 
             penalizedCount++;
@@ -1664,12 +1625,10 @@ window.applyEloDecay = function() {
           }
         });
 
-        // 3. Применяем изменения и отправляем отчет
         if (penalizedCount > 0) {
           batch.commit().then(function() {
             customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
             
-            // Отправляем веселое сообщение в Telegram чат
             var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
                             "Следующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n" +
                             "• " + penalizedNames.join('\n• ') + "\n\n" +
@@ -1711,7 +1670,6 @@ function executeConfirm() {
   closeConfirmModal();
 }
 
-// Защищенная оригинальная история
 function renderUserHistoryList(matches, uid) {
   var hEl = document.getElementById('info-modal-history');
   if (!matches || matches.length === 0) { 
@@ -1735,14 +1693,12 @@ function renderUserHistoryList(matches, uid) {
 
         var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
         
-        // Спокойные, аккуратные стили без свечения
         var winStyle = 'color: #059669; font-weight: 600;';
         var loseStyle = 'color: var(--text-muted); font-weight: 400;';
         
         var myStyle = isWin ? winStyle : loseStyle;
         var opStyle = !isWin ? winStyle : loseStyle;
         
-        // Аккуратные геометрические стрелочки (не системные эмодзи)
         var myEmoji = isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
         var opEmoji = !isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
 
@@ -1785,7 +1741,7 @@ function renderUserHistoryList(matches, uid) {
             leftContentHtml = '<div style="line-height: 1.4; word-break: break-word; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
         }
 
-        var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️</div>' : '';
+        var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑️️</div>' : '';
 
         h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
                '<div style="flex: 1; min-width: 0;">' + 
@@ -1808,7 +1764,6 @@ function renderUserHistoryList(matches, uid) {
   hEl.innerHTML = h;
 }
 
-// --- АВТОМАТИЧЕСКАЯ ПОДГРУЗКА ДАТЫ В ГЛАВНОЕ МЕНЮ ---
 var mainProfileDateLoaded = false;
 setInterval(function() {
   var targetEl = document.getElementById('main-profile-last-played');
@@ -1856,13 +1811,8 @@ setInterval(function() {
   }
 }, 1000);
 
-// ==========================================
-// СИСТЕМА ИВЕНТОВ: БУСТ РЕЙТИНГА (ELO BOOST)
-// ==========================================
 window.currentEloMultiplier = 1;
 
-// Сохранение коэффициента админом
-// Сохранение коэффициента админом с крутыми анонсами в чат
 window.saveEloBoost = function() {
   if (!isSuperAdmin()) return;
   var val = parseInt(document.getElementById('admin-elo-boost').value, 10) || 1;
@@ -1870,27 +1820,16 @@ window.saveEloBoost = function() {
   db.collection('settings').doc('elo_boost').set({ multiplier: val }, { merge: true }).then(function() {
     var msg = "";
 
-    // Генерация крутых комментариев в зависимости от силы буста
     if (val === 2) {
-      msg = "🚀 <b>ИВЕНТ: Х2 ОЧКИ ЭЛО!</b>\n\n" +
-            "Включен двойной множитель рейтинга! Выигрываешь — получаешь в 2 раза больше очков. Проигрываешь — теряешь как обычно.\n\n" +
-            "<i>Отличный шанс для тех, кто засиделся в любителях! Бегом к столам!</i> 🏓";
+      msg = "🚀 <b>ИВЕНТ: Х2 ОЧКИ ЭЛО!</b>\n\nВключен двойной множитель рейтинга! Выигрываешь — получаешь в 2 раза больше очков. Проигрываешь — теряешь как обычно.\n\n<i>Отличный шанс для тех, кто засиделся в любителях! Бегом к столам!</i> 🏓";
     } else if (val === 3) {
-      msg = "🔥 <b>ИВЕНТ: ТРОЙНОЙ БУСТ (х3)!</b>\n\n" +
-            "Ставки повышаются! За победу теперь начисляется в 3 раза больше Эло. Одна удачная серия побед может сделать вас чемпионом клуба.\n\n" +
-            "<i>Ракетки к бою, начинается жара!</i> ☄️";
+      msg = "🔥 <b>ИВЕНТ: ТРОЙНОЙ БУСТ (х3)!</b>\n\nСтавки повышаются! За победу теперь начисляется в 3 раза больше Эло. Одна удачная серия побед может сделать вас чемпионом клуба.\n\n<i>Ракетки к бою, начинается жара!</i> ☄️";
     } else if (val === 5) {
-      msg = "😱 <b>ИВЕНТ: БЕШЕНОЕ ЭЛО (х5)!</b>\n\n" +
-            "Админ сошел с ума! Включен ПЯТИКРАТНЫЙ множитель за победу! Сейчас можно взлететь в топ-10 за пару часов или мощно осадить фаворитов.\n\n" +
-            "<i>Предупреждение: возможны прожженные накладки от скорости игры!</i> ☢️";
+      msg = "😱 <b>ИВЕНТ: БЕШЕНОЕ ЭЛО (х5)!</b>\n\nАдмин сошел с ума! Включен ПЯТИКРАТНЫЙ множитель за победу! Сейчас можно взлететь в топ-10 за пару часов или мощно осадить фаворитов.\n\n<i>Предупреждение: возможны прожженные накладки от скорости игры!</i> ☢️️";
     } else if (val === 10) {
-      msg = "🤯 <b>ИВЕНТ: МЕГА-БУСТ x10 (АБСОЛЮТНОЕ БЕЗУМИЕ)!</b>\n\n" +
-            "Рейтинговая экономика сломана! Каждая победа приносит ДЕСЯТИКРАТНОЕ количество очков. Сегодня новички могут обойти легенд спорта.\n\n" +
-            "<i>Бросайте все дела, такое бывает раз в жизни! Мяч на вашей стороне!</i> 🌋";
+      msg = "🤯 <b>ИВЕНТ: МЕГА-БУСТ x10 (АБСОЛЮТНОЕ БЕЗУМИЕ)!</b>\n\nРейтинговая экономика сломана! Каждая победа приносит ДЕСЯТИКРАТНОЕ количество очков. Сегодня новички могут обойти легенд спорта.\n\n<i>Бросайте все дела, такое бывает раз в жизни! Мяч на вашей стороне!</i> 🌋";
     } else {
-      msg = "🛑 <b>Ивент завершен.</b>\n\n" +
-            "Халява закончилась, буст рейтинга отключен. Начисление Эло вернулось в суровую, но справедливую реальность (x1).\n\n" +
-            "<i>Всем спасибо за игры, рейтинг зафиксирован!</i> 🤝";
+      msg = "🛑 <b>Ивент завершен.</b>\n\nХалява закончилась, буст рейтинга отключен. Начисление Эло вернулось в суровую, но справедливую реальность (x1).\n\n<i>Всем спасибо за игры, рейтинг зафиксирован!</i> 🤝";
     }
     
     sendTelegramAlert(msg);
@@ -1899,15 +1838,8 @@ window.saveEloBoost = function() {
   }).catch(function(e) { customAlert("Ошибка: " + e.message); });
 };
 
-
-// ==========================================
-// РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
-// ==========================================
-
-// ВНИМАНИЕ: Укажите здесь юзернейм вашего бота (без @)
 var BOT_USERNAME = "tennis_club_chmz_bot"; 
 
-// 1. Показать QR-код
 function showRefQrModal() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
   if (!myUid) {
@@ -1917,9 +1849,8 @@ function showRefQrModal() {
   
   var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
   var qrContainer = document.getElementById("ref-qrcode");
-  qrContainer.innerHTML = ""; // Очищаем старый код
+  qrContainer.innerHTML = ""; 
   
-  // Генерируем QR-код
   new QRCode(qrContainer, {
     text: refLink,
     width: 200,
@@ -1932,12 +1863,10 @@ function showRefQrModal() {
   document.getElementById('ref-qr-modal').style.display = 'flex';
 }
 
-// Закрыть окно
 function closeRefQrModal() {
   document.getElementById('ref-qr-modal').style.display = 'none';
 }
 
-// 2. Поделиться ссылкой через стандартное меню смартфона/ПК (Web Share API)
 function shareMyRefLink() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
   if (!myUid) {
@@ -1946,26 +1875,18 @@ function shareMyRefLink() {
     return;
   }
 
-  // ВНИМАНИЕ: Укажите здесь юзернейм вашего бота (без @)
   var botUsername = "tennis_club_chmz_bot"; 
   var refLink = "https://t.me/" + botUsername + "?startapp=" + encodeURIComponent(myUid);
   var inviteTitle = "Клуб настольного тенниса ЧМЗ";
   var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
 
-  // Вызов нативного окна "Поделиться" (iOS, Android, macOS, Windows)
   if (navigator.share) {
     navigator.share({
       title: inviteTitle,
       text: inviteText,
       url: refLink
-    }).then(function() {
-      console.log('Успешно поделились ссылкой');
-    }).catch(function(error) {
-      console.log('Шаринг отменен или произошла ошибка:', error);
-    });
-  } 
-  // Резервный вариант для старых браузеров (копирование в буфер обмена)
-  else if (navigator.clipboard && navigator.clipboard.writeText) {
+    }).then(function() {}).catch(function(error) {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
       if (typeof customAlert === 'function') {
         customAlert("Ссылка скопирована!\nОтправьте её будущему участнику.");
@@ -1974,35 +1895,29 @@ function shareMyRefLink() {
       }
     });
   } else {
-    // Самый старый резервный вариант
     prompt("Скопируйте ссылку для добавления участника:", refLink);
   }
 }
 
-// 3. Запись пригласившего и отправка уведомления в чат
 function processReferralBonus(newUserId, newUserName) {
   try {
     if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe) return;
     var startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
     
-    // Если есть параметр, он не равен себе, и еще не привязан локально
     if (startParam && startParam !== newUserId && !localStorage.getItem('ref_linked_' + newUserId)) {
       var userRef = db.collection('users').doc(newUserId);
       userRef.get().then(function(uDoc) {
         var data = uDoc.data() || {};
-        // Если у новичка еще нет записи "кто пригласил"
         if (!data.invitedBy) {
           userRef.set({
             invitedBy: startParam,
-            refConfirmed: false // По умолчанию не подтвержден
+            refConfirmed: false 
           }, { merge: true }).then(function() {
-            // Начисляем инвайтеру "неподтвержденного" игрока
             db.collection('users').doc(startParam).set({
               pendingInvitesCount: firebase.firestore.FieldValue.increment(1)
             }, { merge: true });
             localStorage.setItem('ref_linked_' + newUserId, 'true');
             
-            // --- ОТПРАВЛЯЕМ УВЕДОМЛЕНИЕ В ТЕЛЕГРАМ ЧАТ ---
             db.collection('users').doc(startParam).get().then(function(inviterDoc) {
                var inviterName = inviterDoc.exists ? (inviterDoc.data().name || "Игрок") : "Участник";
                sendTelegramAlert("🤝 <b>Новый игрок по приглашению!</b>\n\nВ клуб вступил участник: <b>" + cleanHtml(newUserName || "Новичок") + "</b>\nЕго пригласил: <b>" + cleanHtml(inviterName) + "</b>\n\n<i>Осталось сыграть 3 матча для подтверждения квалификации!</i>");
