@@ -1362,7 +1362,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache';
+  var cacheKey = 'tt_ultimate_news_cache_fresh'; // Новый ключ для сброса старой памяти
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1375,12 +1375,13 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
   }
 
+  // Храним чистые ссылки (без прокси), чтобы динамически подмешивать к ним анти-кэш
   var sources = [
-    { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
-    { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
-    { name: 'Турниры WTT', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
-    { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') },
-    { name: 'Bing Sport', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss') }
+    { name: 'Sports.ru', url: 'https://www.sports.ru/table-tennis/rss/all.xml' },
+    { name: 'Google News', url: 'https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru' },
+    { name: 'Турниры WTT', url: 'https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru' },
+    { name: 'Пинг-Понг', url: 'https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru' },
+    { name: 'Bing Sport', url: 'https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' }
   ];
 
   var currentSourceIndex = 0;
@@ -1391,13 +1392,19 @@ function loadTableTennisNews() {
     var source = sources[currentSourceIndex];
     currentSourceIndex++;
 
-    // СЕКРЕТ СКОРОСТИ: Жесткий таймер на 3 секунды
-    var fetchPromise = fetch(source.url).then(function(res) { return res.json(); });
+    // АНТИ-КЭШ: Генерируем уникальное время прямо сейчас
+    var nowTs = Date.now();
+    // 1. Приклеиваем время к оригинальному источнику (заставляем rss2json обновить свою базу)
+    var targetRssUrl = source.url + (source.url.indexOf('?') !== -1 ? '&' : '?') + 'nocache=' + nowTs;
+    // 2. Приклеиваем время к самому прокси (заставляем ваш браузер и провайдера забыть старый ответ)
+    var proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(targetRssUrl) + '&_t=' + nowTs;
+
+    // { cache: 'no-store' } жестко запрещает браузеру использовать сохраненные копии
+    var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
     var timeoutPromise = new Promise(function(resolve, reject) {
-      setTimeout(function() { reject(new Error('timeout')); }, 3000);
+      setTimeout(function() { reject(new Error('timeout')); }, 3000); // 3 секунды на ответ
     });
 
-    // Promise.race запускает запрос и таймер одновременно. Кто первый - тот и победил.
     Promise.race([fetchPromise, timeoutPromise])
       .then(function(data) {
          if (data.status === 'ok' && data.items) {
@@ -1440,12 +1447,10 @@ function loadTableTennisNews() {
          setTimeout(fetchNextSource, 200);
       })
       .catch(function(e) {
-         // Источник заблокирован (без VPN) или тупит сеть — мгновенно пропускаем его
          setTimeout(fetchNextSource, 100);
       });
   }
 
-  // Запускаем сбор новостей не сразу, а через 1.5 секунды, чтобы дать приложению полностью загрузиться
   setTimeout(fetchNextSource, 1500);
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
