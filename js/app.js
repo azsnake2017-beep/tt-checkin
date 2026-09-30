@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Мульти-источники + Дедубликация)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Каскадная загрузка + 5 источников)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1348,13 +1348,12 @@ function renderNewsCards(articles, container) {
       ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
       : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
 
-    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;" onclick="openNewsLink(\'' + a.link + '\')" onmousedown="this.style.opacity=\'0.7\'" onmouseup="this.style.opacity=\'1\'">' +
+    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;" onclick="openNewsLink(\'' + escapeJS(a.link) + '\')" onmousedown="this.style.opacity=\'0.7\'" onmouseup="this.style.opacity=\'1\'">' +
               '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
                 '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
                 '<div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">' + dateStr + '</div>' +
               '</div>' +
               '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 10px;">' + cleanHtml(a.title) + '</div>' +
-              '<div style="font-size: 11px; color: #3b82f6; text-align: right; font-weight: 700;">Читать полностью ↗</div>' +
             '</div>';
   });
   container.innerHTML = html;
@@ -1364,91 +1363,96 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_pro_news_cache';
+  var cacheKey = 'tt_ultimate_news_cache';
   var cachedData = localStorage.getItem(cacheKey);
+  var allArticles = [];
 
-  // 1. МОМЕНТАЛЬНЫЙ РЕНДЕР ИЗ ПАМЯТИ ТЕЛЕФОНА (0 задержек)
+  // 1. МОМЕНТАЛЬНЫЙ РЕНДЕР ИЗ ПАМЯТИ ТЕЛЕФОНА (0 миллисекунд)
   if (cachedData) {
     try {
-      renderNewsCards(JSON.parse(cachedData), container);
+      allArticles = JSON.parse(cachedData);
+      renderNewsCards(allArticles, container);
     } catch(e) {}
   } else {
-    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск печатается... 🏓</div>';
+    // Если кэш совсем пустой (самый первый в жизни вход)
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
   }
 
-  // 2. ФОНОВЫЙ СБОР ИЗ РАЗНЫХ ИСТОЧНИКОВ
+  // 2. ПЯТЬ НЕЗАВИСИМЫХ ИСТОЧНИКОВ
   var sources = [
-    { name: 'Sports.ru', url: 'https://www.sports.ru/table-tennis/rss/all.xml' },
-    { name: 'Google News', url: 'https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru' }
+    { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
+    { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
+    { name: 'Турниры WTT', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
+    { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') },
+    { name: 'Bing Sport', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss') }
   ];
 
-  var allArticles = [];
-  
-  // Создаем независимые запросы. Если один упадет, другие продолжат работу!
-  var fetchPromises = sources.map(function(source) {
-    var proxyUrl = 'https://api.allorigins.win/get?url=' + encodeURIComponent(source.url);
+  var currentSourceIndex = 0;
+
+  // 3. ПООЧЕРЕДНАЯ КАСКАДНАЯ ЗАГРУЗКА (чтобы серверы не заблокировали нас за DDoS)
+  function fetchNextSource() {
+    if (currentSourceIndex >= sources.length) return; // Все источники опрошены
     
-    return fetch(proxyUrl)
+    var source = sources[currentSourceIndex];
+    currentSourceIndex++;
+
+    fetch(source.url)
       .then(function(res) { return res.json(); })
       .then(function(data) {
-         if (!data || !data.contents) return;
-         var parser = new DOMParser();
-         var xmlDoc = parser.parseFromString(data.contents, "text/xml");
-         var items = xmlDoc.querySelectorAll("item");
-         
-         // Берем по 15 новостей с каждого источника
-         for (var i = 0; i < Math.min(items.length, 15); i++) {
-            var item = items[i];
-            var titleEl = item.querySelector("title");
-            var linkEl = item.querySelector("link");
-            var pubDateEl = item.querySelector("pubDate");
-            
-            if (titleEl && linkEl) {
-              var rawTitle = titleEl.textContent;
-              // Очищаем заголовки Google News от приписки СМИ
-              var cleanTitle = rawTitle.split(' - ')[0].trim();
+         if (data.status === 'ok' && data.items) {
+           var newItemsFound = false;
+           
+           data.items.slice(0, 10).forEach(function(item) {
+              var rawTitle = item.title || "";
+              var cleanTitle = rawTitle.split(' - ')[0].trim(); // Убираем приписки СМИ
               var sourceName = rawTitle.split(' - ').length > 1 ? rawTitle.split(' - ').pop().trim() : source.name;
 
-              allArticles.push({
-                title: cleanTitle,
-                link: linkEl.textContent,
-                source: sourceName,
-                date: pubDateEl ? new Date(pubDateEl.textContent).getTime() : Date.now()
+              var dateMs = Date.now();
+              if (item.pubDate) {
+                var parsedDate = new Date(item.pubDate.replace(/-/g, '/'));
+                if (!isNaN(parsedDate.getTime())) dateMs = parsedDate.getTime();
+              }
+
+              // Умная дедубликация: сравниваем статьи по "цифровому отпечатку" заголовка
+              var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
+              var isDuplicate = allArticles.some(function(a) {
+                return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
               });
-            }
+
+              // Если новость уникальная — добавляем
+              if (!isDuplicate) {
+                allArticles.push({
+                  title: cleanTitle,
+                  link: item.link,
+                  source: sourceName,
+                  date: dateMs
+                });
+                newItemsFound = true;
+              }
+           });
+
+           // Если этот источник дал новые уникальные статьи:
+           if (newItemsFound) {
+             // 1. Сортируем все новости от самых свежих к старым
+             allArticles.sort(function(a, b) { return b.date - a.date; });
+             // 2. Оставляем только Топ-20 самых свежих во всём мире
+             allArticles = allArticles.slice(0, 20);
+             // 3. Сохраняем в кэш и перерисовываем в прямом эфире!
+             localStorage.setItem(cacheKey, JSON.stringify(allArticles));
+             renderNewsCards(allArticles, container);
+           }
          }
-      }).catch(function(e) { 
-        // Молча игнорируем ошибку одного источника, чтобы не сломать остальные
-        console.warn("Сбой на источнике:", source.name); 
+         // Запускаем следующий источник с паузой 400мс (имитация человека, защита от бана)
+         setTimeout(fetchNextSource, 400);
+      })
+      .catch(function(e) {
+         // Если один источник упал, просто тихо идем к следующему
+         setTimeout(fetchNextSource, 400);
       });
-  });
+  }
 
-  // 3. РАБОТА ГЛАВНОГО РЕДАКТОРА (Сборка, сортировка, удаление дубликатов)
-  Promise.all(fetchPromises).then(function() {
-    if (allArticles.length === 0) return; // Если интернета нет вообще, оставляем старые новости
-
-    // Сортируем все собранные новости строго по времени (самые свежие сверху)
-    allArticles.sort(function(a, b) { return b.date - a.date; });
-
-    var uniqueArticles = [];
-    var titleSignatures = new Set();
-
-    allArticles.forEach(function(article) {
-      // Создаем "цифровой отпечаток" новости: убираем знаки препинания и приводим к мелкому шрифту
-      // Если отпечатки совпадают, значит об этом уже написали - удаляем дубликат!
-      var signature = article.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 35);
-      
-      if (!titleSignatures.has(signature) && uniqueArticles.length < 15) {
-        titleSignatures.add(signature);
-        uniqueArticles.push(article);
-      }
-    });
-
-    // 4. ТИХАЯ ПУБЛИКАЦИЯ
-    // Сохраняем готовую газету в память телефона и незаметно обновляем экран
-    localStorage.setItem(cacheKey, JSON.stringify(uniqueArticles));
-    renderNewsCards(uniqueArticles, container);
-  });
+  // Запуск каскадной цепи
+  fetchNextSource();
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
