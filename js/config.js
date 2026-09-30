@@ -158,6 +158,11 @@ function switchNavTab(tabId) {
   if (tabId === 'radar' && typeof updateAdminControls === 'function') {
     updateAdminControls();
   }
+
+  // Обновляем доску квестов при открытии вкладки
+  if (tabId === 'quests' && typeof renderQuestBoard === 'function') {
+    renderQuestBoard();
+  }
 }
 
 function initNavTab() {
