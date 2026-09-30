@@ -252,9 +252,6 @@ db.enablePersistence({ synchronizeTabs: true }).catch(function(err) {
     }
 });
 
-try {
-  db.settings({ experimentalForceLongPolling: true });
-} catch(e) {}
 
 // Глобальная память для анти-спам фильтра
 window.recentTgAlerts = {};
