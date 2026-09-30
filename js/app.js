@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Асинхронный, без блокировки Firebase)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Асинхронный, Параллельный)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1362,7 +1362,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v8'; // Новый ключ для сброса старых зависших данных
+  var cacheKey = 'tt_ultimate_news_cache_v9'; // Новый ключ для чистой загрузки
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1376,7 +1376,7 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск в печати... 🏓</div>';
   }
 
-  // 2. ОТЛОЖЕННЫЙ ФОНОВЫЙ СБОР (Не мешает загрузке приложения)
+  // 2. ОТЛОЖЕННЫЙ ФОНОВЫЙ СБОР (Через 4 сек, не мешает приложению)
   setTimeout(function() {
     var sources = [
       { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
@@ -1389,14 +1389,13 @@ function loadTableTennisNews() {
     var pendingRequests = sources.length;
     var newItemsFound = false;
 
-    // Запускаем запросы параллельно, каждый со своим таймером смерти
+    // Запускаем запросы параллельно
     sources.forEach(function(source) {
-      // Подмешиваем случайное число, чтобы пробить кэш провайдера
       var proxyUrl = source.url + '&_t=' + nowTs + Math.floor(Math.random() * 1000);
       
       var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
       var timeoutPromise = new Promise(function(_, reject) { 
-        setTimeout(function() { reject(new Error('timeout')); }, 3500); 
+        setTimeout(function() { reject(new Error('timeout')); }, 2500); // 2.5 секунды - оптимальный лимит!
       });
 
       Promise.race([fetchPromise, timeoutPromise])
@@ -1424,20 +1423,25 @@ function loadTableTennisNews() {
         })
         .finally(function() {
            pendingRequests--;
-           // Когда все источники ответили (или упали по таймауту), обновляем интерфейс
+           // Когда все источники ответили (или упали по таймауту)
            if (pendingRequests === 0) {
              if (newItemsFound) {
                allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20); // Оставляем топ-20 свежих
+               allArticles = allArticles.slice(0, 20); // Топ-20 свежих
                localStorage.setItem(cacheKey, JSON.stringify(allArticles));
                renderNewsCards(allArticles, container);
              } else if (allArticles.length === 0 && !cachedData) {
-                container.innerHTML = '<div class="card" style="border-color: rgba(239, 68, 68, 0.3); padding: 16px; text-align: center;"><div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Агрегатор недоступен</div><div style="font-size: 12px; color: #94a3b8;">Попробуйте обновить страницу позже.</div></div>';
+                // Если зашли в первый раз и провайдер всё заблокировал - красивая заглушка-переходник
+                container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
+                                        '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Агрегатор временно недоступен</div>' +
+                                        '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Провайдер блокирует фоновое обновление.</div>' +
+                                        '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
+                                      '</div>';
              }
            }
         });
     });
-  }, 4000); // 4 секунды задержки: полная свобода для инициализации Firebase
+  }, 4000); // 4 секунды задержки: приложение загружается мгновенно
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
