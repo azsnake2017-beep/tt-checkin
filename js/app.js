@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Минимализм: Заголовок + Кнопка)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Каскадная загрузка + 5 источников)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1335,7 +1335,7 @@ function openNewsLink(url) {
   }
 }
 
-// Рендер минималистичных карточек
+// Вспомогательная функция для красивой отрисовки новостей
 function renderNewsCards(articles, container) {
   if (!articles || articles.length === 0) return;
   var html = '';
@@ -1348,15 +1348,12 @@ function renderNewsCards(articles, container) {
       ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
       : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
 
-    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px;">' +
+    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;" onclick="openNewsLink(\'' + escapeJS(a.link) + '\')" onmousedown="this.style.opacity=\'0.7\'" onmouseup="this.style.opacity=\'1\'">' +
               '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
                 '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
                 '<div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">' + dateStr + '</div>' +
               '</div>' +
-              // Только заголовок
-              '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 12px;">' + cleanHtml(a.title) + '</div>' +
-              // Широкая кнопка перехода
-              '<button class="btn btn-join" style="width: 100%; font-size: 12px; padding: 8px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid #3b82f6; cursor: pointer;" onclick="openNewsLink(\'' + escapeJS(a.link) + '\')">🔗 Читать в источнике</button>' +
+              '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 10px;">' + cleanHtml(a.title) + '</div>' +
             '</div>';
   });
   container.innerHTML = html;
@@ -1366,41 +1363,35 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_news_minimal_v7'; // Новый ключ, чтобы сбросить старый кэш
+  var cacheKey = 'tt_ultimate_news_cache';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
-  // Моментальный показ из памяти
+  // 1. МОМЕНТАЛЬНЫЙ РЕНДЕР ИЗ ПАМЯТИ ТЕЛЕФОНА (0 миллисекунд)
   if (cachedData) {
     try {
       allArticles = JSON.parse(cachedData);
       renderNewsCards(allArticles, container);
     } catch(e) {}
   } else {
-    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Сбор новостей... 🏓</div>';
+    // Если кэш совсем пустой (самый первый в жизни вход)
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
   }
 
-  // Источники без парсинга текстов (работает гораздо быстрее)
+  // 2. ПЯТЬ НЕЗАВИСИМЫХ ИСТОЧНИКОВ
   var sources = [
     { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
     { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
     { name: 'Турниры WTT', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
-    { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') }
+    { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') },
+    { name: 'Bing Sport', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss') }
   ];
 
   var currentSourceIndex = 0;
 
+  // 3. ПООЧЕРЕДНАЯ КАСКАДНАЯ ЗАГРУЗКА (чтобы серверы не заблокировали нас за DDoS)
   function fetchNextSource() {
-    if (currentSourceIndex >= sources.length) {
-      if (allArticles.length === 0 && !cachedData) {
-        container.innerHTML = '<div class="card" style="border-color: rgba(239, 68, 68, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
-                                '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Агрегатор временно недоступен</div>' +
-                                '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Сработала защита от частых запросов (лимит IP).</div>' +
-                                '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на сайте ↗</div>' +
-                              '</div>';
-      }
-      return; 
-    }
+    if (currentSourceIndex >= sources.length) return; // Все источники опрошены
     
     var source = sources[currentSourceIndex];
     currentSourceIndex++;
@@ -1411,9 +1402,9 @@ function loadTableTennisNews() {
          if (data.status === 'ok' && data.items) {
            var newItemsFound = false;
            
-           data.items.slice(0, 12).forEach(function(item) {
+           data.items.slice(0, 10).forEach(function(item) {
               var rawTitle = item.title || "";
-              var cleanTitle = rawTitle.split(' - ')[0].trim();
+              var cleanTitle = rawTitle.split(' - ')[0].trim(); // Убираем приписки СМИ
               var sourceName = rawTitle.split(' - ').length > 1 ? rawTitle.split(' - ').pop().trim() : source.name;
 
               var dateMs = Date.now();
@@ -1422,12 +1413,13 @@ function loadTableTennisNews() {
                 if (!isNaN(parsedDate.getTime())) dateMs = parsedDate.getTime();
               }
 
-              // Защита от дубликатов по заголовку
+              // Умная дедубликация: сравниваем статьи по "цифровому отпечатку" заголовка
               var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
               var isDuplicate = allArticles.some(function(a) {
                 return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
               });
 
+              // Если новость уникальная — добавляем
               if (!isDuplicate) {
                 allArticles.push({
                   title: cleanTitle,
@@ -1439,20 +1431,27 @@ function loadTableTennisNews() {
               }
            });
 
+           // Если этот источник дал новые уникальные статьи:
            if (newItemsFound) {
+             // 1. Сортируем все новости от самых свежих к старым
              allArticles.sort(function(a, b) { return b.date - a.date; });
-             allArticles = allArticles.slice(0, 20); // Строго 20 самых актуальных новостей
+             // 2. Оставляем только Топ-20 самых свежих во всём мире
+             allArticles = allArticles.slice(0, 20);
+             // 3. Сохраняем в кэш и перерисовываем в прямом эфире!
              localStorage.setItem(cacheKey, JSON.stringify(allArticles));
              renderNewsCards(allArticles, container);
            }
          }
-         setTimeout(fetchNextSource, 300);
+         // Запускаем следующий источник с паузой 400мс (имитация человека, защита от бана)
+         setTimeout(fetchNextSource, 400);
       })
       .catch(function(e) {
-         setTimeout(fetchNextSource, 300);
+         // Если один источник упал, просто тихо идем к следующему
+         setTimeout(fetchNextSource, 400);
       });
   }
 
+  // Запуск каскадной цепи
   fetchNextSource();
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
