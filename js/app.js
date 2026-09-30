@@ -1367,10 +1367,19 @@ function loadTableTennisNews() {
   // Отложенный старт, чтобы не тормозить интерфейс приложения
   setTimeout(function() {
     // Теперь мы используем прямые RSS-ссылки без посредника rss2json
-    var sources = [
+   var sources = [
+      // 🇷🇺 Крупнейшие российские спортивные порталы
       { name: 'Sports.ru', rss: 'https://www.sports.ru/table-tennis/rss/all.xml' },
-      { name: 'Мир НТ', rss: 'https://ttw.ru/feed/' },
-      { name: 'Sportbox', rss: 'https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss' }
+      { name: 'Sportbox', rss: 'https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss' },
+      
+      // 🌍 Официальные мировые новости (Международная федерация ITTF)
+      { name: 'ITTF World', rss: 'https://www.ittf.com/feed/' },
+      
+      // 🌐 Мировые и локальные агрегаторы (Через Bing RSS, чтобы обходить блокировки Google)
+      // Ищем все новости, где упоминается WTT (World Table Tennis)
+      { name: 'Турниры WTT', rss: 'https://www.bing.com/news/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' },
+      // Ищем все общие свежие упоминания настольного тенниса в сети
+      { name: 'Пинг-Понг', rss: 'https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' }
     ];
 
     var nowTs = Date.now();
