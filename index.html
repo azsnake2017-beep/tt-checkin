@@ -23,6 +23,16 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
+  <!-- ЖЕСТКИЙ ПРЕДОХРАНИТЕЛЬ ОТ ЗАВИСАНИЙ БЕЗ VPN -->
+  <script>
+    setTimeout(function() {
+      var loader = document.getElementById('app-preloader');
+      if (loader && !loader.classList.contains('hidden')) {
+        loader.classList.add('hidden'); // Убиваем прелоадер через 5 секунд в любом случае
+        console.warn('Принудительный запуск: провайдер заблокировал часть скриптов.');
+      }
+    }, 5000);
+  </script>
 </head>
 <body data-theme="dark">
 <!-- ЭКРАН ЗАГРУЗКИ -->
