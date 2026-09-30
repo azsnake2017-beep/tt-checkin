@@ -1351,7 +1351,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v9';
+  var cacheKey = 'tt_ultimate_news_cache_v10';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1377,10 +1377,17 @@ function loadTableTennisNews() {
     var pendingRequests = sources.length;
     var newItemsFound = false;
 
-    sources.forEach(function(source) {
-      var proxyUrl = source.url + '&_t=' + nowTs + Math.floor(Math.random() * 1000);
+   sources.forEach(function(source) {
+      // Добавляем случайный параметр прямо внутрь закодированной ссылки, чтобы жестко сбросить кэш rss2json
+      var bustStr = encodeURIComponent('&_nocache=' + nowTs + Math.floor(Math.random() * 10000));
+      var proxyUrl = source.url + bustStr + '&_t=' + nowTs;
       
-      var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
+      // Добавляем заголовки, запрещающие кэширование
+      var fetchPromise = fetch(proxyUrl, { 
+          cache: 'no-store',
+          headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      }).then(function(res) { return res.json(); });
+      
       var timeoutPromise = new Promise(function(_, reject) { 
         setTimeout(function() { reject(new Error('timeout')); }, 2500);
       });
