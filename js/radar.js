@@ -108,6 +108,10 @@ function checkIn(loc) {
   if (window.isTableActionRunning) return; // Защита от тройного нажатия
   window.isTableActionRunning = true;
 
+  // 1. МГНОВЕННАЯ БЛОКИРОВКА КНОПКИ (визуальный отклик)
+  var btnBox = document.getElementById('btn-container-' + loc);
+  if (btnBox) btnBox.innerHTML = '<div style="padding: 12px; font-size: 13px; font-weight: bold; color: var(--accent-sky); text-align: center;">⏳ Отмечаем...</div>';
+
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
   var now = Date.now(), otherLoc = loc === 'park' ? 'vostok' : 'park'; var finalList = [];
   
@@ -133,13 +137,21 @@ function checkIn(loc) {
           sendTelegramAlert("🏓 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> уже у стола " + LOCATION_NAMES[loc] + "!" + buildBlockquoteList(finalList, "Сейчас за столом") + "\n\nКто составит компанию?");
       }
       window.isTableActionRunning = false; // Снимаем блокировку
-  }).catch(function(e) { window.isTableActionRunning = false; });
+      renderAll(); // 2. ВОЗВРАЩАЕМ КНОПКИ В НОРМУ ПОСЛЕ ЗАГРУЗКИ
+  }).catch(function(e) { 
+      window.isTableActionRunning = false; 
+      renderAll(); // Возвращаем кнопки даже в случае ошибки интернета
+  });
 }
 
 function leave(loc) {
   var uid = getVerifiedUserId(); if (!uid) return; 
   if (window.isTableActionRunning) return; // Защита от тройного нажатия
   window.isTableActionRunning = true;
+
+  // 1. МГНОВЕННАЯ БЛОКИРОВКА КНОПКИ
+  var btnBox = document.getElementById('btn-container-' + loc);
+  if (btnBox) btnBox.innerHTML = '<div style="padding: 12px; font-size: 13px; font-weight: bold; color: var(--text-muted); text-align: center;">⏳ Выходим...</div>';
 
   var spentMins = 0, spentStr = "", finalList = [];
   
@@ -169,9 +181,12 @@ function leave(loc) {
           sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> закончил тренировку и покинул стол " + LOCATION_NAMES[loc] + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
       }
       window.isTableActionRunning = false; // Снимаем блокировку
-  }).catch(function(e) { window.isTableActionRunning = false; });
+      renderAll(); // 2. ВОЗВРАЩАЕМ КНОПКИ В НОРМУ ПОСЛЕ ЗАГРУЗКИ
+  }).catch(function(e) { 
+      window.isTableActionRunning = false; 
+      renderAll(); // Возвращаем кнопки даже в случае ошибки интернета
+  });
 }
-
 function confirmLeaveFromModal() { if (currentUserActiveLoc) leave(currentUserActiveLoc); }
 
 function extendSession(addMins) {
