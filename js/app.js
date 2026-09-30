@@ -1351,7 +1351,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v12';
+  var cacheKey = 'tt_ultimate_news_cache_v14';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1368,27 +1368,28 @@ function loadTableTennisNews() {
   setTimeout(function() {
     var sources = [
       { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
-     { name: 'Мир НТ', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://ttw.ru/feed/') },
-      { name: 'Sportbox', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss') },
-  
+      { name: 'Мир НТ', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://ttw.ru/feed/') },
+      { name: 'Sportbox', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss') }
     ];
 
     var nowTs = Date.now();
     var pendingRequests = sources.length;
     var newItemsFound = false;
 
-   sources.forEach(function(source) {
-      // Мягкий сброс кэша для браузера (чтобы не блокировал сервер rss2json)
-      var proxyUrl = source.url + '&_t=' + nowTs;
+    sources.forEach(function(source) {
+      // Убрали искусственный сброс кэша (_t), чтобы не злить анти-спам систему агрегатора
+      var proxyUrl = source.url;
       
-      var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
+      var fetchPromise = fetch(proxyUrl, { cache: 'no-cache' }).then(function(res) { 
+        return res.json(); 
+      });
       
-      // Увеличиваем таймаут ожидания ответа с 2.5 до 5 секунд
+      // Даем серверу 8 секунд на ответ (особенно важно для первой загрузки новых сайтов)
       var timeoutPromise = new Promise(function(_, reject) { 
-        setTimeout(function() { reject(new Error('timeout')); }, 5000);
+        setTimeout(function() { reject(new Error('timeout')); }, 8000);
       });
 
-          Promise.race([fetchPromise, timeoutPromise])
+      Promise.race([fetchPromise, timeoutPromise])
         .then(function(data) {
            if (data.status === 'ok' && data.items) {
              data.items.slice(0, 10).forEach(function(item) {
