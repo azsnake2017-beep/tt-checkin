@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Плавное разворачивание + Текст)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Жесткий фильтр текста)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1335,14 +1335,12 @@ function openNewsLink(url) {
   }
 }
 
-// Плавное разворачивание (Анимация высоты)
 window.toggleNewsExpand = function(cardEl) {
   var bodyEl = cardEl.querySelector('.news-body');
   var toggleText = cardEl.querySelector('.news-toggle-text');
   
   if (!cardEl.classList.contains('expanded')) {
     cardEl.classList.add('expanded');
-    // Высчитываем реальную высоту текста для плавной анимации
     bodyEl.style.maxHeight = bodyEl.scrollHeight + 50 + "px"; 
     bodyEl.style.opacity = "1";
     bodyEl.style.marginTop = "10px";
@@ -1374,8 +1372,6 @@ function renderNewsCards(articles, container) {
       ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
       : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
 
-    var descText = a.desc ? a.desc : 'Полный текст статьи доступен на сайте источника...';
-
     html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: all 0.3s ease;" onclick="toggleNewsExpand(this)">' +
               '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
                 '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
@@ -1383,9 +1379,8 @@ function renderNewsCards(articles, container) {
               '</div>' +
               '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 4px;">' + cleanHtml(a.title) + '</div>' +
               
-              // Скрытый блок новостей с CSS-анимацией (изначально max-height: 0)
               '<div class="news-body" style="max-height: 0; opacity: 0; overflow: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); border-top: 1px dashed transparent; margin-top: 0; padding-top: 0;">' +
-                 '<div style="font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 12px;">' + cleanHtml(descText) + '</div>' +
+                 '<div style="font-size: 13px; color: #cbd5e1; line-height: 1.5; margin-bottom: 12px; text-align: justify;">' + cleanHtml(a.desc) + '</div>' +
                  '<button class="btn btn-join" style="width: 100%; font-size: 12px; padding: 8px; background: rgba(59, 130, 246, 0.1); color: #60a5fa; border: 1px solid #3b82f6;" onclick="event.stopPropagation(); openNewsLink(\'' + escapeJS(a.link) + '\')">🔗 Читать в источнике</button>' +
               '</div>' +
               
@@ -1399,8 +1394,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  // ВАЖНО: Новый ключ кэша, чтобы пробить старую память браузера и загрузить тексты новостей!
-  var cacheKey = 'tt_news_cache_v3';
+  var cacheKey = 'tt_news_text_cache_v5'; 
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1413,12 +1407,13 @@ function loadTableTennisNews() {
     container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
   }
 
+  // Расширенный список источников
   var sources = [
     { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
     { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
     { name: 'Турниры WTT', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
     { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') },
-    { name: 'Bing Sport', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss') }
+    { name: 'Спорт-Экспресс', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81+site:sport-express.ru&hl=ru&gl=RU&ceid=RU:ru') }
   ];
 
   var currentSourceIndex = 0;
@@ -1435,7 +1430,7 @@ function loadTableTennisNews() {
          if (data.status === 'ok' && data.items) {
            var newItemsFound = false;
            
-           data.items.slice(0, 10).forEach(function(item) {
+           data.items.slice(0, 12).forEach(function(item) {
               var rawTitle = item.title || "";
               var cleanTitle = rawTitle.split(' - ')[0].trim();
               var sourceName = rawTitle.split(' - ').length > 1 ? rawTitle.split(' - ').pop().trim() : source.name;
@@ -1446,19 +1441,33 @@ function loadTableTennisNews() {
                 if (!isNaN(parsedDate.getTime())) dateMs = parsedDate.getTime();
               }
 
-              // Вытаскиваем и очищаем текст новости от мусорных HTML тегов
-              var rawDesc = item.description || item.content || "";
+              // Очистка текста от HTML и мусора
+              var rawDesc = item.content || item.description || "";
               var tmp = document.createElement("DIV");
               tmp.innerHTML = rawDesc;
               var cleanDesc = tmp.textContent || tmp.innerText || "";
               cleanDesc = cleanDesc.replace(/\s+/g, ' ').trim();
               
-              // Google News часто присылает пустоту или фразу "Читать далее", отсекаем их
-              if (cleanDesc.length < 20 || cleanDesc.indexOf("Читать далее") !== -1) {
-                cleanDesc = "";
+              // Вырезаем дублирование заголовка и названия источника из текста
+              if (cleanDesc.includes(cleanTitle)) {
+                cleanDesc = cleanDesc.replace(cleanTitle, '').trim();
               }
-              if (cleanDesc.length > 350) cleanDesc = cleanDesc.substring(0, 350) + '...';
+              if (cleanDesc.includes(sourceName)) {
+                cleanDesc = cleanDesc.replace(sourceName, '').trim();
+              }
+              
+              // === ЖЕСТКИЙ ФЕЙС-КОНТРОЛЬ ===
+              // Если текста меньше 50 символов (это не новость, а обрубок) или это заглушка - пропускаем!
+              if (cleanDesc.length < 50 || cleanDesc.includes("Читать далее") || cleanDesc.includes("в источнике")) {
+                return; 
+              } 
+              
+              // Аккуратная обрезка длинных текстов
+              if (cleanDesc.length > 250) {
+                cleanDesc = cleanDesc.substring(0, 250) + '...';
+              }
 
+              // Проверка на уникальность новости
               var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
               var isDuplicate = allArticles.some(function(a) {
                 return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
@@ -1467,7 +1476,7 @@ function loadTableTennisNews() {
               if (!isDuplicate) {
                 allArticles.push({
                   title: cleanTitle,
-                  desc: cleanDesc, // Текст теперь точно сохраняется!
+                  desc: cleanDesc,
                   link: item.link,
                   source: sourceName,
                   date: dateMs
@@ -1478,15 +1487,15 @@ function loadTableTennisNews() {
 
            if (newItemsFound) {
              allArticles.sort(function(a, b) { return b.date - a.date; });
-             allArticles = allArticles.slice(0, 20);
+             allArticles = allArticles.slice(0, 20); // Оставляем 20 лучших новостей с текстом
              localStorage.setItem(cacheKey, JSON.stringify(allArticles));
              renderNewsCards(allArticles, container);
            }
          }
-         setTimeout(fetchNextSource, 400);
+         setTimeout(fetchNextSource, 300);
       })
       .catch(function(e) {
-         setTimeout(fetchNextSource, 400);
+         setTimeout(fetchNextSource, 300);
       });
   }
 
