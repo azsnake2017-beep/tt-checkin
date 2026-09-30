@@ -1317,10 +1317,19 @@ function listenLeaderboard() {
 // ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Асинхронный, Параллельный)
 // ==========================================
 function openNewsLink(url) {
+  var isBlocked = url.indexOf('news.google.com') !== -1;
+  var finalUrl = url;
+
+  // Если ссылка из заблокированного источника, тихо применяем прокси (Google Переводчик)
+  if (isBlocked) {
+    finalUrl = 'https://translate.google.com/translate?sl=ru&tl=ru&hl=ru&u=' + encodeURIComponent(url);
+  }
+
+  // Мгновенно открываем финальную ссылку
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-    window.Telegram.WebApp.openLink(url);
+    window.Telegram.WebApp.openLink(finalUrl);
   } else {
-    window.open(url, '_blank');
+    window.open(finalUrl, '_blank');
   }
 }
 
