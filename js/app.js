@@ -1350,11 +1350,14 @@ function renderNewsCards(articles, container) {
 // ==========================================
 // ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Для обычных браузеров и Telegram)
 // ==========================================
+// ==========================================
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Универсальный и безопасный для браузеров)
+// ==========================================
 function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v19';
+  var cacheKey = 'tt_ultimate_news_cache_v21';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1378,33 +1381,12 @@ function loadTableTennisNews() {
     var newItemsFound = false;
 
     sources.forEach(function(source) {
-      // Используем надежный CORS-прокси codetabs, который не блокируется обычными браузерами
-      var proxyUrl = 'https://api.codetabs.com/v1/proxy?quest=' + encodeURIComponent(source.rss);
+      // Максимально чистый запрос к rss2json без лишних параметров.
+      // Браузер видит обычный JSON-ответ и пропускает его без CORS-ошибок.
+      var proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source.rss);
       
-      // Специально убрали настройки кэша, чтобы браузер не блокировал запрос (CORS preflight)
       var fetchPromise = fetch(proxyUrl)
-        .then(function(res) { return res.text(); })
-        .then(function(xmlText) {
-            // Браузер сам парсит XML без дополнительных JSON-оболочек
-            var parser = new DOMParser();
-            var xmlDoc = parser.parseFromString(xmlText, "text/xml");
-            var items = xmlDoc.querySelectorAll("item");
-            var parsedItems = [];
-            
-            for (var i = 0; i < Math.min(items.length, 10); i++) {
-                var node = items[i];
-                var tNode = node.querySelector("title");
-                var lNode = node.querySelector("link");
-                var pdNode = node.querySelector("pubDate");
-                
-                parsedItems.push({
-                   title: tNode ? tNode.textContent : '',
-                   link: lNode ? lNode.textContent : '',
-                   pubDate: pdNode ? pdNode.textContent : ''
-                });
-            }
-            return { status: 'ok', items: parsedItems };
-        });
+        .then(function(res) { return res.json(); });
       
       var timeoutPromise = new Promise(function(_, reject) { 
         setTimeout(function() { reject(new Error('timeout')); }, 8000);
@@ -1412,7 +1394,8 @@ function loadTableTennisNews() {
 
       Promise.race([fetchPromise, timeoutPromise])
         .then(function(data) {
-           if (data.status === 'ok' && data.items) {
+           // Поскольку rss2json отдает уже готовый массив, нам не нужно парсить XML
+           if (data && data.items) {
              data.items.forEach(function(item) {
                 var cleanTitle = (item.title || "").split(' - ')[0].trim();
                 if (!cleanTitle) return;
@@ -1437,13 +1420,13 @@ function loadTableTennisNews() {
            if (pendingRequests === 0) {
              if (newItemsFound) {
                allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20); // Оставляем 20 свежих
+               allArticles = allArticles.slice(0, 20); 
                localStorage.setItem(cacheKey, JSON.stringify(allArticles));
                renderNewsCards(allArticles, container);
              } else if (allArticles.length === 0 && !cachedData) {
                 container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
-                                      '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Блокировка браузером</div>' +
-                                      '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Ваш браузер или блокировщик рекламы запретил загрузку.</div>' +
+                                      '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Лента обновляется...</div>' +
+                                      '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Попробуйте зайти чуть позже.</div>' +
                                       '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
                                       '</div>';
              }
