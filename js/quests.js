@@ -9,25 +9,25 @@ function getRecentMondayId() {
   return 'week_' + d.getTime();
 }
 
-// База заданий (Сбалансированная и защищенная от накруток)
+// База заданий с повышенными наградами: Легкий — 25 Эло, Средний — 50 Эло, Тяжелый — 100 Эло
 var QUEST_POOL = [
-  // ЛЕГКИЕ (Уровень 1) - Упор на активность, низкий риск накрутки
-  { id: 'q_e1', lvl: 1, title: 'Разминка', desc: 'Сыграть 3 любых матча за неделю (результат не важен).', target: 3, action: 'play_match', rewardElo: 3, rewardBadge: 'Разминающийся 🏓', badgeDays: 7, color: '#10b981' },
-  { id: 'q_e2', lvl: 1, title: 'Командный дух', desc: 'Сыграть 2 парных матча (2х2).', target: 2, action: 'play_doubles', rewardElo: 4, rewardBadge: 'В паре 👥', badgeDays: 7, color: '#10b981' },
-  { id: 'q_e3', lvl: 1, title: 'Любитель баланса', desc: 'Сыграть матч, который закончится со счетом 3:2 (победа или поражение).', target: 1, action: 'play_3_2', rewardElo: 4, rewardBadge: 'Боец ⚔️', badgeDays: 7, color: '#10b981' },
-  { id: 'q_e4', lvl: 1, title: 'Турнирный боец', desc: 'Сыграть матч на выходных (суббота или воскресенье).', target: 1, action: 'play_weekend', rewardElo: 3, rewardBadge: 'Уикенд-воин 🏕', badgeDays: 7, color: '#10b981' },
+  // ЛЕГКИЕ (Уровень 1) - Награда: 25 Эло
+  { id: 'q_e1', lvl: 1, title: 'Разминка', desc: 'Сыграть 3 любых матча за неделю (результат не важен).', target: 3, action: 'play_match', rewardElo: 25, rewardBadge: 'Разминающийся 🏓', badgeDays: 7, color: '#10b981' },
+  { id: 'q_e2', lvl: 1, title: 'Командный дух', desc: 'Сыграть 2 парных матча (2х2).', target: 2, action: 'play_doubles', rewardElo: 25, rewardBadge: 'В паре 👥', badgeDays: 7, color: '#10b981' },
+  { id: 'q_e3', lvl: 1, title: 'Любитель баланса', desc: 'Сыграть матч, который закончится со счетом 3:2 (победа или поражение).', target: 1, action: 'play_3_2', rewardElo: 25, rewardBadge: 'Боец ⚔️', badgeDays: 7, color: '#10b981' },
+  { id: 'q_e4', lvl: 1, title: 'Турнирный боец', desc: 'Сыграть матч на выходных (суббота или воскресенье).', target: 1, action: 'play_weekend', rewardElo: 25, rewardBadge: 'Уикенд-воин 🏕', badgeDays: 7, color: '#10b981' },
   
-  // СРЕДНИЕ (Уровень 2) - Требуют подтвержденных побед
-  { id: 'q_m1', lvl: 2, title: 'Хет-трик', desc: 'Одержать победу в 3 матчах.', target: 3, action: 'win_match', rewardElo: 10, rewardBadge: 'Хет-трик 🎯', badgeDays: 7, color: '#f59e0b' },
-  { id: 'q_m2', lvl: 2, title: 'Сыгранная пара', desc: 'Выиграть 2 парных матча (2х2).', target: 2, action: 'win_doubles', rewardElo: 12, rewardBadge: 'Сыгранная пара 🤝', badgeDays: 7, color: '#f59e0b' },
-  { id: 'q_m3', lvl: 2, title: 'Сухарь', desc: 'Разгромить соперника со счетом 3:0.', target: 1, action: 'win_flawless', rewardElo: 12, rewardBadge: 'Сухарь 🍩', badgeDays: 7, color: '#f59e0b' },
-  { id: 'q_m4', lvl: 2, title: 'Стальные нервы', desc: 'Выиграть тяжелейший матч со счетом 3:2.', target: 1, action: 'win_3_2', rewardElo: 15, rewardBadge: 'Стальные нервы 🥶', badgeDays: 7, color: '#f59e0b' },
+  // СРЕДНИЕ (Уровень 2) - Награда: 50 Эло
+  { id: 'q_m1', lvl: 2, title: 'Хет-трик', desc: 'Одержать победу в 3 матчах.', target: 3, action: 'win_match', rewardElo: 50, rewardBadge: 'Хет-трик 🎯', badgeDays: 7, color: '#f59e0b' },
+  { id: 'q_m2', lvl: 2, title: 'Сыгранная пара', desc: 'Выиграть 2 парных матча (2х2).', target: 2, action: 'win_doubles', rewardElo: 50, rewardBadge: 'Сыгранная пара 🤝', badgeDays: 7, color: '#f59e0b' },
+  { id: 'q_m3', lvl: 2, title: 'Сухарь', desc: 'Разгромить соперника со счетом 3:0.', target: 1, action: 'win_flawless', rewardElo: 50, rewardBadge: 'Сухарь 🍩', badgeDays: 7, color: '#f59e0b' },
+  { id: 'q_m4', lvl: 2, title: 'Стальные нервы', desc: 'Выиграть тяжелейший матч со счетом 3:2.', target: 1, action: 'win_3_2', rewardElo: 50, rewardBadge: 'Стальные нервы 🥶', badgeDays: 7, color: '#f59e0b' },
   
-  // СЛОЖНЫЕ (Уровень 3) - Элитные челленджи (Накрутить почти невозможно)
-  { id: 'q_h1', lvl: 3, title: 'Убийца гигантов', desc: 'Победить игрока, чей рейтинг строго выше вашего на 50+ очков.', target: 1, action: 'win_higher_elo', rewardElo: 30, rewardBadge: 'Давид 🗡️', badgeDays: 14, color: '#f43f5e' },
-  { id: 'q_h2', lvl: 3, title: 'Тотальная доминация', desc: 'Одержать 3 победы со счетом 3:0.', target: 3, action: 'win_flawless', rewardElo: 35, rewardBadge: 'Доминатор 👑', badgeDays: 14, color: '#f43f5e' },
-  { id: 'q_h3', lvl: 3, title: 'Гладиатор', desc: 'Одержать серию из 5 побед подряд.', target: 5, action: 'win_streak', rewardElo: 40, rewardBadge: 'Гладиатор 🛡️', badgeDays: 14, color: '#f43f5e' },
-  { id: 'q_h4', lvl: 3, title: 'Легенда парного', desc: 'Выиграть 4 парных матча.', target: 4, action: 'win_doubles', rewardElo: 25, rewardBadge: 'Дуэт-Легенда 🏆', badgeDays: 14, color: '#f43f5e' }
+  // СЛОЖНЫЕ (Уровень 3) - Награда: 100 Эло
+  { id: 'q_h1', lvl: 3, title: 'Убийца гигантов', desc: 'Победить игрока, чей рейтинг строго выше вашего на 50+ очков.', target: 1, action: 'win_higher_elo', rewardElo: 100, rewardBadge: 'Давид 🗡️', badgeDays: 14, color: '#f43f5e' },
+  { id: 'q_h2', lvl: 3, title: 'Тотальная доминация', desc: 'Одержать 3 победы со счетом 3:0.', target: 3, action: 'win_flawless', rewardElo: 100, rewardBadge: 'Доминатор 👑', badgeDays: 14, color: '#f43f5e' },
+  { id: 'q_h3', lvl: 3, title: 'Гладиатор', desc: 'Одержать серию из 5 побед подряд.', target: 5, action: 'win_streak', rewardElo: 100, rewardBadge: 'Гладиатор 🛡️', badgeDays: 14, color: '#f43f5e' },
+  { id: 'q_h4', lvl: 3, title: 'Легенда парного', desc: 'Выиграть 4 парных матча.', target: 4, action: 'win_doubles', rewardElo: 100, rewardBadge: 'Дуэт-Легенда 🏆', badgeDays: 14, color: '#f43f5e' }
 ];
 
 window.renderQuestBoard = function() {
