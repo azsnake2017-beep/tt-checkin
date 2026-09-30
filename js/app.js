@@ -1517,29 +1517,19 @@ document.addEventListener('DOMContentLoaded', function() {
   try { listenLeaderboard(); } catch(e) {}
   try { listenTournaments(); } catch(e) {}
 
- // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
+  // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
   setAppProgress(100, 'Готово!');
   
-  // 4. Системные фоновые таймеры
+  // 4. Фоновые таймеры
   setTimeout(monitorSessions, 1000);
   setInterval(renderAll, 30000); 
   setInterval(monitorSessions, 60000); 
   
-  // ==========================================
-  // 5. ПОГОДА: Запускаем через 0.5 сек (500 мс).
-  // Браузер успеет спрятать экран загрузки и отрисовать кнопки,
-  // после чего погода загрузится практически моментально.
-  // ==========================================
+  // 5. Тяжелые внешние API запускаем только спустя 3 секунды.
   setTimeout(function() {
-     if (typeof loadParkWeather === 'function') { 
-         try { loadParkWeather(); } catch(e) {} 
-         setInterval(loadParkWeather, 600000); 
-     }
-  }, 500);
-  
-  // 6. НОВОСТИ: Оставляем их в строгой изоляции на 3 секунды.
-  setTimeout(function() {
+     if (typeof loadParkWeather === 'function') { try { loadParkWeather(); } catch(e) {} }
      try { loadTableTennisNews(); } catch(e) {}
+     if (typeof loadParkWeather === 'function') { setInterval(loadParkWeather, 600000); }
   }, 3000);
 
 });
