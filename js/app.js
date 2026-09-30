@@ -1325,7 +1325,7 @@ function listenLeaderboard() {
   }, function(err) {});
 }
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (С защитой от зависаний без VPN)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Асинхронный, без блокировки Firebase)
 // ==========================================
 function openNewsLink(url) {
   if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
@@ -1362,96 +1362,82 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_fresh'; // Новый ключ для сброса старой памяти
+  var cacheKey = 'tt_ultimate_news_cache_v8'; // Новый ключ для сброса старых зависших данных
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
+  // 1. СИНХРОННЫЙ РЕНДЕР ИЗ ПАМЯТИ (Мгновенно, без интернета)
   if (cachedData) {
     try {
       allArticles = JSON.parse(cachedData);
       renderNewsCards(allArticles, container);
     } catch(e) {}
   } else {
-    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Печатаем свежий выпуск... 🏓</div>';
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск в печати... 🏓</div>';
   }
 
-  // Храним чистые ссылки (без прокси), чтобы динамически подмешивать к ним анти-кэш
-  var sources = [
-    { name: 'Sports.ru', url: 'https://www.sports.ru/table-tennis/rss/all.xml' },
-    { name: 'Google News', url: 'https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru' },
-    { name: 'Турниры WTT', url: 'https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru' },
-    { name: 'Пинг-Понг', url: 'https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru' },
-    { name: 'Bing Sport', url: 'https://www.bing.com/news/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' }
-  ];
+  // 2. ОТЛОЖЕННЫЙ ФОНОВЫЙ СБОР (Не мешает загрузке приложения)
+  setTimeout(function() {
+    var sources = [
+      { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
+      { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
+      { name: 'Турниры WTT', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
+      { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') }
+    ];
 
-  var currentSourceIndex = 0;
-
-  function fetchNextSource() {
-    if (currentSourceIndex >= sources.length) return; 
-    
-    var source = sources[currentSourceIndex];
-    currentSourceIndex++;
-
-    // АНТИ-КЭШ: Генерируем уникальное время прямо сейчас
     var nowTs = Date.now();
-    // 1. Приклеиваем время к оригинальному источнику (заставляем rss2json обновить свою базу)
-    var targetRssUrl = source.url + (source.url.indexOf('?') !== -1 ? '&' : '?') + 'nocache=' + nowTs;
-    // 2. Приклеиваем время к самому прокси (заставляем ваш браузер и провайдера забыть старый ответ)
-    var proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(targetRssUrl) + '&_t=' + nowTs;
+    var pendingRequests = sources.length;
+    var newItemsFound = false;
 
-    // { cache: 'no-store' } жестко запрещает браузеру использовать сохраненные копии
-    var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
-    var timeoutPromise = new Promise(function(resolve, reject) {
-      setTimeout(function() { reject(new Error('timeout')); }, 3000); // 3 секунды на ответ
-    });
-
-    Promise.race([fetchPromise, timeoutPromise])
-      .then(function(data) {
-         if (data.status === 'ok' && data.items) {
-           var newItemsFound = false;
-           
-           data.items.slice(0, 10).forEach(function(item) {
-              var rawTitle = item.title || "";
-              var cleanTitle = rawTitle.split(' - ')[0].trim();
-              var sourceName = rawTitle.split(' - ').length > 1 ? rawTitle.split(' - ').pop().trim() : source.name;
-
-              var dateMs = Date.now();
-              if (item.pubDate) {
-                var parsedDate = new Date(item.pubDate.replace(/-/g, '/'));
-                if (!isNaN(parsedDate.getTime())) dateMs = parsedDate.getTime();
-              }
-
-              var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
-              var isDuplicate = allArticles.some(function(a) {
-                return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
-              });
-
-              if (!isDuplicate) {
-                allArticles.push({
-                  title: cleanTitle,
-                  link: item.link,
-                  source: sourceName,
-                  date: dateMs
-                });
-                newItemsFound = true;
-              }
-           });
-
-           if (newItemsFound) {
-             allArticles.sort(function(a, b) { return b.date - a.date; });
-             allArticles = allArticles.slice(0, 20);
-             localStorage.setItem(cacheKey, JSON.stringify(allArticles));
-             renderNewsCards(allArticles, container);
-           }
-         }
-         setTimeout(fetchNextSource, 200);
-      })
-      .catch(function(e) {
-         setTimeout(fetchNextSource, 100);
+    // Запускаем запросы параллельно, каждый со своим таймером смерти
+    sources.forEach(function(source) {
+      // Подмешиваем случайное число, чтобы пробить кэш провайдера
+      var proxyUrl = source.url + '&_t=' + nowTs + Math.floor(Math.random() * 1000);
+      
+      var fetchPromise = fetch(proxyUrl, { cache: 'no-store' }).then(function(res) { return res.json(); });
+      var timeoutPromise = new Promise(function(_, reject) { 
+        setTimeout(function() { reject(new Error('timeout')); }, 3500); 
       });
-  }
 
-  setTimeout(fetchNextSource, 1500);
+      Promise.race([fetchPromise, timeoutPromise])
+        .then(function(data) {
+           if (data.status === 'ok' && data.items) {
+             data.items.slice(0, 10).forEach(function(item) {
+                var cleanTitle = (item.title || "").split(' - ')[0].trim();
+                var sourceName = (item.title || "").split(' - ').length > 1 ? (item.title || "").split(' - ').pop().trim() : source.name;
+                var dateMs = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).getTime() : Date.now();
+
+                var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
+                var isDuplicate = allArticles.some(function(a) {
+                  return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
+                });
+
+                if (!isDuplicate && !isNaN(dateMs)) {
+                  allArticles.push({ title: cleanTitle, link: item.link, source: sourceName, date: dateMs });
+                  newItemsFound = true;
+                }
+             });
+           }
+        })
+        .catch(function(e) {
+           // Если без VPN источник упал - скрипт молча игнорирует его
+        })
+        .finally(function() {
+           pendingRequests--;
+           // Когда все источники ответили (или упали по таймауту), обновляем интерфейс
+           if (pendingRequests === 0) {
+             if (newItemsFound) {
+               allArticles.sort(function(a, b) { return b.date - a.date; });
+               allArticles = allArticles.slice(0, 20); // Оставляем топ-20 свежих
+               localStorage.setItem(cacheKey, JSON.stringify(allArticles));
+               renderNewsCards(allArticles, container);
+             } else if (allArticles.length === 0 && !cachedData) {
+                container.innerHTML = '<div class="card" style="border-color: rgba(239, 68, 68, 0.3); padding: 16px; text-align: center;"><div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Агрегатор недоступен</div><div style="font-size: 12px; color: #94a3b8;">Попробуйте обновить страницу позже.</div></div>';
+             }
+           }
+        });
+    });
+  }, 4000); // 4 секунды задержки: полная свобода для инициализации Firebase
 }
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ ЗАГРУЗКА
 document.addEventListener('DOMContentLoaded', function() {
