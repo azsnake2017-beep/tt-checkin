@@ -1475,10 +1475,15 @@ document.addEventListener('DOMContentLoaded', function() {
     if (++tgAttempts > 20) clearInterval(tgCheck); // Сдаемся через 2 секунды, если зашли через Chrome
   }, 100);
 
-  // 1. Отрисовываем базовый UI моментально
+ // 1. Отрисовываем базовый UI моментально
   try { restoreCardStates(); } catch(e) {}
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
+  
+  // Инициализируем доску квестов при старте
+  if (typeof renderQuestBoard === 'function') {
+      try { renderQuestBoard(); } catch(e) {}
+  }
 
   setAppProgress(70, 'Подключение...');
 
