@@ -1517,17 +1517,22 @@ document.addEventListener('DOMContentLoaded', function() {
   try { listenLeaderboard(); } catch(e) {}
   try { listenTournaments(); } catch(e) {}
 
-  // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
+ // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
   setAppProgress(100, 'Готово!');
+  
+  // ==========================================
+  // СКОРОСТЬ ПОГОДЫ: Запускаем её СРАЗУ, так как Open-Meteo 
+  // не блокируется в РФ и работает быстро.
+  // ==========================================
+  if (typeof loadParkWeather === 'function') { try { loadParkWeather(); } catch(e) {} }
   
   // 4. Фоновые таймеры
   setTimeout(monitorSessions, 1000);
   setInterval(renderAll, 30000); 
   setInterval(monitorSessions, 60000); 
   
-  // 5. Тяжелые внешние API запускаем только спустя 3 секунды.
+  // 5. Тяжелые внешние новости стартуют только спустя 3 секунды.
   setTimeout(function() {
-     if (typeof loadParkWeather === 'function') { try { loadParkWeather(); } catch(e) {} }
      try { loadTableTennisNews(); } catch(e) {}
      if (typeof loadParkWeather === 'function') { setInterval(loadParkWeather, 600000); }
   }, 3000);
