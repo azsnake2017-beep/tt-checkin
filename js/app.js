@@ -1351,7 +1351,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v11';
+  var cacheKey = 'tt_ultimate_news_cache_v12';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1368,9 +1368,9 @@ function loadTableTennisNews() {
   setTimeout(function() {
     var sources = [
       { name: 'Sports.ru', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://www.sports.ru/table-tennis/rss/all.xml') },
-      { name: 'Google News', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
-      { name: 'Турниры WTT', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&hl=ru&gl=RU&ceid=RU:ru') },
-      { name: 'Пинг-Понг', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.google.com/rss/search?q=%D0%BF%D0%B8%D0%BD%D0%B3-%D0%BF%D0%BE%D0%BD%D0%B3&hl=ru&gl=RU&ceid=RU:ru') }
+     { name: 'Мир НТ', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://ttw.ru/feed/') },
+      { name: 'Sportbox', url: 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent('https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss') },
+  
     ];
 
     var nowTs = Date.now();
