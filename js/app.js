@@ -1351,7 +1351,7 @@ function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v15';
+  var cacheKey = 'tt_ultimate_news_cache_v16';
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
