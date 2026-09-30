@@ -271,7 +271,22 @@ function updateProfileDisplay() {
   
   var minsTotal = currentUserProfile.totalMinutes || 0;
   document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+// Отображение активного квестового бейджа в профиле
+  var questBadgeHtml = (currentUserProfile.activeBadge && currentUserProfile.activeBadge.expires > Date.now()) 
+    ? '<span class="temporary-badge" style="color: ' + currentUserProfile.activeBadge.color + '; border-color: ' + currentUserProfile.activeBadge.color + ';">' + currentUserProfile.activeBadge.text + '</span>' 
+    : '';
 
+  document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge + questBadgeHtml;
+
+ var qCompleted = parseInt(currentUserProfile.questsCompleted, 10) || 0;
+  var questStatsHtml = qCompleted > 0 ? '<div style="font-size: 11px; color: var(--accent-purple); font-weight: 700; margin-top: 4px;">🎯 Выполнено квестов: ' + qCompleted + '</div>' : '';
+
+  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span>' + questStatsHtml + '</div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+  
+  // Обновляем доску квестов при обновлении профиля
+  if (typeof renderQuestBoard === 'function') renderQuestBoard();
+
+  
   var mContainer = document.getElementById('user-medals-container');
   var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
   if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
@@ -617,9 +632,11 @@ function showUserInfoModal(uid) {
       if (!u.rubberR && currentUserProfile.rubberR) u.rubberR = currentUserProfile.rubberR;
     }
 
-    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+   var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
-    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge;
+    var qBadge = (u.activeBadge && u.activeBadge.expires > Date.now()) ? '<span class="temporary-badge" style="color: ' + u.activeBadge.color + '; border-color: ' + u.activeBadge.color + ';">' + cleanHtml(u.activeBadge.text) + '</span>' : '';
+    
+    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + qBadge;
     
     var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
