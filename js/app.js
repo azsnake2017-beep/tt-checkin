@@ -1520,21 +1520,26 @@ document.addEventListener('DOMContentLoaded', function() {
  // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
   setAppProgress(100, 'Готово!');
   
-  // ==========================================
-  // СКОРОСТЬ ПОГОДЫ: Запускаем её СРАЗУ, так как Open-Meteo 
-  // не блокируется в РФ и работает быстро.
-  // ==========================================
-  if (typeof loadParkWeather === 'function') { try { loadParkWeather(); } catch(e) {} }
-  
-  // 4. Фоновые таймеры
+  // 4. Системные фоновые таймеры
   setTimeout(monitorSessions, 1000);
   setInterval(renderAll, 30000); 
   setInterval(monitorSessions, 60000); 
   
-  // 5. Тяжелые внешние новости стартуют только спустя 3 секунды.
+  // ==========================================
+  // 5. ПОГОДА: Запускаем через 0.5 сек (500 мс).
+  // Браузер успеет спрятать экран загрузки и отрисовать кнопки,
+  // после чего погода загрузится практически моментально.
+  // ==========================================
+  setTimeout(function() {
+     if (typeof loadParkWeather === 'function') { 
+         try { loadParkWeather(); } catch(e) {} 
+         setInterval(loadParkWeather, 600000); 
+     }
+  }, 500);
+  
+  // 6. НОВОСТИ: Оставляем их в строгой изоляции на 3 секунды.
   setTimeout(function() {
      try { loadTableTennisNews(); } catch(e) {}
-     if (typeof loadParkWeather === 'function') { setInterval(loadParkWeather, 600000); }
   }, 3000);
 
 });
