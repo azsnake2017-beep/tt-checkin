@@ -268,38 +268,38 @@ function sendTelegramAlert(text) {
 
   var now = Date.now();
   
-  // 1. Очищаем старые записи из памяти (старше 60 секунд)
-  for (var key in window.recentTgAlerts) {
-    if (now - window.recentTgAlerts[key] > 60000) delete window.recentTgAlerts[key];
-  }
+  // 1. Создаем подпись текста (первые 40 символов) для защиты от дублей при перезагрузке
+  var textSignature = text.substring(0, 40).replace(/[^a-zA-Zа-яА-Я0-9]/g, '');
+  var lastSentSign = localStorage.getItem('tt_last_msg_sign');
+  var lastSentTime = parseInt(localStorage.getItem('tt_last_msg_time') || '0', 10);
 
-  // 2. Жесткая блокировка идентичных сообщений (отсекает дубли подтверждения матчей)
-  if (window.recentTgAlerts[text] && (now - window.recentTgAlerts[text] < 60000)) {
-    console.log("Анти-спам: дублирующее сообщение заблокировано");
+  // Жесткая защита от точных дублей (60 секунд) - переживет перезагрузку приложения
+  if (lastSentSign === textSignature && (now - lastSentTime < 60000)) {
+    console.log("Анти-спам: точный дубль заблокирован.");
     return; 
   }
 
-  // 3. Защита от прыжков по столам (чекины и уходы чаще чем раз в 2 минуты не спамят в чат)
+  // 2. Жесткая защита от прыжков по столам (сохраняется в памяти телефона)
   var isTableAlert = text.indexOf('уже у стола') !== -1 || text.indexOf('покинул стол') !== -1;
   if (isTableAlert) {
-     if (now - window.lastTableAlertTime < 120000) {
+     var lastTableTime = parseInt(localStorage.getItem('tt_last_table_alert') || '0', 10);
+     if (now - lastTableTime < 60000) { // Блок на 1 минуту
         console.log("Анти-спам: блокировка частой смены столов");
         return;
      }
-     window.lastTableAlertTime = now;
+     localStorage.setItem('tt_last_table_alert', now.toString());
   }
 
-  window.recentTgAlerts[text] = now;
+  // 3. Запоминаем факт отправки на жесткий диск
+  localStorage.setItem('tt_last_msg_sign', textSignature);
+  localStorage.setItem('tt_last_msg_time', now.toString());
 
-  // 4. Оригинальная логика отправки через Google Gateway
   var targetUrl = GOOGLE_GATEWAY_URL + '?text=' + encodeURIComponent(text);
+  
+  // 4. ГЛАВНЫЙ ФИКС: Убрали дублирующий резерв со <script> при ошибке fetch.
+  // Если интернет моргнет, скрипт просто промолчит, не дублируя запрос.
   if (window.fetch) {
-    fetch(targetUrl, { mode: 'no-cors' }).catch(function() {
-      var s = document.createElement('script');
-      s.src = targetUrl;
-      document.body.appendChild(s);
-      setTimeout(function() { if (s.parentNode) s.parentNode.removeChild(s); }, 3000);
-    });
+    fetch(targetUrl, { mode: 'no-cors' }).catch(function(e) { console.log('TG alert muted error'); });
   } else {
     var s = document.createElement('script');
     s.src = targetUrl;
