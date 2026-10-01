@@ -119,7 +119,10 @@ window.testHardwareCapabilities = function() {
      results.push("🔊 Звук: Ошибка (модуль не найден)");
   }
 
-  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+  // Обновленная проверка для теста
+  var isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform && window.Telegram.WebApp.platform !== "unknown";
+
+  if (isTelegram && window.Telegram.WebApp.HapticFeedback) {
      window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
      results.push("📳 Вибро: Telegram Haptic API");
   } else if (navigator.vibrate) {
