@@ -2,15 +2,14 @@
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
 //
-// Версия 5.0
+// Версия 5.1
 //
-// Совместим с текущими:
+// Совместим с:
 // - index.html
 // - app.js
 //
 // Главная задача:
 // НЕ оставлять "Сбор свежих новостей..." навсегда.
-//
 // ==========================================
 
 (function () {
@@ -22,42 +21,18 @@
     // ==========================================
 
     var CONFIG = {
-
-        // RSS -> JSON
         proxy: 'https://api.rss2json.com/v1/api.json?rss_url=',
-
-        // Новости старше этого времени НЕ показываем.
-        // 48 часов — небольшой запас, если источник
-        // обновился с задержкой.
         maxAgeMs: 48 * 60 * 60 * 1000,
-
-        // Сколько карточек максимум.
         maxArticles: 15,
-
-        // Таймаут одного источника.
         timeoutMs: 7000,
-
-        // Автоматическое обновление.
         refreshMs: 5 * 60 * 1000,
-
-        // Кэш.
-        cacheKey: 'tt_news_cache_v50',
-
-        // Максимальный возраст кэша.
+        cacheKey: 'tt_news_cache_v51',
         cacheTtlMs: 30 * 60 * 1000
-
     };
 
 
     // ==========================================
     // ИСТОЧНИКИ
-    // ==========================================
-    //
-    // Начинаем с максимально простого варианта.
-    // Если один источник не работает —
-    // остальные не ломают приложение.
-    //
-    // Позже добавим ещё источники.
     // ==========================================
 
     var SOURCES = [
@@ -113,7 +88,6 @@
         'world table tennis',
 
         'world championships',
-
         'world championship'
 
     ];
@@ -167,7 +141,6 @@
     // ==========================================
 
     var isLoading = false;
-
     var lastLoadTime = 0;
 
 
@@ -202,8 +175,6 @@
             return;
         }
 
-
-        // Telegram Mini App
 
         if (
             window.Telegram &&
@@ -394,11 +365,6 @@
         }
 
 
-        // Сильные признаки настольного тенниса.
-        //
-        // Если одновременно есть WTT/ITTF/
-        // настольный теннис — материал оставляем.
-
         var strong =
             text.indexOf('настольн') !== -1 ||
             text.indexOf('пинг понг') !== -1 ||
@@ -495,7 +461,6 @@
     function removeDuplicates(articles) {
 
         var seen = {};
-
         var result = [];
 
 
@@ -663,9 +628,6 @@
 
         if (hasCache) {
 
-            // Если был кэш, его не стираем.
-            // Просто маленькое уведомление.
-
             var notice =
                 document.createElement(
                     'div'
@@ -823,7 +785,6 @@
                     'transition:opacity .15s;' +
                     '">' +
 
-
                     '<div style="' +
                     'display:flex;' +
                     'justify-content:space-between;' +
@@ -831,7 +792,6 @@
                     'gap:8px;' +
                     'margin-bottom:8px;' +
                     '">' +
-
 
                     '<div style="' +
                     'font-size:10px;' +
@@ -855,7 +815,6 @@
 
                     '</div>' +
 
-
                     '<div style="' +
                     'font-size:11px;' +
                     'color:var(--text-muted);' +
@@ -871,9 +830,7 @@
 
                     '</div>' +
 
-
                     '</div>' +
-
 
                     '<div style="' +
                     'font-size:14px;' +
@@ -887,7 +844,6 @@
                     ) +
 
                     '</div>' +
-
 
                     '</div>';
 
@@ -1005,6 +961,21 @@
                 !data ||
                 !Array.isArray(data.items)
             ) {
+
+                return null;
+
+            }
+
+
+            if (
+                data.savedAt &&
+                Date.now() - data.savedAt >
+                CONFIG.cacheTtlMs
+            ) {
+
+                localStorage.removeItem(
+                    CONFIG.cacheKey
+                );
 
                 return null;
 
@@ -1234,6 +1205,7 @@
         return fetchWithTimeout(
             proxyUrl
         )
+
         .then(
             function (data) {
 
@@ -1284,6 +1256,7 @@
                         ) {
 
                             return;
+
                         }
 
 
@@ -1301,6 +1274,7 @@
                         ) {
 
                             return;
+
                         }
 
 
@@ -1408,6 +1382,7 @@
                     return fetchSource(
                         source
                     )
+
                     .catch(
                         function (error) {
 
@@ -1455,15 +1430,11 @@
                 );
 
 
-                // Убираем дубли.
-
                 allArticles =
                     removeDuplicates(
                         allArticles
                     );
 
-
-                // Сначала самые новые.
 
                 allArticles.sort(
                     function (a, b) {
@@ -1518,10 +1489,6 @@
                     );
 
                 } else {
-
-                    // ВАЖНО:
-                    // Больше никаких вечных
-                    // "Сбор свежих новостей..."
 
                     showError(
                         container,
@@ -1607,7 +1574,8 @@
                 readCache();
 
 
-            var cachedArticles = [];
+            var cachedArticles =
+                [];
 
 
             if (
@@ -1630,8 +1598,9 @@
                                         article.date
                                     )
                                 )
+                            );
 
-                        
+                        }
                     );
 
 
@@ -1690,8 +1659,7 @@
 
 
             // ==================================
-            // ЗАПУСКАЕМ RSS НЕЗАВИСИМО
-            // ОТ ЗАПУСКА ПРИЛОЖЕНИЯ
+            // ЗАПУСКАЕМ RSS
             // ==================================
 
             setTimeout(
@@ -1768,11 +1736,12 @@
     // ЗАЩИТА ОТ ОШИБОК
     // ==========================================
 
-    window.__TT_NEWS_READY = true;
+    window.__TT_NEWS_READY =
+        true;
 
 
     console.log(
-        '[TT News] Модуль v5 загружен'
+        '[TT News] Модуль v5.1 загружен'
     );
 
 
