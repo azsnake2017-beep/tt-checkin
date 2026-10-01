@@ -1629,7 +1629,7 @@
                                     Number(
                                         article.date
                                     )
-                                );
+                                )
 
                         }
                     );
