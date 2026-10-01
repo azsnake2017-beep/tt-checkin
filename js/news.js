@@ -2,7 +2,7 @@
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
 //
-// Версия 5.1 (Очищенная и проверенная)
+// Версия 6.0 (Стабильная, без блокировок)
 // ==========================================
 
 (function () {
@@ -13,37 +13,32 @@
     // ==========================================
     var CONFIG = {
         proxy: 'https://api.rss2json.com/v1/api.json?rss_url=',
-        maxAgeMs: 48 * 60 * 60 * 1000,
-        maxArticles: 15,
-        timeoutMs: 7000,
-        refreshMs: 5 * 60 * 1000,
-        cacheKey: 'tt_news_cache_v51',
-        cacheTtlMs: 30 * 60 * 1000
+        maxAgeMs: 48 * 60 * 60 * 1000, // Новости не старше 2 суток
+        maxArticles: 15, // Максимум новостей на экране
+        timeoutMs: 8000,
+        refreshMs: 5 * 60 * 1000, // Автообновление каждые 5 минут
+        cacheKey: 'tt_news_cache_v60', // Новый ключ для сброса старого кэша
+        cacheTtlMs: 30 * 60 * 1000 // Кэш живет 30 минут
     };
 
     // ==========================================
-    // ИСТОЧНИКИ
+    // ИСТОЧНИКИ (Стабильные, без жестких блокировок)
     // ==========================================
     var SOURCES = [
         {
-            name: 'Sports.ru',
-            rss: 'https://www.sports.ru/ping-pong/rss/',
+            name: 'News', // Маркер для парсера Bing
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&setlang=ru&sortBy=Date&format=rss',
             priority: 100
-        },
-        {
-            name: 'Sports.ru',
-            rss: 'https://www.sports.ru/rss/subscribe.xml?sport=ping-pong&class=Sports::News',
-            priority: 95
         },
         {
             name: 'Sport.ru',
             rss: 'https://www.sport.ru/rssfeeds/news.rss',
-            priority: 60
+            priority: 80
         }
     ];
 
     // ==========================================
-    // КЛЮЧЕВЫЕ СЛОВА
+    // КЛЮЧЕВЫЕ СЛОВА ДЛЯ ФИЛЬТРА
     // ==========================================
     var INCLUDE_WORDS = [
         'настольный теннис', 'настольного тенниса', 'настольному теннису', 'настольным теннисом',
@@ -56,9 +51,6 @@
         'world championships', 'world championship'
     ];
 
-    // ==========================================
-    // ИСКЛЮЧЕНИЯ
-    // ==========================================
     var EXCLUDE_WORDS = [
         'большой теннис', 'atp tour', 'wta tour',
         'теннис atp', 'теннис wta',
@@ -74,7 +66,7 @@
     var lastLoadTime = 0;
 
     // ==========================================
-    // ОТКРЫТЬ НОВОСТЬ
+    // ОТКРЫТИЕ ССЫЛКИ
     // ==========================================
     window.openNewsLink = function (url) {
         if (!url || typeof url !== 'string') return;
@@ -94,12 +86,11 @@
                 console.log('[TT News] Telegram openLink error', e);
             }
         }
-
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
     // ==========================================
-    // HTML ESCAPE
+    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
     // ==========================================
     function escapeHtml(value) {
         return String(value || '')
@@ -110,9 +101,6 @@
             .replace(/'/g, '&#039;');
     }
 
-    // ==========================================
-    // ОЧИСТКА RSS
-    // ==========================================
     function cleanText(value) {
         return String(value || '')
             .replace(/<script[\s\S]*?<\/script>/gi, '')
@@ -127,9 +115,6 @@
             .trim();
     }
 
-    // ==========================================
-    // НОРМАЛИЗАЦИЯ
-    // ==========================================
     function normalizeText(value) {
         return cleanText(value)
             .toLowerCase()
@@ -139,22 +124,13 @@
             .trim();
     }
 
-    // ==========================================
-    // ПРОВЕРКА НАСТОЛЬНОГО ТЕННИСА
-    // ==========================================
     function isTableTennisNews(title, description) {
         var text = normalizeText(title) + ' ' + normalizeText(description);
 
-        var found = INCLUDE_WORDS.some(function (word) {
-            return text.indexOf(normalizeText(word)) !== -1;
-        });
-
+        var found = INCLUDE_WORDS.some(function (word) { return text.indexOf(normalizeText(word)) !== -1; });
         if (!found) return false;
 
-        var excluded = EXCLUDE_WORDS.some(function (word) {
-            return text.indexOf(normalizeText(word)) !== -1;
-        });
-
+        var excluded = EXCLUDE_WORDS.some(function (word) { return text.indexOf(normalizeText(word)) !== -1; });
         if (!excluded) return true;
 
         var strong = text.indexOf('настольн') !== -1 ||
@@ -163,27 +139,18 @@
                      text.indexOf('ittf') !== -1 ||
                      text.indexOf('фнтр') !== -1 ||
                      text.indexOf('table tennis') !== -1;
-
         return strong;
     }
 
-    // ==========================================
-    // ДАТА
-    // ==========================================
     function parseDate(value) {
         if (!value) return null;
         var date = new Date(value);
         if (!isNaN(date.getTime())) return date.getTime();
-
         var timestamp = Date.parse(String(value).replace(/-/g, '/'));
         if (!isNaN(timestamp)) return timestamp;
-
         return null;
     }
 
-    // ==========================================
-    // ПРОВЕРКА СВЕЖЕСТИ
-    // ==========================================
     function isFresh(timestamp) {
         if (!timestamp) return false;
         var now = Date.now();
@@ -196,26 +163,18 @@
         return normalizeText(title).replace(/[^а-яa-z0-9]/gi, '').substring(0, 120);
     }
 
-    // ==========================================
-    // ДЕДУПЛИКАЦИЯ
-    // ==========================================
     function removeDuplicates(articles) {
         var seen = {};
         var result = [];
-
         articles.forEach(function (article) {
             var key = titleKey(article.title);
             if (!key || seen[key]) return;
             seen[key] = true;
             result.push(article);
         });
-
         return result;
     }
 
-    // ==========================================
-    // ФОРМАТ ДАТЫ
-    // ==========================================
     function formatDate(timestamp) {
         var d = new Date(timestamp);
         if (isNaN(d.getTime())) return '';
@@ -238,7 +197,7 @@
     }
 
     // ==========================================
-    // ПОЛОЖЕНИЕ ЗАГРУЗКИ
+    // UI ОТОБРАЖЕНИЕ
     // ==========================================
     function showLoading(container) {
         container.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted); font-weight:600;">' +
@@ -247,16 +206,12 @@
                               '</div>';
     }
 
-    // ==========================================
-    // ОШИБКА
-    // ==========================================
     function showError(container, hasCache) {
         if (hasCache) {
             var notice = document.createElement('div');
             notice.style.cssText = 'font-size:10px; color:var(--text-muted); text-align:center; padding:4px 0 10px; opacity:.7;';
             notice.textContent = 'Не удалось обновить ленту. Повторим позже.';
             container.insertBefore(notice, container.firstChild);
-
             setTimeout(function () {
                 if (notice && notice.parentNode) {
                     notice.parentNode.removeChild(notice);
@@ -271,16 +226,13 @@
                               '</div>';
     }
 
-    // ==========================================
-    // РЕНДЕР НОВОСТЕЙ
-    // ==========================================
     function renderNewsCards(articles, container) {
         if (!container) return;
 
         if (!articles || articles.length === 0) {
             container.innerHTML = '<div style="padding:18px; text-align:center; color:var(--text-muted);">' +
                                   '<div style="font-size:14px; font-weight:700; margin-bottom:6px;">Свежих новостей пока нет 🏓</div>' +
-                                  '<div style="font-size:11px; opacity:.7;">Лента автоматически обновится позже.</div>' +
+                                  '<div style="font-size:11px; opacity:.7;">Загляните сюда немного позже.</div>' +
                                   '</div>';
             return;
         }
@@ -312,18 +264,13 @@
                 }
             });
 
-            card.addEventListener('touchstart', function () {
-                card.style.opacity = '0.65';
-            }, { passive: true });
-
-            card.addEventListener('touchend', function () {
-                card.style.opacity = '1';
-            }, { passive: true });
+            card.addEventListener('touchstart', function () { card.style.opacity = '0.65'; }, { passive: true });
+            card.addEventListener('touchend', function () { card.style.opacity = '1'; }, { passive: true });
         });
     }
 
     // ==========================================
-    // КЭШ
+    // УПРАВЛЕНИЕ КЭШЕМ
     // ==========================================
     function readCache() {
         try {
@@ -338,7 +285,6 @@
             }
             return data;
         } catch (e) {
-            console.log('[TT News] Ошибка чтения кэша', e);
             return null;
         }
     }
@@ -349,13 +295,11 @@
                 savedAt: Date.now(),
                 items: articles
             }));
-        } catch (e) {
-            console.log('[TT News] Ошибка записи кэша', e);
-        }
+        } catch (e) { }
     }
 
     // ==========================================
-    // FETCH С TIMEOUT
+    // СЕТЬ
     // ==========================================
     function fetchWithTimeout(url) {
         return new Promise(function (resolve, reject) {
@@ -365,9 +309,7 @@
             var timer = setTimeout(function () {
                 if (finished) return;
                 finished = true;
-                if (controller) {
-                    try { controller.abort(); } catch (e) {}
-                }
+                if (controller) { try { controller.abort(); } catch (e) {} }
                 reject(new Error('timeout'));
             }, CONFIG.timeoutMs);
 
@@ -397,11 +339,13 @@
         });
     }
 
-    // ==========================================
-    // ЗАПРОС ОДНОГО ИСТОЧНИКА
-    // ==========================================
     function fetchSource(source) {
-        var proxyUrl = CONFIG.proxy + encodeURIComponent(source.rss);
+        // Добавляем защиту от кэширования прокси-сервером
+        var cacheBuster = Math.floor(Date.now() / 3600000); 
+        var rawRssUrl = source.rss + (source.rss.indexOf('?') > -1 ? '&' : '?') + 'cb=' + cacheBuster;
+        var proxyUrl = CONFIG.proxy + encodeURIComponent(rawRssUrl);
+
+        console.log('[TT News] Запрашиваем:', source.name);
 
         return fetchWithTimeout(proxyUrl).then(function (data) {
             if (!data || !Array.isArray(data.items)) {
@@ -410,7 +354,18 @@
 
             var articles = [];
             data.items.forEach(function (item) {
-                var title = cleanText(item.title);
+                var rawTitle = item.title || "";
+                var sourceName = source.name;
+                var cleanTitleText = rawTitle;
+
+                // Для Bing: вытаскиваем название СМИ из заголовка (например: "Матч - Чемпионат")
+                var parts = rawTitle.split(' - ');
+                if (source.name === 'News' && parts.length > 1) {
+                    sourceName = parts.pop().trim();
+                    cleanTitleText = parts.join(' - ').trim();
+                }
+
+                var title = cleanText(cleanTitleText);
                 var description = cleanText(item.description || item.content || '');
 
                 if (!title || !isTableTennisNews(title, description)) return;
@@ -424,7 +379,7 @@
                 articles.push({
                     title: title,
                     link: link,
-                    source: source.name,
+                    source: sourceName.replace(/&quot;/g, '"'),
                     date: date,
                     priority: source.priority
                 });
@@ -434,9 +389,6 @@
         });
     }
 
-    // ==========================================
-    // ЗАГРУЗКА ВСЕХ ИСТОЧНИКОВ
-    // ==========================================
     function loadFreshNews(container) {
         if (isLoading) return;
         var now = Date.now();
@@ -448,7 +400,7 @@
         var requests = SOURCES.map(function (source) {
             return fetchSource(source).catch(function (error) {
                 console.warn('[TT News] Источник недоступен:', source.name, error);
-                return [];
+                return []; // Игнорируем ошибку одного источника, продолжаем грузить другие
             });
         });
 
@@ -478,13 +430,16 @@
             console.error('[TT News] Общая ошибка:', error);
             var cache = readCache();
             showError(container, !!(cache && cache.items && cache.items.length));
-        }).finally(function () {
+        }).then(function () {
+            // Замена .finally на .then для совместимости со старыми телефонами
+            isLoading = false;
+        }, function () {
             isLoading = false;
         });
     }
 
     // ==========================================
-    // ГЛАВНАЯ ФУНКЦИЯ
+    // ИНИЦИАЛИЗАЦИЯ
     // ==========================================
     window.loadTableTennisNews = function () {
         var container = document.getElementById('news-container');
@@ -531,6 +486,6 @@
     };
 
     window.__TT_NEWS_READY = true;
-    console.log('[TT News] Модуль v5.1 загружен');
+    console.log('[TT News] Модуль v6.0 успешно загружен!');
 
 })();
