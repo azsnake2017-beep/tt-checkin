@@ -1411,37 +1411,6 @@ function loadTableTennisNews() {
   }, 1000); 
 }
 
-                // ЖЕСТКИЙ ФИЛЬТР: Никаких новостей старше 14 дней!
-                var twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
-
-                if (!isDuplicate && !isNaN(dateMs) && dateMs > twoWeeksAgo) {
-                  allArticles.push({ title: cleanTitle, link: item.link, source: sourceName, date: dateMs });
-                  newItemsFound = true;
-                }
-             });
-           }
-        })
-        .catch(function(e) { console.log("Ошибка загрузки:", source.name); })
-        .finally(function() {
-           pendingRequests--;
-           if (pendingRequests === 0) {
-             if (newItemsFound) {
-               allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20); // Оставляем 20 самых свежих
-               localStorage.setItem(cacheKey, JSON.stringify(allArticles));
-               renderNewsCards(allArticles, container);
-             } else if (allArticles.length === 0 && !cachedData) {
-                container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
-                                      '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Лента обновляется...</div>' +
-                                      '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
-                                      '</div>';
-             }
-           }
-        });
-    });
-  }, 1000); 
-}
-
 // ==========================================
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ АСИНХРОННАЯ ЗАГРУЗКА
 // ==========================================
