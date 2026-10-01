@@ -17,7 +17,6 @@ window.TTAudio = {
   vibrate: function(type) {
     type = type || 'light';
     
-    // 1. Проверка Telegram WebApp
     var tgHaptic = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
     if (tgHaptic) {
       if (type === 'success') tgHaptic.notificationOccurred('success');
@@ -27,12 +26,12 @@ window.TTAudio = {
       return;
     }
 
-    // 2. Проверка стандартного браузера
     if (navigator.vibrate) {
-      if (type === 'success') navigator.vibrate([30, 50, 40]); 
-      else if (type === 'warning') navigator.vibrate([50, 50, 50]); 
-      else if (type === 'heavy') navigator.vibrate([40]); 
-      else navigator.vibrate([30]); 
+      // Чуть увеличили миллисекунды, чтобы пробить тяжелые моторчики Android
+      if (type === 'success') navigator.vibrate([40, 60, 40]); 
+      else if (type === 'warning') navigator.vibrate([60, 60, 60]); 
+      else if (type === 'heavy') navigator.vibrate([50]); 
+      else navigator.vibrate([40]); 
     }
   },
 
@@ -54,7 +53,7 @@ window.TTAudio = {
     localStorage.setItem('tt_sound_enabled', this.soundEnabled); 
     
     if (this.soundEnabled) {
-       this.playRandomBounce(); // Даем тестовый звук при включении
+       this.playRandomBounce(); 
        this.vibrate('success'); 
     } else {
        this.vibrate('warning');
@@ -68,17 +67,17 @@ window.TTAudio = {
 // ГЛОБАЛЬНЫЕ СЛУШАТЕЛИ (UI и клики)
 // ==========================================
 
-// 1. Перехватчик касаний (pointerdown) - для мгновенной ВИБРАЦИИ
-document.addEventListener('pointerdown', function(e) {
+// 1. ИСПОЛЬЗУЕМ TOUCHSTART вместо pointerdown для мгновенного вибро на Android
+document.addEventListener('touchstart', function(e) {
   if (e.target.closest('#main-sound-toggle')) return;
 
   var interactiveElement = e.target.closest('button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn');
   if (interactiveElement && window.TTAudio) {
     window.TTAudio.vibrate('light');
   }
-});
+}, { passive: true });
 
-// 2. Перехватчик полноценных кликов (click) - для ЗВУКА
+// 2. Слушатель кликов остается для звука
 document.addEventListener('click', function(e) {
   if (e.target.closest('#main-sound-toggle')) return;
 
@@ -88,7 +87,7 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// 3. Функция для кнопки на главной странице (вызывается из HTML)
+// 3. Кнопка на главной
 window.toggleAppSound = function() {
   if (!window.TTAudio) return;
   var isEnabled = window.TTAudio.toggleSound();
@@ -98,7 +97,6 @@ window.toggleAppSound = function() {
   }
 };
 
-// 4. Установка правильной иконки при загрузке приложения
 document.addEventListener('DOMContentLoaded', function() {
   var btn = document.getElementById('main-sound-toggle');
   if (btn && window.TTAudio) {
