@@ -340,7 +340,7 @@
       </div>
     </div>
     
-    <!-- КНОПКА: ОХОТА НА ЧЕМПИОНА (ТЕПЕРЬ ОНА ВНУТРИ АДМИНКИ) -->
+    <!-- КНОПКА: ОХОТА НА ЧЕМПИОНА -->
     <div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
       <h4 style="font-size: 14px; color: var(--accent-red); margin-bottom: 8px;">🎯 Ивент: Охота на чемпиона</h4>
       <div style="display: flex; gap: 8px; align-items: center;">
@@ -351,8 +351,15 @@
       </div>
       <button class="btn btn-leave" style="margin-top: 8px; width: 100%; padding: 6px;" onclick="clearBounty()">❌ Отменить охоту</button>
     </div>
+
+    <!-- НОВЫЙ БЛОК: СИСТЕМНЫЕ ТЕСТЫ (ЗВУК И ВИБРО) -->
+    <div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
+      <h4 style="font-size: 14px; color: var(--accent-sky); margin-bottom: 8px;">🛠 Тест оборудования (Отладка)</h4>
+      <button class="btn btn-join" style="background: rgba(14, 165, 233, 0.1); border: 1px solid var(--accent-sky); color: var(--accent-sky); font-weight: 700; width: 100%;" onclick="testHardwareCapabilities()">▶ Запустить тест вибро и звука</button>
+      <div id="debug-log-output" style="font-size: 11px; color: var(--text-muted); text-align: center; margin-top: 8px; font-family: monospace; line-height: 1.4;"></div>
+    </div>
     
-    <button class="btn btn-leave" style="margin-top: 8px;" onclick="closeAdminMenu()">Вернуться назад</button>
+    <button class="btn btn-leave" style="margin-top: 12px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
 </div>
 
