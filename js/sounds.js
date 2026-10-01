@@ -107,31 +107,4 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
-window.testHardwareCapabilities = function() {
-  var logBox = document.getElementById('debug-log-output');
-  if (!logBox) return;
-  var results = [];
 
-  if (window.TTAudio) {
-     window.TTAudio.playRandomBounce();
-     results.push("🔊 Звук: Успешно вызван");
-  } else {
-     results.push("🔊 Звук: Ошибка (модуль не найден)");
-  }
-
-  // Обновленная проверка для теста
-  var isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform && window.Telegram.WebApp.platform !== "unknown";
-
-  if (isTelegram && window.Telegram.WebApp.HapticFeedback) {
-     window.Telegram.WebApp.HapticFeedback.impactOccurred('heavy');
-     results.push("📳 Вибро: Telegram Haptic API");
-  } else if (navigator.vibrate) {
-     var success = navigator.vibrate([100, 50, 100]); 
-     if (success) results.push("📳 Вибро: Сигнал прошел (Браузер)");
-     else results.push("📳 Вибро: ЗАБЛОКИРОВАНО ОС");
-  } else {
-     results.push("📳 Вибро: Не поддерживается");
-  }
-
-  logBox.innerHTML = results.join('<br>');
-};
