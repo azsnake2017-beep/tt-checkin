@@ -26,11 +26,12 @@ window.TTAudio = {
       return;
     }
 
+   // Внутри window.TTAudio:
     if (navigator.vibrate) {
       if (type === 'success') navigator.vibrate([30, 50, 40]); 
       else if (type === 'warning') navigator.vibrate([50, 50, 50]); 
-      else if (type === 'heavy') navigator.vibrate(40);
-      else navigator.vibrate(30); 
+      else if (type === 'heavy') navigator.vibrate([40]); // Обернули в массив
+      else navigator.vibrate([30]); // Обернули в массив
     }
   },
 
