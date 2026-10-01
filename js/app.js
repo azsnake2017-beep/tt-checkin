@@ -1314,50 +1314,13 @@ function listenLeaderboard() {
 }
 
 // ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Асинхронный, Параллельный)
-// ==========================================
-function openNewsLink(url) {
-  // Простое и мгновенное открытие российской ссылки
-  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-    window.Telegram.WebApp.openLink(url, { try_instant_view: true });
-  } else {
-    window.open(url, '_blank');
-  }
-}
-function renderNewsCards(articles, container) {
-  if (!articles || articles.length === 0) return;
-  var html = '';
-  var todayStart = new Date().setHours(0, 0, 0, 0);
-
-  articles.forEach(function(a) {
-    var d = new Date(a.date);
-    var isToday = d.getTime() >= todayStart;
-    var dateStr = isToday 
-      ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
-      : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
-
-    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;" onclick="openNewsLink(\'' + escapeJS(a.link) + '\')" onmousedown="this.style.opacity=\'0.7\'" onmouseup="this.style.opacity=\'1\'">' +
-              '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-                '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
-                '<div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">' + dateStr + '</div>' +
-              '</div>' +
-              '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 10px;">' + cleanHtml(a.title) + '</div>' +
-            '</div>';
-  });
-  container.innerHTML = html;
-}
-
-// ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Для обычных браузеров и Telegram)
-// ==========================================
-// ==========================================
-// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Универсальный и безопасный для браузеров)
+// ГЛАВНЫЙ НОВОСТНОЙ АГРЕГАТОР (Без VPN, Свежие данные)
 // ==========================================
 function loadTableTennisNews() {
   var container = document.getElementById('news-container');
   if (!container) return;
 
-  var cacheKey = 'tt_ultimate_news_cache_v21';
+  var cacheKey = 'tt_news_cache_v24'; // Меняем версию, чтобы сбросить старье 2022 года
   var cachedData = localStorage.getItem(cacheKey);
   var allArticles = [];
 
@@ -1367,47 +1330,64 @@ function loadTableTennisNews() {
       renderNewsCards(allArticles, container);
     } catch(e) {}
   } else {
-    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Свежий выпуск в печати... 🏓</div>';
+    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Сбор свежих новостей... 🏓</div>';
   }
 
   setTimeout(function() {
+    // Используем Sports.ru напрямую и Bing (настроенный строго на свежие новости РФ)
     var sources = [
       { name: 'Sports.ru', rss: 'https://www.sports.ru/table-tennis/rss/all.xml' },
-      { name: 'Sportbox', rss: 'https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss' },
-      { name: 'Турниры WTT', rss: 'https://www.bing.com/news/search?q=WTT+%D0%BD%D0%B0%D1%81%D1%82%D0%BE%D0%BB%D1%8C%D0%BD%D1%8B%D0%B9+%D1%82%D0%B5%D0%BD%D0%BD%D0%B8%D1%81&format=rss' }
+      { name: 'News', rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&setlang=ru&sortBy=Date&format=rss' }
     ];
 
     var pendingRequests = sources.length;
     var newItemsFound = false;
 
+    // Умный сброс кэша (меняется каждый час, заставляя сервер качать свежие новости)
+    var cacheBuster = Math.floor(Date.now() / 3600000); 
+
     sources.forEach(function(source) {
-      // Максимально чистый запрос к rss2json без лишних параметров.
-      // Браузер видит обычный JSON-ответ и пропускает его без CORS-ошибок.
-      var proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(source.rss);
+      // Подмешиваем cacheBuster в ссылку, чтобы обмануть кэш rss2json
+      var rawRssUrl = source.rss + (source.rss.indexOf('?') > -1 ? '&' : '?') + 'cb=' + cacheBuster;
+      var proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rawRssUrl);
       
-      var fetchPromise = fetch(proxyUrl)
-        .then(function(res) { return res.json(); });
-      
+      var fetchPromise = fetch(proxyUrl).then(function(res) { return res.json(); });
       var timeoutPromise = new Promise(function(_, reject) { 
         setTimeout(function() { reject(new Error('timeout')); }, 8000);
       });
 
       Promise.race([fetchPromise, timeoutPromise])
         .then(function(data) {
-           // Поскольку rss2json отдает уже готовый массив, нам не нужно парсить XML
            if (data && data.items) {
              data.items.forEach(function(item) {
-                var cleanTitle = (item.title || "").split(' - ')[0].trim();
-                if (!cleanTitle) return;
-                var sourceName = (item.title || "").split(' - ').length > 1 ? (item.title || "").split(' - ').pop().trim() : source.name;
+                var parts = (item.title || "").split(' - ');
+                var sourceName = source.name; 
+                var cleanTitle = item.title;
+
+                // Bing добавляет имя реального сайта в конец заголовка (например: "Новость - Чемпионат")
+                if (source.name === 'News' && parts.length > 1) {
+                  sourceName = parts.pop().trim(); // Вытаскиваем "Чемпионат", "МатчТВ" и т.д.
+                  cleanTitle = parts.join(' - ').trim(); 
+                } else if (source.name === 'Sports.ru') {
+                  cleanTitle = item.title.trim();
+                }
+
+                // Очистка текста
+                cleanTitle = cleanTitle.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
+                sourceName = sourceName.replace(/&quot;/g, '"');
+
                 var dateMs = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).getTime() : Date.now();
 
+                // Отсеиваем дубликаты
                 var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
                 var isDuplicate = allArticles.some(function(a) {
                   return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
                 });
 
-                if (!isDuplicate && !isNaN(dateMs)) {
+                // ЖЕСТКИЙ ФИЛЬТР: Никаких новостей старше 14 дней!
+                var twoWeeksAgo = Date.now() - (14 * 24 * 60 * 60 * 1000);
+
+                if (!isDuplicate && !isNaN(dateMs) && dateMs > twoWeeksAgo) {
                   allArticles.push({ title: cleanTitle, link: item.link, source: sourceName, date: dateMs });
                   newItemsFound = true;
                 }
@@ -1420,20 +1400,19 @@ function loadTableTennisNews() {
            if (pendingRequests === 0) {
              if (newItemsFound) {
                allArticles.sort(function(a, b) { return b.date - a.date; });
-               allArticles = allArticles.slice(0, 20); 
+               allArticles = allArticles.slice(0, 20); // Оставляем 20 самых свежих
                localStorage.setItem(cacheKey, JSON.stringify(allArticles));
                renderNewsCards(allArticles, container);
              } else if (allArticles.length === 0 && !cachedData) {
                 container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
                                       '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Лента обновляется...</div>' +
-                                      '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Попробуйте зайти чуть позже.</div>' +
                                       '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
                                       '</div>';
              }
            }
         });
     });
-  }, 1500); 
+  }, 1000); 
 }
 
 // ==========================================
