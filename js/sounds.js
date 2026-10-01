@@ -17,17 +17,20 @@ window.TTAudio = {
   vibrate: function(type) {
     type = type || 'light';
     
-    var tgHaptic = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback;
-    if (tgHaptic) {
+    // НАСТОЯЩАЯ ПРОВЕРКА ТЕЛЕГРАМА (Игнорируем "unknown" платформу обычного браузера)
+    var isTelegram = window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.platform && window.Telegram.WebApp.platform !== "unknown";
+    
+    if (isTelegram && window.Telegram.WebApp.HapticFeedback) {
+      var tgHaptic = window.Telegram.WebApp.HapticFeedback;
       if (type === 'success') tgHaptic.notificationOccurred('success');
       else if (type === 'warning') tgHaptic.notificationOccurred('warning');
       else if (type === 'heavy') tgHaptic.impactOccurred('heavy');
       else tgHaptic.impactOccurred('light');
-      return;
+      return; // Завершаем, так как отработал Телеграм
     }
 
+    // ЕСЛИ МЫ В ОБЫЧНОМ БРАУЗЕРЕ (Chrome, Яндекс, Safari)
     if (navigator.vibrate) {
-      // Чуть увеличили миллисекунды, чтобы пробить тяжелые моторчики Android
       if (type === 'success') navigator.vibrate([40, 60, 40]); 
       else if (type === 'warning') navigator.vibrate([60, 60, 60]); 
       else if (type === 'heavy') navigator.vibrate([50]); 
