@@ -1,128 +1,649 @@
 // ==========================================
-// НОВОСТНОЙ МОДУЛЬ КЛУБА (Файл: js/news.js)
+// НОВОСТНОЙ МОДУЛЬ КЛУБА
+// js/news.js
+//
+// Архитектура:
+// Браузер -> /api/news -> сервер в РФ -> RSS/API источники
+//
+// ВАЖНО:
+// news.js НЕ обращается напрямую к Google News,
+// rss2json, зарубежным прокси и т.д.
 // ==========================================
 
-function openNewsLink(url) {
-  if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-    window.Telegram.WebApp.openLink(url, { try_instant_view: true });
-  } else {
-    window.open(url, '_blank');
-  }
-}
+(function () {
+  'use strict';
 
-function renderNewsCards(articles, container) {
-  if (!articles || articles.length === 0) return;
-  var html = '';
-  var todayStart = new Date().setHours(0, 0, 0, 0);
+  // ------------------------------------------
+  // НАСТРОЙКИ
+  // ------------------------------------------
 
-  articles.forEach(function(a) {
-    var d = new Date(a.date);
-    var isToday = d.getTime() >= todayStart;
-    var dateStr = isToday 
-      ? ('Сегодня, ' + ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2)) 
-      : (('0' + d.getDate()).slice(-2) + '.' + ('0' + (d.getMonth() + 1)).slice(-2) + '.' + d.getFullYear());
+  var CONFIG = {
+    apiUrl: '/api/news',
 
-    html += '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 12px; margin-bottom: 10px; cursor: pointer; transition: 0.2s;" onclick="openNewsLink(\'' + escapeJS(a.link) + '\')" onmousedown="this.style.opacity=\'0.7\'" onmouseup="this.style.opacity=\'1\'">' +
-              '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">' +
-                '<div style="font-size: 10px; background: rgba(59,130,246,0.1); color: #60a5fa; padding: 3px 8px; border-radius: 6px; font-weight: 800; text-transform: uppercase;">📰 ' + cleanHtml(a.source) + '</div>' +
-                '<div style="font-size: 11px; color: var(--text-muted); font-weight: 600;">' + dateStr + '</div>' +
-              '</div>' +
-              '<div style="font-size: 14px; font-weight: 600; color: #f8fafc; line-height: 1.4; margin-bottom: 10px;">' + cleanHtml(a.title) + '</div>' +
-            '</div>';
-  });
-  container.innerHTML = html;
-}
+    // Новости старше этого времени не показываем.
+    // 24 часа — хороший вариант для клубного блока.
+    maxAgeMs: 24 * 60 * 60 * 1000,
 
-function loadTableTennisNews() {
-  var container = document.getElementById('news-container');
-  if (!container) return;
+    // Максимум карточек.
+    maxItems: 12,
 
-  var cacheKey = 'tt_news_cache_v28'; 
-  var cachedData = localStorage.getItem(cacheKey);
-  var allArticles = [];
+    // Как часто проверяем новые новости.
+    refreshMs: 5 * 60 * 1000,
 
-  if (cachedData) {
+    // Через сколько миллисекунд считаем API зависшим.
+    timeoutMs: 7000,
+
+    // Кэш браузера.
+    cacheKey: 'tt_news_cache_v30',
+
+    // Время жизни локального кэша.
+    cacheTtlMs: 30 * 60 * 1000
+  };
+
+
+  // ------------------------------------------
+  // ОТКРЫТИЕ НОВОСТИ
+  // ------------------------------------------
+
+  window.openNewsLink = function (url) {
+    if (!url || typeof url !== 'string') return;
+
+    // Разрешаем только http/https.
     try {
-      allArticles = JSON.parse(cachedData);
-      renderNewsCards(allArticles, container);
-    } catch(e) {}
-  } else {
-    container.innerHTML = '<div style="padding: 20px; text-align: center; color: var(--text-muted); font-weight: 600;">Сбор свежих новостей... 🏓</div>';
-  }
+      var parsed = new URL(url);
 
-  setTimeout(function() {
-    var sources = [
-      { name: 'Sports.ru', rss: 'https://www.sports.ru/table-tennis/rss/all.xml' },
-      { name: 'Google News', rss: 'https://news.google.com/rss/search?q=' + encodeURIComponent('настольный теннис when:14d') + '&hl=ru&gl=RU&ceid=RU:ru' }
-    ];
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return;
+      }
+    } catch (e) {
+      return;
+    }
 
-    var pendingRequests = sources.length;
-    var newItemsFound = false;
-    var cacheBuster = Math.floor(Date.now() / 3600000); 
-
-    function checkDone() {
-      pendingRequests--;
-      if (pendingRequests <= 0) {
-        if (newItemsFound && allArticles.length > 0) {
-          allArticles.sort(function(a, b) { return b.date - a.date; });
-          allArticles = allArticles.slice(0, 20); 
-          localStorage.setItem(cacheKey, JSON.stringify(allArticles));
-          renderNewsCards(allArticles, container);
-        } else if (allArticles.length === 0 && !cachedData) {
-          container.innerHTML = '<div class="card" style="border-color: rgba(59, 130, 246, 0.3); padding: 16px; text-align: center; cursor: pointer;" onclick="openNewsLink(\'https://www.sports.ru/table-tennis/\')">' +
-                                '<div style="font-size: 14px; font-weight: 700; color: #f8fafc; margin-bottom: 8px;">Не удалось загрузить ленту</div>' +
-                                '<div style="font-size: 12px; color: #94a3b8; margin-bottom: 12px;">Новые турниры пока не начались.</div>' +
-                                '<div style="font-size: 13px; color: #3b82f6;">Читать напрямую на Sports.ru ↗</div>' +
-                                '</div>';
-        }
+    // Telegram Mini App
+    if (
+      window.Telegram &&
+      window.Telegram.WebApp &&
+      typeof window.Telegram.WebApp.openLink === 'function'
+    ) {
+      try {
+        window.Telegram.WebApp.openLink(url, {
+          try_instant_view: true
+        });
+        return;
+      } catch (e) {
+        // fallback ниже
       }
     }
 
-    sources.forEach(function(source) {
-      var rawRssUrl = source.rss + (source.rss.indexOf('?') > -1 ? '&' : '?') + 'cb=' + cacheBuster;
-      var proxyUrl = 'https://api.rss2json.com/v1/api.json?rss_url=' + encodeURIComponent(rawRssUrl);
-      
-      var fetchPromise = fetch(proxyUrl).then(function(res) { return res.json(); });
-      var timeoutPromise = new Promise(function(resolve, reject) { 
-        setTimeout(function() { reject(new Error('timeout')); }, 8000);
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+
+
+  // ------------------------------------------
+  // ФОРМАТ ДАТЫ
+  // ------------------------------------------
+
+  function formatNewsDate(timestamp) {
+    var d = new Date(timestamp);
+
+    if (isNaN(d.getTime())) {
+      return '';
+    }
+
+    var now = new Date();
+    var diff = Date.now() - d.getTime();
+
+    var minute = 60 * 1000;
+    var hour = 60 * minute;
+
+    if (diff < minute) {
+      return 'только что';
+    }
+
+    if (diff < hour) {
+      return Math.floor(diff / minute) + ' мин назад';
+    }
+
+    var todayStart = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate()
+    ).getTime();
+
+    if (d.getTime() >= todayStart) {
+      return (
+        'Сегодня, ' +
+        String(d.getHours()).padStart(2, '0') +
+        ':' +
+        String(d.getMinutes()).padStart(2, '0')
+      );
+    }
+
+    var yesterdayStart = todayStart - 24 * hour;
+
+    if (d.getTime() >= yesterdayStart) {
+      return (
+        'Вчера, ' +
+        String(d.getHours()).padStart(2, '0') +
+        ':' +
+        String(d.getMinutes()).padStart(2, '0')
+      );
+    }
+
+    return (
+      String(d.getDate()).padStart(2, '0') +
+      '.' +
+      String(d.getMonth() + 1).padStart(2, '0') +
+      '.' +
+      d.getFullYear()
+    );
+  }
+
+
+  // ------------------------------------------
+  // НОРМАЛИЗАЦИЯ НОВОСТИ
+  // ------------------------------------------
+
+  function normalizeArticle(article) {
+    if (!article || typeof article !== 'object') {
+      return null;
+    }
+
+    var title = String(article.title || '').trim();
+    var link = String(article.link || '').trim();
+    var source = String(article.source || 'Новости').trim();
+
+    if (!title || !link) {
+      return null;
+    }
+
+    // Проверяем URL.
+    try {
+      var parsedUrl = new URL(link);
+
+      if (
+        parsedUrl.protocol !== 'https:' &&
+        parsedUrl.protocol !== 'http:'
+      ) {
+        return null;
+      }
+
+      link = parsedUrl.href;
+    } catch (e) {
+      return null;
+    }
+
+    var date = Number(article.date);
+
+    if (!date) {
+      date = Date.now();
+    }
+
+    // Если сервер прислал ISO дату.
+    if (isNaN(date)) {
+      date = new Date(article.date).getTime();
+    }
+
+    if (isNaN(date)) {
+      return null;
+    }
+
+    return {
+      title: title.substring(0, 220),
+      link: link,
+      source: source.substring(0, 80),
+      date: date
+    };
+  }
+
+
+  // ------------------------------------------
+  // ДЕДУПЛИКАЦИЯ
+  // ------------------------------------------
+
+  function normalizeTitle(title) {
+    return String(title || '')
+      .toLowerCase()
+      .replace(/ё/g, 'е')
+      .replace(/[^а-яa-z0-9]+/gi, '')
+      .substring(0, 100);
+  }
+
+
+  function uniqueArticles(articles) {
+    var map = {};
+    var result = [];
+
+    articles.forEach(function (article) {
+      var normalized = normalizeArticle(article);
+
+      if (!normalized) return;
+
+      var signature = normalizeTitle(normalized.title);
+
+      if (!signature) return;
+
+      if (map[signature]) {
+        return;
+      }
+
+      map[signature] = true;
+      result.push(normalized);
+    });
+
+    return result;
+  }
+
+
+  // ------------------------------------------
+  // ФИЛЬТР СВЕЖЕСТИ
+  // ------------------------------------------
+
+  function filterFreshArticles(articles) {
+    var now = Date.now();
+    var minDate = now - CONFIG.maxAgeMs;
+
+    return articles.filter(function (article) {
+      return (
+        article &&
+        article.date &&
+        article.date >= minDate &&
+        article.date <= now + 5 * 60 * 1000
+      );
+    });
+  }
+
+
+  // ------------------------------------------
+  // HTML
+  // ------------------------------------------
+
+  function escapeHtml(value) {
+    return String(value || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+
+  function renderNewsCards(articles, container) {
+    if (!container) return;
+
+    if (!articles || articles.length === 0) {
+      container.innerHTML =
+        '<div style="padding:16px;text-align:center;color:var(--text-muted);font-weight:600;">' +
+        'Свежих новостей пока нет' +
+        '</div>';
+
+      return;
+    }
+
+    var html = '';
+
+    articles.forEach(function (article, index) {
+      var safeTitle = escapeHtml(article.title);
+      var safeSource = escapeHtml(article.source);
+      var dateStr = formatNewsDate(article.date);
+
+      html +=
+        '<div class="card tt-news-card" ' +
+          'data-news-index="' + index + '" ' +
+          'style="' +
+            'border-color:rgba(59,130,246,0.3);' +
+            'padding:12px;' +
+            'margin-bottom:10px;' +
+            'cursor:pointer;' +
+            'transition:opacity .15s,transform .15s;' +
+          '">' +
+
+          '<div style="' +
+            'display:flex;' +
+            'justify-content:space-between;' +
+            'align-items:center;' +
+            'gap:8px;' +
+            'margin-bottom:8px;' +
+          '">' +
+
+            '<div style="' +
+              'font-size:10px;' +
+              'background:rgba(59,130,246,.1);' +
+              'color:#60a5fa;' +
+              'padding:3px 8px;' +
+              'border-radius:6px;' +
+              'font-weight:800;' +
+              'text-transform:uppercase;' +
+              'white-space:nowrap;' +
+              'overflow:hidden;' +
+              'text-overflow:ellipsis;' +
+              'max-width:65%;' +
+            '">' +
+              '📰 ' + safeSource +
+            '</div>' +
+
+            '<div style="' +
+              'font-size:11px;' +
+              'color:var(--text-muted);' +
+              'font-weight:600;' +
+              'white-space:nowrap;' +
+            '">' +
+              escapeHtml(dateStr) +
+            '</div>' +
+
+          '</div>' +
+
+          '<div style="' +
+            'font-size:14px;' +
+            'font-weight:600;' +
+            'color:#f8fafc;' +
+            'line-height:1.4;' +
+          '">' +
+            safeTitle +
+          '</div>' +
+
+        '</div>';
+    });
+
+    container.innerHTML = html;
+
+    // Обработчик кликов без onclick внутри HTML.
+    var cards = container.querySelectorAll('.tt-news-card');
+
+    cards.forEach(function (card) {
+      card.addEventListener('click', function () {
+        var index = Number(card.getAttribute('data-news-index'));
+
+        if (
+          window.__TT_NEWS_ARTICLES &&
+          window.__TT_NEWS_ARTICLES[index]
+        ) {
+          openNewsLink(
+            window.__TT_NEWS_ARTICLES[index].link
+          );
+        }
       });
 
-      Promise.race([fetchPromise, timeoutPromise])
-        .then(function(data) {
-           if (data && data.items) {
-             data.items.forEach(function(item) {
-                var parts = (item.title || "").split(' - ');
-                var sourceName = source.name; 
-                var cleanTitle = item.title;
+      card.addEventListener('mousedown', function () {
+        card.style.opacity = '0.7';
+      });
 
-                if (source.name === 'Google News' && parts.length > 1) {
-                  sourceName = parts.pop().trim(); 
-                  cleanTitle = parts.join(' - ').trim(); 
-                } else if (source.name === 'Sports.ru') {
-                  cleanTitle = (item.title || "").trim();
-                }
+      card.addEventListener('mouseup', function () {
+        card.style.opacity = '1';
+      });
 
-                cleanTitle = cleanTitle.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-                sourceName = sourceName.replace(/&quot;/g, '"');
+      card.addEventListener('mouseleave', function () {
+        card.style.opacity = '1';
+      });
 
-                var dateMs = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).getTime() : Date.now();
-                var signature = cleanTitle.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30);
-                
-                var isDuplicate = allArticles.some(function(a) {
-                  return a.title.toLowerCase().replace(/[^а-яa-z0-9]/gi, '').substring(0, 30) === signature;
-                });
+      card.addEventListener('touchstart', function () {
+        card.style.opacity = '0.7';
+      }, { passive: true });
 
-                var threeWeeksAgo = Date.now() - (21 * 24 * 60 * 60 * 1000);
-
-                if (!isDuplicate && !isNaN(dateMs) && dateMs > threeWeeksAgo) {
-                  allArticles.push({ title: cleanTitle, link: item.link, source: sourceName, date: dateMs });
-                  newItemsFound = true;
-                }
-             });
-           }
-        })
-        .catch(function(e) { console.log("Ошибка API новостей:", e); })
-        .then(checkDone, checkDone); 
+      card.addEventListener('touchend', function () {
+        card.style.opacity = '1';
+      }, { passive: true });
     });
-  }, 1000); 
-}
+
+    window.__TT_NEWS_ARTICLES = articles;
+  }
+
+
+  // ------------------------------------------
+  // LOCAL STORAGE
+  // ------------------------------------------
+
+  function readCache() {
+    try {
+      var raw = localStorage.getItem(CONFIG.cacheKey);
+
+      if (!raw) return null;
+
+      var data = JSON.parse(raw);
+
+      if (!data || !Array.isArray(data.items)) {
+        return null;
+      }
+
+      return {
+        items: data.items,
+        savedAt: Number(data.savedAt || 0)
+      };
+
+    } catch (e) {
+      return null;
+    }
+  }
+
+
+  function saveCache(articles) {
+    try {
+      localStorage.setItem(
+        CONFIG.cacheKey,
+        JSON.stringify({
+          items: articles,
+          savedAt: Date.now()
+        })
+      );
+    } catch (e) {
+      // localStorage может быть переполнен/запрещён.
+    }
+  }
+
+
+  // ------------------------------------------
+  // API REQUEST
+  // ------------------------------------------
+
+  function fetchWithTimeout(url) {
+    var controller = null;
+    var timer = null;
+
+    if (typeof AbortController !== 'undefined') {
+      controller = new AbortController();
+
+      timer = setTimeout(function () {
+        controller.abort();
+      }, CONFIG.timeoutMs);
+    }
+
+    var options = {
+      method: 'GET',
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: {
+        'Accept': 'application/json'
+      }
+    };
+
+    if (controller) {
+      options.signal = controller.signal;
+    }
+
+    return fetch(url, options)
+      .then(function (response) {
+        if (timer) {
+          clearTimeout(timer);
+        }
+
+        if (!response.ok) {
+          throw new Error(
+            'News API HTTP ' + response.status
+          );
+        }
+
+        return response.json();
+      })
+      .then(function (data) {
+        if (!data || !Array.isArray(data.items)) {
+          throw new Error('Некорректный ответ News API');
+        }
+
+        return data.items;
+      });
+  }
+
+
+  // ------------------------------------------
+  // ЗАГРУЗКА НОВОСТЕЙ
+  // ------------------------------------------
+
+  function loadNewsFromServer(container, silent) {
+    return fetchWithTimeout(CONFIG.apiUrl)
+      .then(function (items) {
+
+        var articles = items
+          .map(normalizeArticle)
+          .filter(Boolean);
+
+        articles = filterFreshArticles(articles);
+
+        articles.sort(function (a, b) {
+          return b.date - a.date;
+        });
+
+        articles = uniqueArticles(articles);
+
+        articles = articles.slice(
+          0,
+          CONFIG.maxItems
+        );
+
+        if (articles.length > 0) {
+          saveCache(articles);
+          renderNewsCards(articles, container);
+        } else if (!silent) {
+          renderNewsCards([], container);
+        }
+
+        return articles;
+      })
+      .catch(function (error) {
+
+        console.log(
+          '[TT News] Не удалось обновить новости:',
+          error
+        );
+
+        // При ошибке ничего не ломаем.
+        // Используем локальный кэш.
+        var cached = readCache();
+
+        if (
+          cached &&
+          Array.isArray(cached.items) &&
+          cached.items.length > 0
+        ) {
+          var cachedArticles = cached.items
+            .map(normalizeArticle)
+            .filter(Boolean);
+
+          cachedArticles = filterFreshArticles(
+            cachedArticles
+          );
+
+          cachedArticles.sort(function (a, b) {
+            return b.date - a.date;
+          });
+
+          cachedArticles = uniqueArticles(
+            cachedArticles
+          ).slice(0, CONFIG.maxItems);
+
+          renderNewsCards(
+            cachedArticles,
+            container
+          );
+
+          return cachedArticles;
+        }
+
+        if (!silent) {
+          renderNewsCards([], container);
+        }
+
+        return [];
+      });
+  }
+
+
+  // ------------------------------------------
+  // ОСНОВНАЯ ФУНКЦИЯ
+  // ------------------------------------------
+
+  window.loadTableTennisNews = function () {
+    var container =
+      document.getElementById('news-container');
+
+    if (!container) return;
+
+    // 1. Показываем кэш сразу.
+    var cached = readCache();
+
+    if (
+      cached &&
+      Array.isArray(cached.items)
+    ) {
+      var cachedArticles = cached.items
+        .map(normalizeArticle)
+        .filter(Boolean);
+
+      cachedArticles = filterFreshArticles(
+        cachedArticles
+      );
+
+      cachedArticles.sort(function (a, b) {
+        return b.date - a.date;
+      });
+
+      cachedArticles = uniqueArticles(
+        cachedArticles
+      ).slice(0, CONFIG.maxItems);
+
+      if (cachedArticles.length > 0) {
+        renderNewsCards(
+          cachedArticles,
+          container
+        );
+      }
+    } else {
+      container.innerHTML =
+        '<div style="padding:16px;text-align:center;color:var(--text-muted);font-weight:600;">' +
+        'Загрузка свежих новостей… 🏓' +
+        '</div>';
+    }
+
+    // 2. Обновляем сразу.
+    loadNewsFromServer(container, true);
+
+    // 3. Обновляем каждые 5 минут.
+    if (!window.__TT_NEWS_INTERVAL) {
+      window.__TT_NEWS_INTERVAL = setInterval(
+        function () {
+          loadNewsFromServer(container, true);
+        },
+        CONFIG.refreshMs
+      );
+    }
+
+    // 4. Если пользователь вернулся в приложение.
+    if (!window.__TT_NEWS_VISIBILITY) {
+      document.addEventListener(
+        'visibilitychange',
+        function () {
+          if (
+            document.visibilityState === 'visible'
+          ) {
+            loadNewsFromServer(
+              container,
+              true
+            );
+          }
+        }
+      );
+
+      window.__TT_NEWS_VISIBILITY = true;
+    }
+  };
+
+})();
