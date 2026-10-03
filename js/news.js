@@ -2,7 +2,7 @@
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
 //
-// Версия 8.0 (Чистая архитектура)
+// Версия 7.0 (Защита от перерисовки DOM)
 // ==========================================
 
 (function () {
@@ -14,7 +14,7 @@
         maxArticles: 15, 
         timeoutMs: 8000,
         refreshMs: 5 * 60 * 1000, 
-        cacheKey: 'tt_news_cache_v80', 
+        cacheKey: 'tt_news_cache_v70', 
         cacheTtlMs: 30 * 60 * 1000 
     };
 
@@ -47,9 +47,11 @@
 
     var isLoading = false;
     var lastLoadTime = 0;
-    // Глобальная переменная для хранения скачанных новостей в памяти
-    window.__TT_NEWS_ARTICLES = []; 
+    window.__TT_NEWS_ARTICLES = []; // Храним в глобальной памяти для мгновенного восстановления
 
+    // ==========================================
+    // ОТКРЫТИЕ ССЫЛКИ
+    // ==========================================
     window.openNewsLink = function (url) {
         if (!url || typeof url !== 'string') return;
         try {
@@ -66,6 +68,9 @@
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
+    // ==========================================
+    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
+    // ==========================================
     function escapeHtml(value) {
         return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
@@ -132,6 +137,9 @@
         return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
     }
 
+    // ==========================================
+    // ДИНАМИЧЕСКИЙ ДОСТУП К DOM
+    // ==========================================
     function getContainer() {
         return document.getElementById('news-container');
     }
@@ -174,7 +182,7 @@
         });
 
         c.innerHTML = html;
-        window.__TT_NEWS_ARTICLES = articles; 
+        window.__TT_NEWS_ARTICLES = articles; // Сохраняем для автовосстановления
 
         var cards = c.querySelectorAll('.tt-news-card');
         cards.forEach(function (card) {
@@ -185,6 +193,9 @@
         });
     }
 
+    // ==========================================
+    // КЭШ И СЕТЬ
+    // ==========================================
     function readCache() {
         try {
             var raw = localStorage.getItem(CONFIG.cacheKey);
@@ -288,16 +299,8 @@
     }
 
     // ==========================================
-    // ЛЕГАЛЬНОЕ ВОССТАНОВЛЕНИЕ (ДЛЯ APP.JS)
+    // ИНИЦИАЛИЗАЦИЯ И ЗАЩИТА (АВТОВОССТАНОВЛЕНИЕ)
     // ==========================================
-    window.restoreNewsFromMemory = function() {
-        var c = getContainer();
-        // Если контейнер пуст или содержит только заглушку, а в памяти есть скачанные новости:
-        if (c && c.innerHTML.indexOf('tt-news-card') === -1 && window.__TT_NEWS_ARTICLES && window.__TT_NEWS_ARTICLES.length > 0) {
-            renderNewsCards(window.__TT_NEWS_ARTICLES);
-        }
-    };
-
     window.loadTableTennisNews = function () {
         var cache = readCache();
         if (cache && Array.isArray(cache.items)) {
@@ -316,15 +319,17 @@
             window.__TT_NEWS_INTERVAL = setInterval(loadFreshNews, CONFIG.refreshMs);
         }
 
-        if (!window.__TT_NEWS_VISIBILITY) {
-            document.addEventListener('visibilitychange', function () {
-                if (document.visibilityState === 'visible') {
-                    loadFreshNews();
+        // ЗАЩИТА ОТ ПЕРЕРИСОВКИ DOM (Каждую секунду проверяем, не удалил ли app.js наши новости)
+        if (!window.__TT_NEWS_RESTORE_INTERVAL) {
+            window.__TT_NEWS_RESTORE_INTERVAL = setInterval(function() {
+                var c = getContainer();
+                // Если контейнер есть, но внутри нет карточек и висит загрузка, а данные уже скачаны:
+                if (c && c.innerHTML.indexOf('tt-news-card') === -1 && window.__TT_NEWS_ARTICLES && window.__TT_NEWS_ARTICLES.length > 0) {
+                    renderNewsCards(window.__TT_NEWS_ARTICLES);
                 }
-            });
-            window.__TT_NEWS_VISIBILITY = true;
+            }, 1000);
         }
     };
 
-    console.log('[TT News] Модуль v8.0 (Чистая архитектура) загружен!');
+    console.log('[TT News] Модуль v7.0 (Detached DOM Protection) загружен!');
 })();
