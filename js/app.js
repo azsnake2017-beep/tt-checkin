@@ -1447,9 +1447,7 @@ document.addEventListener('DOMContentLoaded', function() {
           setInterval(loadParkWeather, 600000); 
       }
       
-      // Тяжелые новости стартуют с микро-задержкой, чтобы не драться с Firebase
-      setTimeout(function() { try { loadTableTennisNews(); } catch(e) {} }, 1500);
-      
+          
   }, 100); 
 });
 
