@@ -2,19 +2,19 @@
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
 //
-// Версия 7.0 (Защита от перерисовки DOM)
+// Версия 8.0 (Прямой парсинг XML + Обход блокировок)
 // ==========================================
 
 (function () {
     'use strict';
 
     var CONFIG = {
-        proxy: 'https://api.rss2json.com/v1/api.json?rss_url=',
+        proxy: 'https://api.allorigins.win/get?url=', // Надежный открытый прокси без лимитов
         maxAgeMs: 48 * 60 * 60 * 1000, 
         maxArticles: 15, 
         timeoutMs: 8000,
         refreshMs: 5 * 60 * 1000, 
-        cacheKey: 'tt_news_cache_v70', 
+        cacheKey: 'tt_news_cache_v80', 
         cacheTtlMs: 30 * 60 * 1000 
     };
 
@@ -47,11 +47,8 @@
 
     var isLoading = false;
     var lastLoadTime = 0;
-    window.__TT_NEWS_ARTICLES = []; // Храним в глобальной памяти для мгновенного восстановления
+    window.__TT_NEWS_ARTICLES = []; 
 
-    // ==========================================
-    // ОТКРЫТИЕ ССЫЛКИ
-    // ==========================================
     window.openNewsLink = function (url) {
         if (!url || typeof url !== 'string') return;
         try {
@@ -68,9 +65,6 @@
         window.open(url, '_blank', 'noopener,noreferrer');
     };
 
-    // ==========================================
-    // ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ
-    // ==========================================
     function escapeHtml(value) {
         return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
@@ -137,9 +131,6 @@
         return String(d.getDate()).padStart(2, '0') + '.' + String(d.getMonth() + 1).padStart(2, '0') + '.' + d.getFullYear();
     }
 
-    // ==========================================
-    // ДИНАМИЧЕСКИЙ ДОСТУП К DOM
-    // ==========================================
     function getContainer() {
         return document.getElementById('news-container');
     }
@@ -160,7 +151,7 @@
             setTimeout(function () { if (notice && notice.parentNode) notice.parentNode.removeChild(notice); }, 5000);
             return;
         }
-        c.innerHTML = '<div style="padding:18px; text-align:center; color:var(--text-muted);"><div style="font-size:14px; font-weight:700; margin-bottom:6px;">Новости временно недоступны</div><div style="font-size:11px; opacity:.75;">Приложение работает. Попробуем обновить ленту позже.</div></div>';
+        c.innerHTML = '<div style="padding:18px; text-align:center; color:var(--text-muted);"><div style="font-size:14px; font-weight:700; margin-bottom:6px;">Новости временно недоступны</div><div style="font-size:11px; opacity:.75;">Не удалось загрузить данные. Попробуйте позже.</div></div>';
     }
 
     function renderNewsCards(articles) {
@@ -182,7 +173,7 @@
         });
 
         c.innerHTML = html;
-        window.__TT_NEWS_ARTICLES = articles; // Сохраняем для автовосстановления
+        window.__TT_NEWS_ARTICLES = articles; 
 
         var cards = c.querySelectorAll('.tt-news-card');
         cards.forEach(function (card) {
@@ -190,12 +181,11 @@
                 var idx = Number(card.getAttribute('data-news-index'));
                 if (window.__TT_NEWS_ARTICLES[idx]) openNewsLink(window.__TT_NEWS_ARTICLES[idx].link);
             });
+            card.addEventListener('touchstart', function () { card.style.opacity = '0.65'; }, { passive: true });
+            card.addEventListener('touchend', function () { card.style.opacity = '1'; }, { passive: true });
         });
     }
 
-    // ==========================================
-    // КЭШ И СЕТЬ
-    // ==========================================
     function readCache() {
         try {
             var raw = localStorage.getItem(CONFIG.cacheKey);
@@ -224,7 +214,10 @@
                 reject(new Error('timeout'));
             }, CONFIG.timeoutMs);
 
-            fetch(url, { method: 'GET', cache: 'no-store', signal: controller ? controller.signal : undefined })
+            var options = { method: 'GET', cache: 'no-store' };
+            if (controller) options.signal = controller.signal;
+
+            fetch(url, options)
             .then(function (res) {
                 if (finished) return null;
                 if (!res.ok) throw new Error('HTTP ' + res.status);
@@ -244,27 +237,53 @@
     function fetchSource(source) {
         var cacheBuster = Math.floor(Date.now() / 3600000); 
         var rawRssUrl = source.rss + (source.rss.indexOf('?') > -1 ? '&' : '?') + 'cb=' + cacheBuster;
-        return fetchWithTimeout(CONFIG.proxy + encodeURIComponent(rawRssUrl)).then(function (data) {
-            if (!data || !Array.isArray(data.items)) throw new Error('No items');
+        var proxyUrl = CONFIG.proxy + encodeURIComponent(rawRssUrl);
+
+        return fetchWithTimeout(proxyUrl).then(function (data) {
+            if (!data || !data.contents) throw new Error('No content');
+            
+            // Встроенный парсинг сырого XML прямо в браузере (не зависит от rss2json)
+            var parser = new DOMParser();
+            var xmlDoc = parser.parseFromString(data.contents, "text/xml");
+            var items = xmlDoc.getElementsByTagName("item");
             var articles = [];
-            data.items.forEach(function (item) {
-                var rawTitle = item.title || "";
+            
+            for (var i = 0; i < items.length; i++) {
+                var item = items[i];
+                var getTag = function(name) {
+                    var el = item.getElementsByTagName(name)[0];
+                    return el ? (el.textContent || el.innerHTML) : '';
+                };
+
+                var rawTitle = getTag("title");
                 var sourceName = source.name;
                 var cleanTitleText = rawTitle;
+                
                 var parts = rawTitle.split(' - ');
                 if (source.name === 'News' && parts.length > 1) {
                     sourceName = parts.pop().trim();
                     cleanTitleText = parts.join(' - ').trim();
                 }
+
                 var title = cleanText(cleanTitleText);
-                var description = cleanText(item.description || item.content || '');
-                if (!title || !isTableTennisNews(title, description)) return;
-                var date = parseDate(item.pubDate || item.isoDate || item.date);
-                if (!date || !isFresh(date)) return;
-                var link = item.link || item.guid || '';
-                if (!link) return;
-                articles.push({ title: title, link: link, source: sourceName.replace(/&quot;/g, '"'), date: date, priority: source.priority });
-            });
+                var description = cleanText(getTag("description"));
+
+                if (!title || !isTableTennisNews(title, description)) continue;
+
+                var date = parseDate(getTag("pubDate") || getTag("dc:date") || getTag("date"));
+                if (!date || !isFresh(date)) continue;
+
+                var link = getTag("link") || getTag("guid") || '';
+                if (!link) continue;
+
+                articles.push({
+                    title: title,
+                    link: link,
+                    source: sourceName.replace(/&quot;/g, '"'),
+                    date: date,
+                    priority: source.priority
+                });
+            }
             return articles;
         });
     }
@@ -298,9 +317,6 @@
         }).then(function () { isLoading = false; }, function () { isLoading = false; });
     }
 
-    // ==========================================
-    // ИНИЦИАЛИЗАЦИЯ И ЗАЩИТА (АВТОВОССТАНОВЛЕНИЕ)
-    // ==========================================
     window.loadTableTennisNews = function () {
         var cache = readCache();
         if (cache && Array.isArray(cache.items)) {
@@ -319,11 +335,16 @@
             window.__TT_NEWS_INTERVAL = setInterval(loadFreshNews, CONFIG.refreshMs);
         }
 
-        // ЗАЩИТА ОТ ПЕРЕРИСОВКИ DOM (Каждую секунду проверяем, не удалил ли app.js наши новости)
+        if (!window.__TT_NEWS_VISIBILITY) {
+            document.addEventListener('visibilitychange', function () {
+                if (document.visibilityState === 'visible') loadFreshNews();
+            });
+            window.__TT_NEWS_VISIBILITY = true;
+        }
+
         if (!window.__TT_NEWS_RESTORE_INTERVAL) {
             window.__TT_NEWS_RESTORE_INTERVAL = setInterval(function() {
                 var c = getContainer();
-                // Если контейнер есть, но внутри нет карточек и висит загрузка, а данные уже скачаны:
                 if (c && c.innerHTML.indexOf('tt-news-card') === -1 && window.__TT_NEWS_ARTICLES && window.__TT_NEWS_ARTICLES.length > 0) {
                     renderNewsCards(window.__TT_NEWS_ARTICLES);
                 }
@@ -331,5 +352,5 @@
         }
     };
 
-    console.log('[TT News] Модуль v7.0 (Detached DOM Protection) загружен!');
+    console.log('[TT News] Модуль v8.0 загружен (DOMParser + AllOrigins)');
 })();
