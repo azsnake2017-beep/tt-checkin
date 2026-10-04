@@ -1,7 +1,7 @@
 // ==========================================
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
-// Версия 14.0 (Bing News Aggregator — Прямые ссылки, обход блокировок)
+// Версия 15.0 (Bing RU + Bing World — Прямые ссылки, 100% анти-блок)
 // ==========================================
 
 (function () {
@@ -12,21 +12,20 @@
         maxAgeMs: 120 * 60 * 60 * 1000, // Новости до 5 дней
         maxArticles: 15,
         refreshMs: 5 * 60 * 1000,
-        cacheKey: 'tt_news_cache_v14',
+        cacheKey: 'tt_news_cache_v15',
         cacheTtlMs: 30 * 60 * 1000
     };
 
-    // Bing не блокирует прокси и отдает прямые ссылки на RU-сайты (без редиректов).
-    // ITTF добавлен для небольшого количества мировых новостей.
+    // Bing агрегирует все сайты, отдает прямые ссылки и не блокирует rss2json
     var SOURCES = [
         {
-            name: 'News', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&sortBy=Date&format=rss',
+            name: 'Bing RU', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&format=rss',
             priority: 100
         },
         {
-            name: 'ITTF',
-            rss: 'https://www.ittf.com/feed/',
+            name: 'Bing World',
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('table tennis') + '&cc=us&format=rss',
             priority: 80
         }
     ];
@@ -77,7 +76,7 @@
 
         var html = '';
         articles.forEach(function (article, index) {
-            var isWorld = article.sourceMarker === 'ITTF';
+            var isWorld = article.sourceMarker === 'Bing World';
             var sourceColor = isWorld ? '#f59e0b' : '#60a5fa';
             var sourceBg = isWorld ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59,130,246,.1)';
 
@@ -104,7 +103,7 @@
 
     function fetchSource(source) {
         var cb = Math.floor(Date.now() / 3600000); 
-        var fetchUrl = CONFIG.proxy + encodeURIComponent(source.rss + (source.rss.indexOf('?') > -1 ? '&' : '?') + 'cb=' + cb);
+        var fetchUrl = CONFIG.proxy + encodeURIComponent(source.rss + '&cb=' + cb);
 
         return fetch(fetchUrl)
             .then(function(res) { return res.json(); })
@@ -119,7 +118,7 @@
                     var cleanTitle = rawTitle;
 
                     // Извлекаем настоящее название издания из Bing News (например: "Победа - МатчТВ")
-                    if (source.name === 'News' && parts.length > 1) {
+                    if (parts.length > 1) {
                         realSource = parts.pop().trim();
                         cleanTitle = parts.join(' - ').trim();
                     }
@@ -129,8 +128,8 @@
                     
                     var tl = cleanTitle.toLowerCase();
                     
-                    // Блокируем мусор из мира большого тенниса
-                    if (tl.indexOf('большой теннис') !== -1 || tl.indexOf('уимблдон') !== -1 || tl.indexOf('медведев') !== -1 || tl.indexOf('джокович') !== -1 || tl.indexOf('синнер') !== -1 || tl.indexOf('рублев') !== -1) return;
+                    // Жесткая фильтрация мусора из большого тенниса
+                    if (tl.indexOf('большой теннис') !== -1 || tl.indexOf('уимблдон') !== -1 || tl.indexOf('медведев') !== -1 || tl.indexOf('джокович') !== -1 || tl.indexOf('синнер') !== -1 || tl.indexOf('рублев') !== -1 || tl.indexOf('алькарас') !== -1) return;
 
                     articles.push({
                         title: cleanTitle,
@@ -202,5 +201,5 @@
         }
     };
 
-    console.log('[TT News] Модуль v14.0 загружен (Bing + rss2json)');
+    console.log('[TT News] Модуль v15.0 загружен (Bing RU + World)');
 })();
