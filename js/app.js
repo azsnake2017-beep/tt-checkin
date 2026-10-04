@@ -1266,12 +1266,38 @@ function listenRatings() {
     
     var users = [];
     var myUid = getVerifiedUserId();
+    
+    // Переменные для поиска "Неудержимого" и "Гладиатора"
+    var maxStreak = 0; var streakUid = null;
+    var maxMatches = 0; var ironUid = null;
+
     snap.forEach(function(doc) {
       var d = doc.data();
       if (doc.id.match(/^(tg|google)_/) || d.isVerified) {
         users.push({ uid: doc.id, data: d });
+        
+        var s = parseInt(d.winStreak, 10) || 0;
+        if (s > maxStreak && s >= 3) { maxStreak = s; streakUid = doc.id; }
+        
+        var m = parseInt(d.matches, 10) || 0;
+        if (m > maxMatches && m >= 10) { maxMatches = m; ironUid = doc.id; }
       }
     });
+
+    // === ВЫДАЧА ДИНАМИЧЕСКИХ ТИТУЛОВ В РЕЙТИНГЕ ===
+    window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
+    for (var k in window.__TT_DYNAMIC_BADGES) {
+       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Неудержимый') === -1 && b.indexOf('Гладиатор') === -1; });
+    }
+    if (streakUid) {
+        window.__TT_DYNAMIC_BADGES[streakUid] = window.__TT_DYNAMIC_BADGES[streakUid] || [];
+        window.__TT_DYNAMIC_BADGES[streakUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: #fff; border:none; box-shadow: 0 0 8px rgba(239,68,68,0.5);">🔥 Неудержимый (' + maxStreak + ')</span>');
+    }
+    if (ironUid) {
+        window.__TT_DYNAMIC_BADGES[ironUid] = window.__TT_DYNAMIC_BADGES[ironUid] || [];
+        window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: #fff; border:none;">⚔️ Гладиатор</span>');
+    }
+    // ===============================================
 
     users.sort(function(a, b) { return (parseInt(b.data.elo, 10) || 1000) - (parseInt(a.data.elo, 10) || 1000); });
 
@@ -1282,16 +1308,17 @@ function listenRatings() {
         var docId = item.uid;
         if (docId === myUid) { 
             var currentTm = currentUserProfile.totalMinutes || 0;
-            for(var k in d) currentUserProfile[k] = d[k];
+            for(var pk in d) currentUserProfile[pk] = d[pk];
             currentUserProfile.totalMinutes = currentTm;
-            updateProfileDisplay(); 
         }
         var rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
         var wins = parseInt(d.wins, 10) || 0;
         var losses = parseInt(d.losses, 10) || 0;
         var matches = parseInt(d.matches, 10) || 0;
         var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(docId), rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
+        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
+        var customBadge = getCustomBadge(docId); // Подтягиваем новые огненные бейджи
+        var rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
         
         var streakHtml = (d.winStreak && d.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + d.winStreak + '</span>' : '';
         var deltaNum = parseInt(d.lastEloDelta, 10) || 0;
@@ -1302,6 +1329,8 @@ function listenRatings() {
       } catch(e) {}
     });
     listEl.innerHTML = html || '<span class="empty-note">Сыграйте первый матч!</span>';
+    
+    if (typeof updateProfileDisplay === 'function') updateProfileDisplay(); 
   }, function(err) {});
 }
 
