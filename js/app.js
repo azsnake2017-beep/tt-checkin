@@ -1420,7 +1420,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var isFirstStart = !sessionStorage.getItem('tt_app_loaded');
   if (isFirstStart) {
     sessionStorage.setItem('tt_app_loaded', 'true');
-    window.__MIN_LOADER_TIME = Date.now() + 6000; // Держим экран 6 секунд для чтения
+    window.__MIN_LOADER_TIME = Date.now() + 8000; // Держим экран 8 секунд для чтения
   } else {
     window.__MIN_LOADER_TIME = 0; // При рефреше грузимся моментально
   }
