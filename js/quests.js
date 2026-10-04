@@ -9,7 +9,7 @@ function getRecentMondayId() {
   return 'week_' + d.getTime();
 }
 
-// База заданий с повышенными наградами: Легкий — 25 Эло, Средний — 50 Эло, Тяжелый — 100 Эло
+// База заданий с повышенными наградами
 var QUEST_POOL = [
   // ЛЕГКИЕ (Уровень 1) - Награда: 25 Эло
   { id: 'q_e1', lvl: 1, title: 'Разминка', desc: 'Сыграть 3 любых матча за неделю (результат не важен).', target: 3, action: 'play_match', rewardElo: 25, rewardBadge: 'Разминающийся 🏓', badgeDays: 7, color: '#10b981' },
@@ -70,19 +70,44 @@ window.renderQuestBoard = function() {
     return;
   }
 
-  // 3. Генерация 3 случайных заданий (Раз в неделю по понедельникам)
+  // 3. Генерация 3 заданий с защитой от реролла
   var currentWeekId = getRecentMondayId();
-  if (u.questRollDate !== currentWeekId || !u.questChoices) {
-    var poolE = QUEST_POOL.filter(function(x){return x.lvl===1;});
-    var poolM = QUEST_POOL.filter(function(x){return x.lvl===2;});
-    var poolH = QUEST_POOL.filter(function(x){return x.lvl===3;});
+  
+  if (u.questRollDate !== currentWeekId || !u.questChoices || u.questChoices.length === 0) {
     
-    var e = poolE[Math.floor(Math.random() * poolE.length)];
-    var m = poolM[Math.floor(Math.random() * poolM.length)];
-    var h = poolH[Math.floor(Math.random() * poolH.length)];
+    // Пытаемся достать квесты из кэша (если база данных еще грузится)
+    var cachedQuests = localStorage.getItem('tt_quests_' + uid + '_' + currentWeekId);
+    if (cachedQuests) {
+        try { u.questChoices = JSON.parse(cachedQuests); } catch(e) {}
+    }
     
-    u.questChoices = [e, m, h];
-    db.collection('users').doc(uid).update({ questChoices: u.questChoices, questRollDate: currentWeekId });
+    // Если кэша нет — генерируем на основе математического хэша (Анти-Чит)
+    if (!u.questChoices || u.questChoices.length === 0) {
+        var poolE = QUEST_POOL.filter(function(x){return x.lvl===1;});
+        var poolM = QUEST_POOL.filter(function(x){return x.lvl===2;});
+        var poolH = QUEST_POOL.filter(function(x){return x.lvl===3;});
+        
+        // Хэш-функция: превращает UID и дату в конкретное число
+        function getSeededQuest(pool, seedStr) {
+            var hash = 0;
+            for (var i = 0; i < seedStr.length; i++) {
+                hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
+                hash = hash & hash;
+            }
+            return pool[Math.abs(hash) % pool.length];
+        }
+        
+        // Квесты привязаны к UID игрока. Они не изменятся до следующей недели.
+        var e = getSeededQuest(poolE, uid + currentWeekId + 'lvl1');
+        var m = getSeededQuest(poolM, uid + currentWeekId + 'lvl2');
+        var h = getSeededQuest(poolH, uid + currentWeekId + 'lvl3');
+        
+        u.questChoices = [e, m, h];
+        localStorage.setItem('tt_quests_' + uid + '_' + currentWeekId, JSON.stringify(u.questChoices));
+    }
+    
+    // Отправляем в базу, чтобы закрепить результат
+    db.collection('users').doc(uid).update({ questChoices: u.questChoices, questRollDate: currentWeekId }).catch(function(){});
   }
 
   // 4. Рендер выбора из 3 заданий
