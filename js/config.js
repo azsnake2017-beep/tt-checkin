@@ -395,3 +395,57 @@ function getInventoryRowHtml(icon, label, value, searchPrefix) {
   var url = 'https://www.google.com/search?q=' + query;
   return '<div class="inventory-item"><div class="inventory-item-left"><span>' + icon + '</span> <span style="color: var(--text-muted);">' + label + '</span> <span class="inventory-value">' + cleanHtml(value) + '</span></div><button class="btn-info" style="width: 22px; height: 22px; font-size: 11px; padding: 0;" onclick="openExternalLink(\'' + url + '\')">i</button></div>';
 }
+
+// ==========================================
+// СИСТЕМА ДОСТИЖЕНИЙ И КОНФЕТТИ
+// ==========================================
+
+function triggerConfetti() {
+  if (typeof confetti !== 'function') return;
+  
+  var duration = 3000;
+  var end = Date.now() + duration;
+
+  (function frame() {
+    confetti({
+      particleCount: 5,
+      angle: 60,
+      spread: 55,
+      origin: { x: 0, y: 0.8 },
+      colors: ['#f59e0b', '#3b82f6', '#10b981']
+    });
+    confetti({
+      particleCount: 5,
+      angle: 120,
+      spread: 55,
+      origin: { x: 1, y: 0.8 },
+      colors: ['#f59e0b', '#3b82f6', '#10b981']
+    });
+
+    if (Date.now() < end) {
+      requestAnimationFrame(frame);
+    }
+  }());
+}
+
+function showAchievement(title, icon, name, desc) {
+  document.getElementById('ach-title').innerText = title;
+  document.getElementById('ach-icon').innerText = icon;
+  document.getElementById('ach-name').innerText = name;
+  document.getElementById('ach-desc').innerText = desc;
+  
+  var modal = document.getElementById('achievement-modal');
+  if (modal) modal.style.display = 'flex';
+  
+  // Включаем вибрацию (если это Telegram Web App)
+  if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+    window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
+  }
+  
+  triggerConfetti();
+}
+
+function closeAchievementModal() {
+  var modal = document.getElementById('achievement-modal');
+  if (modal) modal.style.display = 'none';
+}
