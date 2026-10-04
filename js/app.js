@@ -1416,35 +1416,47 @@ document.addEventListener('DOMContentLoaded', function() {
     "Если мяч отскочил криво,<br>Сразу бей по столу с силой.<br>Покажи всем эту яму,<br>Что не видит больше никто.<br>Стол кривой, полы кривые,<br>И планета не под тем углом,<br>Только твой удар прекрасен,<br>Жаль, что физика всё врет."
   ];
 
-  var isFirstStart = !sessionStorage.getItem('tt_app_loaded');
+ var isFirstStart = !sessionStorage.getItem('tt_app_loaded');
   var randomJoke = ttJokes[Math.floor(Math.random() * ttJokes.length)];
   var jokeEl = document.getElementById('preloader-joke');
   var bar = document.getElementById('preloader-bar');
   var txt = document.getElementById('preloader-text');
   
-  // Устанавливаем единый текст загрузки
   if (txt) txt.innerText = 'Загрузка приложения...';
 
   if (isFirstStart) {
     sessionStorage.setItem('tt_app_loaded', 'true');
     
-    // Показываем стих в красивой рамке
+    // Красиво разбиваем стих на отдельные строки для каскадного появления
     if (jokeEl) {
-      jokeEl.innerHTML = randomJoke;
-      jokeEl.style.display = 'block';
+      var rawLines = randomJoke.split('<br>');
+      var linesHtml = '';
+      for (var i = 0; i < rawLines.length; i++) {
+        // Каждая следующая строчка появляется с задержкой в 0.3 секунды
+        var delay = i * 0.3;
+        linesHtml += '<div class="joke-line" style="animation-delay: ' + delay + 's;">' + rawLines[i] + '</div>';
+      }
+      jokeEl.innerHTML = linesHtml;
+      jokeEl.style.display = 'flex';
     }
     
-    // Запускаем плавную полоску ровно на 8 секунд (linear - равномерное движение)
+    // Плавный ход полоски ровно на 8 секунд
     if (bar) {
       bar.style.transition = 'width 8s linear'; 
       setTimeout(function() { bar.style.width = '100%'; }, 50);
     }
     
-    // Глушим функцию изменения прогресса, чтобы внутренние процессы приложения не сбивали наши 8 секунд
     window.setAppProgress = function(percent, text) {}; 
     
-    // Ровно через 8 секунд плавно открываем приложение без смены текста
+    // Ровно через 8 секунд: вибрация + плавное закрытие
     setTimeout(function() {
+      // Тактильный отклик (Haptic Feedback) в Telegram
+      try {
+        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
+        }
+      } catch(e) {}
+
       var loader = document.getElementById('app-preloader');
       if (loader) {
         loader.style.transition = 'opacity 0.6s ease-out';
@@ -1457,7 +1469,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 8000);
     
   } else {
-    // ЕСЛИ ЭТО РЕФРЕШ СТРАНИЦЫ - ГРУЗИМСЯ МОМЕНТАЛЬНО
+    // Если это рефреш — открываемся мгновенно без анимаций
     if (jokeEl) jokeEl.style.display = 'none';
     if (bar) bar.style.width = '100%';
     
