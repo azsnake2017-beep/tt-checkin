@@ -1320,19 +1320,35 @@ function listenLeaderboard() {
 
     items.sort(function(a, b) { return (b.data.totalMinutes || 0) - (a.data.totalMinutes || 0); });
 
+    // === ВЫДАЧА ДИНАМИЧЕСКОГО ТИТУЛА "КОРОЛЬ ПАРКА" ===
+    window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
+    for (var k in window.__TT_DYNAMIC_BADGES) {
+       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король парка') === -1; });
+    }
+    if (items.length > 0 && items[0].data.totalMinutes > 0) {
+        var kingUid = items[0].uid;
+        window.__TT_DYNAMIC_BADGES[kingUid] = window.__TT_DYNAMIC_BADGES[kingUid] || [];
+        window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5);">👑 Король парка</span>');
+    }
+    // ==================================================
+
     var html = '', rank = 1;
     items.forEach(function(item) {
       try {
         var d = item.data;
         var docId = item.uid;
         var hours = ((d.totalMinutes || 0) / 60).toFixed(1), rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '', customBadge = getCustomBadge(docId);
+        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
+        var customBadge = getCustomBadge(docId); // Подтягиваем корону, если она есть
         
         html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">' + hours + ' ч (' + (d.sessions || 0) + ' игр)</span><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
         rank++;
       } catch (e) {}
     });
     listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
+    
+    // Обновляем шапку профиля, чтобы игрок сразу увидел, что стал Королем
+    if (typeof updateProfileDisplay === 'function') updateProfileDisplay(); 
   }, function(err) {});
 }
 
