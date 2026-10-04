@@ -79,33 +79,38 @@
   .preloader-text { margin-top: 16px; font-size: 14px; color: var(--text-muted, #94a3b8); font-weight: 600; letter-spacing: 0.5px; animation: textPulse 2s infinite ease-in-out; }
   @keyframes textPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
   
-  /* Красивое оформление стиха-цитаты */
+ /* Красивое оформление стиха-цитаты (Glassmorphism) */
   .preloader-joke { 
-    margin-top: 30px; 
-    font-size: 14px; 
-    color: #e2e8f0; 
+    margin-top: 28px; 
+    font-size: 13px; 
+    color: #f8fafc; 
     font-style: italic; 
-    text-align: left; 
-    line-height: 1.5; 
-    padding: 12px 16px 12px 20px;
-    background: linear-gradient(90deg, rgba(255,255,255,0.08) 0%, rgba(255,255,255,0.01) 100%);
-    border-left: 4px solid #8b5cf6;
-    border-radius: 0 12px 12px 0;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    text-align: center; /* Центрируем стих для изящности */
+    line-height: 1.6; 
+    padding: 16px 20px;
+    background: rgba(30, 41, 59, 0.6); /* Полупрозрачный темный фон */
+    backdrop-filter: blur(12px); /* Эффект матового стекла */
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(139, 92, 246, 0.3); /* Тонкая фиолетовая рамка со всех сторон */
+    border-radius: 16px; /* Мягкие скругления */
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
     position: relative;
-    width: 280px;
+    width: 85%;
+    max-width: 320px;
+    z-index: 2;
   }
   
-  /* Декоративная кавычка */
+  /* Элегантная кавычка по центру сверху */
   .preloader-joke::before {
     content: '«';
     position: absolute;
-    top: -12px;
-    left: -14px;
-    font-size: 44px;
-    color: #8b5cf6;
+    top: -26px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 64px;
+    color: rgba(139, 92, 246, 0.4);
     font-family: Georgia, serif;
-    opacity: 0.5;
+    z-index: -1;
   }
 </style>
 
