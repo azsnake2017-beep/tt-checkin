@@ -77,14 +77,25 @@ function getWindDirection(degrees) {
   return directions[Math.round((degrees % 360) / 45) % 8];
 }
 
+window.__TT_DYNAMIC_BADGES = {}; // Глобальное хранилище переходящих титулов
+
 function getCustomBadge(uid) {
   if (!uid) return '';
-  if (uid === 'google_XUE0DYY6WoMfkI3TmG7o2HqPUEm1') return '<span class="platform-badge badge-teacher">Учитель 🎓</span>';
-  if (uid === 'tg_750209461') return '<span class="platform-badge badge-temshik">Темщик 🕶️</span>';
-  if (uid === 'tg_6126323287') return '<span class="platform-badge badge-hockey">Хоккеист 🏒</span>';
-  if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') return '<span class="platform-badge badge-bot">Бот 🤖</span>';
-  if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') return '<span class="platform-badge badge-coach">Тренер 📋</span>';
-  return '';
+  var badges = [];
+  
+  // 1. Статические бейджи (Назначаются навсегда конкретным UID)
+  if (uid === 'google_XUE0DYY6WoMfkI3TmG7o2HqPUEm1') badges.push('<span class="platform-badge badge-teacher">Учитель 🎓</span>');
+  if (uid === 'tg_750209461') badges.push('<span class="platform-badge badge-temshik">Темщик 🕶️</span>');
+  if (uid === 'tg_6126323287') badges.push('<span class="platform-badge badge-hockey">Хоккеист 🏒</span>');
+  if (uid === 'google_qW1ZyRnvm4UvEO3tMdQpx5ltcQM2') badges.push('<span class="platform-badge badge-bot">Бот 🤖</span>');
+  if (uid === 'tg_5170799634' || uid === 'google_vu6OeCWP8WXqNVUkI1hDPTD13ri1') badges.push('<span class="platform-badge badge-coach">Тренер 📋</span>');
+
+  // 2. Динамические переходящие титулы (Выдаются на лету лидерам рейтинга)
+  if (window.__TT_DYNAMIC_BADGES[uid]) {
+    badges = badges.concat(window.__TT_DYNAMIC_BADGES[uid]);
+  }
+
+  return badges.join(' ');
 }
 
 function getPlayerStatus(elo) {
