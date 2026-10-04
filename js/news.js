@@ -16,22 +16,57 @@
         cacheTtlMs: 30 * 60 * 1000
     };
 
-    // Три разных запроса к Bing RU для максимального охвата российских спортивных сайтов
+   // 10 независимых запросов к Bing RU для максимального охвата
     var SOURCES = [
         {
-            name: 'Bing Основной', 
+            name: 'Bing Главное', 
             rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&format=rss',
             priority: 100
         },
         {
             name: 'Bing Пинг-понг', 
             rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('пинг-понг') + '&cc=ru&format=rss',
+            priority: 95
+        },
+        {
+            name: 'Bing WTT', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('WTT настольный теннис') + '&cc=ru&format=rss',
             priority: 90
         },
         {
-            name: 'Bing Турниры', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('WTT настольный теннис') + '&cc=ru&format=rss',
+            name: 'Bing ФНТР', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('ФНТР') + '&cc=ru&format=rss',
+            priority: 85
+        },
+        {
+            name: 'Bing ITTF', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('ITTF настольный теннис') + '&cc=ru&format=rss',
             priority: 80
+        },
+        {
+            name: 'Bing Чемпионат', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('чемпионат России настольный теннис') + '&cc=ru&format=rss',
+            priority: 75
+        },
+        {
+            name: 'Bing Турниры', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('турнир настольный теннис') + '&cc=ru&format=rss',
+            priority: 70
+        },
+        {
+            name: 'Bing Сборная', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('сборная России настольный теннис') + '&cc=ru&format=rss',
+            priority: 65
+        },
+        {
+            name: 'Bing Лига Про', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('Лига Про настольный теннис') + '&cc=ru&format=rss',
+            priority: 60
+        },
+        {
+            name: 'Bing Игроки', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('теннисист настольный теннис') + '&cc=ru&format=rss',
+            priority: 55
         }
     ];
 
