@@ -1436,17 +1436,37 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }
   
-  window.setAppProgress = function(percent, text) {
+ window.setAppProgress = function(percent, text) {
     var bar = document.getElementById('preloader-bar');
     var txt = document.getElementById('preloader-text');
-    if (bar) bar.style.width = percent + '%';
+    
+    // Обновляем текст и ширину
     if (txt && text) txt.innerText = text;
+    if (bar) {
+        // Мы используем setTimeout(0), чтобы браузер успел применить CSS transition
+        setTimeout(function() {
+            bar.style.width = percent + '%';
+        }, 0);
+    }
+    
+    // Когда дошли до 100%
     if (percent >= 100) {
-      // Вычисляем, сколько еще нужно подождать до 6 секунд
-      var delay = window.__MIN_LOADER_TIME ? Math.max(150, window.__MIN_LOADER_TIME - Date.now()) : 150;
+      if (txt) txt.innerText = 'Готово! Запуск...';
+      
+      // Вычисляем, сколько еще нужно подождать до 8 секунд
+      var delay = window.__MIN_LOADER_TIME ? Math.max(400, window.__MIN_LOADER_TIME - Date.now()) : 400;
+      
       setTimeout(function() {
         var loader = document.getElementById('app-preloader');
-        if (loader) loader.classList.add('hidden');
+        if (loader) {
+            // Плавно растворяем экран загрузки
+            loader.style.transition = 'opacity 0.4s ease-out';
+            loader.style.opacity = '0';
+            setTimeout(function() {
+                loader.classList.add('hidden');
+                loader.style.display = 'none';
+            }, 400); // Ждем, пока прозрачность не станет 0
+        }
       }, delay);
     }
   };
