@@ -79,40 +79,23 @@
   .preloader-text { margin-top: 16px; font-size: 14px; color: var(--text-muted, #94a3b8); font-weight: 600; letter-spacing: 0.5px; animation: textPulse 2s infinite ease-in-out; }
   @keyframes textPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
   
- /* Красивое оформление стиха-цитаты (Glassmorphism) */
+ /* Мягкий текст, аккуратно вписанный в фон */
   .preloader-joke { 
-    margin-top: 28px; 
-    font-size: 13px; 
-    color: #f8fafc; 
+    margin-top: 30px; 
+    font-size: 14px; 
+    color: #94a3b8; /* Приглушенный серо-голубой цвет, не режет глаз */
     font-style: italic; 
-    text-align: center; /* Центрируем стих для изящности */
+    text-align: center; 
     line-height: 1.6; 
-    padding: 16px 20px;
-    background: rgba(30, 41, 59, 0.6); /* Полупрозрачный темный фон */
-    backdrop-filter: blur(12px); /* Эффект матового стекла */
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(139, 92, 246, 0.3); /* Тонкая фиолетовая рамка со всех сторон */
-    border-radius: 16px; /* Мягкие скругления */
-    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    position: relative;
-    width: 85%;
+    width: 100%;
     max-width: 320px;
-    z-index: 2;
+    padding: 0 20px;
+    /* Легкая темная тень создает эффект того, что текст слегка вдавлен в фон */
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); 
+    letter-spacing: 0.3px;
   }
   
-  /* Элегантная кавычка по центру сверху */
-  .preloader-joke::before {
-    content: '«';
-    position: absolute;
-    top: -26px;
-    left: 50%;
-    transform: translateX(-50%);
-    font-size: 64px;
-    color: rgba(139, 92, 246, 0.4);
-    font-family: Georgia, serif;
-    z-index: -1;
-  }
-</style>
+ </style>
 
 <div id="app-preloader" class="app-preloader">
   <img src="logo.webp" alt="ЧМЗ" class="preloader-logo" onerror="this.style.display='none'">
