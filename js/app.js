@@ -1441,12 +1441,14 @@ document.addEventListener('DOMContentLoaded', function() {
       setInterval(renderAll, 30000); 
       setInterval(monitorSessions, 60000); 
 
-      // Погода стартует, когда экран уже свободен
+    // Погода стартует, когда экран уже свободен
       if (typeof loadParkWeather === 'function') { 
           try { loadParkWeather(); } catch(e) {} 
           setInterval(loadParkWeather, 600000); 
       }
       
+      // ЗАПУСК НОВОСТЕЙ
+      if (typeof loadTableTennisNews === 'function') loadTableTennisNews();
           
   }, 100); 
 });
