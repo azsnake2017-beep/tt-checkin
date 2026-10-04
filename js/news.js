@@ -1,7 +1,7 @@
 // ==========================================
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
-// Версия 12.0 (Google News Aggregator + rss2json)
+// Версия 13.0 (Строго прямые RU-источники, анти-блок)
 // ==========================================
 
 (function () {
@@ -9,22 +9,26 @@
 
     var CONFIG = {
         proxy: 'https://api.rss2json.com/v1/api.json?rss_url=',
-        maxAgeMs: 72 * 60 * 60 * 1000, // 3 дня
+        maxAgeMs: 120 * 60 * 60 * 1000, // Увеличили до 5 дней (в РФ пишут реже)
         maxArticles: 15,
         refreshMs: 5 * 60 * 1000,
-        cacheKey: 'tt_news_cache_v12',
+        cacheKey: 'tt_news_cache_v13',
         cacheTtlMs: 30 * 60 * 1000
     };
 
-    // Google News агрегирует ВСЕ спортивные сайты сам. Нам не нужно опрашивать их по отдельности.
+    // Только прямые российские сайты. Открываются без VPN у всех провайдеров.
     var SOURCES = [
         {
-            name: 'Google RU',
-            rss: 'https://news.google.com/rss/search?q=' + encodeURIComponent('настольный теннис when:7d') + '&hl=ru&gl=RU&ceid=RU:ru'
+            name: 'Sportbox',
+            rss: 'https://news.sportbox.ru/Vidy_sporta/nastolniy_tennis/rss'
         },
         {
-            name: 'Google World',
-            rss: 'https://news.google.com/rss/search?q=' + encodeURIComponent('table tennis when:7d') + '&hl=en-US&gl=US&ceid=US:en'
+            name: 'Sport.ru',
+            rss: 'https://www.sport.ru/rssfeeds/news.rss'
+        },
+        {
+            name: 'Lenta.ru',
+            rss: 'https://lenta.ru/rss/sport'
         }
     ];
 
@@ -41,6 +45,10 @@
 
     function escapeHtml(value) {
         return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
+    }
+
+    function cleanText(value) {
+        return String(value || '').replace(/<[^>]*>/g, ' ').replace(/&quot;/gi, '"').replace(/&amp;/gi, '&').replace(/&#39;/gi, "'").replace(/\s+/g, ' ').trim();
     }
 
     function formatDate(timestamp) {
@@ -70,13 +78,9 @@
 
         var html = '';
         articles.forEach(function (article, index) {
-            var isWorld = article.sourceMarker === 'Google World';
-            var sourceColor = isWorld ? '#f59e0b' : '#60a5fa';
-            var sourceBg = isWorld ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59,130,246,.1)';
-
             html += '<div class="card tt-news-card" data-news-index="' + index + '" style="border-color:rgba(59,130,246,.3); padding:12px; margin-bottom:10px; cursor:pointer; transition:opacity .15s;">' +
                     '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">' +
-                    '<div style="font-size:10px; background:' + sourceBg + '; color:' + sourceColor + '; padding:3px 8px; border-radius:6px; font-weight:800; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;">📰 ' + escapeHtml(article.source) + '</div>' +
+                    '<div style="font-size:10px; background:rgba(59,130,246,.1); color:#60a5fa; padding:3px 8px; border-radius:6px; font-weight:800; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;">📰 ' + escapeHtml(article.source) + '</div>' +
                     '<div style="font-size:11px; color:var(--text-muted); font-weight:600; white-space:nowrap;">' + escapeHtml(formatDate(article.date)) + '</div>' +
                     '</div><div style="font-size:14px; font-weight:600; color:#f8fafc; line-height:1.4;">' + escapeHtml(article.title) + '</div></div>';
         });
@@ -96,8 +100,8 @@
     }
 
     function fetchSource(source) {
-        var cb = Math.floor(Date.now() / 3600000); // Сброс кэша
-        var fetchUrl = CONFIG.proxy + encodeURIComponent(source.rss + '&cb=' + cb);
+        var cb = Math.floor(Date.now() / 3600000); 
+        var fetchUrl = CONFIG.proxy + encodeURIComponent(source.rss + (source.rss.indexOf('?') > -1 ? '&' : '?') + 'cb=' + cb);
 
         return fetch(fetchUrl)
             .then(function(res) { return res.json(); })
@@ -106,31 +110,24 @@
                 
                 var articles = [];
                 data.items.forEach(function(item) {
-                    var rawTitle = item.title || "";
-                    var parts = rawTitle.split(' - ');
-                    var realSource = source.name;
-                    var cleanTitle = rawTitle;
-
-                    // Google News пишет название сайта в конце (например: "Турнир завершен - Чемпионат")
-                    if (parts.length > 1) {
-                        realSource = parts.pop().trim();
-                        cleanTitle = parts.join(' - ').trim();
-                    }
-
-                    // Базовая очистка мусора в заголовке
-                    cleanTitle = cleanTitle.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-
+                    var cleanTitle = cleanText(item.title || "");
+                    var description = cleanText(item.description || item.content || '');
+                    
                     var dateMs = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).getTime() : Date.now();
                     
-                    // Фильтр от тенниса большого
-                    var tl = cleanTitle.toLowerCase();
+                    var tl = (cleanTitle + ' ' + description).toLowerCase();
+                    
+                    // Жесткий фильтр: оставляем только настольный теннис (особенно важно для Lenta.ru)
+                    var isPingPong = tl.indexOf('настольн') !== -1 || tl.indexOf('пинг-понг') !== -1 || tl.indexOf('пинг понг') !== -1;
+                    if (!isPingPong) return;
+
+                    // Отсекаем большой теннис
                     if (tl.indexOf('большой теннис') !== -1 || tl.indexOf('уимблдон') !== -1 || tl.indexOf('медведев') !== -1) return;
 
                     articles.push({
                         title: cleanTitle,
                         link: item.link,
-                        source: realSource,
-                        sourceMarker: source.name,
+                        source: source.name,
                         date: dateMs
                     });
                 });
@@ -151,10 +148,8 @@
             var all = [];
             results.forEach(function(res) { all = all.concat(res); });
             
-            // Сортировка по дате (самые свежие сверху)
             all.sort(function(a, b) { return b.date - a.date; });
             
-            // Удаление дубликатов по названию
             var unique = [];
             var seen = {};
             all.forEach(function(a) {
@@ -198,5 +193,5 @@
         }
     };
 
-    console.log('[TT News] Модуль v12.0 загружен (Надежный Google News)');
+    console.log('[TT News] Модуль v13.0 загружен (Прямые RU-источники)');
 })();
