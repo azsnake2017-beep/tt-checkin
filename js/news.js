@@ -1,7 +1,7 @@
 // ==========================================
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
-// Версия 15.0 (Bing RU + Bing World — Прямые ссылки, 100% анти-блок)
+// Версия 16.0 (Только RU источники — Усиленный сбор через Bing)
 // ==========================================
 
 (function () {
@@ -12,20 +12,25 @@
         maxAgeMs: 120 * 60 * 60 * 1000, // Новости до 5 дней
         maxArticles: 15,
         refreshMs: 5 * 60 * 1000,
-        cacheKey: 'tt_news_cache_v15',
+        cacheKey: 'tt_news_cache_v16',
         cacheTtlMs: 30 * 60 * 1000
     };
 
-    // Bing агрегирует все сайты, отдает прямые ссылки и не блокирует rss2json
+    // Три разных запроса к Bing RU для максимального охвата российских спортивных сайтов
     var SOURCES = [
         {
-            name: 'Bing RU', 
+            name: 'Bing Основной', 
             rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&format=rss',
             priority: 100
         },
         {
-            name: 'Bing World',
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('table tennis') + '&cc=us&format=rss',
+            name: 'Bing Пинг-понг', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('пинг-понг') + '&cc=ru&format=rss',
+            priority: 90
+        },
+        {
+            name: 'Bing Турниры', 
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('WTT настольный теннис') + '&cc=ru&format=rss',
             priority: 80
         }
     ];
@@ -76,13 +81,9 @@
 
         var html = '';
         articles.forEach(function (article, index) {
-            var isWorld = article.sourceMarker === 'Bing World';
-            var sourceColor = isWorld ? '#f59e0b' : '#60a5fa';
-            var sourceBg = isWorld ? 'rgba(245, 158, 11, 0.1)' : 'rgba(59,130,246,.1)';
-
             html += '<div class="card tt-news-card" data-news-index="' + index + '" style="border-color:rgba(59,130,246,.3); padding:12px; margin-bottom:10px; cursor:pointer; transition:opacity .15s;">' +
                     '<div style="display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:8px;">' +
-                    '<div style="font-size:10px; background:' + sourceBg + '; color:' + sourceColor + '; padding:3px 8px; border-radius:6px; font-weight:800; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;">📰 ' + escapeHtml(article.source) + '</div>' +
+                    '<div style="font-size:10px; background:rgba(59,130,246,.1); color:#60a5fa; padding:3px 8px; border-radius:6px; font-weight:800; text-transform:uppercase; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;">📰 ' + escapeHtml(article.source) + '</div>' +
                     '<div style="font-size:11px; color:var(--text-muted); font-weight:600; white-space:nowrap;">' + escapeHtml(formatDate(article.date)) + '</div>' +
                     '</div><div style="font-size:14px; font-weight:600; color:#f8fafc; line-height:1.4;">' + escapeHtml(article.title) + '</div></div>';
         });
@@ -114,10 +115,10 @@
                 data.items.forEach(function(item) {
                     var rawTitle = item.title || "";
                     var parts = rawTitle.split(' - ');
-                    var realSource = source.name;
+                    var realSource = "Новости";
                     var cleanTitle = rawTitle;
 
-                    // Извлекаем настоящее название издания из Bing News (например: "Победа - МатчТВ")
+                    // Извлекаем настоящее название российского издания из Bing News (например: "Чемпионат", "Спорт-Экспресс")
                     if (parts.length > 1) {
                         realSource = parts.pop().trim();
                         cleanTitle = parts.join(' - ').trim();
@@ -135,7 +136,6 @@
                         title: cleanTitle,
                         link: item.link,
                         source: realSource,
-                        sourceMarker: source.name,
                         date: dateMs,
                         priority: source.priority
                     });
@@ -160,6 +160,7 @@
             var unique = [];
             var seen = {};
             all.forEach(function(a) {
+                // Удаляем дубликаты, которые могут найтись по разным запросам
                 var sig = a.title.toLowerCase().replace(/[^а-яa-z]/gi, '').substring(0, 30);
                 if (!seen[sig] && a.date >= (Date.now() - CONFIG.maxAgeMs)) {
                     seen[sig] = true;
@@ -201,5 +202,5 @@
         }
     };
 
-    console.log('[TT News] Модуль v15.0 загружен (Bing RU + World)');
+    console.log('[TT News] Модуль v16.0 загружен (Расширенный поиск RU)');
 })();
