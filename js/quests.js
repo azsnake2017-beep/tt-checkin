@@ -1,21 +1,23 @@
-// js/quests.js — Движок еженедельных заданий и наград
+// ==========================================
+// js/quests.js — Движок еженедельных заданий (Параллельное выполнение)
+// ==========================================
 
-// Жесткая привязка к понедельникам: получаем уникальный ID недели (00:00 понедельника)
+// Жесткая привязка к понедельникам: получаем уникальный ID недели
 function getRecentMondayId() {
   var d = new Date();
-  var day = d.getDay() || 7; // Делаем воскресенье 7-м днем недели
+  var day = d.getDay() || 7; 
   d.setHours(0, 0, 0, 0);
-  d.setDate(d.getDate() - (day - 1)); // Откатываем дату до ближайшего прошедшего понедельника
+  d.setDate(d.getDate() - (day - 1)); 
   return 'week_' + d.getTime();
 }
 
-// База заданий с повышенными наградами
+// База заданий
 var QUEST_POOL = [
   // ЛЕГКИЕ (Уровень 1) - Награда: 25 Эло
   { id: 'q_e1', lvl: 1, title: 'Разминка', desc: 'Сыграть 3 любых матча за неделю (результат не важен).', target: 3, action: 'play_match', rewardElo: 25, rewardBadge: 'Разминающийся 🏓', badgeDays: 7, color: '#10b981' },
   { id: 'q_e2', lvl: 1, title: 'Командный дух', desc: 'Сыграть 2 парных матча (2х2).', target: 2, action: 'play_doubles', rewardElo: 25, rewardBadge: 'В паре 👥', badgeDays: 7, color: '#10b981' },
-  { id: 'q_e3', lvl: 1, title: 'Любитель баланса', desc: 'Сыграть матч, который закончится со счетом 3:2 (победа или поражение).', target: 1, action: 'play_3_2', rewardElo: 25, rewardBadge: 'Боец ⚔️', badgeDays: 7, color: '#10b981' },
-  { id: 'q_e4', lvl: 1, title: 'Турнирный боец', desc: 'Сыграть матч на выходных (суббота или воскресенье).', target: 1, action: 'play_weekend', rewardElo: 25, rewardBadge: 'Уикенд-воин 🏕', badgeDays: 7, color: '#10b981' },
+  { id: 'q_e3', lvl: 1, title: 'Любитель баланса', desc: 'Сыграть матч, который закончится со счетом 3:2.', target: 1, action: 'play_3_2', rewardElo: 25, rewardBadge: 'Боец ⚔️', badgeDays: 7, color: '#10b981' },
+  { id: 'q_e4', lvl: 1, title: 'Турнирный боец', desc: 'Сыграть матч на выходных (сб или вс).', target: 1, action: 'play_weekend', rewardElo: 25, rewardBadge: 'Уикенд-воин 🏕', badgeDays: 7, color: '#10b981' },
   
   // СРЕДНИЕ (Уровень 2) - Награда: 50 Эло
   { id: 'q_m1', lvl: 2, title: 'Хет-трик', desc: 'Одержать победу в 3 матчах.', target: 3, action: 'win_match', rewardElo: 50, rewardBadge: 'Хет-трик 🎯', badgeDays: 7, color: '#f59e0b' },
@@ -24,7 +26,7 @@ var QUEST_POOL = [
   { id: 'q_m4', lvl: 2, title: 'Стальные нервы', desc: 'Выиграть тяжелейший матч со счетом 3:2.', target: 1, action: 'win_3_2', rewardElo: 50, rewardBadge: 'Стальные нервы 🥶', badgeDays: 7, color: '#f59e0b' },
   
   // СЛОЖНЫЕ (Уровень 3) - Награда: 100 Эло
-  { id: 'q_h1', lvl: 3, title: 'Убийца гигантов', desc: 'Победить игрока, чей рейтинг строго выше вашего на 50+ очков.', target: 1, action: 'win_higher_elo', rewardElo: 100, rewardBadge: 'Давид 🗡️', badgeDays: 14, color: '#f43f5e' },
+  { id: 'q_h1', lvl: 3, title: 'Убийца гигантов', desc: 'Победить игрока, чей рейтинг выше вашего на 50+ очков.', target: 1, action: 'win_higher_elo', rewardElo: 100, rewardBadge: 'Давид 🗡️', badgeDays: 14, color: '#f43f5e' },
   { id: 'q_h2', lvl: 3, title: 'Тотальная доминация', desc: 'Одержать 3 победы со счетом 3:0.', target: 3, action: 'win_flawless', rewardElo: 100, rewardBadge: 'Доминатор 👑', badgeDays: 14, color: '#f43f5e' },
   { id: 'q_h3', lvl: 3, title: 'Гладиатор', desc: 'Одержать серию из 5 побед подряд.', target: 5, action: 'win_streak', rewardElo: 100, rewardBadge: 'Гладиатор 🛡️', badgeDays: 14, color: '#f43f5e' },
   { id: 'q_h4', lvl: 3, title: 'Легенда парного', desc: 'Выиграть 4 парных матча.', target: 4, action: 'win_doubles', rewardElo: 100, rewardBadge: 'Дуэт-Легенда 🏆', badgeDays: 14, color: '#f43f5e' }
@@ -48,112 +50,95 @@ window.renderQuestBoard = function() {
     if (typeof updateProfileDisplay === 'function') updateProfileDisplay();
   }
 
-  // 2. Рендер активного квеста
-  if (u.activeQuest) {
-    var q = u.activeQuest;
-    var percent = Math.min(100, Math.round((q.progress / q.target) * 100));
-    var isDone = q.progress >= q.target;
-
-    var html = '<div class="quest-choice-card" style="cursor: default; border-left: 4px solid ' + q.color + ';">' +
-                 '<div class="quest-header"><span>' + q.title + '</span><span style="color: ' + q.color + ';">' + q.progress + ' / ' + q.target + '</span></div>' +
-                 '<div class="quest-desc">' + q.desc + '</div>' +
-                 '<div class="quest-progress-bar"><div class="quest-progress-fill" style="width: ' + percent + '%; background: ' + q.color + '; box-shadow: 0 0 8px ' + q.color + ';"></div></div>' +
-                 '<div class="quest-rewards" style="margin-top: 12px;"><span>Награда: </span><span class="quest-reward-elo">+' + q.rewardElo + ' Эло</span><span class="quest-reward-badge">' + q.rewardBadge + ' (' + q.badgeDays + ' дн.)</span></div>';
-    
-    if (isDone) {
-      html += '<button class="btn btn-join" style="margin-top: 14px; background: ' + q.color + ';" onclick="claimQuestReward()">🎁 Забрать награду</button>';
-    } else {
-      html += '<button class="btn-cancel-modal" style="margin-top: 10px; width: 100%; text-align: center; color: var(--text-muted);" onclick="abandonQuest()">Отменить задание (до понедельника)</button>';
-    }
-    html += '</div>';
-    content.innerHTML = html;
-    return;
-  }
-
-  // 3. Генерация 3 заданий с защитой от реролла
+  // 2. Выдача квестов на неделю (С защитой от реролла)
   var currentWeekId = getRecentMondayId();
   
-  if (u.questRollDate !== currentWeekId || !u.questChoices || u.questChoices.length === 0) {
-    
-    // Пытаемся достать квесты из кэша (если база данных еще грузится)
-    var cachedQuests = localStorage.getItem('tt_quests_' + uid + '_' + currentWeekId);
+  if (u.questRollDate !== currentWeekId || !u.activeQuests || u.activeQuests.length === 0) {
+    var cachedQuests = localStorage.getItem('tt_quests_v2_' + uid + '_' + currentWeekId);
     if (cachedQuests) {
-        try { u.questChoices = JSON.parse(cachedQuests); } catch(e) {}
+        try { u.activeQuests = JSON.parse(cachedQuests); } catch(e) {}
     }
     
-    // Если кэша нет — генерируем на основе математического хэша (Анти-Чит)
-    if (!u.questChoices || u.questChoices.length === 0) {
+    if (!u.activeQuests || u.activeQuests.length === 0) {
         var poolE = QUEST_POOL.filter(function(x){return x.lvl===1;});
         var poolM = QUEST_POOL.filter(function(x){return x.lvl===2;});
         var poolH = QUEST_POOL.filter(function(x){return x.lvl===3;});
         
-        // Хэш-функция: превращает UID и дату в конкретное число
+        // Математический хэш UID + Дата
         function getSeededQuest(pool, seedStr) {
             var hash = 0;
             for (var i = 0; i < seedStr.length; i++) {
                 hash = ((hash << 5) - hash) + seedStr.charCodeAt(i);
                 hash = hash & hash;
             }
-            return pool[Math.abs(hash) % pool.length];
+            // Клонируем объект, чтобы не менять глобальный пул
+            return JSON.parse(JSON.stringify(pool[Math.abs(hash) % pool.length])); 
         }
         
-        // Квесты привязаны к UID игрока. Они не изменятся до следующей недели.
         var e = getSeededQuest(poolE, uid + currentWeekId + 'lvl1');
         var m = getSeededQuest(poolM, uid + currentWeekId + 'lvl2');
         var h = getSeededQuest(poolH, uid + currentWeekId + 'lvl3');
         
-        u.questChoices = [e, m, h];
-        localStorage.setItem('tt_quests_' + uid + '_' + currentWeekId, JSON.stringify(u.questChoices));
+        // Инициализируем прогресс для каждого квеста
+        e.progress = 0; e.isClaimed = false;
+        m.progress = 0; m.isClaimed = false;
+        h.progress = 0; h.isClaimed = false;
+        
+        u.activeQuests = [e, m, h];
+        localStorage.setItem('tt_quests_v2_' + uid + '_' + currentWeekId, JSON.stringify(u.activeQuests));
     }
     
-    // Отправляем в базу, чтобы закрепить результат
-    db.collection('users').doc(uid).update({ questChoices: u.questChoices, questRollDate: currentWeekId }).catch(function(){});
+    // Записываем новые квесты и УДАЛЯЕМ следы старой системы выбора
+    db.collection('users').doc(uid).update({ 
+        activeQuests: u.activeQuests, 
+        questRollDate: currentWeekId,
+        activeQuest: firebase.firestore.FieldValue.delete(),
+        questChoices: firebase.firestore.FieldValue.delete()
+    }).catch(function(){});
   }
 
-  // 4. Рендер выбора из 3 заданий
-  var htmlChoices = '<div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-align: center;">Выберите одно задание на эту неделю:</div>';
-  u.questChoices.forEach(function(c) {
-    htmlChoices += '<div class="quest-choice-card quest-level-' + c.lvl + '" onclick="acceptQuest(\'' + c.id + '\')">' +
-                     '<div class="quest-header"><span>' + c.title + '</span><span style="font-size: 11px; opacity: 0.7;">Сложность: ' + c.lvl + '</span></div>' +
-                     '<div class="quest-desc">' + c.desc + '</div>' +
-                     '<div class="quest-rewards"><span class="quest-reward-elo">+' + c.rewardElo + ' Эло</span><span class="quest-reward-badge">' + c.rewardBadge + '</span></div>' +
-                   '</div>';
+  // 3. Рендер 3 заданий на доске
+  var htmlChoices = '<div style="font-size: 13px; font-weight: 600; color: var(--text-muted); margin-bottom: 12px; text-align: center;">Ваши задания на эту неделю:</div>';
+  
+  u.activeQuests.forEach(function(q) {
+    var percent = Math.min(100, Math.round((q.progress / q.target) * 100));
+    var isDone = q.progress >= q.target;
+    var isClaimed = q.isClaimed;
+
+    htmlChoices += '<div class="quest-choice-card" style="cursor: default; border-left: 4px solid ' + (isClaimed ? '#475569' : q.color) + '; opacity: ' + (isClaimed ? '0.6' : '1') + ';">' +
+                     '<div class="quest-header"><span>' + q.title + '</span>';
+                     
+    if (isClaimed) {
+        htmlChoices += '<span style="color: #10b981; font-weight: 800;">Выполнено ✅</span>';
+    } else {
+        htmlChoices += '<span style="color: ' + q.color + ';">' + q.progress + ' / ' + q.target + '</span>';
+    }
+    
+    htmlChoices += '</div><div class="quest-desc">' + q.desc + '</div>';
+    
+    if (!isClaimed) {
+        htmlChoices += '<div class="quest-progress-bar"><div class="quest-progress-fill" style="width: ' + percent + '%; background: ' + q.color + '; box-shadow: 0 0 8px ' + q.color + ';"></div></div>';
+    }
+    
+    htmlChoices += '<div class="quest-rewards" style="margin-top: 12px;"><span>Награда: </span><span class="quest-reward-elo">+' + q.rewardElo + ' Эло</span><span class="quest-reward-badge">' + q.rewardBadge + ' (' + q.badgeDays + ' дн.)</span></div>';
+
+    if (isDone && !isClaimed) {
+        htmlChoices += '<button class="btn btn-join" style="margin-top: 14px; background: ' + q.color + ';" onclick="claimQuestReward(\'' + q.id + '\')">🎁 Забрать награду</button>';
+    }
+
+    htmlChoices += '</div>';
   });
+  
   content.innerHTML = htmlChoices;
 };
 
-// Принять задание
-window.acceptQuest = function(qId) {
-  var uid = getVerifiedUserId(); if (!uid || !currentUserProfile.questChoices) return;
-  var selected = currentUserProfile.questChoices.find(function(x) { return x.id === qId; });
-  if (!selected) return;
-  
-  selected.progress = 0;
-  db.collection('users').doc(uid).update({ activeQuest: selected, questChoices: firebase.firestore.FieldValue.delete() }).then(function() {
-    currentUserProfile.activeQuest = selected;
-    renderQuestBoard();
-    if (typeof customAlert === 'function') customAlert("🎯 Задание принято!\n\nПрогресс будет заполняться автоматически в течение недели. Удачи!");
-  });
-};
-
-// Отказаться от задания
-window.abandonQuest = function() {
-  if (typeof openConfirmModal === 'function') {
-    openConfirmModal('Вы уверены, что хотите отменить задание?<br><br><span style="font-size: 12px; color: var(--accent-red);">Новое задание можно будет выбрать только в следующий понедельник!</span>', function() {
-      var uid = getVerifiedUserId();
-      db.collection('users').doc(uid).update({ activeQuest: firebase.firestore.FieldValue.delete() }).then(function() {
-        currentUserProfile.activeQuest = null;
-        renderQuestBoard();
-      });
-    });
-  }
-};
-
-// Забрать награду
-window.claimQuestReward = function() {
+// Забрать награду за конкретный квест
+window.claimQuestReward = function(qId) {
   var uid = getVerifiedUserId(); 
-  var q = currentUserProfile.activeQuest; 
-  if (!uid || !q || q.progress < q.target) return;
+  if (!uid || !currentUserProfile.activeQuests) return;
+  
+  var q = currentUserProfile.activeQuests.find(function(x) { return x.id === qId; });
+  if (!q || q.progress < q.target || q.isClaimed) return;
   
   var currentElo = parseInt(currentUserProfile.elo, 10) || 1000;
   var newElo = currentElo + q.rewardElo;
@@ -161,17 +146,18 @@ window.claimQuestReward = function() {
   var expiryDate = Date.now() + (q.badgeDays * 24 * 60 * 60 * 1000);
 
   var newBadge = { text: q.rewardBadge, color: q.color, expires: expiryDate };
+  
+  q.isClaimed = true; // Отмечаем квест как полученный
 
   db.collection('users').doc(uid).update({
     elo: newElo,
     questsCompleted: completedCount,
     activeBadge: newBadge,
-    activeQuest: firebase.firestore.FieldValue.delete()
+    activeQuests: currentUserProfile.activeQuests
   }).then(function() {
     currentUserProfile.elo = newElo;
     currentUserProfile.questsCompleted = completedCount;
     currentUserProfile.activeBadge = newBadge;
-    currentUserProfile.activeQuest = null;
     
     if (typeof customAlert === 'function') customAlert("🎉 ПОЗДРАВЛЯЕМ!\n\nВы получили +" + q.rewardElo + " Эло и уникальную плашку в профиль.");
     if (typeof updateProfileDisplay === 'function') updateProfileDisplay();
@@ -183,7 +169,7 @@ window.claimQuestReward = function() {
   });
 };
 
-// Глобальный триггер прогресса
+// Глобальный триггер прогресса (Проверяет сразу все квесты)
 window.triggerQuestAction = function(uid, actionType, amount) {
   if (!uid) return;
   var increment = amount || 1;
@@ -193,23 +179,34 @@ window.triggerQuestAction = function(uid, actionType, amount) {
     if (!doc.exists) return;
     var data = doc.data();
     
-    if (data.activeQuest && data.activeQuest.action === actionType && data.activeQuest.progress < data.activeQuest.target) {
-      data.activeQuest.progress += increment;
+    if (data.activeQuests && Array.isArray(data.activeQuests)) {
+      var changed = false;
+      var newlyCompleted = [];
       
-      if (data.activeQuest.progress > data.activeQuest.target) {
-          data.activeQuest.progress = data.activeQuest.target;
-      }
-      
-      ref.update({ activeQuest: data.activeQuest });
-      
-      if (uid === (typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null)) {
-        currentUserProfile.activeQuest = data.activeQuest;
-        
-        if (typeof renderQuestBoard === 'function') renderQuestBoard();
-        
-        if (data.activeQuest.progress >= data.activeQuest.target && typeof sendDevicePushNotification === 'function') {
-          sendDevicePushNotification("Квест выполнен!", "Вы достигли цели: " + data.activeQuest.title + ". Зайдите в задания за наградой!");
+      data.activeQuests.forEach(function(q) {
+        if (q.action === actionType && q.progress < q.target && !q.isClaimed) {
+          q.progress += increment;
+          if (q.progress >= q.target) {
+              q.progress = q.target;
+              newlyCompleted.push(q);
+          }
+          changed = true;
         }
+      });
+      
+      if (changed) {
+        ref.update({ activeQuests: data.activeQuests }).then(function() {
+          if (uid === (typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null)) {
+            currentUserProfile.activeQuests = data.activeQuests;
+            
+            if (typeof renderQuestBoard === 'function') renderQuestBoard();
+            
+            if (newlyCompleted.length > 0 && typeof customAlert === 'function') {
+                var titles = newlyCompleted.map(function(c){return c.title;}).join(', ');
+                customAlert("🎯 Квест выполнен: " + titles + "!\n\nЗайдите в раздел заданий, чтобы забрать награду.");
+            }
+          }
+        });
       }
     }
   });
