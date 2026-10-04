@@ -24,6 +24,21 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
 
+  <style>
+  /* Жестко глушим прелоадер, если страница просто обновляется */
+  html.fast-reload #app-preloader { 
+    display: none !important; 
+  }
+</style>
+
+<script>
+  // Этот скрипт срабатывает МГНОВЕННО, еще до того, как страница отрисуется.
+  // Если человек обновляет страницу, мы вешаем класс fast-reload, и экран загрузки даже не появляется.
+  if (sessionStorage.getItem('tt_app_loaded')) {
+    document.documentElement.classList.add('fast-reload');
+  }
+</script>
+  
 </head>
 <body data-theme="dark">
 <!-- ЭКРАН ЗАГРУЗКИ -->
