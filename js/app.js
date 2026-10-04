@@ -251,7 +251,30 @@ function updateProfileDisplay() {
   var adminTag = isAdmin ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
   var customBadge = getCustomBadge(currentUserProfile.uid);
   var elo = parseInt(currentUserProfile.elo, 10) || 1000;
-
+// ДЕТЕКТОР НОВОГО РАНГА
+  var currentStatus = getPlayerStatus(elo);
+  var savedStatus = localStorage.getItem('tt_last_known_status_' + currentUserProfile.uid);
+  
+  if (savedStatus && savedStatus !== currentStatus) {
+    // Извлекаем чистый текст и иконку из строки статуса (Например, из "Любитель 👟")
+    var parts = currentStatus.split(' ');
+    var icon = parts.pop() || '🏆';
+    var cleanStatusName = parts.join(' ');
+    
+    // Если статус изменился, проверяем, не упал ли рейтинг (мы не поздравляем с падением ранга)
+    var savedElo = parseInt(localStorage.getItem('tt_last_known_elo_' + currentUserProfile.uid), 10) || 0;
+    if (elo > savedElo) {
+      setTimeout(function() {
+        if (typeof showAchievement === 'function') {
+          showAchievement('🏆 Повышение ранга!', icon, cleanStatusName, 'Ваш рейтинг достиг ' + elo + ' Эло. Так держать!');
+        }
+      }, 1000); // Небольшая задержка, чтобы интерфейс успел прогрузиться
+    }
+  }
+  
+  // Обновляем память
+  localStorage.setItem('tt_last_known_status_' + currentUserProfile.uid, currentStatus);
+  localStorage.setItem('tt_last_known_elo_' + currentUserProfile.uid, elo);
   var authScreen = document.getElementById('mandatory-auth-screen'); 
   if (authScreen) authScreen.style.display = 'none';
 
