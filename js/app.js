@@ -2039,3 +2039,91 @@ window.closeBadgeInfoModal = function() {
   var modal = document.getElementById('badge-info-modal');
   if (modal) modal.style.display = 'none';
 };
+
+// ==========================================
+// WOW-ЭФФЕКТЫ: Вибрация, Конфетти и 3D-наклон
+// ==========================================
+
+// Универсальная функция тактильного отклика
+window.vibrate = function(style) {
+  try {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.impactOccurred(style || 'light');
+    }
+  } catch(e) {}
+};
+
+// Функция уведомления (success, warning, error)
+window.vibrateNotification = function(type) {
+  try {
+    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
+      window.Telegram.WebApp.HapticFeedback.notificationOccurred(type || 'success');
+    }
+  } catch(e) {}
+};
+
+// Взрыв конфетти
+window.fireConfetti = function(event) {
+  vibrateNotification('success');
+  if (typeof confetti === 'function') {
+    var duration = 2000;
+    var end = Date.now() + duration;
+    var frame = function() {
+      confetti({
+        particleCount: 5,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.8 },
+        colors: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'],
+        zIndex: 12000
+      });
+      confetti({
+        particleCount: 5,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.8 },
+        colors: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'],
+        zIndex: 12000
+      });
+      if (Date.now() < end) requestAnimationFrame(frame);
+    };
+    frame();
+  }
+};
+
+// 3D Tilt эффект для карточки профиля
+function initTiltEffect() {
+  var card = document.querySelector('.profile-card');
+  if (!card) return;
+
+  var handleMove = function(e) {
+    var rect = card.getBoundingClientRect();
+    var x = e.clientX !== undefined ? e.clientX : e.touches[0].clientX;
+    var y = e.clientY !== undefined ? e.clientY : e.touches[0].clientY;
+    
+    var posX = x - rect.left;
+    var posY = y - rect.top;
+    
+    var centerX = rect.width / 2;
+    var centerY = rect.height / 2;
+    
+    var rotateX = ((posY - centerY) / centerY) * -8; // Макс 8 градусов
+    var rotateY = ((posX - centerX) / centerX) * 8;
+    
+    card.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.02, 1.02, 1.02)';
+    card.style.transition = 'none';
+  };
+
+  var handleReset = function() {
+    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    card.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+  };
+
+  card.addEventListener('mousemove', handleMove);
+  card.addEventListener('touchmove', handleMove, {passive: true});
+  card.addEventListener('mouseleave', handleReset);
+  card.addEventListener('touchend', handleReset);
+}
+
+// Запускаем 3D-эффект через секунду после старта
+setTimeout(initTiltEffect, 1000);
