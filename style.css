@@ -279,31 +279,56 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
   backdrop-filter: blur(4px); 
   -webkit-backdrop-filter: blur(4px); 
   display: none; 
-  align-items: center; 
+  align-items: flex-end; /* Изменили: теперь окна прижимаются к низу */
   justify-content: center; 
-  padding: 20px; 
+  padding: 0; /* Изменили: убрали отступы, чтобы прилипало к краю */
   z-index: 1001; 
 }
+
 .modal-box { 
   background: var(--card-bg); 
   border: 1px solid var(--card-border); 
+  border-bottom: none; /* Убрали нижнюю рамку */
   width: 100%; 
-  max-width: 360px; 
-  border-radius: 20px; 
-  padding: 20px; 
-  box-shadow: 0 10px 25px rgba(0,0,0,0.2); 
+  max-width: 440px; /* Расширили под ширину контейнера приложения */
+  border-radius: 24px 24px 0 0; /* Скруглили только верхние углы */
+  padding: 24px 20px 20px 20px; /* Дали место сверху под ползунок */
+  box-shadow: 0 -10px 25px rgba(0,0,0,0.3); /* Тень теперь светит вверх */
   display: flex; 
   flex-direction: column; 
   gap: 14px; 
   text-align: center; 
-  max-height: 85vh; 
+  max-height: 90vh; 
   overflow-y: auto; 
   overscroll-behavior: contain;
   color: var(--text); 
-  animation: popInModal 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+  margin: 0 auto;
+  position: relative;
+  animation: slideUpSheet 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards; /* Новая анимация выезда снизу */
 }
+
+/* Декоративный ползунок сверху шторки (как в iOS) */
+.modal-box::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 40px;
+  height: 4px;
+  background: var(--text-muted);
+  opacity: 0.3;
+  border-radius: 10px;
+  pointer-events: none;
+}
+
+/* Фикс для окна профиля (у него был жестко задан padding: 0 в HTML) */
+#user-info-modal .modal-box {
+  padding-top: 24px !important;
+}
+
 @keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-@keyframes popInModal { from { opacity: 0; transform: scale(0.9) translateY(15px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+@keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
 
 .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .btn-opt { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 12px 4px; border-radius: 10px; font-size: 13px; font-weight: 600; }
