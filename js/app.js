@@ -2209,12 +2209,14 @@ document.addEventListener('touchmove', function(evt) {
 document.addEventListener('touchend', function(evt) {
   if (!activeSheet) return;
   
-  var overlay = activeSheet.closest('.modal-overlay');
+  // ВАЖНО: Запоминаем текущее окно до того, как сбросим глобальную переменную!
+  var currentBox = activeSheet; 
+  var overlay = currentBox.closest('.modal-overlay');
 
   if (currentYDiff > 80) { 
     // === СТЯНУЛИ ВНИЗ: ПЛАВНО ЗАКРЫВАЕМ ===
-    activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-    activeSheet.style.transform = 'translateY(100%)'; 
+    currentBox.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    currentBox.style.transform = 'translateY(100%)'; 
     vibrate('light'); 
     
     // Плавно гасим темный фон
@@ -2223,31 +2225,31 @@ document.addEventListener('touchend', function(evt) {
       overlay.style.opacity = '0';
     }
     
+    // Очищаем стили через 300мс, используя сохраненную переменную currentBox
     setTimeout(function() {
       if (overlay) {
         overlay.style.display = 'none';
-        overlay.style.opacity = ''; // Сбрасываем для следующего открытия
+        overlay.style.opacity = ''; 
         overlay.style.transition = '';
       }
-      activeSheet.style.transform = ''; 
-      activeSheet.style.transition = '';
-      activeSheet.style.animation = ''; // Возвращаем анимацию открытия
+      currentBox.style.transform = ''; 
+      currentBox.style.transition = '';
+      currentBox.style.animation = ''; 
     }, 300); 
 
   } else {
     // === СТЯНУЛИ СЛАБО: ПЛАВНО ОТПРЫГИВАЕМ ОБРАТНО ===
-    activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-    activeSheet.style.transform = 'translateY(0)';
+    currentBox.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    currentBox.style.transform = 'translateY(0)';
     
     setTimeout(function() {
-      if (activeSheet) {
-        activeSheet.style.transform = ''; 
-        activeSheet.style.transition = '';
-        activeSheet.style.animation = ''; 
-      }
+      currentBox.style.transform = ''; 
+      currentBox.style.transition = '';
+      currentBox.style.animation = ''; 
     }, 300);
   }
   
+  // Теперь безопасно сбрасываем глобальные трекеры свайпа
   sheetYDown = null;
   activeSheet = null;
   currentYDiff = 0;
