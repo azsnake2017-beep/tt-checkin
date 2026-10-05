@@ -2182,66 +2182,69 @@ setInterval(function() {
 }, 1000); // Проверяем каждую секунду
 
 // ==========================================
-// УНИВЕРСАЛЬНЫЙ СВАЙП ДЛЯ ЗАКРЫТИЯ ШТОРОК
+// УНИВЕРСАЛЬНЫЙ СВАЙП ДЛЯ ЗАКРЫТИЯ ШТОРОК (ПРОДВИНУТЫЙ)
 // ==========================================
 var sheetYDown = null;
 var activeSheet = null;
+var currentYDiff = 0; // Надежная переменная для хранения сдвига
 
 document.addEventListener('touchstart', function(evt) {
-  if (evt.touches.length > 1) return; // Игнорируем мультитач
+  if (evt.touches.length > 1) return;
   var box = evt.target.closest('.modal-box');
   if (!box) return;
   
-  // Если мы свайпаем внутри области, которая имеет свой внутренний скролл (например, история матчей),
-  // мы не тянем шторку, пока скролл не окажется в самом верху.
+  // Если у нас скроллящийся контент внутри модалки (например турнирная таблица), 
+  // ждем, пока его не доскроллят в самый верх
   var scrollable = evt.target.closest('div[style*="overflow-y: auto"]');
   if (scrollable && scrollable.scrollTop > 0) return;
 
   sheetYDown = evt.touches[0].clientY;
   activeSheet = box;
+  currentYDiff = 0;
+  activeSheet.style.transition = 'none'; // Отключаем плавность, чтобы шторка сразу прилипла к пальцу
 }, {passive: true});
 
 document.addEventListener('touchmove', function(evt) {
   if (!sheetYDown || !activeSheet) return;
+  
   var yUp = evt.touches[0].clientY;
-  var yDiff = yUp - sheetYDown; // Положительное значение = тянем вниз
+  currentYDiff = Math.max(0, yUp - sheetYDown); // Разрешаем тянуть ТОЛЬКО ВНИЗ
 
-  if (yDiff > 0 && activeSheet.scrollTop <= 0) {
-    // Двигаем шторку за пальцем
-    activeSheet.style.transform = 'translateY(' + yDiff + 'px)';
-    activeSheet.style.transition = 'none';
-    
-    // Глушим pull-to-refresh браузера
-    if (evt.cancelable) evt.preventDefault();
+  if (currentYDiff > 0) {
+    activeSheet.style.transform = 'translateY(' + currentYDiff + 'px)';
+    if (evt.cancelable) evt.preventDefault(); // Блокируем дергание самого приложения Telegram
   }
 }, {passive: false});
 
 document.addEventListener('touchend', function(evt) {
   if (!activeSheet) return;
   
-  var currentTransform = activeSheet.style.transform;
-  if (currentTransform && currentTransform.includes('translateY')) {
-    // Извлекаем цифру из translateY(150px)
-    var yDragged = parseInt(currentTransform.replace(/[^\d.]/g, ''), 10);
+  if (currentYDiff > 80) { // Если стянули больше 80 пикселей - закрываем!
+    activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    activeSheet.style.transform = 'translateY(100%)'; // Убираем шторку за экран
+    vibrate('light'); 
     
-    if (yDragged > 80) {
-      // Если стянули больше чем на 80px — закрываем шторку!
-      activeSheet.style.transform = 'translateY(100%)';
-      activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-      vibrate('light'); // Мягкий щелчок закрытия
-      
-      var overlay = activeSheet.closest('.modal-overlay');
-      setTimeout(function() {
-        if (overlay) overlay.style.display = 'none';
+    var overlay = activeSheet.closest('.modal-overlay');
+    setTimeout(function() {
+      if (overlay) overlay.style.display = 'none';
+      activeSheet.style.transform = ''; 
+      activeSheet.style.transition = '';
+    }, 300); // Ждем завершения анимации закрытия
+  } else {
+    // Стянули слабо - отпрыгиваем обратно
+    activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    activeSheet.style.transform = 'translateY(0)';
+    
+    // Очищаем хвосты после того, как шторка вернулась на место
+    setTimeout(function() {
+      if (activeSheet) {
         activeSheet.style.transform = ''; 
         activeSheet.style.transition = '';
-      }, 300);
-    } else {
-      // Если стянули слабо — отпрыгиваем обратно
-      activeSheet.style.transform = 'translateY(0)';
-      activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-    }
+      }
+    }, 300);
   }
+  
   sheetYDown = null;
   activeSheet = null;
+  currentYDiff = 0;
 });
