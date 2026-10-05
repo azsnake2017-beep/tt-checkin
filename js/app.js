@@ -296,8 +296,8 @@ function updateProfileDisplay() {
   document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
 // Отображение активного квестового бейджа в профиле
   var questBadgeHtml = (currentUserProfile.activeBadge && currentUserProfile.activeBadge.expires > Date.now()) 
-    ? '<span class="temporary-badge" style="color: ' + currentUserProfile.activeBadge.color + '; border-color: ' + currentUserProfile.activeBadge.color + ';">' + currentUserProfile.activeBadge.text + '</span>' 
-    : '';
+  ? '<span class="temporary-badge" style="color: ' + currentUserProfile.activeBadge.color + '; border-color: ' + currentUserProfile.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + currentUserProfile.activeBadge.text + '\')">' + currentUserProfile.activeBadge.text + '</span>' 
+  : '';
 
   document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge + questBadgeHtml;
 
@@ -657,7 +657,7 @@ function showUserInfoModal(uid) {
 
    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
-    var qBadge = (u.activeBadge && u.activeBadge.expires > Date.now()) ? '<span class="temporary-badge" style="color: ' + u.activeBadge.color + '; border-color: ' + u.activeBadge.color + ';">' + cleanHtml(u.activeBadge.text) + '</span>' : '';
+    var qBadge = (u.activeBadge && u.activeBadge.expires > Date.now()) ? '<span class="temporary-badge" style="color: ' + u.activeBadge.color + '; border-color: ' + u.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(u.activeBadge.text) + '\')">' + cleanHtml(u.activeBadge.text) + '</span>' : '';
     
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + qBadge;
     
@@ -711,11 +711,11 @@ function showUserInfoModal(uid) {
     var confirmedInvites = Math.max(0, parseInt(u.confirmedInvitesCount, 10) || 0);
     var pendingInvites = Math.max(0, parseInt(u.pendingInvitesCount, 10) || 0);
 
-    var ambassadorBadge = (confirmedInvites >= 5) 
-      ? '<span class="platform-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; margin-left: 4px; font-weight: 700; border: none; padding: 2px 7px; border-radius: 6px; font-size: 11px;">Амбассадор 🤝</span>' 
-      : '';
+   var ambassadorBadge = (confirmedInvites >= 5) 
+  ? '<span class="platform-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; margin-left: 4px; font-weight: 700; border: none; padding: 2px 7px; border-radius: 6px; font-size: 11px; cursor: pointer;" onclick="showBadgeInfo(\'🤝 Амбассадор\')">Амбассадор 🤝</span>' 
+  : '';
 
-    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px; cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + ambassadorBadge;
 
@@ -1291,11 +1291,11 @@ function listenRatings() {
     }
     if (streakUid) {
         window.__TT_DYNAMIC_BADGES[streakUid] = window.__TT_DYNAMIC_BADGES[streakUid] || [];
-        window.__TT_DYNAMIC_BADGES[streakUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: #fff; border:none; box-shadow: 0 0 8px rgba(239,68,68,0.5);">🔥 Несокрушимый (' + maxStreak + ')</span>');
+        window.__TT_DYNAMIC_BADGES[streakUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: #fff; border:none; box-shadow: 0 0 8px rgba(239,68,68,0.5); cursor: pointer;" onclick="showBadgeInfo(\'🔥 Несокрушимый\')">🔥 Несокрушимый (' + maxStreak + ')</span>');
     }
     if (ironUid) {
         window.__TT_DYNAMIC_BADGES[ironUid] = window.__TT_DYNAMIC_BADGES[ironUid] || [];
-        window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: #fff; border:none;">⚔️ Гладиатор</span>');
+window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: #fff; border:none; cursor: pointer;" onclick="showBadgeInfo(\'⚔️ Гладиатор\')">⚔️ Гладиатор</span>');
     }
     // ===============================================
 
@@ -1357,7 +1357,7 @@ function listenLeaderboard() {
     if (items.length > 0 && items[0].data.totalMinutes > 0) {
         var kingUid = items[0].uid;
         window.__TT_DYNAMIC_BADGES[kingUid] = window.__TT_DYNAMIC_BADGES[kingUid] || [];
-        window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5);">👑 Король стола</span>');
+        window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5); cursor: pointer;" onclick="showBadgeInfo(\'👑 Король стола\')">👑 Король стола</span>');
     }
     // ==================================================
 
