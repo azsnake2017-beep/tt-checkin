@@ -1316,7 +1316,7 @@ window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="ba
         var losses = parseInt(d.losses, 10) || 0;
         var matches = parseInt(d.matches, 10) || 0;
         var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
+        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
         var customBadge = getCustomBadge(docId); // Подтягиваем новые огненные бейджи
         var rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
         
@@ -1367,7 +1367,7 @@ function listenLeaderboard() {
         var d = item.data;
         var docId = item.uid;
         var hours = ((d.totalMinutes || 0) / 60).toFixed(1), rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin">Админ ⭐</span>' : '';
+        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
         var customBadge = getCustomBadge(docId); // Подтягиваем корону, если она есть
         
         html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">' + hours + ' ч (' + (d.sessions || 0) + ' игр)</span><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
