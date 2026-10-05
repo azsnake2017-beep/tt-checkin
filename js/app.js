@@ -2127,3 +2127,49 @@ function initTiltEffect() {
 
 // Запускаем 3D-эффект через секунду после старта
 setTimeout(initTiltEffect, 1000);
+
+// ==========================================
+// DYNAMIC ISLAND CONTROLLER
+// ==========================================
+setInterval(function() {
+  var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  // Если локации еще не загрузились или пользователь не вошел - отбой
+  if (!uid || typeof locationsData === 'undefined') return;
+
+  var activePlayer = null;
+  var activeLoc = '';
+
+  // Ищем текущего пользователя в массиве players в Парке и в ДК
+  ['park', 'vostok'].forEach(function(loc) {
+    if (locationsData[loc] && locationsData[loc].players) {
+      var p = locationsData[loc].players.find(function(x) { return x.uid === uid; });
+      if (p) { 
+        activePlayer = p; 
+        activeLoc = loc; 
+      }
+    }
+  });
+
+  var island = document.getElementById('dynamic-island');
+  var timerEl = document.getElementById('di-timer');
+  
+  if (activePlayer && island && timerEl) {
+    // Пользователь за столом — считаем минуты
+    var diffMs = Date.now() - activePlayer.time;
+    var mins = Math.floor(diffMs / 60000);
+    var locName = activeLoc === 'park' ? '🌳 В парке' : '🏛 В ДК';
+    
+    timerEl.innerText = locName + ': ' + mins + ' мин';
+    
+    // Если капсула спрятана — плавно выкатываем её
+    if (!island.classList.contains('visible')) {
+      island.classList.remove('hidden');
+      // Небольшая задержка перед добавлением класса для срабатывания анимации
+      setTimeout(function() { island.classList.add('visible'); }, 10);
+    }
+  } else if (island && island.classList.contains('visible')) {
+    // Пользователь покинул стол — прячем капсулу
+    island.classList.remove('visible');
+    setTimeout(function() { island.classList.add('hidden'); }, 500); // Ждем конца CSS-анимации
+  }
+}, 1000); // Проверяем каждую секунду
