@@ -2263,3 +2263,30 @@ document.addEventListener('touchend', function(evt) {
   activeSheet = null;
   currentYDiff = 0;
 });
+
+// Универсальная функция плавного закрытия любого модального окна
+window.closeModalSmoothly = function(modalId) {
+  var overlay = document.getElementById(modalId);
+  if (!overlay) return;
+  var box = overlay.querySelector('.modal-box');
+
+  if (box) {
+    box.style.animation = 'none';
+    box.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    box.style.transform = 'translateY(100%)';
+  }
+  
+  overlay.style.transition = 'opacity 0.3s ease';
+  overlay.style.opacity = '0';
+
+  setTimeout(function() {
+    overlay.style.display = 'none';
+    overlay.style.opacity = '';
+    overlay.style.transition = '';
+    if (box) {
+      box.style.transform = '';
+      box.style.transition = '';
+      box.style.animation = '';
+    }
+  }, 300);
+};
