@@ -670,5 +670,15 @@
     </button>
   </div>
 </div>
+
+  <!-- МОДАЛЬНОЕ ОКНО: ОПИСАНИЕ ПЛАШКИ / ТИТУЛА -->
+<div class="modal-overlay" id="badge-info-modal" style="z-index: 10500;">
+  <div class="modal-box" style="border-color: var(--accent-amber); text-align: center; max-width: 320px;">
+    <div style="font-size: 48px; margin-bottom: 4px;" id="badge-modal-icon">🏆</div>
+    <h3 style="font-size: 18px; color: var(--accent-amber); margin-bottom: 8px;" id="badge-modal-title">Название плашки</h3>
+    <p style="font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 16px;" id="badge-modal-desc">Описание условий получения...</p>
+    <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="closeBadgeInfoModal()">Понятно</button>
+  </div>
+</div>
 </body>
 </html>
