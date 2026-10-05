@@ -1287,11 +1287,11 @@ function listenRatings() {
     // === ВЫДАЧА ДИНАМИЧЕСКИХ ТИТУЛОВ В РЕЙТИНГЕ ===
     window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
     for (var k in window.__TT_DYNAMIC_BADGES) {
-       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Неудержимый') === -1 && b.indexOf('Гладиатор') === -1; });
+       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Несокрушимый') === -1 && b.indexOf('Гладиатор') === -1; });
     }
     if (streakUid) {
         window.__TT_DYNAMIC_BADGES[streakUid] = window.__TT_DYNAMIC_BADGES[streakUid] || [];
-        window.__TT_DYNAMIC_BADGES[streakUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: #fff; border:none; box-shadow: 0 0 8px rgba(239,68,68,0.5);">🔥 Неудержимый (' + maxStreak + ')</span>');
+        window.__TT_DYNAMIC_BADGES[streakUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: #fff; border:none; box-shadow: 0 0 8px rgba(239,68,68,0.5);">🔥 Несокрушимый (' + maxStreak + ')</span>');
     }
     if (ironUid) {
         window.__TT_DYNAMIC_BADGES[ironUid] = window.__TT_DYNAMIC_BADGES[ironUid] || [];
@@ -1349,15 +1349,15 @@ function listenLeaderboard() {
 
     items.sort(function(a, b) { return (b.data.totalMinutes || 0) - (a.data.totalMinutes || 0); });
 
-    // === ВЫДАЧА ДИНАМИЧЕСКОГО ТИТУЛА "КОРОЛЬ ПАРКА" ===
+    // === ВЫДАЧА ДИНАМИЧЕСКОГО ТИТУЛА "КОРОЛЬ СТОЛА" ===
     window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
     for (var k in window.__TT_DYNAMIC_BADGES) {
-       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король парка') === -1; });
+       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король стола') === -1; });
     }
     if (items.length > 0 && items[0].data.totalMinutes > 0) {
         var kingUid = items[0].uid;
         window.__TT_DYNAMIC_BADGES[kingUid] = window.__TT_DYNAMIC_BADGES[kingUid] || [];
-        window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5);">👑 Король парка</span>');
+        window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5);">👑 Король стола</span>');
     }
     // ==================================================
 
