@@ -486,28 +486,32 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
 }
 
 /* ==========================================
-   DYNAMIC ISLAND (LIVE ACTIVITY)
+   DYNAMIC ISLAND (LIVE ACTIVITY) - ОБНОВЛЕННЫЙ
    ========================================== */
 .dynamic-island {
   position: fixed;
-  top: env(safe-area-inset-top, 16px); /* Учитывает челку на iPhone */
-  margin-top: 16px;
+  top: env(safe-area-inset-top, 16px);
+  margin-top: 8px; /* Чуть приподняли к краю экрана */
   left: 50%;
   transform: translateX(-50%) translateY(-150%);
-  background: rgba(15, 23, 42, 0.85); /* Темно-синее стекло */
+  /* Тот самый глубокий премиальный градиент, как у всех окон */
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  padding: 8px 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 24px; /* Сделали шире и просторнее */
+  min-width: 240px; /* Гарантированная ширина */
   border-radius: 30px;
   display: flex;
   align-items: center;
-  gap: 10px;
+  justify-content: center; /* Текст теперь идеально по центру */
+  gap: 12px;
   z-index: 9000;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+  /* Добавили внутренний блик сверху (эффект стекла) */
+  box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
   transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
   opacity: 0;
-  pointer-events: none; /* Пропускает клики сквозь себя */
+  pointer-events: none;
 }
 
 .dynamic-island.visible {
@@ -515,7 +519,6 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
   opacity: 1;
 }
 
-/* Пульсирующая зеленая точка */
 .di-dot {
   width: 8px;
   height: 8px;
@@ -523,14 +526,17 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
   border-radius: 50%;
   box-shadow: 0 0 8px #10b981;
   animation: pulseDot 1.5s infinite alternate;
+  flex-shrink: 0;
 }
 
+/* Сделали текст максимально читабельным */
 .di-text {
-  color: #f8fafc;
-  font-size: 13px;
-  font-weight: 700;
-  letter-spacing: 0.3px;
+  color: #ffffff; /* Чисто белый цвет */
+  font-size: 14.5px; /* Крупнее */
+  font-weight: 800; /* Жирнее */
+  letter-spacing: 0.5px;
   white-space: nowrap;
+  text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Легкая тень отрывает текст от фона */
 }
 
 @keyframes pulseDot { 
@@ -538,14 +544,18 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
   100% { opacity: 1; transform: scale(1.2); } 
 }
 
-#btn-edit-profile, #btn-logout {
-  position: relative;
-  z-index: 100;
-  transform: translateZ(40px); /* Поднимаем кнопки над 3D-фоном */
-  cursor: pointer;
+/* ==========================================
+   АНИМАЦИЯ СДВИГА ВЕРХНЕГО МОДУЛЯ (ШАПКИ)
+   ========================================== */
+#main-top-header {
+  /* Синхронизируем плавность шапки с плавностью выезда острова */
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  will-change: transform;
 }
-#btn-edit-profile:active, #btn-logout:active {
-  opacity: 0.7; /* Визуальная подсветка при касании */
+
+/* Когда скрипт вешает этот класс на body, шапка уезжает вниз */
+body.island-active #main-top-header {
+  transform: translateY(54px); /* Сдвигаем ровно на высоту острова + отступ */
 }
 
 /* ==========================================
