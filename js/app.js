@@ -2182,64 +2182,79 @@ setInterval(function() {
 }, 1000); // Проверяем каждую секунду
 
 // ==========================================
-// УНИВЕРСАЛЬНЫЙ СВАЙП ДЛЯ ЗАКРЫТИЯ ШТОРОК (ПРОДВИНУТЫЙ)
+// УНИВЕРСАЛЬНЫЙ СВАЙП ДЛЯ ЗАКРЫТИЯ ШТОРОК (ИДЕАЛЬНАЯ ПЛАВНОСТЬ)
 // ==========================================
 var sheetYDown = null;
 var activeSheet = null;
-var currentYDiff = 0; // Надежная переменная для хранения сдвига
+var currentYDiff = 0;
 
 document.addEventListener('touchstart', function(evt) {
   if (evt.touches.length > 1) return;
   var box = evt.target.closest('.modal-box');
   if (!box) return;
   
-  // Если у нас скроллящийся контент внутри модалки (например турнирная таблица), 
-  // ждем, пока его не доскроллят в самый верх
   var scrollable = evt.target.closest('div[style*="overflow-y: auto"]');
   if (scrollable && scrollable.scrollTop > 0) return;
 
   sheetYDown = evt.touches[0].clientY;
   activeSheet = box;
   currentYDiff = 0;
-  activeSheet.style.transition = 'none'; // Отключаем плавность, чтобы шторка сразу прилипла к пальцу
+  
+  // ВАЖНО: Отключаем стартовую CSS-анимацию, чтобы она не сопротивлялась пальцу
+  activeSheet.style.animation = 'none'; 
+  activeSheet.style.transition = 'none'; 
 }, {passive: true});
 
 document.addEventListener('touchmove', function(evt) {
   if (!sheetYDown || !activeSheet) return;
   
   var yUp = evt.touches[0].clientY;
-  currentYDiff = Math.max(0, yUp - sheetYDown); // Разрешаем тянуть ТОЛЬКО ВНИЗ
+  currentYDiff = Math.max(0, yUp - sheetYDown); 
 
   if (currentYDiff > 0) {
     activeSheet.style.transform = 'translateY(' + currentYDiff + 'px)';
-    if (evt.cancelable) evt.preventDefault(); // Блокируем дергание самого приложения Telegram
+    if (evt.cancelable) evt.preventDefault(); 
   }
 }, {passive: false});
 
 document.addEventListener('touchend', function(evt) {
   if (!activeSheet) return;
   
-  if (currentYDiff > 80) { // Если стянули больше 80 пикселей - закрываем!
+  var overlay = activeSheet.closest('.modal-overlay');
+
+  if (currentYDiff > 80) { 
+    // === СТЯНУЛИ ВНИЗ: ПЛАВНО ЗАКРЫВАЕМ ===
     activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-    activeSheet.style.transform = 'translateY(100%)'; // Убираем шторку за экран
+    activeSheet.style.transform = 'translateY(100%)'; 
     vibrate('light'); 
     
-    var overlay = activeSheet.closest('.modal-overlay');
+    // Плавно гасим темный фон
+    if (overlay) {
+      overlay.style.transition = 'opacity 0.3s ease';
+      overlay.style.opacity = '0';
+    }
+    
     setTimeout(function() {
-      if (overlay) overlay.style.display = 'none';
+      if (overlay) {
+        overlay.style.display = 'none';
+        overlay.style.opacity = ''; // Сбрасываем для следующего открытия
+        overlay.style.transition = '';
+      }
       activeSheet.style.transform = ''; 
       activeSheet.style.transition = '';
-    }, 300); // Ждем завершения анимации закрытия
+      activeSheet.style.animation = ''; // Возвращаем анимацию открытия
+    }, 300); 
+
   } else {
-    // Стянули слабо - отпрыгиваем обратно
+    // === СТЯНУЛИ СЛАБО: ПЛАВНО ОТПРЫГИВАЕМ ОБРАТНО ===
     activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
     activeSheet.style.transform = 'translateY(0)';
     
-    // Очищаем хвосты после того, как шторка вернулась на место
     setTimeout(function() {
       if (activeSheet) {
         activeSheet.style.transform = ''; 
         activeSheet.style.transition = '';
+        activeSheet.style.animation = ''; 
       }
     }, 300);
   }
