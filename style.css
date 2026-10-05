@@ -615,3 +615,59 @@ body.island-active #main-top-header {
     0 10px 25px rgba(0, 0, 0, 0.06),
     inset 0 1px 0 rgba(255, 255, 255, 1) !important;
 }
+/* ==========================================
+   ИДЕАЛЬНЫЕ ОТСТУПЫ (12px везде)
+   ========================================== */
+.club-header {
+  /* Уравниваем отступ шапки с базовым расстоянием (gap: 12px) между всеми карточками */
+  margin-bottom: 12px !important; 
+}
+
+/* ==========================================
+   АМБИЕНТНАЯ ПОДСВЕТКА (AMBILIGHT)
+   ========================================== */
+/* 1. Создаем плавную пульсацию тени (Ambilight-эффект) */
+@keyframes ambilightPulse {
+  0% {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 4px var(--ambi-color, transparent) !important;
+  }
+  100% {
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 24px var(--ambi-color, transparent) !important;
+  }
+}
+
+/* 2. Включаем анимацию ТОЛЬКО для темной темы (чтобы в светлой не было грязи) */
+:root:not([data-theme="light"]) .profile-card,
+:root:not([data-theme="light"]) .card,
+:root:not([data-theme="light"]) .rating-card,
+:root:not([data-theme="light"]) .club-header,
+:root:not([data-theme="light"]) .quest-choice-card {
+  animation: ambilightPulse 4s infinite alternate ease-in-out;
+}
+
+/* 3. НАЗНАЧАЕМ ЛОГИЧНЫЕ ЦВЕТА СВЕЧЕНИЯ ДЛЯ КАЖДОГО БЛОКА */
+
+/* Шапка приложения (Нежное небесное свечение) */
+.club-header { --ambi-color: rgba(56, 189, 248, 0.12); }
+
+/* Карточка профиля (Глубокий синий) */
+.profile-card { --ambi-color: rgba(59, 130, 246, 0.2); }
+
+/* Радар: Парк Тищенко (Зеленый, природа) */
+#card-park { --ambi-color: rgba(16, 185, 129, 0.2); }
+
+/* Радар: ДК «Восток» (Фиолетовый, клубный зал) */
+#card-vostok { --ambi-color: rgba(168, 85, 247, 0.2); }
+
+/* Рейтинги Эло (Золото/Янтарь, медали) */
+#view-ratings .rating-card, 
+#view-ratings .card { --ambi-color: rgba(251, 191, 36, 0.15); }
+
+/* Турниры (Оранжевый/Огненный, соревнование) */
+#view-tournaments .card { --ambi-color: rgba(245, 158, 11, 0.18); }
+
+/* Еженедельные задания (Красный/Розовый) */
+#view-quests .card { --ambi-color: rgba(244, 63, 94, 0.15); }
+
+/* Новости (Светло-синий) */
+#view-news .card { --ambi-color: rgba(2, 132, 199, 0.15); }
