@@ -449,3 +449,13 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
   0% { transform: translateX(0); } 
   100% { transform: translateX(15%); } 
 }
+
+/* Подготовка профиля к 3D */
+.profile-card {
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+/* Все элементы внутри приподнимаем над фоном на 30 пикселей */
+.profile-card > * {
+  transform: translateZ(30px);
+}
