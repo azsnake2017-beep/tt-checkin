@@ -1908,9 +1908,7 @@ function showRefQrModal() {
   document.getElementById('ref-qr-modal').style.display = 'flex';
 }
 
-function closeRefQrModal() {
-  document.getElementById('ref-qr-modal').style.display = 'none';
-}
+function closeRefQrModal() { closeModalSmoothly('ref-qr-modal'); }
 
 function shareMyRefLink() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
