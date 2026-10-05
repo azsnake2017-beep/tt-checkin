@@ -348,3 +348,104 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
     user-select: none;
     -webkit-tap-highlight-color: transparent;
 }
+
+/* ==========================================
+   ПОГОДНЫЕ АНИМАЦИИ ДЛЯ КАРТОЧКИ ПАРКА
+   ========================================== */
+#card-park {
+  position: relative;
+  overflow: hidden; /* Чтобы снег и дождь не вылетали за пределы карточки */
+  transition: background 1s ease, border-color 1s ease;
+}
+
+/* Поднимаем текст и кнопки над анимацией, чтобы они были кликабельными */
+#card-park > * {
+  position: relative;
+  z-index: 2;
+}
+
+/* 🌧 ДОЖДЬ */
+#card-park.weather-rain { 
+  background: linear-gradient(to bottom, #1e293b, #0f172a); 
+  border-color: #3b82f6; 
+}
+#card-park.weather-rain::before {
+  content: ''; position: absolute; top: -100%; left: -50%; right: -50%; bottom: 0;
+  /* Рисуем капли дождя векторным кодом прямо в CSS */
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='40'%3E%3Crect width='1' height='15' fill='rgba(147, 197, 253, 0.25)'/%3E%3C/svg%3E");
+  background-size: 20px 40px;
+  animation: rainFall 0.6s linear infinite;
+  transform: rotate(15deg); /* Дождь косой */
+  pointer-events: none; z-index: 1;
+}
+@keyframes rainFall { 
+  0% { background-position: 0 0; } 
+  100% { background-position: -20px 100vh; } 
+}
+
+/* ❄️ СНЕГ */
+#card-park.weather-snow { 
+  background: linear-gradient(to bottom, #1e293b, #0b1120); 
+  border-color: #e0f2fe; 
+}
+#card-park.weather-snow::before, #card-park.weather-snow::after {
+  content: ''; position: absolute; top: -100%; left: 0; right: 0; bottom: 0;
+  /* Рисуем снежинки разного размера радиальными градиентами */
+  background-image: 
+    radial-gradient(3px 3px at 20px 30px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(4px 4px at 40px 70px, #e0f2fe, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 50px 160px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(4px 4px at 90px 40px, #e0f2fe, rgba(0,0,0,0)),
+    radial-gradient(5px 5px at 130px 80px, #ffffff, rgba(0,0,0,0)),
+    radial-gradient(3px 3px at 160px 120px, #ffffff, rgba(0,0,0,0));
+  background-size: 200px 200px;
+  animation: snowFall 5s linear infinite;
+  pointer-events: none; z-index: 1; opacity: 0.8;
+}
+/* Второй слой снега для параллакса (падает медленнее и крупнее) */
+#card-park.weather-snow::after {
+  animation-duration: 8s;
+  animation-delay: -2s;
+  opacity: 0.5;
+  background-size: 300px 300px;
+  transform: scale(1.2);
+}
+@keyframes snowFall { 
+  0% { transform: translateY(0); } 
+  100% { transform: translateY(100vh); } 
+}
+
+/* ☀️ ЯСНО / СОЛНЦЕ */
+#card-park.weather-clear { 
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--card-bg) 60%); 
+  border-color: rgba(245, 158, 11, 0.5); 
+}
+#card-park.weather-clear::before {
+  content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px;
+  /* Мягкое солнечное свечение в углу карточки */
+  background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0) 70%);
+  border-radius: 50%;
+  animation: sunPulse 4s ease-in-out infinite alternate;
+  pointer-events: none; z-index: 1;
+}
+@keyframes sunPulse { 
+  0% { transform: scale(1); opacity: 0.6; } 
+  100% { transform: scale(1.3); opacity: 1; } 
+}
+
+/* ☁️ ПАСМУРНО / ОБЛАКА */
+#card-park.weather-clouds { 
+  background: linear-gradient(to bottom, rgba(71, 85, 105, 0.3), var(--card-bg)); 
+  border-color: #64748b; 
+}
+#card-park.weather-clouds::before {
+  content: ''; position: absolute; top: 0; left: -100%; right: 0; bottom: 0; width: 200%;
+  /* Дрейфующие тени облаков */
+  background: radial-gradient(ellipse at top, rgba(148, 163, 184, 0.1) 0%, transparent 70%);
+  animation: cloudDrift 10s linear infinite alternate;
+  pointer-events: none; z-index: 1;
+}
+@keyframes cloudDrift { 
+  0% { transform: translateX(0); } 
+  100% { transform: translateX(15%); } 
+}
