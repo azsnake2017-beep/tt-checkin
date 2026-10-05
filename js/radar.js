@@ -3,6 +3,31 @@
 // ==========================================
 // ПОГОДНЫЙ ВИДЖЕТ (Идеальная версия: Fail-Fast 2.5 сек)
 // ==========================================
+// Анализатор погоды для анимации карточки парка
+function applyWeatherAnimation(weatherDescription) {
+  var card = document.getElementById('card-park');
+  if (!card || !weatherDescription) return;
+  
+  var w = weatherDescription.toLowerCase();
+  
+  // Очищаем старые погодные классы
+  card.classList.remove('weather-rain', 'weather-snow', 'weather-clear', 'weather-clouds');
+  
+  // Включаем нужный эффект по ключевым словам (отлично работает даже с HTML-строкой из кэша)
+  if (w.includes('дожд') || w.includes('ливень') || w.includes('гроз') || w.includes('морос')) {
+    card.classList.add('weather-rain');
+  } 
+  else if (w.includes('снег') || w.includes('метел') || w.includes('снегопад')) {
+    card.classList.add('weather-snow');
+  } 
+  else if (w.includes('ясн') || w.includes('солн')) {
+    card.classList.add('weather-clear');
+  } 
+  else if (w.includes('облач') || w.includes('пасмур')) {
+    card.classList.add('weather-clouds');
+  }
+}
+
 function loadParkWeather() {
   var container = document.getElementById('weather-park'); 
   if (!container) return;
@@ -11,10 +36,11 @@ function loadParkWeather() {
   var cachedTime = localStorage.getItem('tt_weather_cache_ts');
   if (cachedW && cachedTime && (Date.now() - parseInt(cachedTime, 10) < 600000)) {
     container.innerHTML = cachedW;
+    applyWeatherAnimation(cachedW); // <-- Включаем анимацию при загрузке из кэша
     return;
   }
 
-  // 1. Локальная функция направления ветра (чтобы скрипт не падал с ошибкой)
+  // 1. Локальная функция направления ветра
   var getWindDirection = function(deg) {
     if (deg >= 337.5 || deg < 22.5) return 'С';
     if (deg >= 22.5 && deg < 67.5) return 'СВ';
@@ -26,13 +52,13 @@ function loadParkWeather() {
     return 'СЗ';
   };
 
-  // 2. Анти-кэш: добавляем случайное время к ссылке для обхода кэша провайдера
+  // 2. Анти-кэш
   var url = 'https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto&_t=' + Date.now();
 
-  // 3. ВАЖНО: .json() перенесен внутрь fetchPromise, чтобы таймер контролировал ВЕСЬ процесс скачивания
+  // 3. fetchPromise
   var fetchPromise = fetch(url, { cache: 'no-store' }).then(function(res) { return res.json(); });
   
-  // 4. Снижаем таймер до 2.5 секунд для мгновенной реакции на блокировку
+  // 4. Снижаем таймер
   var timeoutPromise = new Promise(function(_, reject) {
     setTimeout(function() { reject(new Error('Weather timeout')); }, 2500);
   });
@@ -55,18 +81,26 @@ function loadParkWeather() {
           tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea; margin-top: 4px;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
       }
       
-      var weatherHtml = '<div class="weather-badge"><span>' + getW(c.weather_code) + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
+      var weatherDesc = getW(c.weather_code); // Сохраняем текстовое описание
+      var weatherHtml = '<div class="weather-badge"><span>' + weatherDesc + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
       
       container.innerHTML = weatherHtml;
       localStorage.setItem('tt_weather_cache', weatherHtml);
       localStorage.setItem('tt_weather_cache_ts', Date.now().toString());
+
+      applyWeatherAnimation(weatherDesc); // <-- Включаем анимацию после обновления данных
+
     } catch (innerE) { 
-      if (cachedW) container.innerHTML = cachedW;
+      if (cachedW) {
+        container.innerHTML = cachedW;
+        applyWeatherAnimation(cachedW); // <-- Защита: анимация при сбое парсинга
+      }
       else container.innerHTML = '<div class="weather-badge"><span>Парк: столы на открытом воздухе 🌳</span></div>'; 
     }
   }).catch(function(e) { 
     if (cachedW) {
       container.innerHTML = cachedW;
+      applyWeatherAnimation(cachedW); // <-- Защита: анимация при ошибке сети
     } else {
       container.innerHTML = '<div class="weather-badge"><span>Парк: столы на открытом воздухе 🌳</span></div>';
     }
