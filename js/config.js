@@ -205,6 +205,8 @@ function switchTab(tab) {
 
 // Плавное переключение шторки карточек с памятью состояния
 function toggleCard(loc) { 
+  vibrate('medium'); // Добавляем приятный тактильный отклик при клике
+  
   var c = document.getElementById('card-' + loc);
   if (!c) return;
   var isExpanded = c.classList.toggle('expanded');
