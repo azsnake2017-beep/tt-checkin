@@ -344,7 +344,7 @@ function handleEditProfileClick() {
     customAlert("Требуется авторизация!");
   }
 }
-function hideNameModal() { document.getElementById('name-modal').style.display = 'none'; }
+function hideNameModal() { closeModalSmoothly('name-modal'); }
 
 function saveCustomNameWithCheck() {
   var uid = getVerifiedUserId(); if (!uid) return;
@@ -496,7 +496,7 @@ try {
 } catch(e) { console.error("Ошибка слушателя Охоты:", e); }
 
 
-function closeAdminMenu() { document.getElementById('admin-modal').style.display = 'none'; }
+function closeAdminMenu() { closeModalSmoothly('admin-modal'); }
 function sendAdminBroadcast() {
   if(!isSuperAdmin()) return; var t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
   sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
@@ -582,9 +582,7 @@ function openAnnouncementModal(loc) {
   document.getElementById('announcement-modal').style.display = 'flex'; 
 }
 
-function closeAnnouncementModal() { 
-  document.getElementById('announcement-modal').style.display = 'none'; 
-}
+function closeAnnouncementModal() { closeModalSmoothly('announcement-modal'); }
 
 function saveAnnouncement() { 
   var dateStr = document.getElementById('announcement-date').value.trim();
@@ -897,7 +895,7 @@ function renderUserHistoryList(matches, uid) {
   hEl.innerHTML = html;
 }
 
-function closeUserInfoModal() { document.getElementById('user-info-modal').style.display = 'none'; }
+function closeUserInfoModal() { closeModalSmoothly('user-info-modal'); }
 
 function openTournamentModal(tourId) { 
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
@@ -905,7 +903,7 @@ function openTournamentModal(tourId) {
   else { btn.innerText = 'Создать'; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; }
   document.getElementById('tournament-modal').style.display = 'flex'; 
 }
-function closeTournamentModal() { document.getElementById('tournament-modal').style.display = 'none'; }
+function closeTournamentModal() { closeModalSmoothly('tournament-modal'); }
 
 function saveTournament() {
   if (!isSuperAdmin()) return; 
@@ -1066,9 +1064,7 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
   document.getElementById('tour-match-modal').style.display = 'flex'; 
 }
 
-function closeTourMatchModal() { 
-  document.getElementById('tour-match-modal').style.display = 'none'; 
-}
+function closeTourMatchModal() { closeModalSmoothly('tour-match-modal'); }
 
 function selectTourScore(s1, s2) { 
     document.getElementById('tour-match-s1').value = s1; 
@@ -1710,11 +1706,7 @@ function openConfirmModal(htmlText, onConfirm) {
   if (modal) modal.style.display = 'flex';
 }
 
-function closeConfirmModal() {
-  var modal = document.getElementById('confirm-modal');
-  if (modal) modal.style.display = 'none';
-  confirmCallback = null;
-}
+function closeConfirmModal() { closeModalSmoothly('confirm-modal'); confirmCallback = null; }
 
 function executeConfirm() {
   if (typeof confirmCallback === 'function') {
