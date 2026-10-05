@@ -2173,3 +2173,68 @@ setInterval(function() {
     setTimeout(function() { island.classList.add('hidden'); }, 500); // Ждем конца CSS-анимации
   }
 }, 1000); // Проверяем каждую секунду
+
+// ==========================================
+// УНИВЕРСАЛЬНЫЙ СВАЙП ДЛЯ ЗАКРЫТИЯ ШТОРОК
+// ==========================================
+var sheetYDown = null;
+var activeSheet = null;
+
+document.addEventListener('touchstart', function(evt) {
+  if (evt.touches.length > 1) return; // Игнорируем мультитач
+  var box = evt.target.closest('.modal-box');
+  if (!box) return;
+  
+  // Если мы свайпаем внутри области, которая имеет свой внутренний скролл (например, история матчей),
+  // мы не тянем шторку, пока скролл не окажется в самом верху.
+  var scrollable = evt.target.closest('div[style*="overflow-y: auto"]');
+  if (scrollable && scrollable.scrollTop > 0) return;
+
+  sheetYDown = evt.touches[0].clientY;
+  activeSheet = box;
+}, {passive: true});
+
+document.addEventListener('touchmove', function(evt) {
+  if (!sheetYDown || !activeSheet) return;
+  var yUp = evt.touches[0].clientY;
+  var yDiff = yUp - sheetYDown; // Положительное значение = тянем вниз
+
+  if (yDiff > 0 && activeSheet.scrollTop <= 0) {
+    // Двигаем шторку за пальцем
+    activeSheet.style.transform = 'translateY(' + yDiff + 'px)';
+    activeSheet.style.transition = 'none';
+    
+    // Глушим pull-to-refresh браузера
+    if (evt.cancelable) evt.preventDefault();
+  }
+}, {passive: false});
+
+document.addEventListener('touchend', function(evt) {
+  if (!activeSheet) return;
+  
+  var currentTransform = activeSheet.style.transform;
+  if (currentTransform && currentTransform.includes('translateY')) {
+    // Извлекаем цифру из translateY(150px)
+    var yDragged = parseInt(currentTransform.replace(/[^\d.]/g, ''), 10);
+    
+    if (yDragged > 80) {
+      // Если стянули больше чем на 80px — закрываем шторку!
+      activeSheet.style.transform = 'translateY(100%)';
+      activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+      vibrate('light'); // Мягкий щелчок закрытия
+      
+      var overlay = activeSheet.closest('.modal-overlay');
+      setTimeout(function() {
+        if (overlay) overlay.style.display = 'none';
+        activeSheet.style.transform = ''; 
+        activeSheet.style.transition = '';
+      }, 300);
+    } else {
+      // Если стянули слабо — отпрыгиваем обратно
+      activeSheet.style.transform = 'translateY(0)';
+      activeSheet.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    }
+  }
+  sheetYDown = null;
+  activeSheet = null;
+});
