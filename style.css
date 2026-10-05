@@ -596,3 +596,7 @@ body.island-active #main-top-header {
 .tilt-inner > * {
   transform: translateZ(30px);
 }
+
+.club-header {
+  margin-bottom: 16px !important; /* Жестко отрываем шапку от карточки профиля */
+}
