@@ -97,7 +97,7 @@ function handleMatchClick() {
   document.getElementById('match-modal').style.display = 'flex';
 }
 
-function closeMatchModal() { document.getElementById('match-modal').style.display = 'none'; }
+function closeMatchModal() { closeModalSmoothly('match-modal'); }
 
 function selectScore(my, opp) { 
   document.getElementById('match-my-score').value = my; 
