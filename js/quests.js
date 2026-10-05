@@ -123,7 +123,7 @@ window.renderQuestBoard = function() {
     htmlChoices += '<div class="quest-rewards" style="margin-top: 12px;"><span>Награда: </span><span class="quest-reward-elo">+' + q.rewardElo + ' Эло</span><span class="quest-reward-badge">' + q.rewardBadge + ' (' + q.badgeDays + ' дн.)</span></div>';
 
     if (isDone && !isClaimed) {
-        htmlChoices += '<button class="btn btn-join" style="margin-top: 14px; background: ' + q.color + ';" onclick="claimQuestReward(\'' + q.id + '\')">🎁 Забрать награду</button>';
+        htmlChoices += '<button class="btn btn-join" style="margin-top: 14px; background: ' + q.color + ';" onclick="claimQuestReward(\'' + q.id + '\', event)">🎁 Забрать награду</button>';
     }
 
     htmlChoices += '</div>';
@@ -133,7 +133,7 @@ window.renderQuestBoard = function() {
 };
 
 // Забрать награду за конкретный квест
-window.claimQuestReward = function(qId) {
+window.claimQuestReward = function(qId,event) {
   var uid = getVerifiedUserId(); 
   if (!uid || !currentUserProfile.activeQuests) return;
   
@@ -155,6 +155,9 @@ window.claimQuestReward = function(qId) {
     activeBadge: newBadge,
     activeQuests: currentUserProfile.activeQuests
   }).then(function() {
+   
+    // === ЗАПУСКАЕМ САЛЮТ И ВИБРАЦИЮ ===
+    fireConfetti(event);
     currentUserProfile.elo = newElo;
     currentUserProfile.questsCompleted = completedCount;
     currentUserProfile.activeBadge = newBadge;
