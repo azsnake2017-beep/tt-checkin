@@ -539,6 +539,7 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
    ЕДИНЫЙ ПРЕМИАЛЬНЫЙ ГРАДИЕНТ ДЛЯ ВСЕХ БЛОКОВ
    ========================================== */
 .card, 
+.profile-card, /* <--- Добавили карточку профиля сюда! */
 .modal-box, 
 .club-header, 
 .auth-overlay-card {
@@ -580,4 +581,33 @@ body.island-active #main-top-header {
 
 .club-header {
   margin-bottom: 16px !important; /* Жестко отрываем шапку от карточки профиля */
+}
+
+/* ==========================================
+   ГРАДИЕНТЫ ДЛЯ СОЦСЕТЕЙ И ЗАДАНИЙ
+   ========================================== */
+/* Сочные градиенты для Telegram и МАКС */
+.pill-tg { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%) !important; }
+.pill-max { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%) !important; }
+
+/* Стеклянный фон для карточек заданий (не трогаем боковую рамку!) */
+.quest-choice-card {
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+}
+
+/* ==========================================
+   ПОЧИНКА АНИМАЦИИ КНОПОК ПРОФИЛЯ
+   ========================================== */
+/* Возвращаем плавность, эффект вдавливания и затемнения при клике */
+.btn-edit, .btn-logout {
+  transition: transform 0.1s ease, filter 0.2s ease !important;
+  cursor: pointer;
+}
+.btn-edit:active, .btn-logout:active {
+  transform: scale(0.95) !important;
+  filter: brightness(0.85) !important;
+}
+@media (hover: hover) {
+  .btn-edit:hover, .btn-logout:hover { filter: brightness(1.2) !important; }
 }
