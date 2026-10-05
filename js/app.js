@@ -2165,24 +2165,24 @@ setInterval(function() {
   var island = document.getElementById('dynamic-island');
   var timerEl = document.getElementById('di-timer');
   
-  if (activePlayer && island && timerEl) {
-    // Пользователь за столом — считаем минуты
+ if (activePlayer && island && timerEl) {
     var diffMs = Date.now() - activePlayer.time;
     var mins = Math.floor(diffMs / 60000);
     var locName = activeLoc === 'park' ? '🌳 В парке' : '🏛 В ДК';
     
     timerEl.innerText = locName + ': ' + mins + ' мин';
     
-    // Если капсула спрятана — плавно выкатываем её
+    // Появление острова
     if (!island.classList.contains('visible')) {
       island.classList.remove('hidden');
-      // Небольшая задержка перед добавлением класса для срабатывания анимации
+      document.body.classList.add('island-active'); // <--- МАГИЯ СДВИГА: толкаем шапку вниз
       setTimeout(function() { island.classList.add('visible'); }, 10);
     }
   } else if (island && island.classList.contains('visible')) {
-    // Пользователь покинул стол — прячем капсулу
+    // Исчезновение острова
     island.classList.remove('visible');
-    setTimeout(function() { island.classList.add('hidden'); }, 500); // Ждем конца CSS-анимации
+    document.body.classList.remove('island-active'); // <--- МАГИЯ СДВИГА: возвращаем шапку на место
+    setTimeout(function() { island.classList.add('hidden'); }, 500); 
   }
 }, 1000); // Проверяем каждую секунду
 
