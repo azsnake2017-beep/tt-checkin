@@ -116,7 +116,10 @@ function handlePlanClick(loc) {
   else { customAlert("❌ Только авторизованные игроки могут планировать тренировки!"); }
 }
 
-function closePlanModal() { document.getElementById('plan-modal').style.display = 'none'; activePlanningLoc = null; }
+function closePlanModal() { 
+  closeModalSmoothly('plan-modal'); 
+  activePlanningLoc = null; // Сбрасываем локацию сразу, визуально это ни на что не повлияет
+}
 
 function recordTrainingTime(uid, name, durationMinutes) {
   if (!uid || durationMinutes <= 0) return Promise.resolve();
