@@ -596,3 +596,22 @@ body.island-active #main-top-header {
 @media (hover: hover) {
   .btn-edit:hover, .btn-logout:hover { filter: brightness(1.2) !important; }
 }
+
+/* ==========================================
+   АДАПТАЦИЯ ГРАДИЕНТОВ ДЛЯ СВЕТЛОЙ ТЕМЫ
+   ========================================== */
+:root[data-theme="light"] .card, 
+:root[data-theme="light"] .profile-card, 
+:root[data-theme="light"] .modal-box, 
+:root[data-theme="light"] .club-header, 
+:root[data-theme="light"] .auth-overlay-card, 
+:root[data-theme="light"] .quest-choice-card {
+  /* Светлое матовое стекло */
+  background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
+  /* Мягкая темная граница вместо светлой */
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  /* Легкая тень и яркий белый блик внутри */
+  box-shadow: 
+    0 10px 25px rgba(0, 0, 0, 0.06),
+    inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+}
