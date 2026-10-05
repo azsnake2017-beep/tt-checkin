@@ -87,6 +87,8 @@ function loginWithGoogle() {
 }
 
 function logoutProfile() {
+  vibrate('medium'); // Добавили тактильный отклик
+  
   firebase.auth().signOut().then(function(){}).catch(function(){});
   localStorage.removeItem('tt_member_id'); 
   localStorage.removeItem('tt_name');
@@ -333,6 +335,8 @@ function updateProfileDisplay() {
 }
 
 function handleEditProfileClick() { 
+  vibrate('light'); // Добавили тактильный отклик
+  
   if (isUserVerified()) { 
     document.getElementById('name-input').value = currentUserProfile.name || ''; 
     document.getElementById('blade-input').value = currentUserProfile.blade || ''; 
