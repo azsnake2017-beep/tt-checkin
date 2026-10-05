@@ -213,7 +213,7 @@ function leave(loc) {
       });
   }).then(function() {
       if (spentMins > 0) recordTrainingTime(uid, currentUserProfile.name, spentMins);
-      document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false;
+      closeModalSmoothly('extend-modal'); hasTriggeredPush = false;
       if (canSendTgAlert('status_leave_' + loc + '_' + uid)) {
           sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> закончил тренировку и покинул стол " + LOCATION_NAMES[loc] + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
       }
@@ -242,8 +242,8 @@ function extendSession(addMins) {
           });
           t.set(db.collection('locations').doc(currentUserActiveLoc), { players: p }, { merge: true });
       });
-  }).then(function() {
-      hasTriggeredPush = false; document.getElementById('extend-modal').style.display = 'none';
+}).then(function() {
+      hasTriggeredPush = false; closeModalSmoothly('extend-modal');
   }).catch(function(e) {});
 }
 
@@ -274,7 +274,9 @@ function cancelPlan(loc) {
         }); 
     }).catch(function(e) {}); 
 }
-
+function closeExtendModal() {
+  closeModalSmoothly('extend-modal');
+}
 function monitorSessions() {
   var now = Date.now();
   ['park', 'vostok'].forEach(function(loc) {
@@ -397,3 +399,4 @@ function renderAll() {
     } else { document.getElementById('extend-modal').style.display = 'none'; } 
   } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
 }
+
