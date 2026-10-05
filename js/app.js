@@ -2026,8 +2026,7 @@ window.showBadgeInfo = function(badgeKey) {
 };
 
 window.closeBadgeInfoModal = function() {
-  var modal = document.getElementById('badge-info-modal');
-  if (modal) modal.style.display = 'none';
+  closeModalSmoothly('badge-info-modal');
 };
 
 // ==========================================
