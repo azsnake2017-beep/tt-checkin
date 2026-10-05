@@ -564,21 +564,6 @@ body.island-active #main-top-header {
 }
 
 
-/* Внутренний контейнер, который будет летать внутри рамки */
-.tilt-inner {
-  transform-style: preserve-3d;
-  width: 100%;
-  height: 100%;
-  will-change: transform;
-  display: flex;
-  flex-direction: column;
-}
-
-/* Приподнимаем всё содержимое над фоном */
-.tilt-inner > * {
-  transform: translateZ(30px);
-}
-
 .club-header {
   margin-bottom: 16px !important; /* Жестко отрываем шапку от карточки профиля */
 }
