@@ -548,14 +548,12 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
    АНИМАЦИЯ СДВИГА ВЕРХНЕГО МОДУЛЯ (ШАПКИ)
    ========================================== */
 #main-top-header {
-  /* Синхронизируем плавность шапки с плавностью выезда острова */
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-  will-change: transform;
+  /* Используем margin-top вместо transform, чтобы толкать контент вниз */
+  transition: margin-top 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* Когда скрипт вешает этот класс на body, шапка уезжает вниз */
 body.island-active #main-top-header {
-  transform: translateY(54px); /* Сдвигаем ровно на высоту острова + отступ */
+  margin-top: 76px; /* Физически сдвигает шапку и ВСЁ, что находится под ней */
 }
 
 /* ==========================================
