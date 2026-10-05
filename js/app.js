@@ -1981,3 +1981,61 @@ function processReferralBonus(newUserId, newUserName) {
     }
   } catch (err) {}
 }
+// Словарь описаний всех плашек и титулов в клубе
+var BADGE_DESCRIPTIONS = {
+  "👑 Король стола": {
+    title: "Король стола",
+    icon: "👑",
+    desc: "Выдается игроку, который провел больше всего суммарного времени за тренировками и играми в клубе. Докажи, что парк принадлежит тебе!"
+  },
+  "🔥 Несокрушимый": {
+    title: "Несокрушимый",
+    icon: "🔥",
+    desc: "Присваивается игроку с самой длинной активной серией побед в клубе (от 3 матчей подряд). Горячая рука не прощает соперников!"
+  },
+  "⚔️ Гладиатор": {
+    title: "Гладиатор",
+    icon: "⚔️",
+    desc: "Знак истинной стойкости. Выдается бойцам, которые сыграли наибольшее количество матчей в клубе (от 10 игр и выше)."
+  },
+  "🤝 Амбассадор": {
+    title: "Амбассадор",
+    icon: "🤝",
+    desc: "Особый статус за развитие клуба. Выдается игрокам, которые успешно пригласили в приложение и клуб 5 и более новых участников."
+  },
+  "Админ ⭐": {
+    title: "Администратор",
+    icon: "⭐",
+    desc: "Основатель и организатор клуба ЧМЗ. Управляет турнирами, ивентами, ботом и следит за порядком у столов."
+  }
+};
+
+// Функция открытия модалки с информацией о плашке
+window.showBadgeInfo = function(badgeKey) {
+  // Очищаем ключ от лишних тегов/смайликов для поиска в словаре
+  var info = BADGE_DESCRIPTIONS[badgeKey];
+  
+  if (!info) {
+    // Дефолтное описание для квестовых и временных плашек
+    info = {
+      title: badgeKey.replace(/<[^>]*>?/gm, '').trim(),
+      icon: "🏅",
+      desc: "Это временная награда или статус, полученный за успешное выполнение еженедельных заданий, квестов или победы в специальных ивентах."
+    };
+  }
+
+  var titleEl = document.getElementById('badge-modal-title');
+  var descEl = document.getElementById('badge-modal-desc');
+  var iconEl = document.getElementById('badge-modal-icon');
+  var modal = document.getElementById('badge-info-modal');
+
+  if (titleEl) titleEl.innerText = info.title;
+  if (descEl) descEl.innerText = info.desc;
+  if (iconEl) iconEl.innerText = info.icon;
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeBadgeInfoModal = function() {
+  var modal = document.getElementById('badge-info-modal');
+  if (modal) modal.style.display = 'none';
+};
