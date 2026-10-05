@@ -539,15 +539,14 @@ button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
    ЕДИНЫЙ ПРЕМИАЛЬНЫЙ ГРАДИЕНТ ДЛЯ ВСЕХ БЛОКОВ
    ========================================== */
 .card, 
-.profile-card, /* <--- Добавили карточку профиля сюда! */
+.profile-card,
 .modal-box, 
 .club-header, 
 .auth-overlay-card {
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  /* Убрали !important в конце этой строки */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* ==========================================
@@ -578,7 +577,8 @@ body.island-active #main-top-header {
 /* Стеклянный фон для карточек заданий (не трогаем боковую рамку!) */
 .quest-choice-card {
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05) !important;
+  /* Убрали !important в конце этой строки */
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 /* ==========================================
@@ -606,14 +606,10 @@ body.island-active #main-top-header {
 :root[data-theme="light"] .club-header, 
 :root[data-theme="light"] .auth-overlay-card, 
 :root[data-theme="light"] .quest-choice-card {
-  /* Светлое матовое стекло */
   background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
-  /* Мягкая темная граница вместо светлой */
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  /* Легкая тень и яркий белый блик внутри */
-  box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.06),
-    inset 0 1px 0 rgba(255, 255, 255, 1) !important;
+  /* Убрали !important в конце этой строки */
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 /* ==========================================
    ИДЕАЛЬНЫЕ ОТСТУПЫ (12px везде)
@@ -629,10 +625,10 @@ body.island-active #main-top-header {
 /* 1. Создаем плавную пульсацию тени (Ambilight-эффект) */
 @keyframes ambilightPulse {
   0% {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 4px var(--ambi-color, transparent) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 4px var(--ambi-color, transparent);
   }
   100% {
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 24px var(--ambi-color, transparent) !important;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 0 24px var(--ambi-color, transparent);
   }
 }
 
