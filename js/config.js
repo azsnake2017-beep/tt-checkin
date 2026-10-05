@@ -155,6 +155,7 @@ function updateThemeIcon(theme) {
 }
 
 function switchNavTab(tabId) {
+ vibrate('light'); // Мягкий щелчок при нажатии на нижнее меню
   var views = document.querySelectorAll('.main-view'); for(var i=0; i<views.length; i++) views[i].classList.remove('active');
   var items = document.querySelectorAll('.nav-item'); for(var j=0; j<items.length; j++) items[j].classList.remove('active');
   var viewEl = document.getElementById('view-' + tabId);
