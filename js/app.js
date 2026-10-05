@@ -2084,12 +2084,24 @@ window.fireConfetti = function(event) {
   }
 };
 
-// 3D Tilt эффект для карточки профиля (Касания + Гироскоп)
+// 3D Tilt эффект (Рамка на месте, контент внутри летает)
 function initTiltEffect() {
   var card = document.querySelector('.profile-card');
   if (!card) return;
 
-  // 1. Управление от пальца/мышки
+  // 1. Умная обертка: аккуратно помещаем всё содержимое в подвижный контейнер
+  var inner = card.querySelector('.tilt-inner');
+  if (!inner) {
+    inner = document.createElement('div');
+    inner.className = 'tilt-inner';
+    // Переносим все элементы профиля внутрь летающего контейнера
+    while (card.firstChild) {
+      inner.appendChild(card.firstChild);
+    }
+    card.appendChild(inner);
+  }
+
+  // 2. Управление от пальца/мышки
   var handleMove = function(e) {
     var rect = card.getBoundingClientRect();
     var x = e.clientX !== undefined ? e.clientX : e.touches[0].clientX;
@@ -2098,34 +2110,34 @@ function initTiltEffect() {
     var rotateX = (((y - rect.top) - rect.height/2) / (rect.height/2)) * -8;
     var rotateY = (((x - rect.left) - rect.width/2) / (rect.width/2)) * 8;
     
-    card.style.transform = 'perspective(1000px) rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.02, 1.02, 1.02)';
-    card.style.transition = 'none';
+    // ВАЖНО: Применяем наклон только к ВНУТРЕННЕМУ контейнеру!
+    inner.style.transform = 'rotateX(' + rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.02, 1.02, 1.02)';
+    inner.style.transition = 'none';
   };
 
   var handleReset = function() {
-    card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-    card.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
+    inner.style.transform = 'rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+    inner.style.transition = 'transform 0.4s cubic-bezier(0.25, 1, 0.5, 1)';
   };
 
+  // Слушатели вешаем на саму карточку, но крутим внутренности
   card.addEventListener('mousemove', handleMove);
   card.addEventListener('touchmove', handleMove, {passive: true});
   card.addEventListener('mouseleave', handleReset);
   card.addEventListener('touchend', handleReset);
 
-  // 2. Управление от ГИРОСКОПА телефона (настоящее 3D)
+  // 3. Управление от ГИРОСКОПА
   window.addEventListener('deviceorientation', function(e) {
-    if (!e.gamma || !e.beta) return; // Если гироскопа нет - игнорируем
-    
-    // gamma (влево-вправо), beta (вперед-назад). Ограничиваем углы от -10 до 10 градусов
+    if (!e.gamma || !e.beta) return; 
     var rotateY = Math.max(-10, Math.min(10, e.gamma / 2)); 
-    var rotateX = Math.max(-10, Math.min(10, (e.beta - 45) / 2)); // 45 - стандартный угол, под которым мы держим телефон в руке
+    var rotateX = Math.max(-10, Math.min(10, (e.beta - 45) / 2)); 
     
-    card.style.transform = 'perspective(1000px) rotateX(' + -rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.02, 1.02, 1.02)';
-    card.style.transition = 'transform 0.1s ease-out';
+    // Крутим внутренний контейнер от акселерометра
+    inner.style.transform = 'rotateX(' + -rotateX + 'deg) rotateY(' + rotateY + 'deg) scale3d(1.02, 1.02, 1.02)';
+    inner.style.transition = 'transform 0.1s ease-out';
   }, true);
 }
 
-// Запускаем 3D-эффект через секунду после старта
 setTimeout(initTiltEffect, 1000);
 
 // ==========================================
