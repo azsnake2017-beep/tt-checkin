@@ -390,9 +390,14 @@ function openQrModal(type) {
 }
 
 function closeQrModal() { 
-  document.getElementById('qr-modal').style.display = 'none'; 
-  var container = document.getElementById('qr-canvas-container');
-  if (container) container.innerHTML = '';
+  // Запускаем плавное закрытие шторки
+  closeModalSmoothly('qr-modal'); 
+  
+  // Ждем 300 миллисекунд (пока шторка уезжает), а затем тихо очищаем холст
+  setTimeout(function() {
+    var container = document.getElementById('qr-canvas-container');
+    if (container) container.innerHTML = '';
+  }, 300);
 }
 
 function openExternalLink(url) {
