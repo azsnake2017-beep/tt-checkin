@@ -2280,67 +2280,116 @@ window.toggleTheme = function() {
   }
 };
 
-// ==========================================
-// ГОРИЗОНТАЛЬНЫЕ СВАЙПЫ МЕЖДУ ЭКРАНАМИ
-// ==========================================
-var swipeStartX = 0;
-var swipeStartY = 0;
-// Строгий порядок вкладок (как они идут в нижнем меню слева направо)
-var appTabsOrder = ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'];
+/* ==========================================
+   ИНТЕРАКТИВНЫЕ СВАЙПЫ (ПЕРЕТАСКИВАНИЕ ЭКРАНОВ БЕЗ МОРГАНИЯ)
+   ========================================== */
+var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
 document.addEventListener('touchstart', function(e) {
-  // Игнорируем свайп, если открыто ЛЮБОЕ модальное окно/шторка
-  var activeModal = document.querySelector('.modal-overlay[style*="display: flex"]');
-  if (activeModal) return;
-
-  swipeStartX = e.touches[0].clientX;
-  swipeStartY = e.touches[0].clientY;
+  // Игнорируем, если открыто модальное окно
+  if (document.querySelector('.modal-overlay[style*="display: flex"]')) return;
+  swipeState.startX = e.touches[0].clientX;
+  swipeState.startY = e.touches[0].clientY;
+  swipeState.isDragging = false;
+  swipeState.activeView = document.querySelector('.main-view.active');
+  swipeState.targetView = null;
 }, {passive: true});
 
-document.addEventListener('touchend', function(e) {
-  if (!swipeStartX || !swipeStartY) return;
-  
-  var activeModal = document.querySelector('.modal-overlay[style*="display: flex"]');
-  if (activeModal) return;
+document.addEventListener('touchmove', function(e) {
+  if (!swipeState.activeView) return;
+  var dx = e.touches[0].clientX - swipeState.startX;
+  var dy = e.touches[0].clientY - swipeState.startY;
 
-  var swipeEndX = e.changedTouches[0].clientX;
-  var swipeEndY = e.changedTouches[0].clientY;
-
-  var diffX = swipeStartX - swipeEndX;
-  var diffY = swipeStartY - swipeEndY;
-
-  // Проверяем, что свайп был горизонтальным (diffX больше diffY) и достаточно длинным (более 60px)
-  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+  // Если палец пошел по горизонтали — начинаем захват экранов
+  if (!swipeState.isDragging && Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)) {
+    swipeState.isDragging = true;
+    var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
+    var targetIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1;
     
-    // Ищем текущую активную вкладку
-    var activeNav = document.querySelector('.bottom-nav .nav-item.active');
-    if (!activeNav) return;
-
-    var currentTabId = activeNav.id.replace('nav-', '');
-    var currentIndex = appTabsOrder.indexOf(currentTabId);
-
-    if (diffX > 0) {
-      // СВАЙП ВЛЕВО (Хотим открыть экран СПРАВА)
-      if (currentIndex < appTabsOrder.length - 1) {
-        document.documentElement.setAttribute('data-swipe-dir', 'left');
-        if (typeof switchNavTab === 'function') switchNavTab(appTabsOrder[currentIndex + 1]);
-        if (typeof vibrate === 'function') vibrate('light'); 
+    if (targetIndex >= 0 && targetIndex < swipeState.tabs.length) {
+      swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
+      swipeState.direction = dx < 0 ? 1 : -1; 
+      
+      if (swipeState.targetView) {
+        // Достаем следующий экран, ставим его сбоку и готовим к движению
+        swipeState.targetView.style.display = 'flex';
+        swipeState.targetView.style.position = 'absolute';
+        swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
+        swipeState.targetView.style.left = (swipeState.direction === 1 ? 100 : -100) + 'vw';
+        swipeState.targetView.style.width = swipeState.activeView.offsetWidth + 'px';
+        swipeState.targetView.style.zIndex = '5';
+        swipeState.activeView.style.zIndex = '5';
+        
+        // Отключаем задержки анимации, чтобы экраны липли к пальцу
+        swipeState.activeView.style.transition = 'none';
+        swipeState.targetView.style.transition = 'none';
       }
     } else {
-      // СВАЙП ВПРАВО (Хотим открыть экран СЛЕВА)
-      if (currentIndex > 0) {
-        document.documentElement.setAttribute('data-swipe-dir', 'right');
-        if (typeof switchNavTab === 'function') switchNavTab(appTabsOrder[currentIndex - 1]);
-        if (typeof vibrate === 'function') vibrate('light');
-      }
+      swipeState.targetView = null; // Тянем в стену (первый или последний экран)
     }
-    
-    // Очищаем направление свайпа через 400мс (чтобы обычные клики по меню работали как раньше)
-    setTimeout(function() {
-      document.documentElement.removeAttribute('data-swipe-dir');
-    }, 400);
   }
-  
-  swipeStartX = 0;
-  swipeStartY = 0;
+
+  // Двигаем экраны за пальцем
+  if (swipeState.isDragging) {
+    if (e.cancelable) e.preventDefault(); // Блокируем прокрутку вниз
+    if (swipeState.targetView) {
+      swipeState.activeView.style.transform = 'translateX(' + dx + 'px)';
+      swipeState.targetView.style.transform = 'translateX(' + dx + 'px)';
+    } else {
+      // Эффект тугой пружины, если дальше экранов нет
+      swipeState.activeView.style.transform = 'translateX(' + (dx * 0.2) + 'px)';
+    }
+  }
+}, {passive: false});
+
+document.addEventListener('touchend', function(e) {
+  if (!swipeState.isDragging || !swipeState.activeView) return;
+  var dx = e.changedTouches[0].clientX - swipeState.startX;
+  var threshold = window.innerWidth / 3; // Нужно протащить на 1/3 экрана
+
+  if (swipeState.targetView) {
+    // Включаем плавность для финального доезда экрана
+    swipeState.activeView.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+    swipeState.targetView.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
+
+    if (Math.abs(dx) > threshold) {
+      // СВАЙП УСПЕШЕН: Докатываем экраны
+      var finalX = swipeState.direction === 1 ? -window.innerWidth : window.innerWidth;
+      swipeState.activeView.style.transform = 'translateX(' + finalX + 'px)';
+      swipeState.targetView.style.transform = 'translateX(' + finalX + 'px)';
+      
+      var targetId = swipeState.targetView.id.replace('view-', '');
+      var activeEl = swipeState.activeView;
+      var targetEl = swipeState.targetView;
+      
+      setTimeout(function() {
+        // ГАСИМ МОРГАНИЕ: Блокируем CSS перед переключением
+        document.body.classList.add('disable-animations');
+        if (typeof switchNavTab === 'function') switchNavTab(targetId);
+        
+        activeEl.style = '';
+        targetEl.style = '';
+        
+        setTimeout(function() { document.body.classList.remove('disable-animations'); }, 50);
+      }, 250);
+    } else {
+      // СВАЙП ОТМЕНЕН: Возвращаем экраны на исходную
+      swipeState.activeView.style.transform = 'translateX(0)';
+      swipeState.targetView.style.transform = 'translateX(0)';
+      
+      var targetElRevert = swipeState.targetView;
+      var activeElRevert = swipeState.activeView;
+      setTimeout(function() {
+        targetElRevert.style = '';
+        activeElRevert.style = '';
+      }, 250);
+    }
+  } else {
+    // Возврат пружины
+    swipeState.activeView.style.transition = 'transform 0.25s ease';
+    swipeState.activeView.style.transform = 'translateX(0)';
+    var activeElRevert = swipeState.activeView;
+    setTimeout(function() { activeElRevert.style = ''; }, 250);
+  }
+  swipeState.isDragging = false;
 }, {passive: true});
