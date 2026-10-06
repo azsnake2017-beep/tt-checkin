@@ -1049,59 +1049,36 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
 }
 
 /* ==========================================
-   СВЕЧЕНИЕ ВСПЛЫВАЮЩИХ ОКОН, АЛЕРТОВ И УВЕДОМЛЕНИЙ
+   ИДЕАЛЬНОЕ СВЕЧЕНИЕ: ТОЛЬКО ВНЕШНИЕ РАМКИ
    ========================================== */
-/* Для темной темы: бегущий неон цвета активной вкладки */
-:root:not([data-theme="light"]) .modal-box,
-:root:not([data-theme="light"]) .toast,
-:root:not([data-theme="light"]) .alert,
-:root:not([data-theme="light"]) .sweet-alert, /* Если используется библиотека SweetAlert */
-:root:not([data-theme="light"]) [id*="modal"] > div {
+/* 1. Возвращаем свечение модалкам, но строго ТОЛЬКО внешней коробке */
+:root:not([data-theme="light"]) .modal-overlay > .modal-box,
+:root:not([data-theme="light"]) .swal2-popup,
+:root:not([data-theme="light"]) .toast {
   animation: neonEdgeRun 3s linear infinite !important;
-  --ambi-color: var(--theme-glow, #3b82f6) !important; /* Цвет берется от текущего экрана */
-  
-  /* Делаем фон модального окна красивым темным стеклом, чтобы неон смотрелся естественно */
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  --ambi-color: var(--theme-glow, #3b82f6) !important;
 }
 
-/* Для светлой темы: дорогое белое стекло с четкой тенью (чтобы уведомления не сливались) */
-:root[data-theme="light"] .modal-box,
-:root[data-theme="light"] .toast,
-:root[data-theme="light"] .alert,
-:root[data-theme="light"] .sweet-alert,
-:root[data-theme="light"] [id*="modal"] > div {
+/* 2. Гарантированно отключаем неон на ВСЕХ внутренних блоках модалок и профиля */
+.modal-box div, 
+.profile-card div {
+  animation: none !important;
+}
+
+/* 3. Возвращаем аккуратные тонкие рамки без теней для истории матчей и статистики */
+.modal-box div[style*="border"], 
+.profile-card div[style*="border"] {
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  box-shadow: none !important;
+}
+
+/* Светлая тема для модалок */
+:root[data-theme="light"] .modal-overlay > .modal-box,
+:root[data-theme="light"] .swal2-popup,
+:root[data-theme="light"] .toast {
   background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
   border: 1px solid #cbd5e1 !important;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
-}
-
-/* ==========================================
-   ФИКС: СВЕЧЕНИЕ ТОЛЬКО ВОКРУГ ПРОФИЛЯ
-   ========================================== */
-/* Жестко отключаем бегущий неон и его тени для всех элементов ВНУТРИ карточки профиля */
-:root:not([data-theme="light"]) .profile-card .card,
-:root:not([data-theme="light"]) .profile-card [class*="card-"],
-:root:not([data-theme="light"]) .profile-card .stat-box {
-  animation: none !important;
-  box-shadow: none !important;
-  /* Если нужно, возвращаем им легкую плоскую рамку вместо светящейся */
-  border: 1px solid rgba(255, 255, 255, 0.05) !important; 
-}
-
-/* ==========================================
-   ФИКС: ОТКЛЮЧЕНИЕ НЕОНА ВНУТРИ МОДАЛЬНЫХ ОКОН
-   ========================================== */
-/* Жестко гасим анимацию и свечение у всех внутренних элементов окна профиля игрока */
-.modal-box .card,
-.modal-box [class*="box"],
-.modal-box [class*="item"],
-.modal-box [class*="row"],
-.modal-box [class*="history"],
-[id*="modal"] .card,
-[id*="modal"] [class*="box"] {
-  animation: none !important;
-  box-shadow: none !important;
-  /* Возвращаем внутренним блокам аккуратную полупрозрачную рамку, чтобы они не сливались */
-  border: 1px solid rgba(255, 255, 255, 0.08) !important; 
 }
