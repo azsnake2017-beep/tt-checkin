@@ -232,7 +232,7 @@
         <button class="btn-logout" id="btn-logout" onclick="logoutProfile()" style="display:none;">Выйти</button>
       </div>
     </div>
-<button class="btn btn-join" style="margin-top: 10px; width: 100%; background: linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
+<button id="btn-invite-glow" class="btn btn-join" style="margin-top: 10px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
   <span>➕</span> Добавить участника в клуб
 </button>    
     <div class="profile-logo-container">
@@ -329,8 +329,8 @@
  <!-- ЭКРАН 4: ТУРНИРЫ -->
   <div id="view-tournaments" class="main-view">
     <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
-        <h2 style="font-size: 18px; color: var(--accent-amber);">🏆 Активные турниры</h2>
+      <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 4px;">
+  <h2 style="font-size: 18px; color: var(--accent-amber); margin: 0;">🏆 Активные турниры</h2>
         <button id="btn-add-tournament" class="badge-admin-btn" style="display:none; padding: 6px 12px; font-size: 12px; margin: 0;" onclick="openTournamentModal()">+ Добавить</button>
       </div>
       <div id="tournaments-list-active" style="display: flex; flex-direction: column; gap: 12px;"></div>
@@ -343,8 +343,8 @@
   <!-- ЭКРАН 5: НОВОСТИ (ОБЯЗАТЕЛЬНО ДОЛЖЕН БЫТЬ ЗДЕСЬ) -->
   <div id="view-news" class="main-view">
     <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
-      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-        <h2 style="font-size: 18px; color: #3b82f6;">📰 Мир настольного тенниса</h2>
+     <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
+  <h2 style="font-size: 18px; color: #3b82f6; margin: 0;">📰 Мир настольного тенниса</h2>
       </div>
       <div id="news-container" style="display: flex; flex-direction: column; gap: 10px;">
         <span class="empty-note">Сбор свежих новостей...</span>
