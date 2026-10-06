@@ -2281,7 +2281,7 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   АБСОЛЮТНАЯ КАРУСЕЛЬ (ЖЕЛЕЗНАЯ МАТЕМАТИКА БЕЗ НАХЛЕСТОВ)
+   УЛЬТРА-ПЛАВНАЯ КАРУСЕЛЬ НА 60 FPS (БЕЗ НАХЛЕСТОВ И ЛАГОВ)
    ========================================== */
 var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, width: 0, gap: 20, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
@@ -2301,27 +2301,25 @@ document.addEventListener('touchmove', function(e) {
 
   if (!swipeState.isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { 
     swipeState.isDragging = true;
-    document.body.classList.add('is-swiping'); 
-    
-    // КЭШИРУЕМ ШИРИНУ ЭКРАНА ОДИН РАЗ (Убивает баг с нахлестом!)
-    swipeState.width = swipeState.activeView.offsetWidth;
+    document.body.classList.add('disable-animations'); 
 
     var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
-    if (dx < 0) swipeState.direction = 1; // Влево
-    else swipeState.direction = -1; // Вправо
+    swipeState.direction = dx < 0 ? 1 : -1;
     
     var targetIndex = (currentIndex + swipeState.direction + swipeState.tabs.length) % swipeState.tabs.length;
     swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
     
     if (swipeState.targetView) {
-      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
-
+      swipeState.width = swipeState.activeView.getBoundingClientRect().width;
+      
       swipeState.targetView.style.display = 'flex';
       swipeState.targetView.style.position = 'absolute';
       swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
       swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
       swipeState.targetView.style.width = swipeState.width + 'px';
-      swipeState.targetView.style.setProperty('transform', 'translate3d(' + startOffset + 'px, 0, 0)', 'important');
+      
+      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
+      swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
       
       swipeState.activeView.style.zIndex = '5';
       swipeState.targetView.style.zIndex = '5';
@@ -2332,8 +2330,8 @@ document.addEventListener('touchmove', function(e) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
       var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
-      swipeState.activeView.style.setProperty('transform', 'translate3d(' + dx + 'px, 0, 0)', 'important');
-      swipeState.targetView.style.setProperty('transform', 'translate3d(' + (startOffset + dx) + 'px, 0, 0)', 'important');
+      swipeState.activeView.style.transform = 'translate3d(' + dx + 'px, 0, 0)';
+      swipeState.targetView.style.transform = 'translate3d(' + (startOffset + dx) + 'px, 0, 0)';
     }
   }
 }, {passive: false});
@@ -2344,8 +2342,8 @@ document.addEventListener('touchend', function(e) {
   var threshold = 35; 
 
   if (swipeState.targetView) {
-    swipeState.activeView.style.setProperty('transition', 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
-    swipeState.targetView.style.setProperty('transition', 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
+    swipeState.activeView.style.transition = 'transform 0.25s ease-out';
+    swipeState.targetView.style.transition = 'transform 0.25s ease-out';
 
     var isValidSwipe = (swipeState.direction === 1 && dx < -threshold) || (swipeState.direction === -1 && dx > threshold);
 
@@ -2357,8 +2355,8 @@ document.addEventListener('touchend', function(e) {
       
       var finalX = swipeState.direction === 1 ? -(swipeState.width + swipeState.gap) : (swipeState.width + swipeState.gap);
       
-      swipeState.activeView.style.setProperty('transform', 'translate3d(' + finalX + 'px, 0, 0)', 'important');
-      swipeState.targetView.style.setProperty('transform', 'translate3d(0px, 0, 0)', 'important');
+      swipeState.activeView.style.transform = 'translate3d(' + finalX + 'px, 0, 0)';
+      swipeState.targetView.style.transform = 'translate3d(0px, 0, 0)';
       
       var targetId = swipeState.targetView.id.replace('view-', '');
       var activeEl = swipeState.activeView;
@@ -2366,25 +2364,25 @@ document.addEventListener('touchend', function(e) {
       
       setTimeout(function() {
         if (typeof switchNavTab === 'function') switchNavTab(targetId);
-        activeEl.removeAttribute('style');
-        targetEl.removeAttribute('style');
-        document.body.classList.remove('is-swiping');
+        activeEl.style = '';
+        targetEl.style = '';
+        document.body.classList.remove('disable-animations');
       }, 250);
     } else {
       var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
-      swipeState.activeView.style.setProperty('transform', 'translate3d(0px, 0, 0)', 'important');
-      swipeState.targetView.style.setProperty('transform', 'translate3d(' + startOffset + 'px, 0, 0)', 'important');
+      swipeState.activeView.style.transform = 'translate3d(0px, 0, 0)';
+      swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
       
       var targetElRevert = swipeState.targetView;
       var activeElRevert = swipeState.activeView;
       setTimeout(function() {
-        targetElRevert.removeAttribute('style');
-        activeElRevert.removeAttribute('style');
-        document.body.classList.remove('is-swiping');
+        targetElRevert.style = '';
+        activeElRevert.style = '';
+        document.body.classList.remove('disable-animations');
       }, 250);
     }
   } else {
-    document.body.classList.remove('is-swiping');
+    document.body.classList.remove('disable-animations');
   }
   swipeState.isDragging = false;
 }, {passive: true});
