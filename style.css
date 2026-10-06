@@ -777,3 +777,30 @@ body.island-active #main-top-header {
 :root:not([data-theme="light"]) .tab-btn.active {
   background: rgba(255, 255, 255, 0.1) !important;
 }
+
+/* ==========================================
+   ИСПРАВЛЕНИЕ: ОБЩИЙ СВЕТЯЩИЙСЯ БЛОК ДЛЯ НОВОСТЕЙ
+   ========================================== */
+/* 1. Превращаем прозрачный контейнер в настоящую стеклянную карточку */
+#view-news > .card {
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  padding: 16px !important;
+}
+
+/* 1.1 Для светлой темы возвращаем белое стекло */
+:root[data-theme="light"] #view-news > .card {
+  background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
+  border: 1px solid rgba(0, 0, 0, 0.08) !important;
+}
+
+/* 2. Успокаиваем внутренние новости (убираем двойные тени и свечения) */
+:root:not([data-theme="light"]) #news-container .card,
+#news-container .card {
+  animation: none !important; /* Жестко глушим неон на внутренних статьях */
+  background: var(--list-bg) !important; /* Делаем фон чуть темнее основного */
+  border: 1px solid var(--card-border) !important;
+  box-shadow: none !important; /* Убираем лишние тени */
+  padding: 12px !important;
+  border-radius: 12px !important;
+}
