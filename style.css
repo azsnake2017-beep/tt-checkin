@@ -1046,3 +1046,31 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
 .alert {
   z-index: 100005 !important; /* Ставим приоритет выше, чем у меню (9999) */
 }
+
+/* ==========================================
+   СВЕЧЕНИЕ ВСПЛЫВАЮЩИХ ОКОН, АЛЕРТОВ И УВЕДОМЛЕНИЙ
+   ========================================== */
+/* Для темной темы: бегущий неон цвета активной вкладки */
+:root:not([data-theme="light"]) .modal-box,
+:root:not([data-theme="light"]) .toast,
+:root:not([data-theme="light"]) .alert,
+:root:not([data-theme="light"]) .sweet-alert, /* Если используется библиотека SweetAlert */
+:root:not([data-theme="light"]) [id*="modal"] > div {
+  animation: neonEdgeRun 3s linear infinite !important;
+  --ambi-color: var(--theme-glow, #3b82f6) !important; /* Цвет берется от текущего экрана */
+  
+  /* Делаем фон модального окна красивым темным стеклом, чтобы неон смотрелся естественно */
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+}
+
+/* Для светлой темы: дорогое белое стекло с четкой тенью (чтобы уведомления не сливались) */
+:root[data-theme="light"] .modal-box,
+:root[data-theme="light"] .toast,
+:root[data-theme="light"] .alert,
+:root[data-theme="light"] .sweet-alert,
+:root[data-theme="light"] [id*="modal"] > div {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
+}
