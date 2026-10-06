@@ -2281,12 +2281,11 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   ИДЕАЛЬНЫЕ СВАЙПЫ (ЭКРАНЫ СКЛЕЕНЫ + ЗВУК + ВИБРАЦИЯ)
+   КРУГОВАЯ КАРУСЕЛЬ ЭКРАНОВ БЕЗ НАЛОЖЕНИЯ
    ========================================== */
 var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
-var audioCtx = null; // Для системного звука
+var audioCtx = null; 
 
-// Функция генерации приятного UI-щелчка
 function playSystemSwipeSound() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -2295,7 +2294,6 @@ function playSystemSwipeSound() {
     var gain = audioCtx.createGain();
     osc.connect(gain);
     gain.connect(audioCtx.destination);
-    // Настройки звука: короткий глухой "туп"
     osc.type = 'sine';
     osc.frequency.setValueAtTime(300, audioCtx.currentTime);
     osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
@@ -2303,7 +2301,6 @@ function playSystemSwipeSound() {
     gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
     osc.start();
     osc.stop(audioCtx.currentTime + 0.05);
-    // Легкая вибрация, если поддерживается телефоном
     if (navigator.vibrate) navigator.vibrate(15);
   } catch(e) {}
 }
@@ -2325,43 +2322,52 @@ document.addEventListener('touchmove', function(e) {
   if (!swipeState.isDragging && Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)) {
     swipeState.isDragging = true;
     var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
-    var targetIndex = dx < 0 ? currentIndex + 1 : currentIndex - 1;
     
-    if (targetIndex >= 0 && targetIndex < swipeState.tabs.length) {
-      swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
-      swipeState.direction = dx < 0 ? 1 : -1; // 1 = тянем влево (след. экран), -1 = вправо (пред. экран)
+    // БЕСКОНЕЧНАЯ КАРУСЕЛЬ (Считаем индекс по кругу)
+    var targetIndex;
+    if (dx < 0) { // Свайп влево
+      targetIndex = (currentIndex + 1) % swipeState.tabs.length;
+      swipeState.direction = 1;
+    } else {      // Свайп вправо
+      targetIndex = (currentIndex - 1 + swipeState.tabs.length) % swipeState.tabs.length;
+      swipeState.direction = -1;
+    }
+    
+    swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
+    
+    if (swipeState.targetView) {
+      // Берем точную ширину и отступ сверху у активного экрана
+      var viewWidth = swipeState.activeView.offsetWidth;
+      var viewTop = swipeState.activeView.offsetTop;
+
+      // МАГИЯ СКЛЕЙКИ: Отрываем ОБА экрана от верстки и ставим их рядом
+      swipeState.activeView.style.position = 'absolute';
+      swipeState.activeView.style.top = viewTop + 'px';
+      swipeState.activeView.style.left = '0px';
+      swipeState.activeView.style.width = viewWidth + 'px';
       
-      if (swipeState.targetView) {
-        // Ставим новый экран точно в те же координаты, что и текущий (склеиваем)
-        swipeState.targetView.style.display = 'flex';
-        swipeState.targetView.style.position = 'absolute';
-        swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
-        swipeState.targetView.style.left = '0';
-        swipeState.targetView.style.width = '100%';
-        swipeState.targetView.style.zIndex = '5';
-        swipeState.activeView.style.zIndex = '5';
-        
-        swipeState.activeView.style.transition = 'none';
-        swipeState.targetView.style.transition = 'none';
-      }
-    } else {
-      swipeState.targetView = null; 
+      swipeState.targetView.style.display = 'flex';
+      swipeState.targetView.style.position = 'absolute';
+      swipeState.targetView.style.top = viewTop + 'px';
+      
+      // Ставим целевой экран строго за границей текущего (слева или справа)
+      swipeState.targetView.style.left = (swipeState.direction === 1 ? viewWidth : -viewWidth) + 'px';
+      swipeState.targetView.style.width = viewWidth + 'px';
+      
+      swipeState.activeView.style.zIndex = '5';
+      swipeState.targetView.style.zIndex = '5';
+      
+      swipeState.activeView.style.transition = 'none';
+      swipeState.targetView.style.transition = 'none';
     }
   }
 
   if (swipeState.isDragging) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
-      var sw = window.innerWidth;
-      // Смещение для склейки: новый экран ждет за границей (справа или слева)
-      var offset = swipeState.direction === 1 ? sw : -sw;
-      
-      // Двигаем ОБА экрана синхронно. Они жестко сцеплены.
+      // Т.к. экраны уже стоят встык, мы просто двигаем их одновременно
       swipeState.activeView.style.transform = 'translateX(' + dx + 'px)';
-      swipeState.targetView.style.transform = 'translateX(' + (offset + dx) + 'px)';
-    } else {
-      // Эффект пружины в крайних вкладках
-      swipeState.activeView.style.transform = 'translateX(' + (dx * 0.2) + 'px)';
+      swipeState.targetView.style.transform = 'translateX(' + dx + 'px)';
     }
   }
 }, {passive: false});
@@ -2369,21 +2375,22 @@ document.addEventListener('touchmove', function(e) {
 document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var sw = window.innerWidth;
-  var threshold = sw / 3; 
+  var viewWidth = swipeState.activeView.offsetWidth;
+  var threshold = viewWidth / 3; 
 
   if (swipeState.targetView) {
     swipeState.activeView.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
     swipeState.targetView.style.transition = 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)';
-    var offset = swipeState.direction === 1 ? sw : -sw;
 
     if (Math.abs(dx) > threshold) {
       // УСПЕШНЫЙ СВАЙП
-      playSystemSwipeSound(); // Воспроизводим звук и вибрацию!
-
-      // Старый экран улетает, новый встает ровно в 0
-      swipeState.activeView.style.transform = 'translateX(' + (-offset) + 'px)';
-      swipeState.targetView.style.transform = 'translateX(0px)';
+      playSystemSwipeSound();
+      
+      // Вычисляем финальную точку, куда должны уехать экраны
+      var finalX = swipeState.direction === 1 ? -viewWidth : viewWidth;
+      
+      swipeState.activeView.style.transform = 'translateX(' + finalX + 'px)';
+      swipeState.targetView.style.transform = 'translateX(' + finalX + 'px)';
       
       var targetId = swipeState.targetView.id.replace('view-', '');
       var activeEl = swipeState.activeView;
@@ -2393,15 +2400,16 @@ document.addEventListener('touchend', function(e) {
         document.body.classList.add('disable-animations');
         if (typeof switchNavTab === 'function') switchNavTab(targetId);
         
+        // Полностью зачищаем следы абсолютного позиционирования
         activeEl.style = '';
         targetEl.style = '';
         
         setTimeout(function() { document.body.classList.remove('disable-animations'); }, 50);
       }, 250);
     } else {
-      // ОТМЕНА СВАЙПА (возвращаем как было)
+      // ОТМЕНА СВАЙПА
       swipeState.activeView.style.transform = 'translateX(0px)';
-      swipeState.targetView.style.transform = 'translateX(' + offset + 'px)';
+      swipeState.targetView.style.transform = 'translateX(0px)';
       
       var targetElRevert = swipeState.targetView;
       var activeElRevert = swipeState.activeView;
@@ -2410,11 +2418,6 @@ document.addEventListener('touchend', function(e) {
         activeElRevert.style = '';
       }, 250);
     }
-  } else {
-    swipeState.activeView.style.transition = 'transform 0.25s ease';
-    swipeState.activeView.style.transform = 'translateX(0)';
-    var activeElRevert = swipeState.activeView;
-    setTimeout(function() { activeElRevert.style = ''; }, 250);
   }
   swipeState.isDragging = false;
 }, {passive: true});
