@@ -1849,3 +1849,138 @@ function cleanupSwipe() {
 document.addEventListener('touchcancel', function(e) {
   if (swipeState.isDragging || swipeState.isAnimating) cleanupSwipe();
 });
+// ==========================================
+// НАВИГАЦИЯ И ПЕРЕКЛЮЧЕНИЕ ВКЛАДОК
+// ==========================================
+window.switchNavTab = function(tabId) {
+  if (typeof vibrate === 'function') vibrate('light');
+  
+  var views = document.querySelectorAll('.main-view'); 
+  for(var i=0; i<views.length; i++) {
+      views[i].classList.remove('active');
+      views[i].style.display = ''; // Сбрасываем стили после свайпа
+  }
+  
+  var items = document.querySelectorAll('.nav-item'); 
+  for(var j=0; j<items.length; j++) {
+      items[j].classList.remove('active');
+  }
+  
+  var viewEl = document.getElementById('view-' + tabId);
+  var navEl = document.getElementById('nav-' + tabId);
+  
+  if(viewEl) viewEl.classList.add('active');
+  if(navEl) navEl.classList.add('active');
+  window.scrollTo(0, 0); 
+  
+  sessionStorage.setItem('tt_session_tab', tabId);
+  
+  if (tabId === 'radar' && typeof updateAdminControls === 'function') updateAdminControls();
+  if (tabId === 'quests' && typeof renderQuestBoard === 'function') renderQuestBoard();
+};
+
+window.initNavTab = function() {
+  var savedTab = sessionStorage.getItem('tt_session_tab') || 'profile';
+  switchNavTab(savedTab);
+};
+
+window.switchTab = function(tab) {
+  var tabRating = document.getElementById('tab-btn-rating');
+  var tabTime = document.getElementById('tab-btn-time');
+  var viewRating = document.getElementById('view-rating-content');
+  var viewTime = document.getElementById('view-time-content');
+
+  if (tab === 'rating') {
+    if (tabRating) tabRating.classList.add('active'); 
+    if (tabTime) tabTime.classList.remove('active');
+    if (viewRating) viewRating.style.display = 'flex'; 
+    if (viewTime) viewTime.style.display = 'none';
+  } else {
+    if (tabTime) tabTime.classList.add('active'); 
+    if (tabRating) tabRating.classList.remove('active');
+    if (viewTime) viewTime.style.display = 'flex'; 
+    if (viewRating) viewRating.style.display = 'none';
+  }
+};
+
+// ==========================================
+// УПРАВЛЕНИЕ ТЕМОЙ И ШТОРКАМИ
+// ==========================================
+window.initTheme = function() {
+  var savedTheme = localStorage.getItem('tt_theme') || 'dark';
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  var btn = document.getElementById('btn-theme');
+  if (btn) btn.innerText = savedTheme === 'light' ? '☀️' : '🌙';
+};
+
+window.toggleTheme = function() {
+  var root = document.documentElement;
+  var current = root.getAttribute('data-theme') || 'dark';
+  var newTheme = current === 'light' ? 'dark' : 'light';
+  root.setAttribute('data-theme', newTheme);
+  localStorage.setItem('tt_theme', newTheme);
+  var btn = document.getElementById('btn-theme');
+  if (btn) btn.innerText = newTheme === 'light' ? '☀️' : '🌙';
+};
+
+window.toggleCard = function(loc) { 
+  if (typeof vibrate === 'function') vibrate('medium'); 
+  var c = document.getElementById('card-' + loc);
+  if (!c) return;
+  var isExpanded = c.classList.toggle('expanded');
+  localStorage.setItem('tt_card_' + loc, isExpanded ? '1' : '0');
+};
+
+window.restoreCardStates = function() {
+  ['park', 'vostok'].forEach(function(loc) {
+    var c = document.getElementById('card-' + loc);
+    if (!c) return;
+    var savedState = localStorage.getItem('tt_card_' + loc);
+    if (savedState === '1') c.classList.add('expanded');
+    else c.classList.remove('expanded');
+  });
+};
+
+/* ==========================================
+   ДВИЖОК ПЛАВАЮЩЕГО ИНДИКАТОРА МЕНЮ
+   ========================================== */
+document.addEventListener('DOMContentLoaded', function() {
+  var nav = document.querySelector('.bottom-nav');
+  if (!nav) return;
+
+  var indicator = document.createElement('div');
+  indicator.id = 'nav-sliding-indicator';
+  nav.appendChild(indicator);
+
+  var navItems = nav.querySelectorAll('.nav-item');
+
+  function moveIndicator() {
+    var activeItem = nav.querySelector('.nav-item.active');
+    if (!activeItem) return;
+    
+    var navRect = nav.getBoundingClientRect();
+    var itemRect = activeItem.getBoundingClientRect();
+    
+    // Центруем полоску относительно активной иконки
+    var offsetLeft = (itemRect.left - navRect.left) + (itemRect.width / 2) - 18;
+    indicator.style.transform = 'translateX(' + offsetLeft + 'px)';
+    
+    // Красим каретку в цвет активной вкладки
+    var color = getComputedStyle(activeItem).getPropertyValue('--nav-glow').trim() || '#3b82f6';
+    indicator.style.setProperty('--nav-glow', color);
+  }
+
+  // Следим за переключением класса active
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.target.classList.contains('active')) moveIndicator();
+    });
+  });
+
+  navItems.forEach(function(item) {
+    observer.observe(item, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  window.addEventListener('resize', moveIndicator);
+  setTimeout(moveIndicator, 300);
+});
