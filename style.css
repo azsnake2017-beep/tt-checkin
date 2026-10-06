@@ -682,16 +682,6 @@ body.island-active #main-top-header {
   justify-content: center !important;
 }
 
-/* ==========================================
-   СВЕЧЕНИЕ КНОПКИ "ДОБАВИТЬ УЧАСТНИКА"
-   ========================================== */
-#btn-invite-glow {
-  /* Делаем кнопку тусклой и прозрачной, чтобы не била по глазам */
-  background: rgba(37, 99, 235, 0.15) !important; 
-  border: 1px solid rgba(37, 99, 235, 0.4) !important;
-  color: #60a5fa !important; 
-  font-weight: 600;
-}
 
 /* Добавляем мягкое дыхание синего неона */
 :root:not([data-theme="light"]) #btn-invite-glow {
@@ -728,23 +718,49 @@ body.island-active #main-top-header {
 }
 
 /* ==========================================
-   СВЕЧЕНИЕ КНОПКИ "ЗАПИСАТЬ РЕЗУЛЬТАТ МАТЧА"
+   ЕДИНЫЙ СТИЛЬ КНОПОК И ОКНА "ПОСЛЕДНИЕ МАТЧИ"
    ========================================== */
+/* 1. Превращаем окно "Последние матчи" в визуальную копию кнопки */
+#card-recent-matches {
+  padding: 12px !important;       /* Сужаем отступы до размера кнопки */
+  border-radius: 14px !important; /* Скругляем как кнопку */
+  margin-top: 8px !important;
+  /* Заливаем таким же полупрозрачным фиолетовым цветом */
+  background: rgba(168, 85, 247, 0.15) !important; 
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+}
+
+/* Выравниваем шрифт заголовка */
+#card-recent-matches .card-title {
+  font-size: 14px !important;
+  color: #d8b4fe !important;
+  justify-content: center !important;
+}
+
+/* 2. Цвета для главных кнопок (приглушенный фон) */
 #btn-match-glow {
   background: rgba(168, 85, 247, 0.15) !important; 
   border: 1px solid rgba(168, 85, 247, 0.4) !important;
   color: #d8b4fe !important; 
-  font-weight: 600;
+}
+#btn-invite-glow {
+  background: rgba(37, 99, 235, 0.15) !important; 
+  border: 1px solid rgba(37, 99, 235, 0.4) !important;
+  color: #60a5fa !important; 
 }
 
-:root:not([data-theme="light"]) #btn-match-glow {
-  animation: matchPulse 2.5s infinite alternate ease-in-out;
+/* 3. УНИВЕРСАЛЬНОЕ СВЕЧЕНИЕ (Бегущий неон теперь и на кнопках!) */
+:root:not([data-theme="light"]) #btn-match-glow,
+:root:not([data-theme="light"]) #btn-invite-glow,
+:root:not([data-theme="light"]) #card-recent-matches {
+  /* Применяем ту же самую анимацию, что крутится вокруг больших окон */
+  animation: neonEdgeRun 3s linear infinite !important;
 }
 
-@keyframes matchPulse {
-  0%   { box-shadow: 0 0 4px rgba(168, 85, 247, 0.1); }
-  100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); }
-}
+/* 4. Задаем цвета для бегущей линии */
+#btn-invite-glow { --ambi-color: #38bdf8; } /* Небесно-синий неон */
+#btn-match-glow, #card-recent-matches { --ambi-color: #a855f7; } /* Фиолетовый неон */
+
 
 /* ==========================================
    ЗОЛОТОЕ СВЕЧЕНИЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЕЙ РЕЙТИНГА
