@@ -1,4 +1,6 @@
-// js/app.js — Управление профилем, турниры, анонсы встреч и запуск
+// ==========================================
+// ОСНОВНОЙ ДВИЖОК: ПРОФИЛЬ, ТУРНИРЫ, АНОНСЫ И UI
+// ==========================================
 
 function isUserVerified() {
   var tgUser = null;
@@ -57,7 +59,7 @@ window.onTelegramAuth = function(user) {
   subscribeToUserLeaderboard(uid);
   updateProfileDisplay();
   updateAdminControls();
-  renderAll();
+  if(typeof renderAll === 'function') renderAll();
 
   syncUserProfile(uid, defaultName, 'tg');
 };
@@ -79,7 +81,7 @@ function loginWithGoogle() {
       subscribeToUserLeaderboard(uid);
       updateProfileDisplay();
       updateAdminControls();
-      renderAll();
+      if(typeof renderAll === 'function') renderAll();
 
       syncUserProfile(uid, defaultName, 'google');
     }
@@ -87,8 +89,7 @@ function loginWithGoogle() {
 }
 
 function logoutProfile() {
-  vibrate('medium'); // Добавили тактильный отклик
-  
+  if (typeof vibrate === 'function') vibrate('medium');
   firebase.auth().signOut().then(function(){}).catch(function(){});
   localStorage.removeItem('tt_member_id'); 
   localStorage.removeItem('tt_name');
@@ -148,9 +149,8 @@ function finishSync(uid, userData) {
     updateProfileDisplay();
     updateAdminControls();
     if (currentUserProfile.name) localStorage.setItem('tt_name', currentUserProfile.name); 
-    renderAll();
+    if(typeof renderAll === 'function') renderAll();
     
-    // ВЫЗЫВАЕМ ПРОВЕРКУ РЕФЕРАЛА ПРИ КАЖДОМ ВХОДЕ
     if (typeof processReferralBonus === 'function') {
         processReferralBonus(uid, currentUserProfile.name);
     }
@@ -178,7 +178,7 @@ function initUserProfile() {
     subscribeToUserLeaderboard(uid);
     updateProfileDisplay();
     updateAdminControls();
-    renderAll();
+    if(typeof renderAll === 'function') renderAll();
 
     syncUserProfile(uid, defaultName, 'tg');
     
@@ -190,7 +190,7 @@ function initUserProfile() {
         currentUserProfile.totalMinutes = currentTm;
         updateProfileDisplay();
         updateAdminControls();
-        renderAll();
+        if(typeof renderAll === 'function') renderAll();
       }
     }, function(err) {});
     return;
@@ -202,7 +202,7 @@ function initUserProfile() {
     subscribeToUserLeaderboard(savedId);
     updateProfileDisplay();
     updateAdminControls();
-    renderAll();
+    if(typeof renderAll === 'function') renderAll();
 
     db.collection('users').doc(savedId).onSnapshot(function(snap) {
       if (snap.exists) {
@@ -212,7 +212,7 @@ function initUserProfile() {
         currentUserProfile.totalMinutes = currentTm;
         updateProfileDisplay();
         updateAdminControls();
-        renderAll();
+        if(typeof renderAll === 'function') renderAll();
       }
     }, function(err) {});
     return;
@@ -244,18 +244,18 @@ function showAuthRequired(authScreen) {
         window.setAppProgress(100, 'Ожидание авторизации...');
     }
     
-    renderAll();
+    if(typeof renderAll === 'function') renderAll();
 }
 
 function updateProfileDisplay() {
   if (!currentUserProfile.uid) return;
   var isAdmin = isSuperAdmin();
   var adminTag = isAdmin ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
-  var customBadge = getCustomBadge(currentUserProfile.uid);
+  var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(currentUserProfile.uid) : '';
   var elo = parseInt(currentUserProfile.elo, 10) || 1000;
-// ДЕТЕКТОР НОВОГО РАНГА (С защитой от ложных срабатываний при загрузке)
+
   if (currentUserProfile.matches !== undefined) { 
-    var currentStatus = getPlayerStatus(elo);
+    var currentStatus = typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок';
     var savedStatus = localStorage.getItem('tt_last_known_status_' + currentUserProfile.uid);
     
     if (savedStatus && savedStatus !== currentStatus) {
@@ -273,15 +273,13 @@ function updateProfileDisplay() {
       }
     }
     
-    // Обновляем память ТОЛЬКО когда загрузились реальные данные
     localStorage.setItem('tt_last_known_status_' + currentUserProfile.uid, currentStatus);
     localStorage.setItem('tt_last_known_elo_' + currentUserProfile.uid, elo);
   }
+  
   var authScreen = document.getElementById('mandatory-auth-screen'); 
   if (authScreen) authScreen.style.display = 'none';
 
-  document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge;
-  
   var lastDelta = parseInt(currentUserProfile.lastEloDelta, 10) || 0;
   var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
 
@@ -293,39 +291,38 @@ function updateProfileDisplay() {
   var losses = parseInt(currentUserProfile.losses, 10) || 0;
   var matches = parseInt(currentUserProfile.matches, 10) || 0;
   var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-  
   var minsTotal = currentUserProfile.totalMinutes || 0;
-  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span></div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
-// Отображение активного квестового бейджа в профиле
+  var pStatus = typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок';
+
   var questBadgeHtml = (currentUserProfile.activeBadge && currentUserProfile.activeBadge.expires > Date.now()) 
   ? '<span class="temporary-badge" style="color: ' + currentUserProfile.activeBadge.color + '; border-color: ' + currentUserProfile.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + currentUserProfile.activeBadge.text + '\')">' + currentUserProfile.activeBadge.text + '</span>' 
   : '';
 
   document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge + questBadgeHtml;
 
- var qCompleted = parseInt(currentUserProfile.questsCompleted, 10) || 0;
+  var qCompleted = parseInt(currentUserProfile.questsCompleted, 10) || 0;
   var questStatsHtml = qCompleted > 0 ? '<div style="font-size: 11px; color: var(--accent-purple); font-weight: 700; margin-top: 4px;">🎯 Выполнено квестов: ' + qCompleted + '</div>' : '';
 
-  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + getPlayerStatus(elo) + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + formatMinutes(minsTotal) + '</span>' + questStatsHtml + '</div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + pStatus + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span>' + questStatsHtml + '</div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
   
-  // Обновляем доску квестов при обновлении профиля
   if (typeof renderQuestBoard === 'function') renderQuestBoard();
 
-  
   var mContainer = document.getElementById('user-medals-container');
-  var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
-  if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
-    mContainer.innerHTML = '<div class="medal-item">🏆 ' + (currentUserProfile.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>';
-    mContainer.style.display = 'flex';
-  } else { mContainer.style.display = 'none'; }
+  if (mContainer) {
+    var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
+    if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
+      mContainer.innerHTML = '<div class="medal-item">🏆 ' + (currentUserProfile.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>';
+      mContainer.style.display = 'flex';
+    } else { mContainer.style.display = 'none'; }
+  }
 
   var invContainer = document.getElementById('user-inventory-container');
   if (invContainer) {
     if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
       var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-      if (currentUserProfile.blade) invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
-      if (currentUserProfile.rubberL) invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
-      if (currentUserProfile.rubberR) invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
+      if (currentUserProfile.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
+      if (currentUserProfile.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
+      if (currentUserProfile.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
       invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
     } else { invContainer.style.display = 'none'; }
   }
@@ -335,8 +332,7 @@ function updateProfileDisplay() {
 }
 
 function handleEditProfileClick() { 
-  vibrate('light'); // Добавили тактильный отклик
-  
+  if (typeof vibrate === 'function') vibrate('light'); 
   if (isUserVerified()) { 
     document.getElementById('name-input').value = currentUserProfile.name || ''; 
     document.getElementById('blade-input').value = currentUserProfile.blade || ''; 
@@ -345,10 +341,10 @@ function handleEditProfileClick() {
     document.getElementById('rttf-input').value = currentUserProfile.rttf || ''; 
     document.getElementById('name-modal').style.display = 'flex'; 
   } else {
-    customAlert("Требуется авторизация!");
+    if(typeof customAlert==='function') customAlert("Требуется авторизация!");
   }
 }
-function hideNameModal() { closeModalSmoothly('name-modal'); }
+function hideNameModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('name-modal'); }
 
 function saveCustomNameWithCheck() {
   var uid = getVerifiedUserId(); if (!uid) return;
@@ -378,13 +374,12 @@ function saveCustomNameWithCheck() {
       updateProfileDisplay(); 
       updateAdminControls();
       hideNameModal(); 
-      renderAll();
-  }).catch(function(e) { customAlert("Не удалось сохранить профиль: " + e.message); });
+      if(typeof renderAll === 'function') renderAll();
+  }).catch(function(e) { if(typeof customAlert==='function') customAlert("Не удалось сохранить профиль: " + e.message); });
 }
 
 function openAdminMenu() { 
   document.getElementById('admin-modal').style.display = 'flex'; 
-  
   if (isSuperAdmin()) {
     db.collection('users').orderBy('elo', 'desc').get().then(function(snap) {
       var sel = document.getElementById('admin-bounty-select');
@@ -398,9 +393,6 @@ function openAdminMenu() {
   }
 }
 
-// ==========================================
-// ИВЕНТ: МУЛЬТИ-ОХОТА НА ЧЕМПИОНА
-// ==========================================
 window.currentBountyTargets = {};
 
 window.openBountyProfile = function(uid) {
@@ -422,8 +414,8 @@ window.saveBounty = function() {
 
     db.collection('settings').doc('bounty').set({ targets: targets }, { merge: true }).then(function() {
       var msg = "🎯 <b>СЕЗОН ОХОТЫ РАСШИРЯЕТСЯ!</b> 🎯\n\nВ списке разыскиваемых пополнение. Назначена награда за голову: <b>" + targetText + "</b>!\n\n💰 <b>Награда: +100 Эло</b> за победу (1х1).\n\n<i>Кто заберет куш?</i> 🩸🐺";
-      sendTelegramAlert(msg);
-      customAlert("✅ " + targetText + " добавлен в список розыска!");
+      if(typeof sendTelegramAlert==='function') sendTelegramAlert(msg);
+      if(typeof customAlert==='function') customAlert("✅ " + targetText + " добавлен в список розыска!");
       closeAdminMenu();
     });
   });
@@ -433,8 +425,8 @@ window.clearBounty = function(silent) {
   if (!isSuperAdmin()) return;
   db.collection('settings').doc('bounty').delete().then(function() {
     if (!silent) {
-      sendTelegramAlert("🛑 <b>Охота отменена.</b> Все награды отозваны.");
-      customAlert("✅ Все охоты отменены!");
+      if(typeof sendTelegramAlert==='function') sendTelegramAlert("🛑 <b>Охота отменена.</b> Все награды отозваны.");
+      if(typeof customAlert==='function') customAlert("✅ Все охоты отменены!");
       closeAdminMenu();
     }
   });
@@ -451,7 +443,6 @@ try {
       if (banner) banner.style.display = 'block';
       if (container) {
         container.innerHTML = ''; 
-        
         Object.keys(window.currentBountyTargets).forEach(function(uid) {
           var name = window.currentBountyTargets[uid];
           
@@ -465,7 +456,6 @@ try {
           badge.innerHTML = '<span style="font-size: 14px; margin-right: 8px;">👤</span>' +
                             '<span style="font-size: 14px; font-weight: 900; color: #fde047; text-shadow: 0 2px 4px rgba(0,0,0,0.5);">' + cleanHtml(name) + '</span>' +
                             '<span id="bounty-tag-' + uid + '" style="display: none; margin-left: 8px; align-items: center;"></span>';
-          
           container.appendChild(badge);
 
           db.collection('users').doc(uid).get().then(function(uDoc) {
@@ -497,18 +487,16 @@ try {
       if (container) container.innerHTML = '';
     }
   });
-} catch(e) { console.error("Ошибка слушателя Охоты:", e); }
+} catch(e) {}
 
-
-function closeAdminMenu() { closeModalSmoothly('admin-modal'); }
+function closeAdminMenu() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('admin-modal'); }
 function sendAdminBroadcast() {
   if(!isSuperAdmin()) return; var t = document.getElementById('admin-broadcast-text').value.trim(); if(!t) return;
-  sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); customAlert("✅ Отправлено");
+  if(typeof sendTelegramAlert==='function') sendTelegramAlert("📢 <b>Сообщение от администрации клуба:</b>\n\n" + cleanHtml(t)); document.getElementById('admin-broadcast-text').value = ''; closeAdminMenu(); if(typeof customAlert==='function') customAlert("✅ Отправлено");
 }
 
 function sendClubStatsBroadcast() {
   if (!isSuperAdmin()) return;
-  
   Promise.all([
     db.collection('users').get(),
     db.collection('matches_history').get(),
@@ -559,11 +547,11 @@ function sendClubStatsBroadcast() {
 
     text += "\n📲 <i>Смотрите полную таблицу и бронируйте столы в нашем приложении!</i>";
 
-    sendTelegramAlert(text);
+    if(typeof sendTelegramAlert==='function') sendTelegramAlert(text);
     closeAdminMenu();
-    customAlert("✅ Статистика и ТОП-10 отправлены в чат!");
+    if(typeof customAlert==='function') customAlert("✅ Статистика и ТОП-10 отправлены в чат!");
   }).catch(function(err) {
-    customAlert("Ошибка сбора статистики: " + err.message);
+    if(typeof customAlert==='function') customAlert("Ошибка сбора статистики: " + err.message);
   });
 }
 
@@ -582,11 +570,10 @@ function openAnnouncementModal(loc) {
       dateInput.value = '';
       descInput.value = aData || '';
   }
-  
   document.getElementById('announcement-modal').style.display = 'flex'; 
 }
 
-function closeAnnouncementModal() { closeModalSmoothly('announcement-modal'); }
+function closeAnnouncementModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('announcement-modal'); }
 
 function saveAnnouncement() { 
   var dateStr = document.getElementById('announcement-date').value.trim();
@@ -604,21 +591,19 @@ function saveAnnouncement() {
       if (descStr) tgText += "\n📝 " + cleanHtml(descStr) + "\n";
       tgText += "\n<i>Заходите в приложение, чтобы спланировать визит и занять стол!</i> 🏓";
       
-      sendTelegramAlert(tgText);
+      if(typeof sendTelegramAlert==='function') sendTelegramAlert(tgText);
   });
 }
 
 function deleteAnnouncement() { 
   if(!isSuperAdmin()) return; 
   var obj = { vostok: null };
-  
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
       closeAnnouncementModal(); 
-      customAlert("✅ Анонс успешно удален");
+      if(typeof customAlert==='function') customAlert("✅ Анонс успешно удален");
   });
 }
 
-// --- КАРТОЧКА ПРОФИЛЯ С РАСШИРЕННОЙ АНАЛИТИКОЙ, ИНВЕНТАРЕМ И ПЛАШКАМИ ---
 function showUserInfoModal(uid) {
   if(!uid) return;
   document.getElementById('info-modal-title').innerHTML = "👤 Загрузка..."; 
@@ -642,14 +627,9 @@ function showUserInfoModal(uid) {
     db.collection('leaderboard').doc(uid).get()
   ]).then(function(docs) {
     var d = docs[0], ld = docs[1];
-
-    if (!d.exists) { 
-      closeUserInfoModal(); 
-      return; 
-    }
+    if (!d.exists) { closeUserInfoModal(); return; }
 
     var u = d.data() || {};
-    
     var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
     if (uid === myUid && typeof currentUserProfile !== 'undefined') {
       if (!u.blade && currentUserProfile.blade) u.blade = currentUserProfile.blade;
@@ -657,7 +637,7 @@ function showUserInfoModal(uid) {
       if (!u.rubberR && currentUserProfile.rubberR) u.rubberR = currentUserProfile.rubberR;
     }
 
-   var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
+    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     var qBadge = (u.activeBadge && u.activeBadge.expires > Date.now()) ? '<span class="temporary-badge" style="color: ' + u.activeBadge.color + '; border-color: ' + u.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(u.activeBadge.text) + '\')">' + cleanHtml(u.activeBadge.text) + '</span>' : '';
     
@@ -679,12 +659,11 @@ function showUserInfoModal(uid) {
       if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
         mMedals.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
         mMedals.style.display = 'flex';
-      } else { 
-        mMedals.style.display = 'none'; 
-      }
+      } else { mMedals.style.display = 'none'; }
     }
 
     var eloDisplay = u.elo !== undefined ? u.elo : 1000;
+    var pStatus = typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок';
     
     var invHtml = '';
     if (u.blade || u.rubberL || u.rubberR) {
@@ -692,14 +671,11 @@ function showUserInfoModal(uid) {
             if (!val) return '';
             var searchUrl = 'https://www.google.com/search?q=' + encodeURIComponent(searchPrefix + ' ' + val);
             return '<div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; min-height: 24px;">' +
-                     '<div style="display: flex; align-items: center; gap: 6px; color: var(--text-muted); flex-shrink: 0;">' +
-                       '<span>' + icon + '</span><span>' + label + '</span>' +
-                     '</div>' +
+                     '<div style="display: flex; align-items: center; gap: 6px; color: var(--text-muted); flex-shrink: 0;"><span>' + icon + '</span><span>' + label + '</span></div>' +
                      '<div style="display: flex; align-items: center; gap: 6px; min-width: 0; justify-content: flex-end; text-align: right;">' +
                        '<b style="color: var(--text); font-size: 12px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 170px;" title="' + cleanHtml(val) + '">' + cleanHtml(val) + '</b>' +
                        '<button class="btn-info" style="width: 20px; height: 20px; font-size: 10px; padding: 0; flex-shrink: 0;" onclick="openExternalLink(\'' + searchUrl + '\')">i</button>' +
-                     '</div>' +
-                   '</div>';
+                     '</div></div>';
         };
 
         invHtml = '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 6px;">' +
@@ -717,32 +693,21 @@ function showUserInfoModal(uid) {
   ? '<span class="platform-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; margin-left: 4px; font-weight: 700; border: none; padding: 2px 7px; border-radius: 6px; font-size: 11px; cursor: pointer;" onclick="showBadgeInfo(\'🤝 Амбассадор\')">Амбассадор 🤝</span>' 
   : '';
 
-    var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px; cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
-    var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + ambassadorBadge;
 
     var invitesHtml = '';
     if (confirmedInvites > 0 || pendingInvites > 0) {
-      var pendingStr = pendingInvites > 0 
-        ? '<span style="color: var(--text-muted); opacity: 0.45; font-size: 12px; margin-left: 5px;" title="Ожидают квалификации (сыграно менее 3 матчей)">(+' + pendingInvites + ' ожид.)</span>' 
-        : '';
-        
+      var pendingStr = pendingInvites > 0 ? '<span style="color: var(--text-muted); opacity: 0.45; font-size: 12px; margin-left: 5px;" title="Ожидают квалификации (сыграно менее 3 матчей)">(+' + pendingInvites + ' ожид.)</span>' : '';
       invitesHtml = '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;">' +
-                      '<span style="color: var(--text-muted);">Добавил участников:</span>' +
-                      '<div>' +
-                        '<span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' +
-                        pendingStr +
-                        '<span style="margin-left: 4px;">🤝</span>' +
-                      '</div>' +
-                    '</div>';
+                    '<span style="color: var(--text-muted);">Добавил участников:</span><div><span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' + pendingStr + '<span style="margin-left: 4px;">🤝</span></div></div>';
     }
 
     document.getElementById('info-modal-content-area').innerHTML = uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + (typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок') + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + pStatus + '</span></div>' +
       '<div id="dynamic-last-match-date" style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted);">Загрузка...</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + formatMinutes(mins) + '</span></div>' +
+      '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins+' мин') + '</span></div>' +
       invitesHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
@@ -752,26 +717,21 @@ function showUserInfoModal(uid) {
         var matches = [];
         allSnaps.forEach(function(docX) {
           var mx = docX.data();
-          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) {
-            mx.docId = docX.id;
-            matches.push(mx);
-          }
+          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) { mx.docId = docX.id; matches.push(mx); }
         });
 
         var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
         if (matches.length > 0) {
-          matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+          matches.sort(function(a, b) { return (typeof parseTime==='function'?parseTime(b.timestamp):b.timestamp) - (typeof parseTime==='function'?parseTime(a.timestamp):a.timestamp); });
           try {
-            var lastTs = parseTime(matches[0].timestamp);
+            var lastTs = typeof parseTime==='function'?parseTime(matches[0].timestamp):matches[0].timestamp;
             if (lastTs) {
               var mDate = new Date(lastTs);
               var day = ('0' + mDate.getDate()).slice(-2);
               var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
-              
               var today = new Date(); today.setHours(0,0,0,0);
               var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
               var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
-              
               var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (<span style="' + (diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);') + '">' + diffDays + ' дн. назад</span>)';
               lastMatchStr = '<span style="font-weight: 600; color: var(--accent-sky);">' + day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span></span>';
             }
@@ -781,35 +741,28 @@ function showUserInfoModal(uid) {
         var dynRow = document.getElementById('dynamic-last-match-date');
         if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
 
-        if (typeof renderUserHistoryList === 'function') {
-            renderUserHistoryList(matches, uid);
-        }
+        if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
     }).catch(function(err) {
         document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
         var dynRow = document.getElementById('dynamic-last-match-date');
         if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
     });
-
-  }).catch(function(e) {
-    closeUserInfoModal();
-  });
+  }).catch(function(e) { closeUserInfoModal(); });
 }
 
 function processMatchesData(matches, uid) {
     var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
     if (matches.length > 0) {
-      matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+      matches.sort(function(a, b) { return (typeof parseTime==='function'?parseTime(b.timestamp):b.timestamp) - (typeof parseTime==='function'?parseTime(a.timestamp):a.timestamp); });
       try {
-        var lastTs = parseTime(matches[0].timestamp);
+        var lastTs = typeof parseTime==='function'?parseTime(matches[0].timestamp):matches[0].timestamp;
         if (lastTs) {
           var mDate = new Date(lastTs);
           var day = ('0' + mDate.getDate()).slice(-2);
           var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
-          
           var today = new Date(); today.setHours(0,0,0,0);
           var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
           var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
-          
           var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (<span style="' + (diffDays >= 7 ? 'color: var(--accent-red);' : 'color: var(--text-muted);') + '">' + diffDays + ' дн. назад</span>)';
           lastMatchStr = '<span style="font-weight: 600; color: var(--accent-sky);">' + day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px;">' + daysText + '</span></span>';
         }
@@ -818,26 +771,21 @@ function processMatchesData(matches, uid) {
     
     var dynRow = document.getElementById('dynamic-last-match-date');
     if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
-
     if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
 }
 
 function renderUserHistoryFromSnaps(snaps, uid) {
   var matches = [];
   snaps.forEach(function(docX) { matches.push(docX.data()); });
-  renderUserHistoryList(matches, uid);
+  if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
 }
 
 function renderUserHistoryList(matches, uid) {
   var hEl = document.getElementById('info-modal-history');
   if (!hEl) return;
-
-  if (!matches || matches.length === 0) { 
-    hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; 
-    return; 
-  }
+  if (!matches || matches.length === 0) { hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; return; }
   
-  matches.sort(function(a, b) { return parseTime(b.timestamp) - parseTime(a.timestamp); });
+  matches.sort(function(a, b) { return (typeof parseTime==='function'?parseTime(b.timestamp):b.timestamp) - (typeof parseTime==='function'?parseTime(a.timestamp):a.timestamp); });
   var recentMatches = matches.slice(0, 10);
   var html = '';
   
@@ -859,7 +807,7 @@ function renderUserHistoryList(matches, uid) {
       var p1Color = isMyTeamWin && ((isDoubles && m.team1Uids.indexOf(uid) !== -1) || (!isDoubles && m.p1Uid === uid)) ? 'color: #10b981;' : '';
       var p2Color = isMyTeamWin && ((isDoubles && m.team2Uids.indexOf(uid) !== -1) || (!isDoubles && m.p2Uid === uid)) ? 'color: #10b981;' : '';
 
-      var d = new Date(parseTime(m.timestamp));
+      var d = new Date(typeof parseTime==='function'?parseTime(m.timestamp):m.timestamp);
       var day = ('0' + d.getDate()).slice(-2);
       var month = ('0' + (d.getMonth() + 1)).slice(-2);
       var hours = ('0' + d.getHours()).slice(-2);
@@ -891,15 +839,12 @@ function renderUserHistoryList(matches, uid) {
                 '</div>' +
                 '<div style="font-size: 10px; color: var(--text-muted); text-align: center; margin-top: 4px;">' + badgeHtml + timeStr + '</div>' +
               '</div>';
-    } catch(errRow) {
-      console.log("Ошибка рендера строки матча", errRow);
-    }
+    } catch(errRow) {}
   });
-  
   hEl.innerHTML = html;
 }
 
-function closeUserInfoModal() { closeModalSmoothly('user-info-modal'); }
+function closeUserInfoModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('user-info-modal'); }
 
 function openTournamentModal(tourId) { 
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
@@ -907,26 +852,26 @@ function openTournamentModal(tourId) {
   else { btn.innerText = 'Создать'; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; }
   document.getElementById('tournament-modal').style.display = 'flex'; 
 }
-function closeTournamentModal() { closeModalSmoothly('tournament-modal'); }
+function closeTournamentModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('tournament-modal'); }
 
 function saveTournament() {
   if (!isSuperAdmin()) return; 
   var title = document.getElementById('tour-title').value.trim(), dateVal = document.getElementById('tour-date').value, desc = document.getElementById('tour-desc').value.trim();
-  if (!title) return customAlert('Введите название турнира');
+  if (!title) { if(typeof customAlert === 'function') customAlert('Введите название турнира'); return; }
   var dateStr = ''; if (dateVal) { var d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
   
   var obj = { title: title, dateStr: dateStr, rawDate: dateVal, desc: desc };
-  if (currentEditingTourId) { db.collection('tournaments').doc(currentEditingTourId).update(obj).then(function() { customAlert('✅ Турнир обновлен'); closeTournamentModal(); }).catch(function(e) { customAlert('Ошибка сохранения: ' + e.message); }); } 
-  else { obj.status = 'registration'; obj.likes = []; obj.dislikes = []; obj.participants = []; obj.groups = {A:[], B:[]}; obj.matches = []; obj.playoffs = {}; obj.results = null; obj.createdAt = Date.now(); db.collection('tournaments').add(obj).then(function() { customAlert('✅ Турнир успешно создан'); closeTournamentModal(); }).catch(function(e) { customAlert('Ошибка сохранения: ' + e.message); }); }
+  if (currentEditingTourId) { db.collection('tournaments').doc(currentEditingTourId).update(obj).then(function() { if(typeof customAlert === 'function') customAlert('✅ Турнир обновлен'); closeTournamentModal(); }).catch(function(e) { if(typeof customAlert === 'function') customAlert('Ошибка сохранения: ' + e.message); }); } 
+  else { obj.status = 'registration'; obj.likes = []; obj.dislikes = []; obj.participants = []; obj.groups = {A:[], B:[]}; obj.matches = []; obj.playoffs = {}; obj.results = null; obj.createdAt = Date.now(); db.collection('tournaments').add(obj).then(function() { if(typeof customAlert === 'function') customAlert('✅ Турнир успешно создан'); closeTournamentModal(); }).catch(function(e) { if(typeof customAlert === 'function') customAlert('Ошибка сохранения: ' + e.message); }); }
 }
 
 function deleteTournament(id) { 
   if (!isSuperAdmin()) return; 
-  openConfirmModal('Вы уверены, что хотите удалить этот турнир?', function() { db.collection('tournaments').doc(id).delete().then(function() { customAlert("✅ Турнир удален"); }).catch(function(e) { customAlert("❌ Ошибка удаления: " + e.message); }); });
+  if(typeof openConfirmModal === 'function') openConfirmModal('Вы уверены, что хотите удалить этот турнир?', function() { db.collection('tournaments').doc(id).delete().then(function() { if(typeof customAlert === 'function') customAlert("✅ Турнир удален"); }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка удаления: " + e.message); }); });
 }
 
 function toggleTourReaction(id, type) {
-  var uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы ставить реакции!');
+  var uid = getVerifiedUserId(); if (!uid) return typeof customAlert==='function'?customAlert('Авторизуйтесь!'):null;
   var ref = db.collection('tournaments').doc(id);
   db.runTransaction(function(t) {
       return t.get(ref).then(function(doc) {
@@ -939,7 +884,7 @@ function toggleTourReaction(id, type) {
 }
 
 function joinTournament(id, title) {
-  var uid = getVerifiedUserId(); if (!uid) return customAlert('Авторизуйтесь, чтобы участвовать!');
+  var uid = getVerifiedUserId(); if (!uid) return typeof customAlert==='function'?customAlert('Авторизуйтесь!'):null;
   var ref = db.collection('tournaments').doc(id); var joined = false;
   db.runTransaction(function(t) {
       return t.get(ref).then(function(doc) {
@@ -948,7 +893,7 @@ function joinTournament(id, title) {
           for(var i=0; i<parts.length; i++) { if (parts[i].uid === uid) isInList = true; }
           if (!isInList) { parts.push({uid: uid, name: currentUserProfile.name, elo: parseInt(currentUserProfile.elo, 10) || 1000}); t.update(ref, { participants: parts }); joined = true; }
       });
-  }).then(function() { if (joined && canSendTgAlert('tour_join_' + uid + '_' + id)) { sendTelegramAlert("🏆 Игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> зарегистрировался на турнир <b>" + title + "</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!"); } }).catch(function(e) {});
+  }).then(function() { if (joined && typeof canSendTgAlert === 'function' && canSendTgAlert('tour_join_' + uid + '_' + id)) { if(typeof sendTelegramAlert === 'function') sendTelegramAlert("🏆 Игрок <b>" + cleanHtml(currentUserProfile.name) + "</b> зарегистрировался на турнир <b>" + title + "</b>!\n\nЗаходите в приложение, чтобы тоже принять участие!"); } }).catch(function(e) {});
 }
 
 function leaveTournament(id) {
@@ -962,7 +907,7 @@ function startTournament(id, type) {
   if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
   ref.get().then(function(doc) {
     if (!doc.exists) return; var data = doc.data(); var parts = data.participants || [];
-    if (parts.length < 4) { customAlert('Для турнира нужно минимум 4 участника!'); return; }
+    if (parts.length < 4) { if(typeof customAlert === 'function') customAlert('Для турнира нужно минимум 4 участника!'); return; }
     var grpA = [], grpB = [];
     if (type === 'smart') {
       var sorted = parts.slice().sort(function(a,b) { return (parseInt(b.elo, 10) || 1000) - (parseInt(a.elo, 10) || 1000); });
@@ -992,7 +937,7 @@ function generatePlayoffs(id) {
     var aRaw = (data.groups && data.groups.A) ? data.groups.A : []; var bRaw = (data.groups && data.groups.B) ? data.groups.B : [];
     var a = aRaw.slice().sort(function(x,y) { return (y.w||0) - (x.w||0) || (y.pts||0) - (x.pts||0); }); 
     var b = bRaw.slice().sort(function(x,y) { return (y.w||0) - (x.w||0) || (y.pts||0) - (x.pts||0); });
-    if (a.length < 2 || b.length < 2) { customAlert("Недостаточно игроков в группах для плей-офф!"); return; }
+    if (a.length < 2 || b.length < 2) { if(typeof customAlert === 'function') customAlert("Недостаточно игроков в группах для плей-офф!"); return; }
 
     var matches = data.matches || [];
     matches.push({ id: 'semi1', stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, title: 'Полуфинал 1' });
@@ -1029,7 +974,7 @@ function completeTournament(id) {
     var firstM = null, thirdM = null;
     var mArr = data.matches || [];
     for(var i=0; i<mArr.length; i++) { if (mArr[i].id === 'first') firstM = mArr[i]; if (mArr[i].id === 'third') thirdM = mArr[i]; }
-    if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) { customAlert("Завершите финалы!"); return; }
+    if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) { if(typeof customAlert === 'function') customAlert("Завершите финалы!"); return; }
 
     var gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
     var slv = firstM.score1 > firstM.score2 ? {uid: firstM.p2Uid, name: firstM.p2Name} : {uid: firstM.p1Uid, name: firstM.p1Name};
@@ -1054,7 +999,7 @@ function completeTournament(id) {
     Promise.all(promises).then(function() {
         batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
         batch.commit().then(function() {
-            sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
+            if(typeof sendTelegramAlert === 'function') sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
         });
     });
   }).catch(function(e) {});
@@ -1068,7 +1013,7 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
   document.getElementById('tour-match-modal').style.display = 'flex'; 
 }
 
-function closeTourMatchModal() { closeModalSmoothly('tour-match-modal'); }
+function closeTourMatchModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('tour-match-modal'); }
 
 function selectTourScore(s1, s2) { 
     document.getElementById('tour-match-s1').value = s1; 
@@ -1084,7 +1029,6 @@ function submitTourMatchScore() {
   var s1 = parseInt(document.getElementById('tour-match-s1').value, 10), s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
   var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
   closeTourMatchModal();
-  
   var recordedMatch = null;
 
   db.runTransaction(function(t) {
@@ -1109,7 +1053,7 @@ function submitTourMatchScore() {
               var isPWin = s1 > s2; 
               var p1Elo = parseInt(p1Data.elo, 10) || 1000; 
               var p2Elo = parseInt(p2Data.elo, 10) || 1000;
-              var myDelta = calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0);
+              var myDelta = typeof calculateElo === 'function' ? calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0) : 10;
               var newP1Elo = Math.max(100, p1Elo + myDelta); 
               var newP2Elo = Math.max(100, p2Elo - myDelta);
               var p1S = isPWin ? ((parseInt(p1Data.winStreak, 10) || 0) + 1) : 0; 
@@ -1267,7 +1211,6 @@ function listenRatings() {
     var users = [];
     var myUid = getVerifiedUserId();
     
-    // Переменные для поиска "Неудержимого" и "Гладиатора"
     var maxStreak = 0; var streakUid = null;
     var maxMatches = 0; var ironUid = null;
 
@@ -1284,7 +1227,6 @@ function listenRatings() {
       }
     });
 
-    // === ВЫДАЧА ДИНАМИЧЕСКИХ ТИТУЛОВ В РЕЙТИНГЕ ===
     window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
     for (var k in window.__TT_DYNAMIC_BADGES) {
        window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Несокрушимый') === -1 && b.indexOf('Гладиатор') === -1; });
@@ -1295,9 +1237,8 @@ function listenRatings() {
     }
     if (ironUid) {
         window.__TT_DYNAMIC_BADGES[ironUid] = window.__TT_DYNAMIC_BADGES[ironUid] || [];
-window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: #fff; border:none; cursor: pointer;" onclick="showBadgeInfo(\'⚔️ Гладиатор\')">⚔️ Гладиатор</span>');
+        window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: #fff; border:none; cursor: pointer;" onclick="showBadgeInfo(\'⚔️ Гладиатор\')">⚔️ Гладиатор</span>');
     }
-    // ===============================================
 
     users.sort(function(a, b) { return (parseInt(b.data.elo, 10) || 1000) - (parseInt(a.data.elo, 10) || 1000); });
 
@@ -1316,15 +1257,15 @@ window.__TT_DYNAMIC_BADGES[ironUid].push('<span class="platform-badge" style="ba
         var losses = parseInt(d.losses, 10) || 0;
         var matches = parseInt(d.matches, 10) || 0;
         var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
-        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
-        var customBadge = getCustomBadge(docId); // Подтягиваем новые огненные бейджи
+        var adminBadgeHTML = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(docId) !== -1) ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
+        var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : '';
         var rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
         
         var streakHtml = (d.winStreak && d.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + d.winStreak + '</span>' : '';
         var deltaNum = parseInt(d.lastEloDelta, 10) || 0;
         var deltaHtml = deltaNum ? (deltaNum > 0 ? '<span class="elo-delta elo-up">(+' + deltaNum + ') 📈</span>' : '<span class="elo-delta elo-down">(' + deltaNum + ') 📉</span>') : '';
 
-        html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div><div class="player-status-tag">' + getPlayerStatus(parseInt(d.elo, 10) || 1000) + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
+        html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div><div class="player-status-tag">' + (typeof getPlayerStatus==='function'?getPlayerStatus(parseInt(d.elo, 10) || 1000):'Игрок') + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
         rank++;
       } catch(e) {}
     });
@@ -1349,7 +1290,6 @@ function listenLeaderboard() {
 
     items.sort(function(a, b) { return (b.data.totalMinutes || 0) - (a.data.totalMinutes || 0); });
 
-    // === ВЫДАЧА ДИНАМИЧЕСКОГО ТИТУЛА "КОРОЛЬ СТОЛА" ===
     window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
     for (var k in window.__TT_DYNAMIC_BADGES) {
        window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король стола') === -1; });
@@ -1359,7 +1299,6 @@ function listenLeaderboard() {
         window.__TT_DYNAMIC_BADGES[kingUid] = window.__TT_DYNAMIC_BADGES[kingUid] || [];
         window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5); cursor: pointer;" onclick="showBadgeInfo(\'👑 Король стола\')">👑 Король стола</span>');
     }
-    // ==================================================
 
     var html = '', rank = 1;
     items.forEach(function(item) {
@@ -1367,8 +1306,8 @@ function listenLeaderboard() {
         var d = item.data;
         var docId = item.uid;
         var hours = ((d.totalMinutes || 0) / 60).toFixed(1), rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-        var adminBadgeHTML = ADMIN_UIDS.indexOf(docId) !== -1 ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
-        var customBadge = getCustomBadge(docId); // Подтягиваем корону, если она есть
+        var adminBadgeHTML = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(docId) !== -1) ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
+        var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : ''; 
         
         html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + '</div></div><div style="display: flex; align-items: center; gap: 8px;"><span class="leader-score">' + hours + ' ч (' + (d.sessions || 0) + ' игр)</span><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
         rank++;
@@ -1376,47 +1315,20 @@ function listenLeaderboard() {
     });
     listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
     
-    // Обновляем шапку профиля, чтобы игрок сразу увидел, что стал Королем
     if (typeof updateProfileDisplay === 'function') updateProfileDisplay(); 
   }, function(err) {});
 }
 
-
 // ==========================================
-// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ: СВЕРХБЫСТРАЯ АСИНХРОННАЯ ЗАГРУЗКА
+// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
-
-  // БАЗА ВРЕДНЫХ СОВЕТОВ (30 штук)
   var ttJokes = [
-    "Если ты продул всухую<br>И твой Эло покатился,<br>Ни за что не жми на кнопку<br>«Записать свой результат».<br>Сделай вид, что нет смартфона,<br>Что зашел сюда случайно,<br>И вообще ракетку эту<br>Первый раз в руках держал.",
-    "Если вдруг удар не вышел,<br>Сразу жалуйся на ветер,<br>Даже если ты играешь<br>В самом центре ДК «Восток».<br>Сквозняки, лучи от солнца,<br>Слишком круглый белый мячик —<br>Вот причины поражений,<br>А не твой кривой топ-спин.",
-    "Если видишь — стол свободен,<br>А в радаре кто-то «В парке»,<br>Смело двигай чьи-то вещи<br>И кричи: «Теперь мой стол!»<br>А когда придут ребята<br>С кнопкой «Я уже у стола»,<br>Говори, что ты не местный<br>И не знаешь слов «чекин».",
-    "Если клей отстал от губки<br>И накладка отвалилась,<br>Не спеши ее обратно<br>Спецраствором прилеплять.<br>Примотай прозрачным скотчем,<br>Гвоздиком прибей по краю,<br>Чтоб мячи от этой схемы<br>Улетали прямо в лес.",
-    "Если мяч летит навылет,<br>Ноги в пол вбейте гвоздями,<br>Ни за что не смейте прыгать,<br>Просто падайте под стол.<br>Пусть соперник горько плачет,<br>Доставая вас оттуда,<br>Ведь спасать чужие жизни<br>Интересней, чем играть!",
-    "Если мяч задел за сетку<br>И свалился прямо в край,<br>Ни за что не извиняйся,<br>Гордо голову дери.<br>Пусть соперник точно знает:<br>Это не слепая случайность,<br>А годами на турнирах<br>Отработанный удар.",
-    "На разминке перед матчем<br>Бей со всей дури в забор,<br>Чтоб соперник за мячами<br>Бегал в дальние кусты.<br>А когда он, запыхавшись,<br>Наконец-то подойдет,<br>Говори: «Ну все, размялись,<br>Начинаем на очки!»",
-    "Если у врага подача<br>Крутит так, что слепнут очи,<br>Сразу мяч лови рукою<br>И кричи: «Я не готов!»<br>Сделай так еще раз десять,<br>Пока он не психанет<br>И не станет подавать<br>Слабо в самый центр стола.",
-    "Если счет забыли оба,<br>Смело говори: «Мой сет!»<br>И записывай победу<br>В приложение скорей.<br>Кто увереннее крикнет,<br>Тот по правилам и прав,<br>А кто робко промолчал —<br>Пусть идет учить матчасть.",
-    "Если ты играешь в паре,<br>Стой на месте как скала.<br>Пусть напарник резво скачет<br>Влево, вправо и под стол.<br>А когда он запыхается,<br>Не отбив простой накат,<br>Строго посмотри с укором:<br>«Что ж ты ноги не включил?»",
-    "Если ты купил накладку<br>За пятнадцать тысяч в сумме,<br>А она сама не крутит<br>И не лупит точно в стол,<br>Напиши письмо на фабрику<br>И потребуй возвращенья:<br>Ты платил за мастер-классы,<br>А прислали просто клей.",
-    "Если матч зашел в качели,<br>И вы режете друг другу,<br>Ни за что не атакуй,<br>Просто жди часов до трех.<br>Кто уснет у стола первым —<br>Тот технически слил матч,<br>А тебя наградят кубком<br>За титановый терпеж.",
-    "Если квест тебе назначен:<br>«Победить три раза всухую»,<br>Выбирай того, кто держит<br>Ракетку первый день в году.<br>Разгроми его без жалости,<br>Забери свои награды,<br>Спорт высоких достижений<br>Сентиментов не прощает.",
-    "Если в клубном турнире<br>Ты попал на фаворита,<br>Громко кашляй перед топсом,<br>Урони ключи на пол.<br>Расскажи смешную шутку<br>Прямо под его замах —<br>Психология в пинг-понге<br>Важнее всяких там шипов!",
-    "Если ты нажал в радаре,<br>Что придешь через пятнадцать,<br>Приходи часа через два,<br>Не спеша допив чаек.<br>Пусть ребята у стола<br>Вглядываются вдаль аллей —<br>Появление легенды<br>Должно быть долгожданным!",
-    "Если ты промазал топсом,<br>И очко ушло к врагу,<br>Запускай ракетку в стену,<br>Чтобы треснул инвентарь!<br>Пусть все знают: ты не лузер,<br>Просто дерево плохое,<br>А с нормальным основаньем<br>Ты б китайцев побеждал.",
-    "Если ты в пылу сраженья<br>Весь покрылся липким потом,<br>Полотенце брать не нужно,<br>Это трата ценных сил.<br>Вытирай ладонь о столик,<br>Где соперник подает,<br>В этой луже непременно<br>Забуксует его мяч.",
-    "Если ты подал подачу<br>И она задела сетку,<br>Но соперник не заметил,<br>Продолжай играть как бог.<br>А когда он отобьет<br>Мимо линии случайно,<br>Тут же вспомни: «Была сетка!<br>Переигрываем, брат!»",
-    "Если видишь, что у друга<br>Плохо клеится игра,<br>Встань над ним с лицом эксперта<br>И советы раздавай.<br>«Кисть расслабь, шагай смелее,<br>И не горбись у стола!»<br>Он, конечно, не попросит,<br>Но зато пропишет в глаз.",
-    "Если ты махнул ракеткой,<br>Но по мячику мазила,<br>Посмотри наверх сурово<br>И потри глаза рукой.<br>Пусть соперник точно знает:<br>Ослепила злая лампа!<br>А с нормальным освещеньем<br>Ты б его давно порвал.",
-    "Приходи в ДК «Восток»<br>Прямо в куртке и ботинках.<br>Шорты, майки и кроссовки —<br>Для неопытных пижонов.<br>А когда продуешь сет,<br>Сможешь всем сказать с улыбкой:<br>«Я бы вас разнес всухую,<br>Если б шапку только снял!»",
-    "Если против вас выходит<br>Дед с китайскими шипами,<br>Не пытайтесь делать топсы,<br>Лучше сразу сдаться в плен.<br>Эти шипы поглощают<br>И вращения, и душу,<br>Брось ракетку, плачь навзрыд<br>И иди домой пешком.",
-    "Если мяч коснулся края<br>И со звоном рухнул в пол,<br>Поднимай палец к небу<br>И кричи: «Я так и знал!»<br>Мастерство не потеряешь,<br>Геометрия в крови,<br>А кто думает «случайность» —<br>Ничего не смыслит в спорте.",
-    "Чтобы в рейтинге ЧМЗ<br>Взмыть орлом на пьедестал,<br>Выбирай себе в партнеры<br>Тех, кто только снял пальто.<br>Бей по ним, пока не сдадутся,<br>Забирай их свежий Эло,<br>И ходи потом по залу<br>С гордо поднятым лицом.",
-    "Если мяч отскочил криво,<br>Сразу бей по столу с силой.<br>Покажи всем эту яму,<br>Что не видит больше никто.<br>Стол кривой, полы кривые,<br>И планета не под тем углом,<br>Только твой удар прекрасен,<br>Жаль, что физика всё врет."
+    "Если ты продул всухую<br>И твой Эло покатился,<br>Ни за что не жми на кнопку<br>«Записать свой результат».",
+    "Если вдруг удар не вышел,<br>Сразу жалуйся на ветер,<br>Даже если ты играешь<br>В самом центре ДК «Восток»."
   ];
 
- var isFirstStart = !sessionStorage.getItem('tt_app_loaded');
+  var isFirstStart = !sessionStorage.getItem('tt_app_loaded');
   var randomJoke = ttJokes[Math.floor(Math.random() * ttJokes.length)];
   var jokeEl = document.getElementById('preloader-joke');
   var bar = document.getElementById('preloader-bar');
@@ -1426,37 +1338,23 @@ document.addEventListener('DOMContentLoaded', function() {
 
   if (isFirstStart) {
     sessionStorage.setItem('tt_app_loaded', 'true');
-    
-    // Красиво разбиваем стих на отдельные строки для каскадного появления
     if (jokeEl) {
       var rawLines = randomJoke.split('<br>');
       var linesHtml = '';
       for (var i = 0; i < rawLines.length; i++) {
-        // Каждая следующая строчка появляется с задержкой в 0.3 секунды
-        var delay = i * 0.3;
-        linesHtml += '<div class="joke-line" style="animation-delay: ' + delay + 's;">' + rawLines[i] + '</div>';
+        linesHtml += '<div class="joke-line" style="animation-delay: ' + (i * 0.3) + 's;">' + rawLines[i] + '</div>';
       }
       jokeEl.innerHTML = linesHtml;
       jokeEl.style.display = 'flex';
     }
-    
-    // Плавный ход полоски ровно на 8 секунд
     if (bar) {
       bar.style.transition = 'width 8s linear'; 
       setTimeout(function() { bar.style.width = '100%'; }, 50);
     }
-    
     window.setAppProgress = function(percent, text) {}; 
     
-    // Ровно через 8 секунд: вибрация + плавное закрытие
     setTimeout(function() {
-      // Тактильный отклик (Haptic Feedback) в Telegram
-      try {
-        if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-          window.Telegram.WebApp.HapticFeedback.impactOccurred('medium');
-        }
-      } catch(e) {}
-
+      if (typeof vibrate === 'function') vibrate('medium');
       var loader = document.getElementById('app-preloader');
       if (loader) {
         loader.style.transition = 'opacity 0.6s ease-out';
@@ -1469,7 +1367,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 8000);
     
   } else {
-    // Если это рефреш — открываемся мгновенно без анимаций
     if (jokeEl) jokeEl.style.display = 'none';
     if (bar) bar.style.width = '100%';
     
@@ -1484,60 +1381,54 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-
- // Гибкое ожидание Telegram (не блокирует интерфейс)
   var tgAttempts = 0;
   var tgCheck = setInterval(function() {
     if (window.Telegram && window.Telegram.WebApp) {
       try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
       clearInterval(tgCheck);
     }
-    if (++tgAttempts > 20) clearInterval(tgCheck); // Сдаемся через 2 секунды, если зашли через Chrome
+    if (++tgAttempts > 20) clearInterval(tgCheck);
   }, 100);
 
- // 1. Отрисовываем базовый UI моментально
   try { restoreCardStates(); } catch(e) {}
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
   
-  // Инициализируем доску квестов при старте
   if (typeof renderQuestBoard === 'function') {
       try { renderQuestBoard(); } catch(e) {}
   }
 
-  setAppProgress(70, 'Подключение...');
+  if (typeof setAppProgress === 'function') setAppProgress(70, 'Подключение...');
 
-  // 2. Инициируем Firebase-запросы (они асинхронны, но мы пока запускаем только самые важные)
   try { initUserProfile(); } catch(e) {}
   try { updateAdminControls(); } catch(e) {}
-  try { listenPendingMatches(); } catch(e) {}
+  if(typeof listenPendingMatches === 'function') { try { listenPendingMatches(); } catch(e) {} }
   
   ['park', 'vostok'].forEach(function(loc) {
     try {
       db.collection('locations').doc(loc).onSnapshot(function(doc) { 
           try { 
               var data = doc.data() || {}; 
-              locationsData[loc].plans = data.plans || []; 
-              locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: DEFAULT_LIMIT_MS } : p; }); 
-              renderAll(); 
+              if(typeof locationsData !== 'undefined' && locationsData[loc]) {
+                 locationsData[loc].plans = data.plans || []; 
+                 locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) } : p; }); 
+                 if(typeof renderAll === 'function') renderAll(); 
+              }
           } catch(e){} 
       }, function(err) {});
     } catch(e) {}
   });
 
-  // 3. Отключаем прелоадер СРАЗУ. Интерфейс готов, кнопки работают.
-  setAppProgress(100, 'Готово!');
+  if (typeof setAppProgress === 'function') setAppProgress(100, 'Готово!');
   
-  // 4. ВСЕ ТЯЖЕЛЫЕ БАЗЫ ГРУЗЯТСЯ ПАРАЛЛЕЛЬНО В ФОНЕ (ЧЕРЕЗ setTimeOut)
-  // Это освобождает Chrome от "заморозки" экрана
   setTimeout(function() {
       try {
         db.collection('settings').doc('announcements').onSnapshot(function(doc) {
           try {
-            announcementsData = doc.data() || { vostok: null };
+            if(typeof announcementsData !== 'undefined') announcementsData = doc.data() || { vostok: null };
             var badgeBox = document.getElementById('announcement-box-vostok');
             var textBox = document.getElementById('announcement-text-vostok');
-            if (badgeBox && textBox) { 
+            if (badgeBox && textBox && typeof announcementsData !== 'undefined') { 
                 var aData = announcementsData.vostok;
                 if (aData) { 
                     if (typeof aData === 'object') {
@@ -1566,28 +1457,27 @@ document.addEventListener('DOMContentLoaded', function() {
         });
       } catch(e) {}
 
-      try { listenRecentMatches(); } catch(e) {}
+      if(typeof listenRecentMatches === 'function') { try { listenRecentMatches(); } catch(e) {} }
       try { listenRatings(); } catch(e) {}
       try { listenLeaderboard(); } catch(e) {}
       try { listenTournaments(); } catch(e) {}
 
-      setTimeout(monitorSessions, 1000);
-      setInterval(renderAll, 30000); 
-      setInterval(monitorSessions, 60000); 
+      if(typeof monitorSessions === 'function') {
+         setTimeout(monitorSessions, 1000);
+         setInterval(monitorSessions, 60000); 
+      }
+      if(typeof renderAll === 'function') setInterval(renderAll, 30000); 
 
-    // Погода стартует, когда экран уже свободен
       if (typeof loadParkWeather === 'function') { 
           try { loadParkWeather(); } catch(e) {} 
           setInterval(loadParkWeather, 600000); 
       }
       
-      // ЗАПУСК НОВОСТЕЙ
       if (typeof loadTableTennisNews === 'function') loadTableTennisNews();
           
   }, 100); 
 });
 
-// Функция тихого удаления матча из истории (в стилистике приложения)
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
   
@@ -1601,19 +1491,20 @@ function deleteHistoryMatch(docId, profileUid) {
   
   var confirmText = 'Удалить этот матч из истории?<br><br><span style="font-size: 12px; opacity: 0.8;">(Рейтинги игроков не изменятся, удалится только карточка матча)</span>';
   
-  openConfirmModal(confirmText, function() {
-    db.collection('matches_history').doc(docId).delete().then(function() {
-      customAlert('✅ Матч удален из истории');
-      if (profileUid) {
-        showUserInfoModal(profileUid); // Обновляем карточку игрока
-      }
-    }).catch(function(e) {
-      customAlert('Ошибка удаления: ' + e.message);
-    });
-  });
+  if (typeof openConfirmModal === 'function') {
+      openConfirmModal(confirmText, function() {
+        db.collection('matches_history').doc(docId).delete().then(function() {
+          if (typeof customAlert === 'function') customAlert('✅ Матч удален из истории');
+          if (profileUid) {
+            showUserInfoModal(profileUid);
+          }
+        }).catch(function(e) {
+          if (typeof customAlert === 'function') customAlert('Ошибка удаления: ' + e.message);
+        });
+      });
+  }
 }
 
-// --- МЕХАНИКА ELO DECAY (РУЧНОЙ ЗАПУСК С ЗАЩИТОЙ + НОВИЧКИ) ---
 window.applyEloDecay = function() {
   if (!isSuperAdmin()) return;
 
@@ -1626,513 +1517,80 @@ window.applyEloDecay = function() {
   if (title) { title.innerText = "Списание рейтинга"; title.style.color = "var(--accent-red)"; }
   if (box) { box.style.borderColor = "var(--accent-red)"; }
 
-  openConfirmModal(confirmMsg, function() {
-    customAlert("⏳ Анализируем историю матчей за 7 дней...");
+  if(typeof openConfirmModal === 'function') {
+      openConfirmModal(confirmMsg, function() {
+        if(typeof customAlert === 'function') customAlert("⏳ Анализируем историю матчей за 7 дней...");
 
-    var now = Date.now();
-    var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
+        var now = Date.now();
+        var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
 
-    db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
-      var activeUids = new Set();
-      
-      snap.forEach(function(doc) {
-        var m = doc.data();
-        if (m.participants) {
-          m.participants.forEach(function(uid) { activeUids.add(uid); });
-        }
-      });
-
-      db.collection('users').get().then(function(usersSnap) {
-        var batch = db.batch();
-        var penalizedCount = 0;
-        var penalizedNames = [];
-
-        usersSnap.forEach(function(uDoc) {
-          var u = uDoc.data();
-          var uid = uDoc.id;
-
-          if (activeUids.has(uid)) return;
-
-          var regDate = u.createdAt || u.timestamp || 0;
-          if (regDate) {
-            var regTime = typeof parseTime === 'function' ? parseTime(regDate) : Number(regDate);
-            if (now - regTime < 7 * 24 * 60 * 60 * 1000) {
-              return; 
+        db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
+          var activeUids = new Set();
+          snap.forEach(function(doc) {
+            var m = doc.data();
+            if (m.participants) {
+              m.participants.forEach(function(uid) { activeUids.add(uid); });
             }
-          }
-
-          var lastPenalty = u.lastPenaltyDate || 0;
-          
-          if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
-            var currentElo = parseInt(u.elo, 10) || 1000;
-            var newElo = Math.max(100, currentElo - 50);
-
-            batch.set(db.collection('users').doc(uid), {
-              elo: newElo,
-              lastPenaltyDate: now, 
-              lastEloDelta: -50 
-            }, { merge: true });
-
-            penalizedCount++;
-            penalizedNames.push(cleanHtml(u.name));
-          }
-        });
-
-        if (penalizedCount > 0) {
-          batch.commit().then(function() {
-            customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
-            
-            var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\n" +
-                            "Следующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n" +
-                            "• " + penalizedNames.join('\n• ') + "\n\n" +
-                            "<i>Пора расчехлять ракетки и возвращать позиции!</i> 🏓";
-            sendTelegramAlert(tgMessage);
-            
-            closeAdminMenu();
-          }).catch(function(e) { customAlert("❌ Ошибка при списании: " + e.message); });
-        } else {
-          customAlert("✅ Проверка завершена. Все лентяи уже оштрафованы, остальные — активно играют!");
-          closeAdminMenu();
-        }
-
-      }).catch(function(e) { customAlert("❌ Ошибка базы пользователей: " + e.message); });
-    }).catch(function(e) { customAlert("❌ Ошибка истории матчей: " + e.message); });
-  });
-};
-
-var confirmCallback = null;
-
-function openConfirmModal(htmlText, onConfirm) {
-  var el = document.getElementById('confirm-modal-text');
-  if (el) el.innerHTML = htmlText;
-  confirmCallback = onConfirm;
-  var modal = document.getElementById('confirm-modal');
-  if (modal) modal.style.display = 'flex';
-}
-
-function closeConfirmModal() { closeModalSmoothly('confirm-modal'); confirmCallback = null; }
-
-function executeConfirm() {
-  if (typeof confirmCallback === 'function') {
-    confirmCallback();
-  }
-  closeConfirmModal();
-}
-
-function renderUserHistoryList(matches, uid) {
-  var hEl = document.getElementById('info-modal-history');
-  if (!matches || matches.length === 0) { 
-    hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; 
-    return; 
-  }
-  
-  var recentMatches = matches.slice(0, 10);
-  var h = '';
-  
-  recentMatches.forEach(function(mx) {
-    try {
-        var isDoubles = mx.type === 'doubles';
-        var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
-        
-        var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
-        var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
-
-        var myS = isTeam1 ? s1 : s2;
-        var opS = isTeam1 ? s2 : s1;
-
-        var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
-        
-        var winStyle = 'color: #059669; font-weight: 600;';
-        var loseStyle = 'color: var(--text-muted); font-weight: 400;';
-        
-        var myStyle = isWin ? winStyle : loseStyle;
-        var opStyle = !isWin ? winStyle : loseStyle;
-        
-        var myEmoji = isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
-        var opEmoji = !isWin ? '<span style="color: #059669; font-size: 10px; margin-right: 4px;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; margin-right: 4px;">▼</span>';
-
-        var dtStr = new Date(parseTime(mx.timestamp)).toLocaleDateString();
-        var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px;">2x2</span>' : '<span class="badge-mode badge-mode-singles" style="margin-right: 6px;">1x1</span>';
-        
-        var leftContentHtml = '';
-
-        if (isDoubles) {
-            var tArr = isTeam1 ? mx.team1NamesArr : mx.team2NamesArr;
-            var tUids = isTeam1 ? mx.team1Uids : mx.team2Uids;
-            var myPartner = null, myPartnerUid = null;
-            if (tArr && tUids) {
-                if (tUids[0] === uid) { myPartner = tArr[1]; myPartnerUid = tUids[1]; }
-                else { myPartner = tArr[0]; myPartnerUid = tUids[0]; }
-            }
-            
-            var partnerHtml = myPartner ? '<span class="clickable-name" style="'+myStyle+'" onclick="showUserInfoModal(\''+escapeJS(myPartnerUid)+'\')">' + cleanHtml(myPartner) + '</span>' : '<span style="'+myStyle+'">Неизвестно</span>';
-            
-            var opArr = isTeam1 ? mx.team2NamesArr : mx.team1NamesArr;
-            var opUids = isTeam1 ? mx.team2Uids : mx.team1Uids;
-            var opHtml = '';
-            if (opArr && opUids && opArr.length > 1) {
-                opHtml = '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUids[0])+'\')">' + cleanHtml(opArr[0]) + '</span>' +
-                         ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ' +
-                         '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUids[1])+'\')">' + cleanHtml(opArr[1]) + '</span>';
-            } else {
-                var opN = isTeam1 ? mx.team2Names : mx.team1Names;
-                opHtml = '<span style="'+opStyle+'">' + cleanHtml(opN || "Неизвестные игроки").replace(/ & /g, ' <span style="color:var(--text-muted); font-size: 10px;">&</span> ') + '</span>';
-            }
-
-            leftContentHtml = '<div style="margin-bottom: 4px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">в паре с:</span> ' + myEmoji + partnerHtml + '</div>' +
-                              '<div style="line-height: 1.4; word-break: break-word;"><span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
-
-        } else {
-            var opUid = isTeam1 ? mx.p2Uid : mx.p1Uid;
-            var opName = isTeam1 ? mx.p2Name : mx.p1Name;
-            var opHtml = '<span class="clickable-name" style="'+opStyle+'" onclick="showUserInfoModal(\''+escapeJS(opUid)+'\')">' + cleanHtml(opName || "Неизвестно") + '</span>';
-            
-            leftContentHtml = '<div style="line-height: 1.4; word-break: break-word; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted);">против:</span> ' + opEmoji + opHtml + '</div>';
-        }
-
-        var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑</div>' : '';
-
-        h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:12px; gap: 8px; margin-bottom: 6px;">' +
-               '<div style="flex: 1; min-width: 0;">' + 
-                 leftContentHtml +
-                 '<div style="color:var(--text-muted);font-size:10px; margin-top:6px;">' + dtStr + '</div>' +
-               '</div>' +
-               '<div style="display: flex; align-items: center;">' +
-                 '<div style="font-weight:700; font-size: 16px; white-space: nowrap; flex-shrink: 0; background: var(--row-bg); padding: 4px 10px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">' +
-                   '<span style="' + myStyle + '">' + myS + '</span>' +
-                   '<span style="color:var(--text-muted); opacity: 0.5; margin: 0 4px;">:</span>' +
-                   '<span style="' + opStyle + '">' + opS + '</span>' +
-                 '</div>' +
-                 adminDelBtn +
-               '</div>' +
-             '</div>';
-    } catch(errRow) {
-      console.log("Пропуск поврежденной записи матча", errRow);
-    }
-  });
-  hEl.innerHTML = h;
-}
-
-var mainProfileDateLoaded = false;
-setInterval(function() {
-  var targetEl = document.getElementById('main-profile-last-played');
-  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  
-  if (!mainProfileDateLoaded && targetEl && targetEl.innerHTML.includes('Загрузка') && myUid) {
-    mainProfileDateLoaded = true; 
-    
-    db.collection('matches_history').get().then(function(snap) {
-      var myMatches = [];
-      snap.forEach(function(docX) {
-        var mx = docX.data();
-        var isPart = (mx.participants && mx.participants.indexOf(myUid) !== -1) || 
-                     (mx.p1Uid === myUid || mx.p2Uid === myUid) ||
-                     (mx.team1Uids && mx.team1Uids.indexOf(myUid) !== -1) ||
-                     (mx.team2Uids && mx.team2Uids.indexOf(myUid) !== -1);
-        if (isPart) myMatches.push(mx);
-      });
-
-      if (myMatches.length === 0) {
-        targetEl.innerHTML = '<span style="color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
-        return;
-      }
-
-      myMatches.sort(function(a, b) {
-        var tA = typeof parseTime === 'function' ? parseTime(a.timestamp) : (a.timestamp || 0);
-        var tB = typeof parseTime === 'function' ? parseTime(b.timestamp) : (b.timestamp || 0);
-        return tB - tA;
-      });
-
-      var lastTs = typeof parseTime === 'function' ? parseTime(myMatches[0].timestamp) : myMatches[0].timestamp;
-      var mDate = new Date(lastTs);
-      var day = ('0' + mDate.getDate()).slice(-2);
-      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
-      
-      var today = new Date(); today.setHours(0,0,0,0);
-      var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
-      var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
-      
-      var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (' + diffDays + ' дн. назад)';
-      var color = diffDays >= 7 ? 'var(--accent-red)' : 'var(--text-muted)';
-      
-      targetEl.innerHTML = day + '.' + month + '.' + mDate.getFullYear() + '<span style="font-size: 11px; margin-left: 6px; color:' + color + ';">' + daysText + '</span>';
-    });
-  }
-}, 1000);
-
-window.currentEloMultiplier = 1;
-
-window.saveEloBoost = function() {
-  if (!isSuperAdmin()) return;
-  var val = parseInt(document.getElementById('admin-elo-boost').value, 10) || 1;
-  
-  db.collection('settings').doc('elo_boost').set({ multiplier: val }, { merge: true }).then(function() {
-    var msg = "";
-
-    if (val === 2) {
-      msg = "🚀 <b>ИВЕНТ: Х2 ОЧКИ ЭЛО!</b>\n\nВключен двойной множитель рейтинга! Выигрываешь — получаешь в 2 раза больше очков. Проигрываешь — теряешь как обычно.\n\n<i>Отличный шанс для тех, кто засиделся в любителях! Бегом к столам!</i> 🏓";
-    } else if (val === 3) {
-      msg = "🔥 <b>ИВЕНТ: ТРОЙНОЙ БУСТ (х3)!</b>\n\nСтавки повышаются! За победу теперь начисляется в 3 раза больше Эло. Одна удачная серия побед может сделать вас чемпионом клуба.\n\n<i>Ракетки к бою, начинается жара!</i> ☄️";
-    } else if (val === 5) {
-      msg = "😱 <b>ИВЕНТ: БЕШЕНОЕ ЭЛО (х5)!</b>\n\nАдмин сошел с ума! Включен ПЯТИКРАТНЫЙ множитель за победу! Сейчас можно взлететь в топ-10 за пару часов или мощно осадить фаворитов.\n\n<i>Предупреждение: возможны прожженные накладки от скорости игры!</i> ☢";
-    } else if (val === 10) {
-      msg = "🤯 <b>ИВЕНТ: МЕГА-БУСТ x10 (АБСОЛЮТНОЕ БЕЗУМИЕ)!</b>\n\nРейтинговая экономика сломана! Каждая победа приносит ДЕСЯТИКРАТНОЕ количество очков. Сегодня новички могут обойти легенд спорта.\n\n<i>Бросайте все дела, такое бывает раз в жизни! Мяч на вашей стороне!</i> 🌋";
-    } else {
-      msg = "🛑 <b>Ивент завершен.</b>\n\nХалява закончилась, буст рейтинга отключен. Начисление Эло вернулось в суровую, но справедливую реальность (x1).\n\n<i>Всем спасибо за игры, рейтинг зафиксирован!</i> 🤝";
-    }
-    
-    sendTelegramAlert(msg);
-    customAlert("✅ Успешно! Буст рейтинга установлен на x" + val);
-    closeAdminMenu();
-  }).catch(function(e) { customAlert("Ошибка: " + e.message); });
-};
-
-var BOT_USERNAME = "tennis_club_chmz_bot"; 
-
-function showRefQrModal() {
-  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  if (!myUid) {
-    alert("Сначала необходимо авторизоваться!");
-    return;
-  }
-  
-  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
-  var qrContainer = document.getElementById("ref-qrcode");
-  qrContainer.innerHTML = ""; 
-  
-  new QRCode(qrContainer, {
-    text: refLink,
-    width: 200,
-    height: 200,
-    colorDark : "#000000",
-    colorLight : "#ffffff",
-    correctLevel : QRCode.CorrectLevel.H
-  });
-
-  document.getElementById('ref-qr-modal').style.display = 'flex';
-}
-
-function closeRefQrModal() { closeModalSmoothly('ref-qr-modal'); }
-
-function shareMyRefLink() {
-  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  if (!myUid) {
-    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
-    else alert("Сначала необходимо авторизоваться!");
-    return;
-  }
-
-  var botUsername = "tennis_club_chmz_bot"; 
-  var refLink = "https://t.me/" + botUsername + "?startapp=" + encodeURIComponent(myUid);
-  var inviteTitle = "Клуб настольного тенниса ЧМЗ";
-  var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
-
-  if (navigator.share) {
-    navigator.share({
-      title: inviteTitle,
-      text: inviteText,
-      url: refLink
-    }).then(function() {}).catch(function(error) {});
-  } else if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
-      if (typeof customAlert === 'function') {
-        customAlert("Ссылка скопирована!\nОтправьте её будущему участнику.");
-      } else {
-        alert("Ссылка скопирована в буфер обмена!");
-      }
-    });
-  } else {
-    prompt("Скопируйте ссылку для добавления участника:", refLink);
-  }
-}
-
-function processReferralBonus(newUserId, newUserName) {
-  try {
-    if (!window.Telegram || !window.Telegram.WebApp || !window.Telegram.WebApp.initDataUnsafe) return;
-    var startParam = window.Telegram.WebApp.initDataUnsafe.start_param;
-    
-    if (startParam && startParam !== newUserId && !localStorage.getItem('ref_linked_' + newUserId)) {
-      var userRef = db.collection('users').doc(newUserId);
-      userRef.get().then(function(uDoc) {
-        var data = uDoc.data() || {};
-        if (!data.invitedBy) {
-          userRef.set({
-            invitedBy: startParam,
-            refConfirmed: false 
-          }, { merge: true }).then(function() {
-            db.collection('users').doc(startParam).set({
-              pendingInvitesCount: firebase.firestore.FieldValue.increment(1)
-            }, { merge: true });
-            localStorage.setItem('ref_linked_' + newUserId, 'true');
-            
-            db.collection('users').doc(startParam).get().then(function(inviterDoc) {
-               var inviterName = inviterDoc.exists ? (inviterDoc.data().name || "Игрок") : "Участник";
-               sendTelegramAlert("🤝 <b>Новый игрок по приглашению!</b>\n\nВ клуб вступил участник: <b>" + cleanHtml(newUserName || "Новичок") + "</b>\nЕго пригласил: <b>" + cleanHtml(inviterName) + "</b>\n\n<i>Осталось сыграть 3 матча для подтверждения квалификации!</i>");
-            });
           });
-        }
+
+          db.collection('users').get().then(function(usersSnap) {
+            var batch = db.batch();
+            var penalizedCount = 0;
+            var penalizedNames = [];
+
+            usersSnap.forEach(function(uDoc) {
+              var u = uDoc.data();
+              var uid = uDoc.id;
+
+              if (activeUids.has(uid)) return;
+
+              var regDate = u.createdAt || u.timestamp || 0;
+              if (regDate) {
+                var regTime = typeof parseTime === 'function' ? parseTime(regDate) : Number(regDate);
+                if (now - regTime < 7 * 24 * 60 * 60 * 1000) {
+                  return; 
+                }
+              }
+
+              var lastPenalty = u.lastPenaltyDate || 0;
+              if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
+                var currentElo = parseInt(u.elo, 10) || 1000;
+                var newElo = Math.max(100, currentElo - 50);
+
+                batch.set(db.collection('users').doc(uid), {
+                  elo: newElo,
+                  lastPenaltyDate: now, 
+                  lastEloDelta: -50 
+                }, { merge: true });
+
+                penalizedCount++;
+                penalizedNames.push(cleanHtml(u.name));
+              }
+            });
+
+            if (penalizedCount > 0) {
+              batch.commit().then(function() {
+                if(typeof customAlert === 'function') customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
+                
+                var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\nСледующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n• " + penalizedNames.join('\n• ') + "\n\n<i>Пора расчехлять ракетки и возвращать позиции!</i> 🏓";
+                if(typeof sendTelegramAlert === 'function') sendTelegramAlert(tgMessage);
+                
+                closeAdminMenu();
+              }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка при списании: " + e.message); });
+            } else {
+              if(typeof customAlert === 'function') customAlert("✅ Проверка завершена. Все лентяи уже оштрафованы, остальные — активно играют!");
+              closeAdminMenu();
+            }
+
+          }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка базы пользователей: " + e.message); });
+        }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка истории матчей: " + e.message); });
       });
-    }
-  } catch (err) {}
-}
-// Словарь описаний всех плашек и титулов в клубе
-var BADGE_DESCRIPTIONS = {
-  "👑 Король стола": {
-    title: "Король стола",
-    icon: "👑",
-    desc: "Выдается игроку, который провел больше всего суммарного времени за тренировками и играми в клубе. Докажи, что стол принадлежит тебе!"
-  },
-  "🔥 Несокрушимый": {
-    title: "Несокрушимый",
-    icon: "🔥",
-    desc: "Присваивается игроку с самой длинной активной серией побед в клубе (от 3 матчей подряд). Горячая рука не прощает соперников!"
-  },
-  "⚔️ Гладиатор": {
-    title: "Гладиатор",
-    icon: "⚔️",
-    desc: "Знак истинной стойкости. Выдается бойцам, которые сыграли наибольшее количество матчей в клубе (от 10 игр и выше)."
-  },
-  "🤝 Амбассадор": {
-    title: "Амбассадор",
-    icon: "🤝",
-    desc: "Особый статус за развитие клуба. Выдается игрокам, которые успешно пригласили в приложение и клуб 5 и более новых участников."
-  },
-  "Админ ⭐": {
-    title: "Администратор",
-    icon: "⭐",
-    desc: "Основатель и организатор клуба ЧМЗ. Управляет турнирами, ивентами, ботом и следит за порядком у столов."
-  }
-};
-
-// Функция открытия модалки с информацией о плашке
-window.showBadgeInfo = function(badgeKey) {
-  // Очищаем ключ от лишних тегов/смайликов для поиска в словаре
-  var info = BADGE_DESCRIPTIONS[badgeKey];
-  
-  if (!info) {
-    // Дефолтное описание для квестовых и временных плашек
-    info = {
-      title: badgeKey.replace(/<[^>]*>?/gm, '').trim(),
-      icon: "🏅",
-      desc: "Это временная награда или статус, полученный за успешное выполнение еженедельных заданий, квестов или победы в специальных ивентах."
-    };
-  }
-
-  var titleEl = document.getElementById('badge-modal-title');
-  var descEl = document.getElementById('badge-modal-desc');
-  var iconEl = document.getElementById('badge-modal-icon');
-  var modal = document.getElementById('badge-info-modal');
-
-  if (titleEl) titleEl.innerText = info.title;
-  if (descEl) descEl.innerText = info.desc;
-  if (iconEl) iconEl.innerText = info.icon;
-  if (modal) modal.style.display = 'flex';
-};
-
-window.closeBadgeInfoModal = function() {
-  closeModalSmoothly('badge-info-modal');
-};
-
-// ==========================================
-// WOW-ЭФФЕКТЫ: Вибрация, Конфетти и 3D-наклон
-// ==========================================
-
-// Универсальная функция тактильного отклика
-window.vibrate = function(style) {
-  try {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.impactOccurred(style || 'light');
-    }
-  } catch(e) {}
-};
-
-// Функция уведомления (success, warning, error)
-window.vibrateNotification = function(type) {
-  try {
-    if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
-      window.Telegram.WebApp.HapticFeedback.notificationOccurred(type || 'success');
-    }
-  } catch(e) {}
-};
-
-// Взрыв конфетти
-window.fireConfetti = function(event) {
-  vibrateNotification('success');
-  if (typeof confetti === 'function') {
-    var duration = 2000;
-    var end = Date.now() + duration;
-    var frame = function() {
-      confetti({
-        particleCount: 5,
-        angle: 60,
-        spread: 55,
-        origin: { x: 0, y: 0.8 },
-        colors: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'],
-        zIndex: 12000
-      });
-      confetti({
-        particleCount: 5,
-        angle: 120,
-        spread: 55,
-        origin: { x: 1, y: 0.8 },
-        colors: ['#f59e0b', '#10b981', '#3b82f6', '#8b5cf6'],
-        zIndex: 12000
-      });
-      if (Date.now() < end) requestAnimationFrame(frame);
-    };
-    frame();
   }
 };
 
 
 // ==========================================
-// DYNAMIC ISLAND CONTROLLER
-// ==========================================
-setInterval(function() {
-  var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  // Если локации еще не загрузились или пользователь не вошел - отбой
-  if (!uid || typeof locationsData === 'undefined') return;
-
-  var activePlayer = null;
-  var activeLoc = '';
-
-  // Ищем текущего пользователя в массиве players в Парке и в ДК
-  ['park', 'vostok'].forEach(function(loc) {
-    if (locationsData[loc] && locationsData[loc].players) {
-      var p = locationsData[loc].players.find(function(x) { return x.uid === uid; });
-      if (p) { 
-        activePlayer = p; 
-        activeLoc = loc; 
-      }
-    }
-  });
-
-  var island = document.getElementById('dynamic-island');
-  var timerEl = document.getElementById('di-timer');
-  
- if (activePlayer && island && timerEl) {
-    var diffMs = Date.now() - activePlayer.time;
-    var mins = Math.floor(diffMs / 60000);
-    var locName = activeLoc === 'park' ? '🌳 В парке' : '🏛 В ДК';
-    
-    timerEl.innerText = locName + ': ' + mins + ' мин';
-    
-    // Появление острова
-    if (!island.classList.contains('visible')) {
-      island.classList.remove('hidden');
-      document.body.classList.add('island-active'); // <--- МАГИЯ СДВИГА: толкаем шапку вниз
-      setTimeout(function() { island.classList.add('visible'); }, 10);
-    }
-  } else if (island && island.classList.contains('visible')) {
-    // Исчезновение острова
-    island.classList.remove('visible');
-    document.body.classList.remove('island-active'); // <--- МАГИЯ СДВИГА: возвращаем шапку на место
-    setTimeout(function() { island.classList.add('hidden'); }, 500); 
-  }
-}, 1000); // Проверяем каждую секунду
-
-// ==========================================
-// УНИВЕРСАЛЬНЫЙ СВАЙП ДЛЯ ЗАКРЫТИЯ ШТОРОК (ИДЕАЛЬНАЯ ПЛАВНОСТЬ)
+// ГЛОБАЛЬНЫЙ МЕХАНИЗМ ЗАКРЫТИЯ СВАЙПОМ
 // ==========================================
 var sheetYDown = null;
 var activeSheet = null;
@@ -2143,21 +1601,19 @@ document.addEventListener('touchstart', function(evt) {
   var box = evt.target.closest('.modal-box');
   if (!box) return;
   
-  var scrollable = evt.target.closest('div[style*="overflow-y: auto"]');
+  var scrollable = evt.target.closest('div[style*="overflow-y: auto"], .scrollable-list, .player-list, #info-modal-history');
   if (scrollable && scrollable.scrollTop > 0) return;
 
   sheetYDown = evt.touches[0].clientY;
   activeSheet = box;
   currentYDiff = 0;
   
-  // ВАЖНО: Отключаем стартовую CSS-анимацию, чтобы она не сопротивлялась пальцу
   activeSheet.style.animation = 'none'; 
   activeSheet.style.transition = 'none'; 
 }, {passive: true});
 
 document.addEventListener('touchmove', function(evt) {
   if (!sheetYDown || !activeSheet) return;
-  
   var yUp = evt.touches[0].clientY;
   currentYDiff = Math.max(0, yUp - sheetYDown); 
 
@@ -2170,23 +1626,19 @@ document.addEventListener('touchmove', function(evt) {
 document.addEventListener('touchend', function(evt) {
   if (!activeSheet) return;
   
-  // ВАЖНО: Запоминаем текущее окно до того, как сбросим глобальную переменную!
   var currentBox = activeSheet; 
   var overlay = currentBox.closest('.modal-overlay');
 
   if (currentYDiff > 80) { 
-    // === СТЯНУЛИ ВНИЗ: ПЛАВНО ЗАКРЫВАЕМ ===
     currentBox.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
     currentBox.style.transform = 'translateY(100%)'; 
-    vibrate('light'); 
+    if(typeof vibrate==='function') vibrate('light'); 
     
-    // Плавно гасим темный фон
     if (overlay) {
       overlay.style.transition = 'opacity 0.3s ease';
       overlay.style.opacity = '0';
     }
     
-    // Очищаем стили через 300мс, используя сохраненную переменную currentBox
     setTimeout(function() {
       if (overlay) {
         overlay.style.display = 'none';
@@ -2199,7 +1651,6 @@ document.addEventListener('touchend', function(evt) {
     }, 300); 
 
   } else {
-    // === СТЯНУЛИ СЛАБО: ПЛАВНО ОТПРЫГИВАЕМ ОБРАТНО ===
     currentBox.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
     currentBox.style.transform = 'translateY(0)';
     
@@ -2210,13 +1661,11 @@ document.addEventListener('touchend', function(evt) {
     }, 300);
   }
   
-  // Теперь безопасно сбрасываем глобальные трекеры свайпа
   sheetYDown = null;
   activeSheet = null;
   currentYDiff = 0;
 });
 
-// Универсальная функция плавного закрытия любого модального окна
 window.closeModalSmoothly = function(modalId) {
   var overlay = document.getElementById(modalId);
   if (!overlay) return;
@@ -2244,50 +1693,27 @@ window.closeModalSmoothly = function(modalId) {
 };
 
 // ==========================================
-// УПРАВЛЕНИЕ ТЕМОЙ (СОХРАНЕНИЕ И СМЕНА ИКОНКИ)
+// ФИНАЛЬНЫЙ ДВИЖОК КАРУСЕЛИ (БЕЗ НАХЛЕСТОВ И БАГОВ)
 // ==========================================
-window.initTheme = function() {
-  // Читаем сохраненную тему из памяти телефона (по умолчанию 'dark')
-  var savedTheme = localStorage.getItem('tt_theme') || 'dark';
-  
-  // Устанавливаем тему для всего документа (:root и body)
-  document.documentElement.setAttribute('data-theme', savedTheme);
-  document.body.setAttribute('data-theme', savedTheme);
-  
-  // Светлая тема = ☀️, Темная тема = 🌙
-  var btn = document.getElementById('btn-theme');
-  if (btn) {
-    btn.innerText = savedTheme === 'light' ? '☀️' : '🌙';
-  }
+var swipeState = {
+  isDragging: false,
+  isVerticalScroll: false,
+  isAnimating: false, // ГЛАВНЫЙ ФИКС: блокировка на время анимации
+  startX: 0,
+  startY: 0,
+  activeView: null,
+  targetView: null,
+  direction: 0,
+  width: 0,
+  gap: 20,
+  tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news']
 };
-
-window.toggleTheme = function() {
-  var root = document.documentElement;
-  var current = root.getAttribute('data-theme') || 'dark';
-  var newTheme = current === 'light' ? 'dark' : 'light';
-  
-  // Применяем новую тему
-  root.setAttribute('data-theme', newTheme);
-  document.body.setAttribute('data-theme', newTheme);
-  
-  // Сохраняем выбор, чтобы после обновления страницы тема не сбрасывалась
-  localStorage.setItem('tt_theme', newTheme);
-  
-  // Светлая тема = ☀️, Темная тема = 🌙
-  var btn = document.getElementById('btn-theme');
-  if (btn) {
-    btn.innerText = newTheme === 'light' ? '☀️' : '🌙';
-  }
-};
-
-/* ==========================================
-   ФИНАЛЬНАЯ КАРУСЕЛЬ (ЗАЩИТА СКРОЛЛА + АНТИ-МЕРЦАНИЕ + 60 FPS)
-   ========================================== */
-var swipeState = { isDragging: false, isVerticalScroll: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, width: 0, gap: 20, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
 document.addEventListener('touchstart', function(e) {
+  // Если сейчас идет анимация свайпа ИЛИ открыто модальное окно — игнорируем нажатие
+  if (swipeState.isAnimating) return;
   if (document.querySelector('.modal-overlay[style*="display: flex"]') || document.querySelector('.swal2-container')) return;
-  
+
   swipeState.startX = e.touches[0].clientX;
   swipeState.startY = e.touches[0].clientY;
   swipeState.isDragging = false;
@@ -2297,53 +1723,50 @@ document.addEventListener('touchstart', function(e) {
 }, {passive: true});
 
 document.addEventListener('touchmove', function(e) {
-  if (!swipeState.activeView) return;
-  
+  if (swipeState.isAnimating || !swipeState.activeView) return;
+
   var dx = e.touches[0].clientX - swipeState.startX;
   var dy = e.touches[0].clientY - swipeState.startY;
 
-  // 1. ЖЕСТКАЯ ЗАЩИТА: Если палец пошел вверх/вниз сильнее, чем вбок — это вертикальный скролл.
-  // Блокируем свайп карусели до следующего касания экрана.
   if (!swipeState.isDragging) {
+    // 1. ЖЕСТКАЯ ЗАЩИТА: Если палец пошел вертикально — отменяем горизонтальный свайп
     if (Math.abs(dy) > Math.abs(dx) + 5) {
       swipeState.isVerticalScroll = true;
       return;
     }
-    
-    // 2. Инициируем горизонтальный свайп, только если мы не скроллим
-    if (!swipeState.isVerticalScroll && Math.abs(dx) > 10) { 
+
+    // 2. Инициируем горизонтальный свайп
+    if (!swipeState.isVerticalScroll && Math.abs(dx) > 10) {
       swipeState.isDragging = true;
-      document.body.classList.add('disable-animations'); 
+      document.body.classList.add('disable-animations');
 
       var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
       swipeState.direction = dx < 0 ? 1 : -1;
-      
+
       var targetIndex = (currentIndex + swipeState.direction + swipeState.tabs.length) % swipeState.tabs.length;
       swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
-      
+
       if (swipeState.targetView) {
-        // Кэшируем ширину 1 раз (максимум FPS)
         swipeState.width = swipeState.activeView.offsetWidth;
-        
-        // Размещаем целевой экран рядом с текущим
+
         swipeState.targetView.style.display = 'flex';
         swipeState.targetView.style.position = 'absolute';
         swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
         swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
         swipeState.targetView.style.width = swipeState.width + 'px';
-        
+
         var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
         swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
-        
+
         swipeState.activeView.style.zIndex = '5';
-        swipeState.targetView.style.zIndex = '5';
+        swipeState.targetView.style.zIndex = '6';
       }
     }
   }
 
-  // 3. Двигаем экраны синхронно (GPU Ускорение)
+  // 3. Двигаем экраны за пальцем
   if (swipeState.isDragging && swipeState.targetView) {
-    if (e.cancelable) e.preventDefault(); // Блокируем дергание страницы
+    if (e.cancelable) e.preventDefault();
     var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
     swipeState.activeView.style.transform = 'translate3d(' + dx + 'px, 0, 0)';
     swipeState.targetView.style.transform = 'translate3d(' + (startOffset + dx) + 'px, 0, 0)';
@@ -2351,155 +1774,78 @@ document.addEventListener('touchmove', function(e) {
 }, {passive: false});
 
 document.addEventListener('touchend', function(e) {
-  if (!swipeState.isDragging || !swipeState.activeView) return;
+  // Если ничего не двигали или анимация заблокирована - сброс
+  if (swipeState.isAnimating || !swipeState.isDragging || !swipeState.activeView) {
+      swipeState.isDragging = false;
+      swipeState.isVerticalScroll = false;
+      return;
+  }
+
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var threshold = 35; // Очень легкое касание для переключения
+  var threshold = 40; // Чувствительность перелистывания
 
   if (swipeState.targetView) {
-    // Включаем плавную доводку 3D-движка
+    swipeState.isAnimating = true; // БЛОКИРУЕМ НОВЫЕ СВАЙПЫ ДО ОКОНЧАНИЯ АНИМАЦИИ
     swipeState.activeView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
     swipeState.targetView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
 
     var isValidSwipe = (swipeState.direction === 1 && dx < -threshold) || (swipeState.direction === -1 && dx > threshold);
 
     if (isValidSwipe) {
-      // ИГРАЕМ ЗВУК И ВИБРИРУЕМ
-      if (window.TTAudio && typeof window.TTAudio.playRandomBounce === 'function') {
-        window.TTAudio.playRandomBounce();
-      }
+      if (window.TTAudio && typeof window.TTAudio.playRandomBounce === 'function') window.TTAudio.playRandomBounce();
       if (navigator.vibrate) navigator.vibrate(10);
-      
+
       var finalX = swipeState.direction === 1 ? -(swipeState.width + swipeState.gap) : (swipeState.width + swipeState.gap);
-      
-      // Доводим анимацию до конца
+
       swipeState.activeView.style.transform = 'translate3d(' + finalX + 'px, 0, 0)';
       swipeState.targetView.style.transform = 'translate3d(0px, 0, 0)';
-      
+
       var targetId = swipeState.targetView.id.replace('view-', '');
-      var activeEl = swipeState.activeView;
-      var targetEl = swipeState.targetView;
-      
-      // Ждем завершения CSS анимации (250мс)
+
+      // Ждем завершения анимации и запускаем ТОТАЛЬНУЮ очистку стилей
       setTimeout(function() {
         if (typeof switchNavTab === 'function') switchNavTab(targetId);
-        
-        // ФИКС МЕРЦАНИЯ: Мягко сбрасываем стили, оставляя display
-        activeEl.style.transform = '';
-        activeEl.style.transition = '';
-        activeEl.style.position = '';
-        activeEl.style.width = '';
-        activeEl.style.zIndex = '';
-        
-        targetEl.style.transform = '';
-        targetEl.style.transition = '';
-        targetEl.style.position = '';
-        targetEl.style.width = '';
-        targetEl.style.zIndex = '';
-        
-        document.body.classList.remove('disable-animations');
+        cleanupSwipe();
       }, 250);
-      
+
     } else {
-      // ВОЗВРАТ (если свайп отменен)
+      // Возврат, если свайп слишком слабый
       var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
       swipeState.activeView.style.transform = 'translate3d(0px, 0, 0)';
       swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
-      
-      var targetElRevert = swipeState.targetView;
-      var activeElRevert = swipeState.activeView;
-      
+
       setTimeout(function() {
-        activeElRevert.style.transform = '';
-        activeElRevert.style.transition = '';
-        activeElRevert.style.position = '';
-        activeElRevert.style.width = '';
-        activeElRevert.style.zIndex = '';
-        
-        targetElRevert.style.transform = '';
-        targetElRevert.style.transition = '';
-        targetElRevert.style.position = '';
-        targetElRevert.style.width = '';
-        targetElRevert.style.zIndex = '';
-        targetElRevert.style.display = 'none'; // Прячем второй экран
-        
-        document.body.classList.remove('disable-animations');
+        cleanupSwipe();
       }, 250);
     }
   } else {
     document.body.classList.remove('disable-animations');
+    swipeState.isDragging = false;
+    swipeState.isVerticalScroll = false;
   }
-  
-  // Сбрасываем трекеры
-  swipeState.isDragging = false;
-  swipeState.isVerticalScroll = false;
 }, {passive: true});
 
-// Спасательный круг от "зависших" свайпов при звонке телефона
-document.addEventListener('touchcancel', function(e) {
-  if (swipeState.isDragging) {
-    if(swipeState.activeView) {
-      swipeState.activeView.style.transform = '';
-      swipeState.activeView.style.transition = '';
-    }
-    if(swipeState.targetView) {
-      swipeState.targetView.style.transform = '';
-      swipeState.targetView.style.transition = '';
-      swipeState.targetView.style.display = 'none';
+// ФУНКЦИЯ ТОТАЛЬНОЙ ОЧИСТКИ ОТ НАЛОЖЕНИЙ
+function cleanupSwipe() {
+    var views = document.querySelectorAll('.main-view');
+    // Мы безжалостно сбрасываем абсолютно все inline-стили со ВСЕХ экранов
+    for (var i = 0; i < views.length; i++) {
+        views[i].style.transform = '';
+        views[i].style.transition = '';
+        views[i].style.position = '';
+        views[i].style.width = '';
+        views[i].style.zIndex = '';
+        views[i].style.top = '';
+        views[i].style.left = '';
+        views[i].style.display = ''; // Дальше видимость контроллируется только классом .active в CSS
     }
     document.body.classList.remove('disable-animations');
     swipeState.isDragging = false;
-  }
-});
-/* ==========================================
-   ДВИЖОК ПЛАВАЮЩЕГО ИНДИКАТОРА МЕНЮ
-   ========================================== */
-document.addEventListener('DOMContentLoaded', function() {
-  var nav = document.querySelector('.bottom-nav');
-  if (!nav) return;
+    swipeState.isVerticalScroll = false;
+    swipeState.isAnimating = false; // РАЗБЛОКИРУЕМ НОВЫЕ СВАЙПЫ
+}
 
-  // Создаем светящуюся каретку и добавляем её в меню
-  var indicator = document.createElement('div');
-  indicator.id = 'nav-sliding-indicator';
-  nav.appendChild(indicator);
-
-  var navItems = nav.querySelectorAll('.nav-item');
-
-  // Функция, которая высчитывает координаты и двигает индикатор
-  function moveIndicator() {
-    var activeItem = nav.querySelector('.nav-item.active');
-    if (!activeItem) return;
-    
-    var navRect = nav.getBoundingClientRect();
-    var itemRect = activeItem.getBoundingClientRect();
-    
-    // Вычисляем центр активной иконки (36px - это ширина нашего индикатора, делим на 2 = 18)
-    var offsetLeft = (itemRect.left - navRect.left) + (itemRect.width / 2) - 18;
-    
-    // Запускаем перекат
-    indicator.style.transform = 'translateX(' + offsetLeft + 'px)';
-    
-    // Копируем уникальный цвет активной вкладки и красим им каретку
-    var color = getComputedStyle(activeItem).getPropertyValue('--nav-glow').trim() || '#3b82f6';
-    indicator.style.setProperty('--nav-glow', color);
-  }
-
-  // Настраиваем "шпиона", который следит за классом .active
-  var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (mutation.target.classList.contains('active')) {
-        moveIndicator();
-      }
-    });
-  });
-
-  // Вешаем слежку на все кнопки меню
-  navItems.forEach(function(item) {
-    observer.observe(item, { attributes: true, attributeFilter: ['class'] });
-  });
-
-  // Если пользователь перевернет телефон, линия не съедет, а пересчитает координаты
-  window.addEventListener('resize', moveIndicator);
-
-  // Первый запуск (чуть ждем, пока прогрузятся все шрифты и отступы)
-  setTimeout(moveIndicator, 300);
+// Защита при звонке или системном прерывании
+document.addEventListener('touchcancel', function(e) {
+  if (swipeState.isDragging || swipeState.isAnimating) cleanupSwipe();
 });
