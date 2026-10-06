@@ -11,19 +11,73 @@
   --logo-shadow: rgba(0, 0, 0, 0.15);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
-body { background-color: var(--bg); color: var(--text); padding: 16px; display: flex; justify-content: center; min-height: 100vh; transition: background-color 0.3s, color 0.3s; overflow-x: hidden; }
+
+/* ==========================================
+   БАЗА: СКРОЛЛИНГ И ЗАЩИТА ОТ ДЕРГАНИЯ
+   ========================================== */
+html, body { 
+  overflow-x: hidden !important; 
+  overflow-y: auto !important; 
+  overscroll-behavior-y: none; /* Убирает пружинистость всей страницы */
+}
+
+body { 
+  background-color: var(--bg); 
+  color: var(--text); 
+  padding: 16px; 
+  display: flex; 
+  justify-content: center; 
+  min-height: 100vh; 
+  transition: background-color 0.3s, color 0.3s; 
+  -webkit-font-smoothing: antialiased;
+}
+
 .container { width: 100%; max-width: 440px; display: flex; flex-direction: column; gap: 12px; min-height: 100%; padding-bottom: calc(80px + env(safe-area-inset-bottom)); }
 
-/* Анимация переключения вкладок */
-.main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; }
-.main-view.active { 
-  display: flex; 
+/* ==========================================
+   СЛОИ (Z-INDEX)
+   ========================================== */
+.bottom-nav { z-index: 1000 !important; }
+.dynamic-island { z-index: 9000 !important; }
+.modal-overlay, .swal2-container { z-index: 99999 !important; }
+#app-preloader, #loading-screen, .loading-screen { z-index: 999999 !important; }
+
+/* ==========================================
+   АППАРАТНОЕ УСКОРЕНИЕ (60 FPS) И ЭКРАНЫ
+   ========================================== */
+.main-view { 
+  display: none; 
+  flex-direction: column; 
+  gap: 12px !important; 
+  flex-grow: 1; 
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+.main-view > *, .btn-match-quick, .tabs-container { 
+  margin-top: 0 !important; 
+}
+
+/* ЖЕСТКОЕ ОТКЛЮЧЕНИЕ МЕРЦАНИЯ */
+.main-view.active { display: flex; animation: none !important; }
+
+body.disable-animations .main-view,
+body.is-swiping .main-view {
+  transition: none !important;
+  animation: none !important;
+}
+
+/* Нативный скроллинг списков внутри приложения */
+.scrollable-list, .player-list, #info-modal-history, .modal-box {
+  -webkit-overflow-scrolling: touch; 
+  overscroll-behavior-y: contain;
 }
 
 .outdated-browser-banner { display: none; background: #991b1b; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; text-align: center; margin-bottom: 8px; border: 1px solid #f87171; }
 .outdated-browser-banner a { color: #fef08a; font-weight: 700; text-decoration: underline; }
 
-.club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); }
+.club-header { display: flex; flex-direction: column; gap: 12px; background: var(--card-bg); border: 1px solid var(--card-border); padding: 14px; border-radius: 16px; box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1); margin-bottom: 12px !important; }
 .club-header-top { display: flex; align-items: center; justify-content: space-between; gap: 10px; width: 100%; }
 .club-header-left { display: flex; align-items: center; gap: 12px; overflow: hidden; }
 .club-logo { width: 48px; height: 48px; border-radius: 50%; object-fit: cover; background: #0b1120; border: 2px solid var(--accent-sky); flex-shrink: 0; }
@@ -31,27 +85,22 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .club-header-text p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
 /* БАЗОВЫЕ КЛАССЫ КНОПОК И АНИМАЦИИ */
-.btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only, .badge-admin-btn, .btn-theme-toggle, .btn-cancel-modal { 
+.btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only, .badge-admin-btn, .btn-theme-toggle, .btn-cancel-modal, .btn-edit, .btn-logout { 
   transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease, filter 0.2s ease, color 0.2s ease; 
-  user-select: none; 
-  cursor: pointer;
+  user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;
 }
 
-/* 💻 ХОВЕР: Лёгкая подсветка только для ПК (мышка) */
 @media (hover: hover) {
-  .btn:hover, .btn-opt:hover, .score-btn:hover, .btn-match-quick:hover, .btn-info:hover, .btn-app-qr-large:hover, .btn-qr-icon-only:hover, .badge-admin-btn:hover, .btn-theme-toggle:hover { 
-    filter: brightness(1.2); 
-  }
+  .btn:hover, .btn-opt:hover, .score-btn:hover, .btn-match-quick:hover, .btn-info:hover, .btn-app-qr-large:hover, .btn-qr-icon-only:hover, .badge-admin-btn:hover, .btn-theme-toggle:hover, .btn-edit:hover, .btn-logout:hover { filter: brightness(1.2); }
   .tab-btn:hover { color: var(--text); background: var(--row-bg); }
   .btn-cancel-modal:hover { color: var(--text); }
   .clickable-name:hover { opacity: 0.8; filter: brightness(1.2); }
   .nav-item:hover { color: var(--primary); filter: brightness(1.1); }
+  .quest-choice-card:hover { filter: brightness(1.2); }
 }
 
-/* 📱 НАЖАТИЕ (ТАП): Эффект вдавливания и затемнения (Телефоны и ПК) */
-.btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active, .badge-admin-btn:active, .btn-theme-toggle:active, .btn-cancel-modal:active { 
-  transform: scale(0.95); 
-  filter: brightness(0.85);
+.btn:active, .btn-opt:active, .tab-btn:active, .score-btn:active, .btn-match-quick:active, .btn-info:active, .btn-app-qr-large:active, .btn-qr-icon-only:active, .badge-admin-btn:active, .btn-theme-toggle:active, .btn-cancel-modal:active, .btn-edit:active, .btn-logout:active, .quest-choice-card:active { 
+  transform: scale(0.95); filter: brightness(0.85);
 }
 
 .btn-theme-toggle { background: transparent; border: 1px solid var(--card-border); color: var(--text); width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
@@ -62,8 +111,8 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .social-links-minimal { display: flex; gap: 8px; width: 100%; border-top: 1px solid var(--card-border); padding-top: 12px; }
 .social-pill { flex: 1; background: var(--row-bg); border: 1px solid var(--card-border); border-radius: 10px; padding: 6px 10px; display: flex; align-items: center; justify-content: space-between; }
 .social-pill-left { display: flex; align-items: center; gap: 6px; text-decoration: none; font-size: 13px; font-weight: 600; padding: 4px 8px; border-radius: 8px; color: #fff; flex: 1; justify-content: center; user-select: none; }
-.pill-tg { background: #0ea5e9; }
-.pill-max { background: #8b5cf6; }
+.pill-tg { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%) !important; }
+.pill-max { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%) !important; }
 .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
 .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
@@ -79,111 +128,61 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
 .user-name-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
 #user-score-container { flex-shrink: 0; display: flex; flex-direction: column; align-items: flex-end; }
-
 .profile-stats-row { display: flex; align-items: flex-start; justify-content: space-between; font-size: 12px; color: var(--text-muted); border-top: 1px solid var(--card-border); padding-top: 8px; }
 .profile-actions-row { display: flex; gap: 8px; margin-top: 2px; }
-
 .medals-box { display: flex; gap: 10px; justify-content: center; background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.2); padding: 8px; border-radius: 8px; margin-top: 4px; }
 .medal-item { font-size: 13px; font-weight: 700; color: var(--text); display: flex; align-items: center; gap: 4px; }
-.inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 6px; }
+.inventory-box { background: var(--row-bg); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; font-size: 12px; color: var(--text-muted); margin-top: 4px; display: flex; flex-direction: column; gap: 6px; display: none !important; }
 .inventory-item { display: flex; align-items: center; justify-content: space-between; gap: 6px; width: 100%; border-bottom: 1px dashed var(--card-border); padding-bottom: 6px; }
 .inventory-item:last-child { border-bottom: none; padding-bottom: 0; }
 .inventory-item-left { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .inventory-value { color: var(--text); font-weight: 600; margin-left: 2px; }
 
 .profile-logo-container { display: flex; justify-content: center; align-items: center; flex: 1; margin: 10px 0; min-height: 0; }
-.profile-large-logo { width: 100%; height: auto; max-height: 35vh; object-fit: contain; background: transparent; filter: drop-shadow(0 10px 20px var(--logo-shadow)); }
+.profile-large-logo { width: 100%; height: auto; max-height: 35vh; object-fit: contain; background: transparent; filter: drop-shadow(0 10px 20px var(--logo-shadow)); animation: logoRgbGlow 10s infinite linear; }
+@keyframes logoRgbGlow {
+  0%   { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); } 
+  20%  { filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.6)); } 
+  40%  { filter: drop-shadow(0 0 25px rgba(244, 63, 94, 0.6)); }  
+  60%  { filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.6)); } 
+  80%  { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.6)); } 
+  100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); } 
+}
 
 .platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
 .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
-.badge-teacher { background: rgba(168, 85, 247, 0.2); color: #9333ea; margin-left: 4px; }
-.badge-temshik { background: rgba(16, 185, 129, 0.2); color: #059669; margin-left: 4px; }
-.badge-hockey { background: rgba(56, 189, 248, 0.2); color: #0284c7; margin-left: 4px; }
-.badge-bot { background: rgba(148, 163, 184, 0.2); color: #64748b; margin-left: 4px; }
-.badge-coach { background: rgba(59, 130, 246, 0.2); color: #2563eb; margin-left: 4px; }
-:root[data-theme="dark"] .badge-admin { color: #f59e0b; }
-:root[data-theme="dark"] .badge-teacher { color: #d8b4fe; }
-:root[data-theme="dark"] .badge-temshik { color: #10b981; }
-:root[data-theme="dark"] .badge-hockey { color: #38bdf8; }
-:root[data-theme="dark"] .badge-bot { color: #cbd5e1; }
-:root[data-theme="dark"] .badge-coach { color: #60a5fa; }
-
 .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 4px; }
 
 .btn-edit, .btn-logout { flex: 1; border: none; padding: 7px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; text-align: center; }
 .btn-edit { background: var(--card-border); color: var(--text); }
 .btn-logout { background: rgba(225, 29, 72, 0.1); border: 1px solid rgba(225, 29, 72, 0.3); color: var(--primary); }
 
-.btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px; margin-top: 12px;}
+.btn-match-quick { background: linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%); color: #fff; border: 1px solid rgba(168, 85, 247, 0.4); padding: 12px; border-radius: 14px; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; gap: 8px;}
+#btn-match-glow { background: rgba(168, 85, 247, 0.15) !important; border: 1px solid rgba(168, 85, 247, 0.4) !important; color: #d8b4fe !important; }
+#btn-invite-glow { background: rgba(37, 99, 235, 0.15) !important; border: 1px solid rgba(37, 99, 235, 0.4) !important; color: #60a5fa !important; }
+#btn-invite-glow { animation: invitePulse 2.5s infinite alternate ease-in-out; }
+@keyframes invitePulse { 0% { box-shadow: 0 0 4px rgba(37, 99, 235, 0.1); } 100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.6); } }
 
 /* Плавный аккордеон карточек */
-.card { 
-  background: var(--card-bg); 
-  border: 1px solid var(--card-border); 
-  border-radius: 16px; 
-  padding: 16px; 
-  display: flex; 
-  flex-direction: column; 
-  gap: 8px; 
-  transition: border-color 0.3s ease, background 0.3s ease; 
-}
-.card-top { 
-  display: flex; 
-  justify-content: space-between; 
-  align-items: flex-start; 
-  cursor: pointer; 
-  user-select: none; 
-}
-.card-title { 
-  font-size: 18px; 
-  font-weight: 700; 
-  display: flex; 
-  align-items: center; 
-  gap: 6px; 
-}
-.card-title::after { 
-  content: ' ▼'; 
-  font-size: 10px; 
-  color: var(--text-muted); 
-  transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); 
-}
-.card.expanded .card-title::after { 
-  transform: rotate(180deg); 
-}
-
-/* CSS-Grid магия для плавного схлопывания высоты 0 -> auto */
-.card-collapse-wrapper {
-  display: grid;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.card.expanded .card-collapse-wrapper {
-  grid-template-rows: 1fr;
-}
-.card-body-collapse { 
-  min-height: 0; 
-  overflow: hidden;
-}
-.card-body-inner {
-  padding-top: 8px;
-  display: flex; 
-  flex-direction: column; 
-  gap: 12px; 
-  opacity: 0;
-  transform: translateY(-8px);
-  transition: opacity 0.3s ease, transform 0.3s ease;
-}
-.card.expanded .card-body-inner { 
-  opacity: 1;
-  transform: translateY(0);
-}
-
+.card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.3s ease, background 0.3s ease; }
+.card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
+.card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.card-title::after { content: ' ▼'; font-size: 10px; color: var(--text-muted); transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.card.expanded .card-title::after { transform: rotate(180deg); }
+.card-collapse-wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+.card.expanded .card-collapse-wrapper { grid-template-rows: 1fr; }
+.card-body-collapse { min-height: 0; overflow: hidden; }
+.card-body-inner { padding-top: 8px; display: flex; flex-direction: column; gap: 12px; opacity: 0; transform: translateY(-8px); transition: opacity 0.3s ease, transform 0.3s ease; }
+.card.expanded .card-body-inner { opacity: 1; transform: translateY(0); }
 .card-desc { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
 
+#card-recent-matches { padding: 12px !important; border-radius: 14px !important; background: rgba(168, 85, 247, 0.15) !important; border: 1px solid rgba(168, 85, 247, 0.4) !important; }
+#card-recent-matches .card-title { font-size: 14px !important; color: #d8b4fe !important; justify-content: center !important; }
+
+/* ПОГОДА */
 .weather-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .weather-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: #0284c7; width: fit-content; }
 :root[data-theme="dark"] .weather-badge { color: var(--accent-sky); }
-
 .event-badge { display: flex; flex-direction: column; gap: 4px; background: rgba(168, 85, 247, 0.1); border: 1px solid rgba(168, 85, 247, 0.25); padding: 8px 10px; border-radius: 10px; font-size: 12px; color: #9333ea; margin-top: 6px; }
 :root[data-theme="dark"] .event-badge { color: #d8b4fe; }
 
@@ -211,7 +210,6 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .btn-plan { background: var(--list-bg); border: 1px solid #3b82f6; color: #2563eb; }
 :root[data-theme="dark"] .btn-plan { color: #93c5fd; }
 .btn-leave { background: var(--card-border); color: var(--text); }
-
 .action-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 
 .tabs-container { display: flex; gap: 8px; background: var(--card-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 8px; }
@@ -219,19 +217,16 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .tab-btn.active { background: var(--card-border); color: var(--text); }
 
 .rating-card, .leaderboard-card { background: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--card-border); }
-.card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; }
+.card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; justify-content: center !important; }
 .scrollable-list { display: flex; flex-direction: column; gap: 6px; }
-
 .leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: var(--row-bg); font-size: 13px; }
 .leader-left { display: flex; align-items: center; gap: 8px; }
 .leader-rank { font-weight: 700; width: 22px; color: var(--text-muted); }
 .leader-rank-1 { color: #f59e0b; } .leader-rank-2 { color: #94a3b8; } .leader-rank-3 { color: #b45309; }
-
 .rating-score { font-weight: 700; color: #9333ea; font-size: 15px; }
 :root[data-theme="dark"] .rating-score { color: var(--accent-purple); }
 .leader-score { font-weight: 700; color: #0284c7; }
 :root[data-theme="dark"] .leader-score { color: var(--accent-sky); }
-
 .player-status-tag { font-size: 11px; color: var(--text-muted); display: block; margin-top: 2px; }
 .streak-fire { font-size: 11px; color: #f59e0b; font-weight: 700; margin-left: 4px; }
 .elo-delta { font-size: 10px; font-weight: 600; margin-left: 6px; }
@@ -250,741 +245,105 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 .tour-score-badge { font-weight: 700; background: var(--row-bg); padding: 4px 8px; border-radius: 6px; margin-left: 8px; white-space: nowrap; }
 .tour-badge-winner { color: #059669; } :root[data-theme="dark"] .tour-badge-winner { color: var(--accent-green); }
 .clickable-name { color: var(--accent-sky); cursor: pointer; text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 3px; font-weight: 600; transition: 0.2s; }
-
 .badge-mode { display: inline-block; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 4px; margin-bottom: 4px; }
 .badge-mode-singles { background: rgba(56, 189, 248, 0.15); color: #0284c7; }
 :root[data-theme="dark"] .badge-mode-singles { color: var(--accent-sky); }
 .badge-mode-doubles { background: rgba(168, 85, 247, 0.15); color: #9333ea; }
 :root[data-theme="dark"] .badge-mode-doubles { color: var(--accent-purple); }
 
+/* ==========================================
+   МЕНЮ НАВИГАЦИИ (НИЖНЕЕ)
+   ========================================== */
 .bottom-nav {
   position: fixed; bottom: 0; left: 0; width: 100%;
   background: var(--bottom-nav-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
   border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; align-items: center;
-  padding-bottom: env(safe-area-inset-bottom); z-index: 1000; box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
+  padding-bottom: env(safe-area-inset-bottom); box-shadow: 0 -4px 10px rgba(0,0,0,0.05);
 }
-.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.2s; user-select: none; }
+.nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; padding: 10px 0; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; transition: color 0.3s ease !important; user-select: none; }
 .nav-item.active { color: var(--primary); }
-.nav-icon { font-size: 22px; margin-bottom: 4px; }
+.nav-icon { font-size: 22px; margin-bottom: 4px; display: block; transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s; }
 .nav-item:active { transform: scale(0.9); filter: brightness(0.8); }
+.nav-item.active .nav-icon { transform: translateY(-4px) scale(1.25); }
 
-.modal-overlay { 
-  position: fixed; 
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(0, 0, 0, 0.6); 
-  backdrop-filter: blur(4px); 
-  -webkit-backdrop-filter: blur(4px); 
-  display: none; 
-  align-items: flex-end; /* Изменили: теперь окна прижимаются к низу */
-  justify-content: center; 
-  padding: 0; /* Изменили: убрали отступы, чтобы прилипало к краю */
-  z-index: 1001; 
+#nav-sliding-indicator {
+  position: absolute; top: 0; left: 0; width: 36px; height: 4px;
+  background: var(--nav-glow, #3b82f6); border-radius: 0 0 6px 6px;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s, box-shadow 0.4s;
+  pointer-events: none; transform: translateZ(0); will-change: transform;
 }
+
+/* ==========================================
+   МОДАЛЬНЫЕ ОКНА
+   ========================================== */
+.modal-overlay { 
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0; width: 100vw; height: 100vh;
+  background: rgba(0, 0, 0, 0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); 
+  display: none; align-items: flex-end; justify-content: center; padding: 0; 
+  opacity: 0; transition: opacity 0.25s ease-out !important;
+}
+.modal-overlay[style*="display: flex"], .swal2-container { opacity: 1 !important; }
 
 .modal-box { 
-  background: var(--card-bg); 
-  border: 1px solid var(--card-border); 
-  border-bottom: none; /* Убрали нижнюю рамку */
-  width: 100%; 
-  max-width: 440px; /* Расширили под ширину контейнера приложения */
-  border-radius: 24px 24px 0 0; /* Скруглили только верхние углы */
-  padding: 24px 20px 20px 20px; /* Дали место сверху под ползунок */
-  box-shadow: 0 -10px 25px rgba(0,0,0,0.3); /* Тень теперь светит вверх */
-  display: flex; 
-  flex-direction: column; 
-  gap: 14px; 
-  text-align: center; 
-  max-height: 90vh; 
-  overflow-y: auto; 
-  overscroll-behavior: contain;
-  color: var(--text); 
-  margin: 0 auto;
-  position: relative;
-  animation: slideUpSheet 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards; /* Новая анимация выезда снизу */
+  background: var(--card-bg); border: 1px solid var(--card-border); border-bottom: none; 
+  width: 100%; max-width: 440px; border-radius: 24px 24px 0 0; 
+  padding: 24px 20px 20px 20px; box-shadow: 0 -10px 25px rgba(0,0,0,0.3); 
+  display: flex; flex-direction: column; gap: 14px; text-align: center; 
+  max-height: 90vh; overflow-y: auto; overscroll-behavior: contain; color: var(--text); 
+  margin: 0 auto; position: relative; 
+  transform: translateY(100%); transition: transform 0.35s cubic-bezier(0.32, 0.72, 0, 1) !important;
 }
+.modal-overlay[style*="display: flex"] > .modal-box { transform: translateY(0) !important; }
 
-/* Декоративный ползунок сверху шторки (как в iOS) */
-.modal-box::after {
-  content: '';
-  position: absolute;
-  top: 8px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: 40px;
-  height: 4px;
-  background: var(--text-muted);
-  opacity: 0.3;
-  border-radius: 10px;
-  pointer-events: none;
-}
-
-/* Фикс для окна профиля (у него был жестко задан padding: 0 в HTML) */
-#user-info-modal .modal-box {
-  padding-top: 24px !important;
-}
-
-@keyframes fadeInOverlay { from { opacity: 0; } to { opacity: 1; } }
-@keyframes slideUpSheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
+.modal-box::after { content: ''; position: absolute; top: 8px; left: 50%; transform: translateX(-50%); width: 40px; height: 4px; background: var(--text-muted); opacity: 0.3; border-radius: 10px; pointer-events: none; }
+#user-info-modal .modal-box { padding-top: 24px !important; }
 .modal-options-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .btn-opt { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 12px 4px; border-radius: 10px; font-size: 13px; font-weight: 600; }
-
 .input-time, .input-select, .textarea-announcement, .input-name { background: var(--input-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px; border-radius: 10px; font-size: 16px; outline: none; width: 100%; }
 .input-select { -webkit-appearance: none; appearance: none; background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; background-size: 16px; padding-right: 40px; }
 .textarea-announcement { resize: vertical; min-height: 90px; }
 .input-name { text-align: left; padding: 12px 14px; }
-.name-error-msg { color: #f87171; font-size: 12px; display: none; }
 .btn-cancel-modal { background: transparent; border: none; color: var(--text-muted); font-size: 13px; margin-top: 4px; }
 .score-picker { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
 .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; }
-.score-btn.active { border-color: var(--accent-purple); background: rgba(168, 85, 247, 0.15); color: #9333ea; }
-:root[data-theme="dark"] .score-btn.active { color: var(--accent-purple); }
 
 /* ==========================================
-   СТИЛИ ДЛЯ ЕЖЕНЕДЕЛЬНЫХ ЗАДАНИЙ
+   КВЕСТЫ (ЕЖЕНЕДЕЛЬНЫЕ ЗАДАНИЯ)
    ========================================== */
 .quest-choice-card { background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-@media (hover: hover) { .quest-choice-card:hover { filter: brightness(1.2); } }
-.quest-choice-card:active { transform: scale(0.98); }
-
 .quest-level-1 { border-left: 4px solid #10b981; } 
 .quest-level-2 { border-left: 4px solid #f59e0b; } 
 .quest-level-3 { border-left: 4px solid #f43f5e; } 
-
 .quest-header { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
 .quest-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px; }
 .quest-rewards { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; font-weight: 700; }
 .quest-reward-elo { color: var(--accent-gold); background: rgba(251, 191, 36, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2); }
 .quest-reward-badge { color: var(--accent-sky); background: rgba(56, 189, 248, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
-
 .quest-progress-bar { width: 100%; height: 10px; background: var(--row-bg); border-radius: 6px; margin-top: 12px; overflow: hidden; border: 1px solid var(--card-border); }
-.quest-progress-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
-
+.quest-progress-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateZ(0); will-change: transform; }
 .temporary-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-left: 4px; border: 1px solid; animation: pulseBadge 2s infinite; }
 @keyframes pulseBadge { 0% { opacity: 0.9; } 50% { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,255,255,0.3)); } 100% { opacity: 0.9; } }
 
-/* Делаем интерфейс мгновенно отзывчивым как нативное приложение */
-button, a, .btn, .nav-item, .quest-choice-card, .card, .action-btn {
-    touch-action: manipulation;
-    user-select: none;
-    -webkit-tap-highlight-color: transparent;
-}
-
 /* ==========================================
-   ПОГОДНЫЕ АНИМАЦИИ ДЛЯ КАРТОЧКИ ПАРКА
-   ========================================== */
-#card-park {
-  position: relative;
-  overflow: hidden; /* Чтобы снег и дождь не вылетали за пределы карточки */
-  transition: background 1s ease, border-color 1s ease;
-}
-
-/* Поднимаем текст и кнопки над анимацией, чтобы они были кликабельными */
-#card-park > * {
-  position: relative;
-  z-index: 2;
-}
-
-/* 🌧 ДОЖДЬ */
-#card-park.weather-rain { 
-  background: linear-gradient(to bottom, #1e293b, #0f172a); 
-  border-color: #3b82f6; 
-}
-#card-park.weather-rain::before {
-  content: ''; position: absolute; top: -100%; left: -50%; right: -50%; bottom: 0;
-  /* Рисуем капли дождя векторным кодом прямо в CSS */
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='40'%3E%3Crect width='1' height='15' fill='rgba(147, 197, 253, 0.25)'/%3E%3C/svg%3E");
-  background-size: 20px 40px;
-  animation: rainFall 0.6s linear infinite;
-  transform: rotate(15deg); /* Дождь косой */
-  pointer-events: none; z-index: 1;
-}
-@keyframes rainFall { 
-  0% { background-position: 0 0; } 
-  100% { background-position: -20px 100vh; } 
-}
-
-/* ❄️ СНЕГ */
-#card-park.weather-snow { 
-  background: linear-gradient(to bottom, #1e293b, #0b1120); 
-  border-color: #e0f2fe; 
-}
-#card-park.weather-snow::before, #card-park.weather-snow::after {
-  content: ''; position: absolute; top: -100%; left: 0; right: 0; bottom: 0;
-  /* Рисуем снежинки разного размера радиальными градиентами */
-  background-image: 
-    radial-gradient(3px 3px at 20px 30px, #ffffff, rgba(0,0,0,0)),
-    radial-gradient(4px 4px at 40px 70px, #e0f2fe, rgba(0,0,0,0)),
-    radial-gradient(3px 3px at 50px 160px, #ffffff, rgba(0,0,0,0)),
-    radial-gradient(4px 4px at 90px 40px, #e0f2fe, rgba(0,0,0,0)),
-    radial-gradient(5px 5px at 130px 80px, #ffffff, rgba(0,0,0,0)),
-    radial-gradient(3px 3px at 160px 120px, #ffffff, rgba(0,0,0,0));
-  background-size: 200px 200px;
-  animation: snowFall 5s linear infinite;
-  pointer-events: none; z-index: 1; opacity: 0.8;
-}
-/* Второй слой снега для параллакса (падает медленнее и крупнее) */
-#card-park.weather-snow::after {
-  animation-duration: 8s;
-  animation-delay: -2s;
-  opacity: 0.5;
-  background-size: 300px 300px;
-  transform: scale(1.2);
-}
-@keyframes snowFall { 
-  0% { transform: translateY(0); } 
-  100% { transform: translateY(100vh); } 
-}
-
-/* ☀️ ЯСНО / СОЛНЦЕ */
-#card-park.weather-clear { 
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--card-bg) 60%); 
-  border-color: rgba(245, 158, 11, 0.5); 
-}
-#card-park.weather-clear::before {
-  content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px;
-  /* Мягкое солнечное свечение в углу карточки */
-  background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0) 70%);
-  border-radius: 50%;
-  animation: sunPulse 4s ease-in-out infinite alternate;
-  pointer-events: none; z-index: 1;
-}
-@keyframes sunPulse { 
-  0% { transform: scale(1); opacity: 0.6; } 
-  100% { transform: scale(1.3); opacity: 1; } 
-}
-
-/* ☁️ ПАСМУРНО / ОБЛАКА */
-#card-park.weather-clouds { 
-  background: linear-gradient(to bottom, rgba(71, 85, 105, 0.3), var(--card-bg)); 
-  border-color: #64748b; 
-}
-#card-park.weather-clouds::before {
-  content: ''; position: absolute; top: 0; left: -100%; right: 0; bottom: 0; width: 200%;
-  /* Дрейфующие тени облаков */
-  background: radial-gradient(ellipse at top, rgba(148, 163, 184, 0.1) 0%, transparent 70%);
-  animation: cloudDrift 10s linear infinite alternate;
-  pointer-events: none; z-index: 1;
-}
-@keyframes cloudDrift { 
-  0% { transform: translateX(0); } 
-  100% { transform: translateX(15%); } 
-}
-
-
-/* ==========================================
-   DYNAMIC ISLAND (LIVE ACTIVITY) - ОБНОВЛЕННЫЙ
+   DYNAMIC ISLAND
    ========================================== */
 .dynamic-island {
-  position: fixed;
-  top: env(safe-area-inset-top, 16px);
-  margin-top: 8px; /* Чуть приподняли к краю экрана */
-  left: 50%;
-  transform: translateX(-50%) translateY(-150%);
-  /* Тот самый глубокий премиальный градиент, как у всех окон */
+  position: fixed; top: env(safe-area-inset-top, 16px); margin-top: 8px; left: 50%; transform: translateX(-50%) translateY(-150%);
   background: linear-gradient(145deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 10px 24px; /* Сделали шире и просторнее */
-  min-width: 240px; /* Гарантированная ширина */
-  border-radius: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center; /* Текст теперь идеально по центру */
-  gap: 12px;
-  z-index: 9000;
-  /* Добавили внутренний блик сверху (эффект стекла) */
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 10px 24px; min-width: 240px; border-radius: 30px; display: flex; align-items: center; justify-content: center; gap: 12px;
   box-shadow: 0 10px 25px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease;
-  opacity: 0;
-  pointer-events: none;
+  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.5s ease; opacity: 0; pointer-events: none;
 }
-
-.dynamic-island.visible {
-  transform: translateX(-50%) translateY(0);
-  opacity: 1;
-}
-
-.di-dot {
-  width: 8px;
-  height: 8px;
-  background: #10b981;
-  border-radius: 50%;
-  box-shadow: 0 0 8px #10b981;
-  animation: pulseDot 1.5s infinite alternate;
-  flex-shrink: 0;
-}
-
-/* Сделали текст максимально читабельным */
-.di-text {
-  color: #ffffff; /* Чисто белый цвет */
-  font-size: 14.5px; /* Крупнее */
-  font-weight: 800; /* Жирнее */
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* Легкая тень отрывает текст от фона */
-}
-
-@keyframes pulseDot { 
-  0% { opacity: 0.4; transform: scale(0.8); } 
-  100% { opacity: 1; transform: scale(1.2); } 
-}
+.dynamic-island.visible { transform: translateX(-50%) translateY(0); opacity: 1; }
+.di-dot { width: 8px; height: 8px; background: #10b981; border-radius: 50%; box-shadow: 0 0 8px #10b981; animation: pulseDot 1.5s infinite alternate; flex-shrink: 0; }
+.di-text { color: #ffffff; font-size: 14.5px; font-weight: 800; letter-spacing: 0.5px; white-space: nowrap; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
+@keyframes pulseDot { 0% { opacity: 0.4; transform: scale(0.8); } 100% { opacity: 1; transform: scale(1.2); } }
+#main-top-header { transition: margin-top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+body.island-active #main-top-header { margin-top: 14px; }
 
 /* ==========================================
-   ЕДИНЫЙ ПРЕМИАЛЬНЫЙ ГРАДИЕНТ ДЛЯ ВСЕХ БЛОКОВ
-   ========================================== */
-.card, 
-.profile-card,
-.modal-box, 
-.club-header, 
-.auth-overlay-card {
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  /* Убрали !important в конце этой строки */
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-/* ==========================================
-   АНИМАЦИЯ ОСТРОВА (СЛЕГКА НАЕЗЖАЕТ СВЕРХУ)
-   ========================================== */
-#main-top-header {
-  /* Плавность для легкого толчка вниз */
-  transition: margin-top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-body.island-active #main-top-header {
-  /* Делаем лишь легкий сдвиг, чтобы Остров стильно ложился поверх шапки */
-  margin-top: 14px; 
-}
-
-
-.club-header {
-  margin-bottom: 16px !important; /* Жестко отрываем шапку от карточки профиля */
-}
-
-/* ==========================================
-   ГРАДИЕНТЫ ДЛЯ СОЦСЕТЕЙ И ЗАДАНИЙ
-   ========================================== */
-/* Сочные градиенты для Telegram и МАКС */
-.pill-tg { background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%) !important; }
-.pill-max { background: linear-gradient(135deg, #a855f7 0%, #7e22ce 100%) !important; }
-
-/* Стеклянный фон для карточек заданий (не трогаем боковую рамку!) */
-.quest-choice-card {
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
-  /* Убрали !important в конце этой строки */
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-}
-
-/* ==========================================
-   ПОЧИНКА АНИМАЦИИ КНОПОК ПРОФИЛЯ
-   ========================================== */
-/* Возвращаем плавность, эффект вдавливания и затемнения при клике */
-.btn-edit, .btn-logout {
-  transition: transform 0.1s ease, filter 0.2s ease !important;
-  cursor: pointer;
-}
-.btn-edit:active, .btn-logout:active {
-  transform: scale(0.95) !important;
-  filter: brightness(0.85) !important;
-}
-@media (hover: hover) {
-  .btn-edit:hover, .btn-logout:hover { filter: brightness(1.2) !important; }
-}
-
-/* ==========================================
-   АДАПТАЦИЯ ГРАДИЕНТОВ ДЛЯ СВЕТЛОЙ ТЕМЫ
-   ========================================== */
-:root[data-theme="light"] .card, 
-:root[data-theme="light"] .profile-card, 
-:root[data-theme="light"] .modal-box, 
-:root[data-theme="light"] .club-header, 
-:root[data-theme="light"] .auth-overlay-card, 
-:root[data-theme="light"] .quest-choice-card {
-  background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  /* Убрали !important в конце этой строки */
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
-}
-/* ==========================================
-   ОБЪЕМНАЯ СВЕТЛАЯ ТЕМА (ГРАДИЕНТЫ И КОНТРАСТ)
-   ========================================== */
-/* 1. Глубокий градиент и тени для всех карточек в светлой теме */
-:root[data-theme="light"] .card, 
-:root[data-theme="light"] .profile-card, 
-:root[data-theme="light"] .modal-box, 
-:root[data-theme="light"] .club-header, 
-:root[data-theme="light"] .auth-overlay-card, 
-:root[data-theme="light"] .quest-choice-card,
-:root[data-theme="light"] .tabs-container,
-:root[data-theme="light"] #view-news > .card {
-  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 8px 15px rgba(15, 23, 42, 0.08), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
-}
-
-/* 2. Сочные цвета для кнопок матчей (Читаемый фиолетовый) */
-:root[data-theme="light"] #btn-match-glow,
-:root[data-theme="light"] #card-recent-matches {
-  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important;
-  border: 1px solid #c084fc !important;
-  color: #7e22ce !important; /* Насыщенный темный фиолетовый */
-  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2) !important;
-}
-:root[data-theme="light"] #card-recent-matches .card-title {
-  color: #7e22ce !important;
-}
-
-/* 3. Кнопка инвайта (Читаемый синий) */
-:root[data-theme="light"] #btn-invite-glow {
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
-  border: 1px solid #93c5fd !important;
-  color: #1d4ed8 !important; /* Насыщенный синий */
-  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2) !important;
-}
-
-/* 4. Объемные кнопки профиля (Редактировать и Выйти) */
-:root[data-theme="light"] .btn-edit {
-  background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  color: #334155 !important;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
-}
-:root[data-theme="light"] .btn-logout {
-  background: linear-gradient(145deg, #fff1f2 0%, #fecdd3 100%) !important;
-  border: 1px solid #fda4af !important;
-  color: #be123c !important; /* Темно-красный */
-  box-shadow: 0 2px 5px rgba(225,29,72,0.1) !important;
-}
-/* ==========================================
-   ИДЕАЛЬНЫЕ ОТСТУПЫ (12px везде)
-   ========================================== */
-.club-header {
-  /* Уравниваем отступ шапки с базовым расстоянием (gap: 12px) между всеми карточками */
-  margin-bottom: 12px !important; 
-}
-
-/* ==========================================
-   АККУРАТНАЯ АМБИЕНТНАЯ ПОДСВЕТКА (БЕГУЩИЙ НЕОН ПО КОНТУРУ)
-   ========================================== */
-/* 1. Идеально ровная бегущая линия строго по кромке окна */
-@keyframes neonEdgeRun {
-  0%   { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   0 -4px 10px var(--ambi-color); }
-  25%  { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   4px 0 10px var(--ambi-color); }
-  50%  { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   0 4px 10px var(--ambi-color); }
-  75%  { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),  -4px 0 10px var(--ambi-color); }
-  100% { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   0 -4px 10px var(--ambi-color); }
-}
-
-/* 2. Применяем бегущую линию (ДОБАВЛЕН .leaderboard-card ДЛЯ ЗАЛА СЛАВЫ) */
-:root:not([data-theme="light"]) .profile-card,
-:root:not([data-theme="light"]) .card,
-:root:not([data-theme="light"]) .rating-card,
-:root:not([data-theme="light"]) .leaderboard-card,
-:root:not([data-theme="light"]) .club-header {
-  animation: neonEdgeRun 3s linear infinite !important; 
-}
-
-
-/* 4. Яркие базовые цвета */
-.club-header { --ambi-color: #38bdf8; }
-.profile-card { --ambi-color: #3b82f6; }
-#card-park { --ambi-color: #10b981; }
-#card-vostok { --ambi-color: #a855f7; }
-.rating-card, .leaderboard-card { --ambi-color: #fbbf24; } /* Рейтинг и Зал славы светятся общим золотом */
-#view-tournaments .card { --ambi-color: #f97316; }
-#view-quests .card { --ambi-color: #f43f5e; }
-
-/* ==========================================
-   ИСПРАВЛЕНИЕ: БОКОВЫЕ ПОЛОСКИ ЗАДАНИЙ
-   ========================================== */
-/* Базовые рамки (Видны всегда: и днем, и ночью) */
-.quest-level-1 { border-left: 4px solid #10b981 !important; }
-.quest-level-2 { border-left: 4px solid #f59e0b !important; }
-.quest-level-3 { border-left: 4px solid #f43f5e !important; }
-
-/* Неоновая пульсация теней (Только для темной темы) */
-:root:not([data-theme="light"]) .quest-level-1 { 
-  animation: pulseQuest1 1.5s infinite alternate ease-in-out !important; 
-}
-:root:not([data-theme="light"]) .quest-level-2 { 
-  animation: pulseQuest2 1.5s infinite alternate ease-in-out !important; 
-}
-:root:not([data-theme="light"]) .quest-level-3 { 
-  animation: pulseQuest3 1.5s infinite alternate ease-in-out !important; 
-}
-
-/* Сами фильтры свечения (Оставляем как было) */
-@keyframes pulseQuest1 {
-  0%   { filter: drop-shadow(-2px 0 4px rgba(16, 185, 129, 0.4)); }
-  100% { filter: drop-shadow(-8px 0 12px rgba(16, 185, 129, 1)); }
-}
-@keyframes pulseQuest2 {
-  0%   { filter: drop-shadow(-2px 0 4px rgba(245, 158, 11, 0.4)); }
-  100% { filter: drop-shadow(-8px 0 12px rgba(245, 158, 11, 1)); }
-}
-@keyframes pulseQuest3 {
-  0%   { filter: drop-shadow(-2px 0 4px rgba(244, 63, 94, 0.4)); }
-  100% { filter: drop-shadow(-8px 0 12px rgba(244, 63, 94, 1)); }
-}
-/* ==========================================
-   ЦЕНТРОВКА ЗАГОЛОВКОВ (РЕЙТИНГ И ЗАЛ СЛАВЫ)
-   ========================================== */
-.card-block-title {
-  justify-content: center !important;
-}
-
-
-/* Добавляем мягкое дыхание синего неона */
-:root:not([data-theme="light"]) #btn-invite-glow {
-  animation: invitePulse 2.5s infinite alternate ease-in-out;
-}
-
-@keyframes invitePulse {
-  0%   { box-shadow: 0 0 4px rgba(37, 99, 235, 0.1); }
-  100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.6); }
-}
-
-/* ==========================================
-   СВЕЧЕНИЕ БОЛЬШОГО ЛОГОТИПА НА ГЛАВНОЙ (RGB)
-   ========================================== */
-:root:not([data-theme="light"]) .profile-large-logo {
-  /* Плавный перелив всех цветов за 10 секунд */
-  animation: logoRgbGlow 10s infinite linear;
-}
-
-@keyframes logoRgbGlow {
-  0%   { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }   /* Небесный */
-  20%  { filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.6)); }   /* Фиолетовый */
-  40%  { filter: drop-shadow(0 0 25px rgba(244, 63, 94, 0.6)); }    /* Неоново-розовый */
-  60%  { filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.6)); }   /* Золотой */
-  80%  { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.6)); }   /* Изумрудный */
-  100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }   /* Возврат к небесному */
-}
-
-/* ==========================================
-   СКРЫТИЕ ИНВЕНТАРЯ НА ГЛАВНОЙ СТРАНИЦЕ
-   ========================================== */
-#user-inventory-container {
-  display: none !important;
-}
-
-/* ==========================================
-   ЕДИНЫЙ СТИЛЬ КНОПОК И ОКНА "ПОСЛЕДНИЕ МАТЧИ"
-   ========================================== */
-/* 1. Превращаем окно "Последние матчи" в визуальную копию кнопки */
-#card-recent-matches {
-  padding: 12px !important;       
-  border-radius: 14px !important; 
-  margin-top: 0 !important;       /* Обнулили отступ, чтобы работала идеальная сетка в 12px */
-  background: rgba(168, 85, 247, 0.15) !important; 
-  border: 1px solid rgba(168, 85, 247, 0.4) !important;
-}
-
-/* Выравниваем шрифт заголовка */
-#card-recent-matches .card-title {
-  font-size: 14px !important;
-  color: #d8b4fe !important;
-  justify-content: center !important;
-}
-
-/* 2. Цвета для главных кнопок (приглушенный фон) */
-#btn-match-glow {
-  background: rgba(168, 85, 247, 0.15) !important; 
-  border: 1px solid rgba(168, 85, 247, 0.4) !important;
-  color: #d8b4fe !important; 
-}
-#btn-invite-glow {
-  background: rgba(37, 99, 235, 0.15) !important; 
-  border: 1px solid rgba(37, 99, 235, 0.4) !important;
-  color: #60a5fa !important; 
-}
-
-/* 3. УНИВЕРСАЛЬНОЕ СВЕЧЕНИЕ (Бегущий неон теперь и на кнопках!) */
-:root:not([data-theme="light"]) #btn-match-glow,
-:root:not([data-theme="light"]) #btn-invite-glow,
-:root:not([data-theme="light"]) #card-recent-matches {
-  /* Применяем ту же самую анимацию, что крутится вокруг больших окон */
-  animation: neonEdgeRun 3s linear infinite !important;
-}
-
-/* 4. Задаем цвета для бегущей линии */
-#btn-invite-glow { --ambi-color: #38bdf8; } /* Небесно-синий неон */
-#btn-match-glow, #card-recent-matches { --ambi-color: #a855f7; } /* Фиолетовый неон */
-
-
-/* ==========================================
-   ЗОЛОТОЕ СВЕЧЕНИЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЕЙ РЕЙТИНГА
-   ========================================== */
-:root:not([data-theme="light"]) .tabs-container {
-  /* Включаем премиальный фон стекла, чтобы неон смотрелся естественно */
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  /* Запускаем бегущий желтый огонек */
-  --ambi-color: #fbbf24;
-  animation: neonEdgeRun 3s linear infinite !important;
-}
-
-/* Фикс для кнопки внутри бегущей рамки: чтобы активная вкладка выделялась */
-:root:not([data-theme="light"]) .tab-btn.active {
-  background: rgba(255, 255, 255, 0.1) !important;
-}
-
-/* ==========================================
-   ИДЕАЛЬНЫЙ БЛОК НОВОСТЕЙ (СВЕТИТСЯ ТОЛЬКО РАМКА)
-   ========================================== */
-/* 1. Включаем свечение и фон СТРОГО для главной внешней карточки новостей */
-:root:not([data-theme="light"]) #view-news > .card {
-  animation: neonEdgeRun 3s linear infinite !important;
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  padding: 16px !important;
-  --ambi-color: #0ea5e9; /* Голубой неон */
-}
-
-/* Фон для главной рамки новостей в светлой теме */
-:root[data-theme="light"] #view-news > .card {
-  background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
-  border: 1px solid rgba(0, 0, 0, 0.08) !important;
-  padding: 16px !important;
-}
-
-/* 2. Жестко глушим неон ТОЛЬКО у внутренних новостей и исправляем цвет текста */
-#news-container .card {
-  animation: none !important; 
-  background: var(--list-bg) !important; 
-  border: 1px solid var(--card-border) !important;
-  box-shadow: none !important; 
-  padding: 12px !important;
-  border-radius: 12px !important;
-  color: var(--text) !important; /* Главный цвет текста */
-}
-
-/* Принудительно перекрашиваем все элементы внутри новостей под текущую тему */
-#news-container .card,
-#news-container .card * {
-  color: var(--text) !important;
-}
-
-/* ==========================================
-   АНИМАЦИЯ НИЖНЕГО МЕНЮ (ПЛАВАЮЩИЙ НЕОН)
-   ========================================== */
-.bottom-nav {
-  position: relative; /* Необходимо для правильного позиционирования бегущей линии */
-}
-
-/* Плавность смены цвета для всех иконок */
-.nav-item {
-  transition: color 0.3s ease !important;
-}
-
-/* Физика подпрыгивания самой иконки */
-.nav-item .nav-icon {
-  display: block;
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s;
-}
-
-/* Состояние активной вкладки (Иконка летит вверх и увеличивается) */
-.nav-item.active .nav-icon {
-  transform: translateY(-4px) scale(1.25);
-}
-
-/* Неоновое свечение текста и иконки (только для Темной темы) */
-:root:not([data-theme="light"]) .nav-item.active {
-  text-shadow: 0 0 12px var(--nav-glow);
-}
-:root:not([data-theme="light"]) .nav-item.active .nav-icon {
-  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
-}
-
-/* Уникальные цвета для каждой вкладки меню */
-#nav-profile { --nav-glow: #3b82f6; }       /* Синий */
-#nav-profile.active { color: var(--nav-glow) !important; }
-
-#nav-radar { --nav-glow: #10b981; }         /* Зеленый */
-#nav-radar.active { color: var(--nav-glow) !important; }
-
-#nav-ratings { --nav-glow: #fbbf24; }       /* Золотой */
-#nav-ratings.active { color: var(--nav-glow) !important; }
-
-#nav-tournaments { --nav-glow: #f97316; }   /* Оранжевый */
-#nav-tournaments.active { color: var(--nav-glow) !important; }
-
-#nav-quests { --nav-glow: #f43f5e; }        /* Розовый */
-#nav-quests.active { color: var(--nav-glow) !important; }
-
-#nav-news { --nav-glow: #0ea5e9; }          /* Голубой */
-#nav-news.active { color: var(--nav-glow) !important; }
-
-/* ==========================================
-   БЕГУЩИЙ ИНДИКАТОР (СОЗДАЕТСЯ ЧЕРЕЗ JS)
-   ========================================== */
-#nav-sliding-indicator {
-  position: absolute;
-  top: 0; 
-  left: 0;
-  width: 36px;
-  height: 4px;
-  background: var(--nav-glow, #3b82f6);
-  border-radius: 0 0 6px 6px;
-  /* Идеальная кинематографичная кривая скорости для скольжения */
-  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s, box-shadow 0.4s;
-  pointer-events: none;
-  z-index: 10;
-}
-
-/* Свечение каретки в Темной теме */
-:root:not([data-theme="light"]) #nav-sliding-indicator {
-  box-shadow: 0 2px 12px var(--nav-glow, #3b82f6);
-}
-
-/* Свечение каретки в Светлой теме */
-:root[data-theme="light"] #nav-sliding-indicator {
-  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-}
-
-/* ==========================================
-   1. ЖЕЛЕЗОБЕТОННАЯ ИЕРАРХИЯ СЛОЕВ (Z-INDEX)
-   ========================================== */
-.bottom-nav { z-index: 1000 !important; }
-.dynamic-island { z-index: 9000 !important; }
-.modal-overlay, .swal2-container { z-index: 99999 !important; }
-#app-preloader, #loading-screen, .loading-screen, [id*="loading"] { z-index: 999999 !important; }
-
-/* ==========================================
-   2. ЗАЩИТА СКРОЛЛА И БЕЗОПАСНОЕ УСКОРЕНИЕ (60 FPS)
-   ========================================== */
-html, body {
-  overflow-x: hidden !important; 
-  overflow-y: auto !important;
-  overscroll-behavior-y: none; /* Убирает "резинку" у всего сайта */
-}
-.scrollable-list, .player-list, #info-modal-history, .modal-box {
-  -webkit-overflow-scrolling: touch; /* Плавная нативная инерция */
-  overscroll-behavior-y: contain;
-}
-/* Ускоряем только контейнеры экранов, не трогая модалки и меню (чтобы не ломать слои) */
-.main-view {
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
-
-/* ==========================================
-   3. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ
-   ========================================== */
-.main-view { gap: 12px !important; }
-.main-view > * { margin-top: 0 !important; }
-.btn-match-quick, .tabs-container { margin-top: 0 !important; }
-
-/* ==========================================
-   4. ПРАВИЛЬНЫЕ ЦВЕТА СВЕЧЕНИЯ (ЖЕСТКАЯ ПРИВЯЗКА К ID)
+   ЦВЕТА И СВЕЧЕНИЕ (ОБЩАЯ ТЕМАТИЗАЦИЯ)
    ========================================== */
 #view-profile { --theme-glow: #3b82f6; }
 #view-radar { --theme-glow: #10b981; }
@@ -993,38 +352,47 @@ html, body {
 #view-quests { --theme-glow: #ef4444; }
 #view-news { --theme-glow: #0ea5e9; }
 
-.club-header { --ambi-color: #94a3b8 !important; } /* Шапка всегда серая */
+.club-header { --ambi-color: #94a3b8 !important; } 
 
-/* Карточки берут цвет своего родного экрана, даже когда они уезжают вбок при свайпе */
-.main-view .card,
-.main-view .profile-card,
-.main-view .rating-card,
-.main-view .leaderboard-card,
-.main-view .tabs-container,
-.main-view #btn-match-glow,
-.main-view #btn-invite-glow,
-.main-view #card-recent-matches,
-.main-view .quest-choice-card,
-.main-view #view-news > .card {
+.main-view .card, .main-view .profile-card, .main-view .rating-card, .main-view .leaderboard-card, .main-view .tabs-container, .main-view #btn-match-glow, .main-view #btn-invite-glow, .main-view #card-recent-matches, .main-view .quest-choice-card, .main-view #view-news > .card {
   --ambi-color: var(--theme-glow) !important;
 }
 
-#nav-ratings.active { --nav-glow: #a855f7 !important; }
-#nav-quests.active { --nav-glow: #ef4444 !important; }
+#nav-profile.active { color: #3b82f6 !important; --nav-glow: #3b82f6; }
+#nav-radar.active { color: #10b981 !important; --nav-glow: #10b981; }
+#nav-ratings.active { color: #a855f7 !important; --nav-glow: #a855f7; }
+#nav-tournaments.active { color: #f97316 !important; --nav-glow: #f97316; }
+#nav-quests.active { color: #ef4444 !important; --nav-glow: #ef4444; }
+#nav-news.active { color: #0ea5e9 !important; --nav-glow: #0ea5e9; }
 
-/* ==========================================
-   5. СИСТЕМНЫЙ СЕРЫЙ СВЕТ ДЛЯ МОДАЛЬНЫХ ОКОН
-   ========================================== */
-.modal-overlay { opacity: 0; transition: opacity 0.25s ease-out !important; }
-.modal-overlay[style*="display: flex"], .swal2-container { opacity: 1 !important; }
+:root:not([data-theme="light"]) .nav-item.active { text-shadow: 0 0 12px var(--nav-glow); }
+:root:not([data-theme="light"]) .nav-item.active .nav-icon { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4)); }
+:root:not([data-theme="light"]) #nav-sliding-indicator { box-shadow: 0 2px 12px var(--nav-glow); }
+:root[data-theme="light"] #nav-sliding-indicator { box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
 
-.modal-box, .swal2-popup, .toast {
-  transform: scale(0.85) translateY(20px);
-  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+@keyframes neonEdgeRun {
+  0%   { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   0 -4px 10px var(--ambi-color); }
+  25%  { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   4px 0 10px var(--ambi-color); }
+  50%  { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   0 4px 10px var(--ambi-color); }
+  75%  { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),  -4px 0 10px var(--ambi-color); }
+  100% { box-shadow: 0 8px 20px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 3px var(--ambi-color),   0 -4px 10px var(--ambi-color); }
 }
-.modal-overlay[style*="display: flex"] > .modal-box,
-.swal2-popup[style*="display: flex"] {
-  transform: scale(1) translateY(0) !important;
+
+:root:not([data-theme="light"]) .card, 
+:root:not([data-theme="light"]) .profile-card,
+:root:not([data-theme="light"]) .rating-card,
+:root:not([data-theme="light"]) .leaderboard-card,
+:root:not([data-theme="light"]) .tabs-container,
+:root:not([data-theme="light"]) #view-news > .card,
+:root:not([data-theme="light"]) .club-header, 
+:root:not([data-theme="light"]) .auth-overlay-card,
+:root:not([data-theme="light"]) .quest-choice-card,
+:root:not([data-theme="light"]) #btn-match-glow,
+:root:not([data-theme="light"]) #btn-invite-glow,
+:root:not([data-theme="light"]) #card-recent-matches {
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  animation: neonEdgeRun 3s linear infinite !important;
 }
 
 :root:not([data-theme="light"]) .modal-overlay > .modal-box,
@@ -1033,36 +401,54 @@ html, body {
   animation: neonEdgeRun 3s linear infinite !important;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  --ambi-color: #94a3b8 !important;
+  --ambi-color: #94a3b8 !important; /* Серый системный неон */
 }
 
-:root[data-theme="light"] .modal-overlay > .modal-box,
-:root[data-theme="light"] .swal2-popup,
-:root[data-theme="light"] .toast {
-  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
+/* Глушим свечение внутри окон и карточек */
+.modal-box .card, .modal-box [class*="box"], .profile-card .card, .profile-card [class*="box"], #news-container .card {
+  animation: none !important; box-shadow: none !important; border: 1px solid var(--card-border) !important; background: var(--list-bg) !important;
 }
 
-.modal-box .card, 
-.modal-box [class*="box"],
-.profile-card .card,
-.profile-card [class*="box"] {
-  animation: none !important;
-  box-shadow: none !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+/* СВЕТЛАЯ ТЕМА */
+:root[data-theme="light"] .card, :root[data-theme="light"] .profile-card, :root[data-theme="light"] .rating-card, :root[data-theme="light"] .leaderboard-card, :root[data-theme="light"] .tabs-container, :root[data-theme="light"] #view-news > .card, :root[data-theme="light"] .club-header, :root[data-theme="light"] .auth-overlay-card, :root[data-theme="light"] .quest-choice-card {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 8px 15px rgba(15, 23, 42, 0.08), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
-
-/* ==========================================
-   6. ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ В СВЕТЛОЙ ТЕМЕ
-   ========================================== */
-:root[data-theme="light"] .quest-choice-card {
-  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-left: none; 
+:root[data-theme="light"] .modal-overlay > .modal-box, :root[data-theme="light"] .swal2-popup, :root[data-theme="light"] .toast {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
+:root[data-theme="light"] .score-btn.active { color: var(--accent-purple) !important; border-color: var(--accent-purple) !important; background: rgba(168, 85, 247, 0.15) !important; }
+:root[data-theme="light"] .quest-choice-card { border-left: none !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#10b981"] { border-left: 4px solid #10b981 !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
+:root[data-theme="light"] #btn-match-glow, :root[data-theme="light"] #card-recent-matches { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important; border: 1px solid #c084fc !important; color: #7e22ce !important; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2) !important; }
+:root[data-theme="light"] #card-recent-matches .card-title { color: #7e22ce !important; }
+:root[data-theme="light"] #btn-invite-glow { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important; border: 1px solid #93c5fd !important; color: #1d4ed8 !important; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2) !important; }
+:root[data-theme="light"] .btn-edit { background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%) !important; border: 1px solid #cbd5e1 !important; color: #334155 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important; }
+:root[data-theme="light"] .btn-logout { background: linear-gradient(145deg, #fff1f2 0%, #fecdd3 100%) !important; border: 1px solid #fda4af !important; color: #be123c !important; box-shadow: 0 2px 5px rgba(225,29,72,0.1) !important; }
+:root:not([data-theme="light"]) .quest-level-1 { animation: pulseQuest1 1.5s infinite alternate ease-in-out !important; }
+:root:not([data-theme="light"]) .quest-level-2 { animation: pulseQuest2 1.5s infinite alternate ease-in-out !important; }
+:root:not([data-theme="light"]) .quest-level-3 { animation: pulseQuest3 1.5s infinite alternate ease-in-out !important; }
+@keyframes pulseQuest1 { 0% { filter: drop-shadow(-2px 0 4px rgba(16, 185, 129, 0.4)); } 100% { filter: drop-shadow(-8px 0 12px rgba(16, 185, 129, 1)); } }
+@keyframes pulseQuest2 { 0% { filter: drop-shadow(-2px 0 4px rgba(245, 158, 11, 0.4)); } 100% { filter: drop-shadow(-8px 0 12px rgba(245, 158, 11, 1)); } }
+@keyframes pulseQuest3 { 0% { filter: drop-shadow(-2px 0 4px rgba(244, 63, 94, 0.4)); } 100% { filter: drop-shadow(-8px 0 12px rgba(244, 63, 94, 1)); } }
+
+/* ==========================================
+   ПОГОДНЫЕ АНИМАЦИИ
+   ========================================== */
+#card-park { position: relative; overflow: hidden; transition: background 1s ease, border-color 1s ease; }
+#card-park > * { position: relative; z-index: 2; }
+#card-park.weather-rain { background: linear-gradient(to bottom, #1e293b, #0f172a); border-color: #3b82f6; }
+#card-park.weather-rain::before { content: ''; position: absolute; top: -100%; left: -50%; right: -50%; bottom: 0; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='40'%3E%3Crect width='1' height='15' fill='rgba(147, 197, 253, 0.25)'/%3E%3C/svg%3E"); background-size: 20px 40px; animation: rainFall 0.6s linear infinite; transform: rotate(15deg); pointer-events: none; z-index: 1; }
+@keyframes rainFall { 0% { background-position: 0 0; } 100% { background-position: -20px 100vh; } }
+#card-park.weather-snow { background: linear-gradient(to bottom, #1e293b, #0b1120); border-color: #e0f2fe; }
+#card-park.weather-snow::before, #card-park.weather-snow::after { content: ''; position: absolute; top: -100%; left: 0; right: 0; bottom: 0; background-image: radial-gradient(3px 3px at 20px 30px, #ffffff, rgba(0,0,0,0)), radial-gradient(4px 4px at 40px 70px, #e0f2fe, rgba(0,0,0,0)), radial-gradient(3px 3px at 50px 160px, #ffffff, rgba(0,0,0,0)), radial-gradient(4px 4px at 90px 40px, #e0f2fe, rgba(0,0,0,0)), radial-gradient(5px 5px at 130px 80px, #ffffff, rgba(0,0,0,0)), radial-gradient(3px 3px at 160px 120px, #ffffff, rgba(0,0,0,0)); background-size: 200px 200px; animation: snowFall 5s linear infinite; pointer-events: none; z-index: 1; opacity: 0.8; }
+#card-park.weather-snow::after { animation-duration: 8s; animation-delay: -2s; opacity: 0.5; background-size: 300px 300px; transform: scale(1.2); }
+@keyframes snowFall { 0% { transform: translateY(0); } 100% { transform: translateY(100vh); } }
+#card-park.weather-clear { background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, var(--card-bg) 60%); border-color: rgba(245, 158, 11, 0.5); }
+#card-park.weather-clear::before { content: ''; position: absolute; top: -60px; right: -60px; width: 200px; height: 200px; background: radial-gradient(circle, rgba(251, 191, 36, 0.25) 0%, rgba(251, 191, 36, 0) 70%); border-radius: 50%; animation: sunPulse 4s ease-in-out infinite alternate; pointer-events: none; z-index: 1; }
+@keyframes sunPulse { 0% { transform: scale(1); opacity: 0.6; } 100% { transform: scale(1.3); opacity: 1; } }
+#card-park.weather-clouds { background: linear-gradient(to bottom, rgba(71, 85, 105, 0.3), var(--card-bg)); border-color: #64748b; }
+#card-park.weather-clouds::before { content: ''; position: absolute; top: 0; left: -100%; right: 0; bottom: 0; width: 200%; background: radial-gradient(ellipse at top, rgba(148, 163, 184, 0.1) 0%, transparent 70%); animation: cloudDrift 10s linear infinite alternate; pointer-events: none; z-index: 1; }
+@keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(15%); } }
