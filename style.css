@@ -1087,3 +1087,20 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   /* Если нужно, возвращаем им легкую плоскую рамку вместо светящейся */
   border: 1px solid rgba(255, 255, 255, 0.05) !important; 
 }
+
+/* ==========================================
+   ФИКС: ОТКЛЮЧЕНИЕ НЕОНА ВНУТРИ МОДАЛЬНЫХ ОКОН
+   ========================================== */
+/* Жестко гасим анимацию и свечение у всех внутренних элементов окна профиля игрока */
+.modal-box .card,
+.modal-box [class*="box"],
+.modal-box [class*="item"],
+.modal-box [class*="row"],
+.modal-box [class*="history"],
+[id*="modal"] .card,
+[id*="modal"] [class*="box"] {
+  animation: none !important;
+  box-shadow: none !important;
+  /* Возвращаем внутренним блокам аккуратную полупрозрачную рамку, чтобы они не сливались */
+  border: 1px solid rgba(255, 255, 255, 0.08) !important; 
+}
