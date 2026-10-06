@@ -726,3 +726,39 @@ body.island-active #main-top-header {
 #user-inventory-container {
   display: none !important;
 }
+
+/* ==========================================
+   СВЕЧЕНИЕ КНОПКИ "ЗАПИСАТЬ РЕЗУЛЬТАТ МАТЧА"
+   ========================================== */
+#btn-match-glow {
+  background: rgba(168, 85, 247, 0.15) !important; 
+  border: 1px solid rgba(168, 85, 247, 0.4) !important;
+  color: #d8b4fe !important; 
+  font-weight: 600;
+}
+
+:root:not([data-theme="light"]) #btn-match-glow {
+  animation: matchPulse 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes matchPulse {
+  0%   { box-shadow: 0 0 4px rgba(168, 85, 247, 0.1); }
+  100% { box-shadow: 0 0 15px rgba(168, 85, 247, 0.6); }
+}
+
+/* ==========================================
+   ЗОЛОТОЕ СВЕЧЕНИЕ ДЛЯ ПЕРЕКЛЮЧАТЕЛЕЙ РЕЙТИНГА
+   ========================================== */
+:root:not([data-theme="light"]) .tabs-container {
+  /* Включаем премиальный фон стекла, чтобы неон смотрелся естественно */
+  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  /* Запускаем бегущий желтый огонек */
+  --ambi-color: #fbbf24;
+  animation: neonEdgeRun 3s linear infinite !important;
+}
+
+/* Фикс для кнопки внутри бегущей рамки: чтобы активная вкладка выделялась */
+:root:not([data-theme="light"]) .tab-btn.active {
+  background: rgba(255, 255, 255, 0.1) !important;
+}
