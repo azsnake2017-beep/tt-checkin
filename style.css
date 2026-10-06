@@ -454,34 +454,38 @@ body.island-active #main-top-header { margin-top: 14px; }
 @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(15%); } }
 
 /* ==========================================
-   ЖЕСТКИЙ ФИКС КВЕСТОВ: УБИРАЕМ ЛИШНИЙ НЕОН И ВОЗВРАЩАЕМ ПОЛОСКИ
+   ФИНАЛЬНЫЙ СТРОГИЙ ФИКС КВЕСТОВ И СВЕЧЕНИЯ
    ========================================== */
 
-/* 1. Отключаем любое свечение и анимацию внутри экрана заданий */
-#view-quests .card,
-#view-quests .quest-choice-card {
-  animation: none !important;
-  box-shadow: none !important;
-}
-
-/* 2. Настраиваем внешнюю рамку экрана заданий */
+/* 1. Возвращаем красный неон строго для внешней рамки экрана заданий */
 :root:not([data-theme="light"]) #view-quests > .card {
   animation: neonEdgeRun 3s linear infinite !important;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  --ambi-color: #ef4444 !important; /* Красный неон строго по контуру */
+  --ambi-color: #ef4444 !important; /* Красный неон */
 }
 
-/* 3. Гарантированно возвращаем цветные полоски слева для карточек квестов */
+/* 2. Гарантированно возвращаем цветные полоски слева для каждой карточки квеста */
+.quest-choice-card {
+  border-top: 1px solid var(--card-border) !important;
+  border-right: 1px solid var(--card-border) !important;
+  border-bottom: 1px solid var(--card-border) !important;
+}
+
+/* Уровень 1 (Зеленый) */
 .quest-choice-card.quest-level-1, 
-.quest-choice-card[style*="#10b981"] { 
+.quest-choice-card[style*="10b981"] { 
   border-left: 4px solid #10b981 !important; 
 }
+
+/* Уровень 2 (Оранжевый) */
 .quest-choice-card.quest-level-2, 
-.quest-choice-card[style*="#f59e0b"] { 
+.quest-choice-card[style*="f59e0b"] { 
   border-left: 4px solid #f59e0b !important; 
 }
+
+/* Уровень 3 (Красный) */
 .quest-choice-card.quest-level-3, 
-.quest-choice-card[style*="#f43f5e"] { 
+.quest-choice-card[style*="f43f5e"] { 
   border-left: 4px solid #f43f5e !important; 
 }
