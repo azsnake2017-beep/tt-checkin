@@ -116,7 +116,7 @@ function openConfirmModal(msg, action) {
   document.getElementById('confirm-modal').style.display = 'flex';
 }
 function closeConfirmModal() {
-  document.getElementById('confirm-modal').style.display = 'none';
+  closeModalSmoothly('confirm-modal');
   confirmActionCallback = null;
 }
 function executeConfirm() {
@@ -131,8 +131,7 @@ function customAlert(msg) {
   if (el) el.style.display = 'flex';
 }
 function closeCustomAlert() { 
-  var el = document.getElementById('custom-alert-modal');
-  if (el) el.style.display = 'none'; 
+  closeModalSmoothly('custom-alert-modal');
 }
 
 function initTheme() {
@@ -466,6 +465,5 @@ function showAchievement(title, icon, name, desc) {
 }
 
 function closeAchievementModal() {
-  var modal = document.getElementById('achievement-modal');
-  if (modal) modal.style.display = 'none';
+  closeModalSmoothly('achievement-modal');
 }
