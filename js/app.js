@@ -2238,4 +2238,70 @@ window.showBadgeInfo = function(badgeKey) {
   if (iconEl) iconEl.innerText = info.icon;
   
   openModalSmoothly('badge-info-modal');
+
+  /* ==========================================
+   РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
+   ========================================== */
+var BOT_USERNAME = "tennis_club_chmz_bot"; 
+
+window.showRefQrModal = function() {
+  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  if (!myUid) {
+    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
+    else alert("Сначала необходимо авторизоваться!");
+    return;
+  }
+  
+  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
+  var qrContainer = document.getElementById("ref-qrcode");
+  if (qrContainer) {
+      qrContainer.innerHTML = ""; 
+      new QRCode(qrContainer, {
+        text: refLink,
+        width: 200,
+        height: 200,
+        colorDark : "#000000",
+        colorLight : "#ffffff",
+        correctLevel : QRCode.CorrectLevel.H
+      });
+  }
+
+  // Вызываем наше новое супер-плавное окно!
+  openModalSmoothly('ref-qr-modal');
+};
+
+window.closeRefQrModal = function() { 
+  if(typeof closeModalSmoothly === 'function') closeModalSmoothly('ref-qr-modal'); 
+};
+
+window.shareMyRefLink = function() {
+  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  if (!myUid) {
+    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
+    else alert("Сначала необходимо авторизоваться!");
+    return;
+  }
+
+  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
+  var inviteTitle = "Клуб настольного тенниса ЧМЗ";
+  var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
+
+  if (navigator.share) {
+    navigator.share({
+      title: inviteTitle,
+      text: inviteText,
+      url: refLink
+    }).then(function() {}).catch(function(error) {});
+  } else if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
+      if (typeof customAlert === 'function') {
+        customAlert("Ссылка скопирована!\nОтправьте её будущему участнику.");
+      } else {
+        alert("Ссылка скопирована в буфер обмена!");
+      }
+    });
+  } else {
+    prompt("Скопируйте ссылку для добавления участника:", refLink);
+  }
+};
 };
