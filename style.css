@@ -1049,10 +1049,9 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
 }
 
 /* ==========================================
-   ИДЕАЛЬНОЕ СВЕЧЕНИЕ: ТОЛЬКО ВНЕШНИЕ РАМКИ
+   ИДЕАЛЬНОЕ СВЕЧЕНИЕ (ТОЛЬКО ВНЕШНИЕ РАМКИ)
    ========================================== */
-/* 1. Возвращаем свечение модалкам, но строго ТОЛЬКО внешней коробке */
-:root:not([data-theme="light"]) .modal-overlay > .modal-box,
+:root:not([data-theme="light"]) .modal-box,
 :root:not([data-theme="light"]) .swal2-popup,
 :root:not([data-theme="light"]) .toast {
   animation: neonEdgeRun 3s linear infinite !important;
@@ -1061,40 +1060,34 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   --ambi-color: var(--theme-glow, #3b82f6) !important;
 }
 
-/* 2. Гарантированно отключаем неон на ВСЕХ внутренних блоках модалок и профиля */
-.modal-box div, 
-.profile-card div {
+/* Жестко гасим неон внутри любых карточек и окон */
+.modal-box .card, 
+.modal-box [class*="box"],
+.profile-card .card,
+.profile-card [class*="box"] {
   animation: none !important;
-}
-
-/* 3. Возвращаем аккуратные тонкие рамки без теней для истории матчей и статистики */
-.modal-box div[style*="border"], 
-.profile-card div[style*="border"] {
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
   box-shadow: none !important;
 }
 
-/* Светлая тема для модалок */
-:root[data-theme="light"] .modal-overlay > .modal-box,
-:root[data-theme="light"] .swal2-popup,
-:root[data-theme="light"] .toast {
-  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
+/* ==========================================
+   ВЫРАВНИВАНИЕ ЭКРАНОВ И УДАЛЕНИЕ "СКАЧКОВ"
+   ========================================== */
+/* Жестко выравниваем верхний край всех экранов по одной линии */
+.main-view {
+  gap: 12px !important;
+}
+.main-view > * {
+  margin-top: 0 !important;
+}
+.main-view > :first-child {
+  margin-top: 0 !important;
 }
 
 /* ==========================================
-   ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ ЭКРАНОВ И АНИМАЦИИ
+   КРАСИВАЯ АНИМАЦИЯ ПОЯВЛЕНИЯ ОКОН И АЛЕРТОВ
    ========================================== */
-/* 1. Жестко выравниваем верхний край всех экранов (убираем "скачки" при свайпе) */
-.main-view > :first-child,
-#btn-match-glow {
-  margin-top: 0 !important; 
-}
-
-/* 2. Анимация появления для модальных окон (попап-эффект) */
 @keyframes popInAlert {
-  0%   { opacity: 0; transform: scale(0.9) translateY(10px); }
+  0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
   100% { opacity: 1; transform: scale(1) translateY(0); }
 }
 @keyframes fadeInBg {
@@ -1102,16 +1095,15 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   100% { opacity: 1; }
 }
 
-/* 3. Применяем плавное появление к темному фону (SweetAlert и кастомные окна) */
-.swal2-container,
-.modal-overlay[style*="display: flex"] {
-  animation: fadeInBg 0.2s ease-out !important;
+/* Плавное затемнение фона */
+.modal-overlay[style*="display: flex"],
+.swal2-container {
+  animation: fadeInBg 0.25s ease-out !important;
 }
 
-/* 4. Применяем упругий "поп-ин" к самим окнам и алертам */
-.swal2-popup, 
-.toast, 
-.alert,
-#confirm-modal .modal-box {
-  animation: popInAlert 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
+/* Упругий "поп-ин" самого окна */
+.modal-overlay[style*="display: flex"] .modal-box,
+.swal2-popup,
+.toast {
+  animation: popInAlert 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
