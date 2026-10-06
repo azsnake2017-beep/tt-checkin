@@ -1065,14 +1065,14 @@ body.is-swiping .main-view.active {
   transform: scale(1) translateY(0) !important;
 }
 
-/* Свечение только внешних рамок модалок */
+/* Свечение только внешних рамок модалок (СТРОГО СЕРЫЙ ЦВЕТ) */
 :root:not([data-theme="light"]) .modal-overlay > .modal-box,
 :root:not([data-theme="light"]) .swal2-popup,
 :root:not([data-theme="light"]) .toast {
   animation: neonEdgeRun 3s linear infinite !important;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  --ambi-color: var(--theme-glow, #3b82f6) !important;
+  --ambi-color: #94a3b8 !important; /* Системный серебристо-серый, как у титульного окна */
 }
 
 /* Принудительно глушим неон у внутренних карточек */
