@@ -800,7 +800,8 @@ body.island-active #main-top-header {
   color: var(--text) !important; /* Главный цвет текста */
 }
 
-/* Принудительно перекрашиваем все заголовки и тексты внутри новостей под текущую тему */
+/* Принудительно перекрашиваем все элементы внутри новостей под текущую тему */
+#news-container .card,
 #news-container .card * {
-  color: var(--text);
+  color: var(--text) !important;
 }
