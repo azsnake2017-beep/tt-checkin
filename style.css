@@ -722,10 +722,9 @@ body.island-active #main-top-header {
    ========================================== */
 /* 1. Превращаем окно "Последние матчи" в визуальную копию кнопки */
 #card-recent-matches {
-  padding: 12px !important;       /* Сужаем отступы до размера кнопки */
-  border-radius: 14px !important; /* Скругляем как кнопку */
-  margin-top: 8px !important;
-  /* Заливаем таким же полупрозрачным фиолетовым цветом */
+  padding: 12px !important;       
+  border-radius: 14px !important; 
+  margin-top: 0 !important;       /* Обнулили отступ, чтобы работала идеальная сетка в 12px */
   background: rgba(168, 85, 247, 0.15) !important; 
   border: 1px solid rgba(168, 85, 247, 0.4) !important;
 }
