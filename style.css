@@ -20,14 +20,15 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 /* ==========================================
    СТИЛИ ДЛЯ ИНТЕРАКТИВНЫХ СВАЙПОВ
    ========================================== */
-/* Базовая анимация (для кликов по нижнему меню - мягкое проявление) */
+/* ==========================================
+   ИСПРАВЛЕНО: ОТКЛЮЧЕНО МОРГАНИЕ ПОСЛЕ СВАЙПА
+   ========================================== */
 .main-view.active { 
   display: flex; 
-  animation: fadeScaleIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important; 
+  animation: none !important; /* Убили анимацию, которая вызывала мерцание */
 }
 
-/* МАГИЯ АНТИ-МОРГАНИЯ: Полное отключение CSS-вспышек во время перетаскивания */
-body.disable-animations .main-view {
+body.disable-animations * {
   animation: none !important;
   transition: none !important;
 }
@@ -994,35 +995,43 @@ html, body {
 }
 
 /* ==========================================
-   1. ДИНАМИЧЕСКАЯ ТЕМАТИЗАЦИЯ СВЕЧЕНИЯ ПО ВКЛАДКАМ
+   ЖЕЛЕЗОБЕТОННАЯ ИЕРАРХИЯ СЛОЕВ (Z-INDEX)
    ========================================== */
-body:has(#view-profile.active) { --theme-glow: #3b82f6; }
-body:has(#view-radar.active) { --theme-glow: #10b981; }
-body:has(#view-ratings.active) { --theme-glow: #a855f7; }
-body:has(#view-tournaments.active) { --theme-glow: #f97316; }
-body:has(#view-quests.active) { --theme-glow: #ef4444; }
-body:has(#view-news.active) { --theme-glow: #0ea5e9; }
+.bottom-nav { z-index: 1000 !important; }
+.dynamic-island { z-index: 9000 !important; }
+.modal-overlay, .swal2-container { z-index: 99999 !important; }
+#app-preloader, #loading-screen, .loading-screen { z-index: 999999 !important; }
 
-/* Титульный блок всегда благородно серый */
+/* ==========================================
+   ПРАВИЛЬНЫЕ ЦВЕТА (БЕЗ СМЕШИВАНИЯ ПРИ СВАЙПЕ)
+   ========================================== */
+/* Привязываем цвет жестко к экрану, а не к его активности */
+#view-profile { --theme-glow: #3b82f6; }
+#view-radar { --theme-glow: #10b981; }
+#view-ratings { --theme-glow: #a855f7; }
+#view-tournaments { --theme-glow: #f97316; }
+#view-quests { --theme-glow: #ef4444; }
+#view-news { --theme-glow: #0ea5e9; }
+
+/* Шапка всегда серая */
 .club-header { --ambi-color: #94a3b8 !important; }
 
-/* Динамический неон для всех активных окон */
-.main-view.active .card,
-.main-view.active .profile-card,
-.main-view.active .rating-card,
-.main-view.active .leaderboard-card,
-.main-view.active .tabs-container,
-.main-view.active #btn-match-glow,
-.main-view.active #btn-invite-glow,
-.main-view.active #card-recent-matches,
-.main-view.active .quest-choice-card,
-.main-view.active #view-news > .card {
+/* Карточки берут цвет своего родного экрана, даже когда они уезжают вбок */
+.main-view .card,
+.main-view .profile-card,
+.main-view .rating-card,
+.main-view .leaderboard-card,
+.main-view .tabs-container,
+.main-view #btn-match-glow,
+.main-view #btn-invite-glow,
+.main-view #card-recent-matches,
+.main-view .quest-choice-card,
+.main-view #view-news > .card {
   --ambi-color: var(--theme-glow) !important;
 }
 
 #nav-ratings { --nav-glow: #a855f7 !important; }
 #nav-quests { --nav-glow: #ef4444 !important; }
-
 /* ==========================================
    2. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ И АНТИ-МЕРЦАНИЕ
    ========================================== */
