@@ -2281,73 +2281,89 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   УЛЬТРА-ПЛАВНАЯ КАРУСЕЛЬ НА 60 FPS (БЕЗ НАХЛЕСТОВ И ЛАГОВ)
+   ФИНАЛЬНАЯ КАРУСЕЛЬ (ЗАЩИТА СКРОЛЛА + АНТИ-МЕРЦАНИЕ + 60 FPS)
    ========================================== */
-var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, width: 0, gap: 20, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
+var swipeState = { isDragging: false, isVerticalScroll: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, width: 0, gap: 20, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
 document.addEventListener('touchstart', function(e) {
   if (document.querySelector('.modal-overlay[style*="display: flex"]') || document.querySelector('.swal2-container')) return;
+  
   swipeState.startX = e.touches[0].clientX;
   swipeState.startY = e.touches[0].clientY;
   swipeState.isDragging = false;
+  swipeState.isVerticalScroll = false;
   swipeState.activeView = document.querySelector('.main-view.active');
   swipeState.targetView = null;
 }, {passive: true});
 
 document.addEventListener('touchmove', function(e) {
   if (!swipeState.activeView) return;
+  
   var dx = e.touches[0].clientX - swipeState.startX;
   var dy = e.touches[0].clientY - swipeState.startY;
 
-  if (!swipeState.isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { 
-    swipeState.isDragging = true;
-    document.body.classList.add('disable-animations'); 
+  // 1. ЖЕСТКАЯ ЗАЩИТА: Если палец пошел вверх/вниз сильнее, чем вбок — это вертикальный скролл.
+  // Блокируем свайп карусели до следующего касания экрана.
+  if (!swipeState.isDragging) {
+    if (Math.abs(dy) > Math.abs(dx) + 5) {
+      swipeState.isVerticalScroll = true;
+      return;
+    }
+    
+    // 2. Инициируем горизонтальный свайп, только если мы не скроллим
+    if (!swipeState.isVerticalScroll && Math.abs(dx) > 10) { 
+      swipeState.isDragging = true;
+      document.body.classList.add('disable-animations'); 
 
-    var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
-    swipeState.direction = dx < 0 ? 1 : -1;
-    
-    var targetIndex = (currentIndex + swipeState.direction + swipeState.tabs.length) % swipeState.tabs.length;
-    swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
-    
-    if (swipeState.targetView) {
-      swipeState.width = swipeState.activeView.getBoundingClientRect().width;
+      var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
+      swipeState.direction = dx < 0 ? 1 : -1;
       
-      swipeState.targetView.style.display = 'flex';
-      swipeState.targetView.style.position = 'absolute';
-      swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
-      swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
-      swipeState.targetView.style.width = swipeState.width + 'px';
+      var targetIndex = (currentIndex + swipeState.direction + swipeState.tabs.length) % swipeState.tabs.length;
+      swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
       
-      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
-      swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
-      
-      swipeState.activeView.style.zIndex = '5';
-      swipeState.targetView.style.zIndex = '5';
+      if (swipeState.targetView) {
+        // Кэшируем ширину 1 раз (максимум FPS)
+        swipeState.width = swipeState.activeView.offsetWidth;
+        
+        // Размещаем целевой экран рядом с текущим
+        swipeState.targetView.style.display = 'flex';
+        swipeState.targetView.style.position = 'absolute';
+        swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
+        swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
+        swipeState.targetView.style.width = swipeState.width + 'px';
+        
+        var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
+        swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
+        
+        swipeState.activeView.style.zIndex = '5';
+        swipeState.targetView.style.zIndex = '5';
+      }
     }
   }
 
-  if (swipeState.isDragging) {
-    if (e.cancelable) e.preventDefault(); 
-    if (swipeState.targetView) {
-      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
-      swipeState.activeView.style.transform = 'translate3d(' + dx + 'px, 0, 0)';
-      swipeState.targetView.style.transform = 'translate3d(' + (startOffset + dx) + 'px, 0, 0)';
-    }
+  // 3. Двигаем экраны синхронно (GPU Ускорение)
+  if (swipeState.isDragging && swipeState.targetView) {
+    if (e.cancelable) e.preventDefault(); // Блокируем дергание страницы
+    var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
+    swipeState.activeView.style.transform = 'translate3d(' + dx + 'px, 0, 0)';
+    swipeState.targetView.style.transform = 'translate3d(' + (startOffset + dx) + 'px, 0, 0)';
   }
 }, {passive: false});
 
 document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var threshold = 35; 
+  var threshold = 35; // Очень легкое касание для переключения
 
   if (swipeState.targetView) {
-    swipeState.activeView.style.transition = 'transform 0.25s ease-out';
-    swipeState.targetView.style.transition = 'transform 0.25s ease-out';
+    // Включаем плавную доводку 3D-движка
+    swipeState.activeView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
+    swipeState.targetView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
 
     var isValidSwipe = (swipeState.direction === 1 && dx < -threshold) || (swipeState.direction === -1 && dx > threshold);
 
     if (isValidSwipe) {
+      // ИГРАЕМ ЗВУК И ВИБРИРУЕМ
       if (window.TTAudio && typeof window.TTAudio.playRandomBounce === 'function') {
         window.TTAudio.playRandomBounce();
       }
@@ -2355,6 +2371,7 @@ document.addEventListener('touchend', function(e) {
       
       var finalX = swipeState.direction === 1 ? -(swipeState.width + swipeState.gap) : (swipeState.width + swipeState.gap);
       
+      // Доводим анимацию до конца
       swipeState.activeView.style.transform = 'translate3d(' + finalX + 'px, 0, 0)';
       swipeState.targetView.style.transform = 'translate3d(0px, 0, 0)';
       
@@ -2362,30 +2379,77 @@ document.addEventListener('touchend', function(e) {
       var activeEl = swipeState.activeView;
       var targetEl = swipeState.targetView;
       
+      // Ждем завершения CSS анимации (250мс)
       setTimeout(function() {
         if (typeof switchNavTab === 'function') switchNavTab(targetId);
-        activeEl.style = '';
-        targetEl.style = '';
+        
+        // ФИКС МЕРЦАНИЯ: Мягко сбрасываем стили, оставляя display
+        activeEl.style.transform = '';
+        activeEl.style.transition = '';
+        activeEl.style.position = '';
+        activeEl.style.width = '';
+        activeEl.style.zIndex = '';
+        
+        targetEl.style.transform = '';
+        targetEl.style.transition = '';
+        targetEl.style.position = '';
+        targetEl.style.width = '';
+        targetEl.style.zIndex = '';
+        
         document.body.classList.remove('disable-animations');
       }, 250);
+      
     } else {
+      // ВОЗВРАТ (если свайп отменен)
       var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
       swipeState.activeView.style.transform = 'translate3d(0px, 0, 0)';
       swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
       
       var targetElRevert = swipeState.targetView;
       var activeElRevert = swipeState.activeView;
+      
       setTimeout(function() {
-        targetElRevert.style = '';
-        activeElRevert.style = '';
+        activeElRevert.style.transform = '';
+        activeElRevert.style.transition = '';
+        activeElRevert.style.position = '';
+        activeElRevert.style.width = '';
+        activeElRevert.style.zIndex = '';
+        
+        targetElRevert.style.transform = '';
+        targetElRevert.style.transition = '';
+        targetElRevert.style.position = '';
+        targetElRevert.style.width = '';
+        targetElRevert.style.zIndex = '';
+        targetElRevert.style.display = 'none'; // Прячем второй экран
+        
         document.body.classList.remove('disable-animations');
       }, 250);
     }
   } else {
     document.body.classList.remove('disable-animations');
   }
+  
+  // Сбрасываем трекеры
   swipeState.isDragging = false;
+  swipeState.isVerticalScroll = false;
 }, {passive: true});
+
+// Спасательный круг от "зависших" свайпов при звонке телефона
+document.addEventListener('touchcancel', function(e) {
+  if (swipeState.isDragging) {
+    if(swipeState.activeView) {
+      swipeState.activeView.style.transform = '';
+      swipeState.activeView.style.transition = '';
+    }
+    if(swipeState.targetView) {
+      swipeState.targetView.style.transform = '';
+      swipeState.targetView.style.transition = '';
+      swipeState.targetView.style.display = 'none';
+    }
+    document.body.classList.remove('disable-animations');
+    swipeState.isDragging = false;
+  }
+});
 /* ==========================================
    ДВИЖОК ПЛАВАЮЩЕГО ИНДИКАТОРА МЕНЮ
    ========================================== */
