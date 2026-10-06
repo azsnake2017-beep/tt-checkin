@@ -1692,13 +1692,13 @@ window.closeModalSmoothly = function(modalId) {
   }, 300);
 };
 
-// ==========================================
-// ФИНАЛЬНЫЙ ДВИЖОК КАРУСЕЛИ (БЕЗ НАХЛЕСТОВ И БАГОВ)
-// ==========================================
+/* ==========================================
+   ФИНАЛЬНАЯ КАРУСЕЛЬ (С ПОЛНОЙ ЗАЩИТОЙ СКРОЛЛА)
+   ========================================== */
 var swipeState = {
   isDragging: false,
   isVerticalScroll: false,
-  isAnimating: false, // ГЛАВНЫЙ ФИКС: блокировка на время анимации
+  isAnimating: false,
   startX: 0,
   startY: 0,
   activeView: null,
@@ -1710,7 +1710,6 @@ var swipeState = {
 };
 
 document.addEventListener('touchstart', function(e) {
-  // Если сейчас идет анимация свайпа ИЛИ открыто модальное окно — игнорируем нажатие
   if (swipeState.isAnimating) return;
   if (document.querySelector('.modal-overlay[style*="display: flex"]') || document.querySelector('.swal2-container')) return;
 
@@ -1729,14 +1728,14 @@ document.addEventListener('touchmove', function(e) {
   var dy = e.touches[0].clientY - swipeState.startY;
 
   if (!swipeState.isDragging) {
-    // 1. ЖЕСТКАЯ ЗАЩИТА: Если палец пошел вертикально — отменяем горизонтальный свайп
-    if (Math.abs(dy) > Math.abs(dx) + 5) {
+    // ЖЕСТКАЯ ЗАЩИТА СКРОЛЛА: Если палец дернулся вверх/вниз - сразу отдаем управление браузеру!
+    if (Math.abs(dy) > 8 || Math.abs(dy) > Math.abs(dx)) {
       swipeState.isVerticalScroll = true;
       return;
     }
 
-    // 2. Инициируем горизонтальный свайп
-    if (!swipeState.isVerticalScroll && Math.abs(dx) > 10) {
+    // Начинаем свайп ТОЛЬКО если движение явно горизонтальное (dx > dy в полтора раза)
+    if (!swipeState.isVerticalScroll && Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       swipeState.isDragging = true;
       document.body.classList.add('disable-animations');
 
@@ -1764,7 +1763,7 @@ document.addEventListener('touchmove', function(e) {
     }
   }
 
-  // 3. Двигаем экраны за пальцем
+  // Если свайп вбок прошел проверку — двигаем карточки
   if (swipeState.isDragging && swipeState.targetView) {
     if (e.cancelable) e.preventDefault();
     var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
@@ -1774,7 +1773,6 @@ document.addEventListener('touchmove', function(e) {
 }, {passive: false});
 
 document.addEventListener('touchend', function(e) {
-  // Если ничего не двигали или анимация заблокирована - сброс
   if (swipeState.isAnimating || !swipeState.isDragging || !swipeState.activeView) {
       swipeState.isDragging = false;
       swipeState.isVerticalScroll = false;
@@ -1782,10 +1780,10 @@ document.addEventListener('touchend', function(e) {
   }
 
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var threshold = 40; // Чувствительность перелистывания
+  var threshold = 40; 
 
   if (swipeState.targetView) {
-    swipeState.isAnimating = true; // БЛОКИРУЕМ НОВЫЕ СВАЙПЫ ДО ОКОНЧАНИЯ АНИМАЦИИ
+    swipeState.isAnimating = true; 
     swipeState.activeView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
     swipeState.targetView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
 
@@ -1802,21 +1800,17 @@ document.addEventListener('touchend', function(e) {
 
       var targetId = swipeState.targetView.id.replace('view-', '');
 
-      // Ждем завершения анимации и запускаем ТОТАЛЬНУЮ очистку стилей
       setTimeout(function() {
         if (typeof switchNavTab === 'function') switchNavTab(targetId);
         cleanupSwipe();
       }, 250);
 
     } else {
-      // Возврат, если свайп слишком слабый
       var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
       swipeState.activeView.style.transform = 'translate3d(0px, 0, 0)';
       swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
 
-      setTimeout(function() {
-        cleanupSwipe();
-      }, 250);
+      setTimeout(cleanupSwipe, 250);
     }
   } else {
     document.body.classList.remove('disable-animations');
@@ -1825,10 +1819,8 @@ document.addEventListener('touchend', function(e) {
   }
 }, {passive: true});
 
-// ФУНКЦИЯ ТОТАЛЬНОЙ ОЧИСТКИ ОТ НАЛОЖЕНИЙ
 function cleanupSwipe() {
     var views = document.querySelectorAll('.main-view');
-    // Мы безжалостно сбрасываем абсолютно все inline-стили со ВСЕХ экранов
     for (var i = 0; i < views.length; i++) {
         views[i].style.transform = '';
         views[i].style.transition = '';
@@ -1837,13 +1829,18 @@ function cleanupSwipe() {
         views[i].style.zIndex = '';
         views[i].style.top = '';
         views[i].style.left = '';
-        views[i].style.display = ''; // Дальше видимость контроллируется только классом .active в CSS
+        views[i].style.display = ''; 
     }
     document.body.classList.remove('disable-animations');
     swipeState.isDragging = false;
     swipeState.isVerticalScroll = false;
-    swipeState.isAnimating = false; // РАЗБЛОКИРУЕМ НОВЫЕ СВАЙПЫ
+    swipeState.isAnimating = false; 
 }
+
+document.addEventListener('touchcancel', function(e) {
+  if (swipeState.isDragging || swipeState.isAnimating) cleanupSwipe();
+});
+
 
 // Защита при звонке или системном прерывании
 document.addEventListener('touchcancel', function(e) {
