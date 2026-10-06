@@ -1001,3 +1001,37 @@ html, body {
 [id*="loading"] {
   z-index: 100000 !important; /* Перекрывает меню, у которого 9999 */
 }
+
+/* ==========================================
+   ДИНАМИЧЕСКАЯ ТЕМАТИЗАЦИЯ СВЕЧЕНИЯ ПО ВКЛАДКАМ
+   ========================================== */
+/* 1. Умная система: задаем главный цвет в зависимости от того, какой экран активен */
+body:has(#view-profile.active) { --theme-glow: #3b82f6; }       /* Профиль: Синий */
+body:has(#view-radar.active) { --theme-glow: #10b981; }         /* Радар: Зеленый */
+body:has(#view-ratings.active) { --theme-glow: #a855f7; }       /* Рейтинг: Фиолетовый */
+body:has(#view-tournaments.active) { --theme-glow: #f97316; }   /* Турниры: Оранжевый */
+body:has(#view-quests.active) { --theme-glow: #ef4444; }        /* Задания: Красный */
+body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новости: Светло-голубой */
+
+/* 2. Заставляем самый верхний титульный блок перекрашиваться на лету */
+.club-header { 
+  --ambi-color: var(--theme-glow) !important; 
+}
+
+/* 3. Применяем цвет ко ВСЕМ бегающим неоновым рамкам внутри текущей вкладки */
+.main-view.active .card,
+.main-view.active .profile-card,
+.main-view.active .rating-card,
+.main-view.active .leaderboard-card,
+.main-view.active .tabs-container,
+.main-view.active #btn-match-glow,
+.main-view.active #btn-invite-glow,
+.main-view.active #card-recent-matches,
+.main-view.active .quest-choice-card,
+.main-view.active #view-news > .card {
+  --ambi-color: var(--theme-glow) !important;
+}
+
+/* 4. Обновляем цвета иконок в нижнем меню, чтобы они совпадали с темой */
+#nav-ratings { --nav-glow: #a855f7 !important; } /* Рейтинг теперь фиолетовый */
+#nav-quests { --nav-glow: #ef4444 !important; }  /* Задания теперь красные */
