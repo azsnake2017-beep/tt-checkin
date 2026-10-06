@@ -850,7 +850,7 @@ function openTournamentModal(tourId) {
   if (!isSuperAdmin()) return; currentEditingTourId = (tourId && typeof tourId === 'string') ? tourId : null; var btn = document.getElementById('btn-save-tour');
   if (currentEditingTourId) { btn.innerText = 'Сохранить изменения'; db.collection('tournaments').doc(currentEditingTourId).get().then(function(doc) { if (doc.exists) { var d = doc.data(); document.getElementById('tour-title').value = d.title || ''; document.getElementById('tour-date').value = d.rawDate || ''; document.getElementById('tour-desc').value = d.desc || ''; } }); } 
   else { btn.innerText = 'Создать'; document.getElementById('tour-title').value = ''; document.getElementById('tour-date').value = ''; document.getElementById('tour-desc').value = ''; }
-  document.getElementById('tournament-modal').style.display = 'flex'; 
+  openModalSmoothly('tournament-modal');
 }
 function closeTournamentModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('tournament-modal'); }
 
@@ -1010,7 +1010,7 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
   document.getElementById('tour-id-val').value = tourId; 
   document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
   selectTourScore(3, 0); 
-  document.getElementById('tour-match-modal').style.display = 'flex'; 
+  openModalSmoothly('tour-match-modal'); 
 }
 
 function closeTourMatchModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('tour-match-modal'); }
