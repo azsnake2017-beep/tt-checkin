@@ -16,7 +16,38 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 
 /* Анимация переключения вкладок */
 .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; }
-.main-view.active { display: flex; animation: slideFadeIn 0.3s ease forwards; }
+/* ==========================================
+   ПЛАВНЫЕ ГОРИЗОНТАЛЬНЫЕ СВАЙПЫ (АНИМАЦИЯ ЭКРАНОВ)
+   ========================================== */
+/* Базовая анимация (для обычных кликов по нижнему меню - мягкое проявление) */
+.main-view.active { 
+  display: flex; 
+  animation: fadeScaleIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important; 
+}
+
+/* Анимация при свайпе ВЛЕВО (новый экран плавно выезжает СПРАВА) */
+:root[data-swipe-dir="left"] .main-view.active {
+  animation: slideInFromRight 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+}
+
+/* Анимация при свайпе ВПРАВО (новый экран плавно выезжает СЛЕВА) */
+:root[data-swipe-dir="right"] .main-view.active {
+  animation: slideInFromLeft 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+}
+
+/* Ключевые кадры движений */
+@keyframes fadeScaleIn { 
+  from { opacity: 0; transform: scale(0.98); } 
+  to { opacity: 1; transform: scale(1); } 
+}
+@keyframes slideInFromRight { 
+  from { opacity: 0; transform: translateX(50px); } 
+  to { opacity: 1; transform: translateX(0); } 
+}
+@keyframes slideInFromLeft { 
+  from { opacity: 0; transform: translateX(-50px); } 
+  to { opacity: 1; transform: translateX(0); } 
+}
 @keyframes slideFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .outdated-browser-banner { display: none; background: #991b1b; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; text-align: center; margin-bottom: 8px; border: 1px solid #f87171; }
