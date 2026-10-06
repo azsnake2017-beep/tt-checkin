@@ -583,3 +583,57 @@ html, body {
 .leader-stats-col {
   display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
 }
+
+/* ==========================================
+   ПРЕМИУМ ОПТИМИЗАЦИЯ И 60 FPS ДВИЖОК
+   ========================================== */
+
+/* 1. Жесткое GPU-ускорение для всех слоев, которые двигаются */
+.modal-overlay, .modal-box, .main-view, .dynamic-island, .bottom-nav, .card, .platform-badge {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
+}
+
+/* 2. Дорогая физика окон (Apple Spring Animation) */
+.modal-box {
+  transition: transform 0.45s cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+.modal-overlay {
+  transition: opacity 0.35s ease-out !important;
+  /* Уменьшаем радиус блюра до 4px (выглядит дорого, но не убивает FPS) */
+  background: rgba(11, 17, 32, 0.75) !important;
+  backdrop-filter: blur(4px) !important;
+  -webkit-backdrop-filter: blur(4px) !important;
+}
+
+/* 3. Оптимизация Неона (заменяем лагучий box-shadow на статичный + пульс цвета) */
+@keyframes premiumPulse {
+  0%   { border-color: rgba(255, 255, 255, 0.05); filter: brightness(1); }
+  50%  { border-color: rgba(255, 255, 255, 0.25); filter: brightness(1.15); }
+  100% { border-color: rgba(255, 255, 255, 0.05); filter: brightness(1); }
+}
+
+:root:not([data-theme="light"]) .card, 
+:root:not([data-theme="light"]) .profile-card,
+:root:not([data-theme="light"]) .rating-card,
+:root:not([data-theme="light"]) .leaderboard-card,
+:root:not([data-theme="light"]) .tabs-container {
+  /* Оставляем красивое статичное свечение, анимация идет только по легким фильтрам */
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4), inset 0 1px 0 rgba(255,255,255,0.05), 0 0 10px var(--ambi-color, transparent) !important;
+  animation: premiumPulse 4s infinite ease-in-out !important;
+}
+
+/* 4. Легкая анимация квестов (без теней, пульсируем прозрачностью) */
+@keyframes pulseQuestSmooth {
+  0% { opacity: 0.85; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.01); }
+}
+:root:not([data-theme="light"]) .quest-level-1,
+:root:not([data-theme="light"]) .quest-level-2,
+:root:not([data-theme="light"]) .quest-level-3 {
+  animation: pulseQuestSmooth 2s infinite alternate ease-in-out !important;
+  box-shadow: none !important;
+}
