@@ -2393,3 +2393,57 @@ document.addEventListener('touchend', function(e) {
   }
   swipeState.isDragging = false;
 }, {passive: true});
+
+/* ==========================================
+   ДВИЖОК ПЛАВАЮЩЕГО ИНДИКАТОРА МЕНЮ
+   ========================================== */
+document.addEventListener('DOMContentLoaded', function() {
+  var nav = document.querySelector('.bottom-nav');
+  if (!nav) return;
+
+  // Создаем светящуюся каретку и добавляем её в меню
+  var indicator = document.createElement('div');
+  indicator.id = 'nav-sliding-indicator';
+  nav.appendChild(indicator);
+
+  var navItems = nav.querySelectorAll('.nav-item');
+
+  // Функция, которая высчитывает координаты и двигает индикатор
+  function moveIndicator() {
+    var activeItem = nav.querySelector('.nav-item.active');
+    if (!activeItem) return;
+    
+    var navRect = nav.getBoundingClientRect();
+    var itemRect = activeItem.getBoundingClientRect();
+    
+    // Вычисляем центр активной иконки (36px - это ширина нашего индикатора, делим на 2 = 18)
+    var offsetLeft = (itemRect.left - navRect.left) + (itemRect.width / 2) - 18;
+    
+    // Запускаем перекат
+    indicator.style.transform = 'translateX(' + offsetLeft + 'px)';
+    
+    // Копируем уникальный цвет активной вкладки и красим им каретку
+    var color = getComputedStyle(activeItem).getPropertyValue('--nav-glow').trim() || '#3b82f6';
+    indicator.style.setProperty('--nav-glow', color);
+  }
+
+  // Настраиваем "шпиона", который следит за классом .active
+  var observer = new MutationObserver(function(mutations) {
+    mutations.forEach(function(mutation) {
+      if (mutation.target.classList.contains('active')) {
+        moveIndicator();
+      }
+    });
+  });
+
+  // Вешаем слежку на все кнопки меню
+  navItems.forEach(function(item) {
+    observer.observe(item, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  // Если пользователь перевернет телефон, линия не съедет, а пересчитает координаты
+  window.addEventListener('resize', moveIndicator);
+
+  // Первый запуск (чуть ждем, пока прогрузятся все шрифты и отступы)
+  setTimeout(moveIndicator, 300);
+});
