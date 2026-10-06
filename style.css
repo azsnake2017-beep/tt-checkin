@@ -640,9 +640,13 @@ body.island-active #main-top-header {
   animation: neonEdgeRun 3s linear infinite !important; 
 }
 
-/* 3. ИСКЛЮЧЕНИЕ: Жестко гасим неоновую гирлянду на каждой новости */
-:root:not([data-theme="light"]) #view-news .card {
+/* 3. ИСПРАВЛЕНИЕ: Светится только главная рамка новостей, а статьи внутри - нет */
+:root:not([data-theme="light"]) #view-news > .card {
+  animation: neonEdgeRun 3s linear infinite !important; 
+}
+:root:not([data-theme="light"]) #news-container .card {
   animation: none !important;
+  box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; /* Успокаиваем тени внутренних карточек */
 }
 
 /* 4. Яркие базовые цвета */
@@ -669,4 +673,44 @@ body.island-active #main-top-header {
 
 :root:not([data-theme="light"]) .quest-choice-card {
   animation: questSidePulse 1.5s infinite alternate ease-in-out !important;
+}
+
+/* ==========================================
+   ЦЕНТРОВКА ЗАГОЛОВКОВ (РЕЙТИНГ И ЗАЛ СЛАВЫ)
+   ========================================== */
+.card-block-title {
+  justify-content: center !important;
+}
+
+/* ==========================================
+   СВЕЧЕНИЕ КНОПКИ "ДОБАВИТЬ УЧАСТНИКА"
+   ========================================== */
+#btn-invite-glow {
+  /* Делаем кнопку тусклой и прозрачной, чтобы не била по глазам */
+  background: rgba(37, 99, 235, 0.15) !important; 
+  border: 1px solid rgba(37, 99, 235, 0.4) !important;
+  color: #60a5fa !important; 
+  font-weight: 600;
+}
+
+/* Добавляем мягкое дыхание синего неона */
+:root:not([data-theme="light"]) #btn-invite-glow {
+  animation: invitePulse 2.5s infinite alternate ease-in-out;
+}
+
+@keyframes invitePulse {
+  0%   { box-shadow: 0 0 4px rgba(37, 99, 235, 0.1); }
+  100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.6); }
+}
+
+/* ==========================================
+   СВЕЧЕНИЕ БОЛЬШОГО ЛОГОТИПА НА ГЛАВНОЙ
+   ========================================== */
+:root:not([data-theme="light"]) .profile-large-logo {
+  animation: logoGlow 4s infinite alternate ease-in-out;
+}
+
+@keyframes logoGlow {
+  0%   { filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.2)); }
+  100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }
 }
