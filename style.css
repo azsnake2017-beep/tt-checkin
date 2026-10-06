@@ -704,13 +704,18 @@ body.island-active #main-top-header {
 }
 
 /* ==========================================
-   СВЕЧЕНИЕ БОЛЬШОГО ЛОГОТИПА НА ГЛАВНОЙ
+   СВЕЧЕНИЕ БОЛЬШОГО ЛОГОТИПА НА ГЛАВНОЙ (RGB)
    ========================================== */
 :root:not([data-theme="light"]) .profile-large-logo {
-  animation: logoGlow 4s infinite alternate ease-in-out;
+  /* Плавный перелив всех цветов за 10 секунд */
+  animation: logoRgbGlow 10s infinite linear;
 }
 
-@keyframes logoGlow {
-  0%   { filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.2)); }
-  100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }
+@keyframes logoRgbGlow {
+  0%   { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }   /* Небесный */
+  20%  { filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.6)); }   /* Фиолетовый */
+  40%  { filter: drop-shadow(0 0 25px rgba(244, 63, 94, 0.6)); }    /* Неоново-розовый */
+  60%  { filter: drop-shadow(0 0 25px rgba(251, 191, 36, 0.6)); }   /* Золотой */
+  80%  { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.6)); }   /* Изумрудный */
+  100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }   /* Возврат к небесному */
 }
