@@ -1074,3 +1074,16 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   border: 1px solid #cbd5e1 !important;
   box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
+
+/* ==========================================
+   ФИКС: СВЕЧЕНИЕ ТОЛЬКО ВОКРУГ ПРОФИЛЯ
+   ========================================== */
+/* Жестко отключаем бегущий неон и его тени для всех элементов ВНУТРИ карточки профиля */
+:root:not([data-theme="light"]) .profile-card .card,
+:root:not([data-theme="light"]) .profile-card [class*="card-"],
+:root:not([data-theme="light"]) .profile-card .stat-box {
+  animation: none !important;
+  box-shadow: none !important;
+  /* Если нужно, возвращаем им легкую плоскую рамку вместо светящейся */
+  border: 1px solid rgba(255, 255, 255, 0.05) !important; 
+}
