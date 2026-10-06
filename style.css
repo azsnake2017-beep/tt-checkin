@@ -1104,13 +1104,12 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   animation: popInAlert 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
 
+
+
 /* ==========================================
-   ФИКС: ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ (СВЕТЛАЯ ТЕМА)
+   ФИКС: ВОЗВРАЩАЕМ ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ В СВЕТЛОЙ ТЕМЕ
    ========================================== */
-:root[data-theme="light"] .quest-choice-card {
-  /* Оставляем border-left пустым, чтобы не перебивать JS-цвета уровней квестов */
-  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-  border-left: none; 
-}
+:root[data-theme="light"] .quest-choice-card[style*="#10b981"] { border-left: 4px solid #10b981 !important; }
+:root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
+:root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
+:root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
