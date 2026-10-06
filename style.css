@@ -13,12 +13,12 @@
 * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
 
 /* ==========================================
-   БАЗА: СКРОЛЛИНГ И ЗАЩИТА ОТ ДЕРГАНИЯ
+   БАЗА: СКРОЛЛИНГ (ВОССТАНОВЛЕН) И АДАПТИВ
    ========================================== */
 html, body { 
   overflow-x: hidden !important; 
-  overflow-y: auto !important; 
-  overscroll-behavior-y: none; /* Убирает пружинистость всей страницы */
+  overflow-y: auto !important; /* Жизненно важно для скролла */
+  overscroll-behavior-y: auto !important; /* Разрешаем нативную прокрутку */
 }
 
 body { 
@@ -43,7 +43,7 @@ body {
 #app-preloader, #loading-screen, .loading-screen { z-index: 999999 !important; }
 
 /* ==========================================
-   АППАРАТНОЕ УСКОРЕНИЕ (60 FPS) И ЭКРАНЫ
+   ЭКРАНЫ И ИХ ПЕРЕКЛЮЧЕНИЕ
    ========================================== */
 .main-view { 
   display: none; 
@@ -55,25 +55,26 @@ body {
   backface-visibility: hidden;
 }
 
-.main-view > *, .btn-match-quick, .tabs-container { 
-  margin-top: 0 !important; 
-}
+.main-view > *, .btn-match-quick, .tabs-container { margin-top: 0 !important; }
 
-/* ЖЕСТКОЕ ОТКЛЮЧЕНИЕ МЕРЦАНИЯ */
-.main-view.active { display: flex; animation: none !important; }
+/* Активный экран показываем жестко, без CSS-анимаций, чтобы не было мерцания */
+.main-view.active { display: flex !important; animation: none !important; }
 
+/* Блокировка анимаций внутри экрана на время свайпа (защита от лагов) */
 body.disable-animations .main-view,
 body.is-swiping .main-view {
   transition: none !important;
   animation: none !important;
 }
 
-/* Нативный скроллинг списков внутри приложения */
+/* Нативный плавный скролл внутри списков */
 .scrollable-list, .player-list, #info-modal-history, .modal-box {
   -webkit-overflow-scrolling: touch; 
-  overscroll-behavior-y: contain;
 }
 
+/* ==========================================
+   СИСТЕМНЫЕ БАННЕРЫ И ШАПКА
+   ========================================== */
 .outdated-browser-banner { display: none; background: #991b1b; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; text-align: center; margin-bottom: 8px; border: 1px solid #f87171; }
 .outdated-browser-banner a { color: #fef08a; font-weight: 700; text-decoration: underline; }
 
@@ -84,7 +85,9 @@ body.is-swiping .main-view {
 .club-header-text h1 { font-size: 14px; font-weight: 700; line-height: 1.2; color: var(--text); }
 .club-header-text p { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-/* БАЗОВЫЕ КЛАССЫ КНОПОК И АНИМАЦИИ */
+/* ==========================================
+   БАЗОВЫЕ КЛАССЫ КНОПОК И ВЗАИМОДЕЙСТВИЯ
+   ========================================== */
 .btn, .btn-opt, .tab-btn, .score-btn, .btn-match-quick, .btn-info, .btn-app-qr-large, .btn-qr-icon-only, .badge-admin-btn, .btn-theme-toggle, .btn-cancel-modal, .btn-edit, .btn-logout { 
   transition: transform 0.1s ease, background 0.2s ease, opacity 0.2s ease, filter 0.2s ease, color 0.2s ease; 
   user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; cursor: pointer;
@@ -116,6 +119,9 @@ body.is-swiping .main-view {
 .btn-qr-icon-only { background: var(--card-border); border: 1px solid var(--card-border); color: var(--text); width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; padding: 0; flex-shrink: 0; margin-left: 6px; }
 .icon-img-mini { width: 18px; height: 18px; object-fit: contain; background: transparent; }
 
+/* ==========================================
+   АВТОРИЗАЦИЯ
+   ========================================== */
 .auth-overlay-card { display: none; background: var(--card-bg); border: 2px solid var(--primary); border-radius: 16px; padding: 20px; text-align: center; flex-direction: column; align-items: center; gap: 12px; margin-top: 20px; }
 .auth-overlay-card h2 { font-size: 17px; color: var(--text); }
 .auth-overlay-card p { font-size: 13px; color: var(--text-muted); line-height: 1.4; }
@@ -123,6 +129,9 @@ body.is-swiping .main-view {
 .btn-auth-provider { width: 100%; border: 1px solid #cbd5e1; padding: 12px 14px; border-radius: 10px; font-size: 14px; font-weight: 600; display: flex; align-items: center; justify-content: center; gap: 8px; background: #fff; color: #1e293b; }
 .auth-vpn-note { font-size: 11px; color: var(--accent-amber); background: rgba(245, 158, 11, 0.1); border: 1px solid rgba(245, 158, 11, 0.25); padding: 8px 10px; border-radius: 8px; line-height: 1.4; text-align: center; margin-top: 4px; }
 
+/* ==========================================
+   ПРОФИЛЬ
+   ========================================== */
 .profile-card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1); }
 .profile-top-row { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
 .profile-user-main { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 14px; font-weight: 600; color: var(--text); flex: 1; min-width: 0; }
@@ -163,7 +172,9 @@ body.is-swiping .main-view {
 #btn-invite-glow { animation: invitePulse 2.5s infinite alternate ease-in-out; }
 @keyframes invitePulse { 0% { box-shadow: 0 0 4px rgba(37, 99, 235, 0.1); } 100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.6); } }
 
-/* Плавный аккордеон карточек */
+/* ==========================================
+   УНИВЕРСАЛЬНЫЕ КАРТОЧКИ С АККОРДЕОНОМ
+   ========================================== */
 .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 8px; transition: border-color 0.3s ease, background 0.3s ease; }
 .card-top { display: flex; justify-content: space-between; align-items: flex-start; cursor: pointer; user-select: none; }
 .card-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
@@ -179,7 +190,9 @@ body.is-swiping .main-view {
 #card-recent-matches { padding: 12px !important; border-radius: 14px !important; background: rgba(168, 85, 247, 0.15) !important; border: 1px solid rgba(168, 85, 247, 0.4) !important; }
 #card-recent-matches .card-title { font-size: 14px !important; color: #d8b4fe !important; justify-content: center !important; }
 
-/* ПОГОДА */
+/* ==========================================
+   ПОГОДА В ПАРКЕ (ОБНОВЛЕННАЯ СИСТЕМА)
+   ========================================== */
 .weather-container { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
 .weather-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.2); padding: 5px 10px; border-radius: 8px; font-size: 12px; color: #0284c7; width: fit-content; }
 :root[data-theme="dark"] .weather-badge { color: var(--accent-sky); }
@@ -212,6 +225,9 @@ body.is-swiping .main-view {
 .btn-leave { background: var(--card-border); color: var(--text); }
 .action-group { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
 
+/* ==========================================
+   РЕЙТИНГИ И ЛИДЕРБОРД
+   ========================================== */
 .tabs-container { display: flex; gap: 8px; background: var(--card-bg); padding: 4px; border-radius: 12px; border: 1px solid var(--card-border); margin-bottom: 8px; }
 .tab-btn { flex: 1; padding: 8px 12px; border: none; background: transparent; color: var(--text-muted); font-size: 13px; font-weight: 600; border-radius: 8px; }
 .tab-btn.active { background: var(--card-border); color: var(--text); }
@@ -236,6 +252,9 @@ body.is-swiping .main-view {
 .btn-info { background: rgba(56, 189, 248, 0.1); border: 1px solid rgba(56, 189, 248, 0.3); color: #0284c7; width: 26px; height: 26px; border-radius: 6px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
 :root[data-theme="dark"] .btn-info { color: var(--accent-sky); }
 
+/* ==========================================
+   ТУРНИРЫ
+   ========================================== */
 .tour-group-table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; background: var(--list-bg); border-radius: 8px; overflow: hidden; border: 1px solid var(--card-border); }
 .tour-group-table th, .tour-group-table td { padding: 6px 8px; text-align: center; border-bottom: 1px solid var(--card-border); }
 .tour-group-table th { background: var(--row-bg); color: var(--text-muted); font-weight: 600; }
@@ -308,23 +327,6 @@ body.is-swiping .main-view {
 .score-btn { background: var(--row-bg); border: 1px solid var(--card-border); color: var(--text); padding: 10px 0; border-radius: 8px; font-size: 14px; font-weight: 700; }
 
 /* ==========================================
-   КВЕСТЫ (ЕЖЕНЕДЕЛЬНЫЕ ЗАДАНИЯ)
-   ========================================== */
-.quest-choice-card { background: var(--list-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 14px; margin-bottom: 10px; cursor: pointer; transition: 0.2s; position: relative; overflow: hidden; }
-.quest-level-1 { border-left: 4px solid #10b981; } 
-.quest-level-2 { border-left: 4px solid #f59e0b; } 
-.quest-level-3 { border-left: 4px solid #f43f5e; } 
-.quest-header { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
-.quest-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px; }
-.quest-rewards { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; font-weight: 700; }
-.quest-reward-elo { color: var(--accent-gold); background: rgba(251, 191, 36, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2); }
-.quest-reward-badge { color: var(--accent-sky); background: rgba(56, 189, 248, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
-.quest-progress-bar { width: 100%; height: 10px; background: var(--row-bg); border-radius: 6px; margin-top: 12px; overflow: hidden; border: 1px solid var(--card-border); }
-.quest-progress-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateZ(0); will-change: transform; }
-.temporary-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-left: 4px; border: 1px solid; animation: pulseBadge 2s infinite; }
-@keyframes pulseBadge { 0% { opacity: 0.9; } 50% { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,255,255,0.3)); } 100% { opacity: 0.9; } }
-
-/* ==========================================
    DYNAMIC ISLAND
    ========================================== */
 .dynamic-island {
@@ -386,7 +388,6 @@ body.island-active #main-top-header { margin-top: 14px; }
 :root:not([data-theme="light"]) #view-news > .card,
 :root:not([data-theme="light"]) .club-header, 
 :root:not([data-theme="light"]) .auth-overlay-card,
-:root:not([data-theme="light"]) .quest-choice-card,
 :root:not([data-theme="light"]) #btn-match-glow,
 :root:not([data-theme="light"]) #btn-invite-glow,
 :root:not([data-theme="light"]) #card-recent-matches {
@@ -410,29 +411,19 @@ body.island-active #main-top-header { margin-top: 14px; }
 }
 
 /* СВЕТЛАЯ ТЕМА */
-:root[data-theme="light"] .card, :root[data-theme="light"] .profile-card, :root[data-theme="light"] .rating-card, :root[data-theme="light"] .leaderboard-card, :root[data-theme="light"] .tabs-container, :root[data-theme="light"] #view-news > .card, :root[data-theme="light"] .club-header, :root[data-theme="light"] .auth-overlay-card, :root[data-theme="light"] .quest-choice-card {
+:root[data-theme="light"] .card, :root[data-theme="light"] .profile-card, :root[data-theme="light"] .rating-card, :root[data-theme="light"] .leaderboard-card, :root[data-theme="light"] .tabs-container, :root[data-theme="light"] #view-news > .card, :root[data-theme="light"] .club-header, :root[data-theme="light"] .auth-overlay-card {
   background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 8px 15px rgba(15, 23, 42, 0.08), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
 :root[data-theme="light"] .modal-overlay > .modal-box, :root[data-theme="light"] .swal2-popup, :root[data-theme="light"] .toast {
   background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important; border: 1px solid #cbd5e1 !important; box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
 :root[data-theme="light"] .score-btn.active { color: var(--accent-purple) !important; border-color: var(--accent-purple) !important; background: rgba(168, 85, 247, 0.15) !important; }
-:root[data-theme="light"] .quest-choice-card { border-left: none !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#10b981"] { border-left: 4px solid #10b981 !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
+
 :root[data-theme="light"] #btn-match-glow, :root[data-theme="light"] #card-recent-matches { background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important; border: 1px solid #c084fc !important; color: #7e22ce !important; box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2) !important; }
 :root[data-theme="light"] #card-recent-matches .card-title { color: #7e22ce !important; }
 :root[data-theme="light"] #btn-invite-glow { background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important; border: 1px solid #93c5fd !important; color: #1d4ed8 !important; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2) !important; }
 :root[data-theme="light"] .btn-edit { background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%) !important; border: 1px solid #cbd5e1 !important; color: #334155 !important; box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important; }
 :root[data-theme="light"] .btn-logout { background: linear-gradient(145deg, #fff1f2 0%, #fecdd3 100%) !important; border: 1px solid #fda4af !important; color: #be123c !important; box-shadow: 0 2px 5px rgba(225,29,72,0.1) !important; }
-:root:not([data-theme="light"]) .quest-level-1 { animation: pulseQuest1 1.5s infinite alternate ease-in-out !important; }
-:root:not([data-theme="light"]) .quest-level-2 { animation: pulseQuest2 1.5s infinite alternate ease-in-out !important; }
-:root:not([data-theme="light"]) .quest-level-3 { animation: pulseQuest3 1.5s infinite alternate ease-in-out !important; }
-@keyframes pulseQuest1 { 0% { filter: drop-shadow(-2px 0 4px rgba(16, 185, 129, 0.4)); } 100% { filter: drop-shadow(-8px 0 12px rgba(16, 185, 129, 1)); } }
-@keyframes pulseQuest2 { 0% { filter: drop-shadow(-2px 0 4px rgba(245, 158, 11, 0.4)); } 100% { filter: drop-shadow(-8px 0 12px rgba(245, 158, 11, 1)); } }
-@keyframes pulseQuest3 { 0% { filter: drop-shadow(-2px 0 4px rgba(244, 63, 94, 0.4)); } 100% { filter: drop-shadow(-8px 0 12px rgba(244, 63, 94, 1)); } }
 
 /* ==========================================
    ПОГОДНЫЕ АНИМАЦИИ
@@ -454,46 +445,53 @@ body.island-active #main-top-header { margin-top: 14px; }
 @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(15%); } }
 
 /* ==========================================
-   ФИНАЛЬНЫЙ ФИКС: СКРОЛЛ, КВЕСТЫ И ТЕНИ
+   КВЕСТЫ (ЕЖЕНЕДЕЛЬНЫЕ ЗАДАНИЯ)
    ========================================== */
-
-/* 1. Возвращаем нормальный скролл для всей страницы и списков */
-html, body {
-  overflow-y: auto !important;
-  overflow-x: hidden !important;
-  overscroll-behavior-y: auto !important;
-}
-
-.scrollable-list, .player-list, #info-modal-history, .modal-box, .main-view.active {
-  -webkit-overflow-scrolling: touch;
-}
-
-/* 2. Чистим лишнее свечение внутри вкладки заданий */
-#view-quests .card,
-#view-quests .quest-choice-card {
+.quest-choice-card { 
+  background: var(--list-bg); 
+  border: 1px solid var(--card-border); 
+  border-radius: 12px; 
+  padding: 14px; 
+  margin-bottom: 10px; 
+  cursor: pointer; 
+  transition: 0.2s; 
+  position: relative; 
+  overflow: hidden; 
   animation: none !important;
   box-shadow: none !important;
 }
 
-/* 3. Гарантированно возвращаем цветные полоски слева для заданий (и в темной, и в светлой теме) */
-.quest-choice-card {
-  border-left: none !important; /* Сбрасываем стандарт */
-  border-top: 1px solid var(--card-border) !important;
-  border-right: 1px solid var(--card-border) !important;
-  border-bottom: 1px solid var(--card-border) !important;
-}
+.quest-header { display: flex; justify-content: space-between; align-items: center; font-size: 15px; font-weight: 700; color: var(--text); margin-bottom: 6px; }
+.quest-desc { font-size: 13px; color: var(--text-muted); line-height: 1.4; margin-bottom: 10px; }
+.quest-rewards { display: flex; flex-wrap: wrap; gap: 8px; font-size: 11px; font-weight: 700; }
+.quest-reward-elo { color: var(--accent-gold); background: rgba(251, 191, 36, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(251, 191, 36, 0.2); }
+.quest-reward-badge { color: var(--accent-sky); background: rgba(56, 189, 248, 0.1); padding: 3px 8px; border-radius: 6px; border: 1px solid rgba(56, 189, 248, 0.2); }
+.quest-progress-bar { width: 100%; height: 10px; background: var(--row-bg); border-radius: 6px; margin-top: 12px; overflow: hidden; border: 1px solid var(--card-border); }
+.quest-progress-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); transform: translateZ(0); will-change: transform; }
+.temporary-badge { display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 800; padding: 2px 6px; border-radius: 6px; margin-left: 4px; border: 1px solid; animation: pulseBadge 2s infinite; }
+@keyframes pulseBadge { 0% { opacity: 0.9; } 50% { opacity: 1; filter: drop-shadow(0 0 4px rgba(255,255,255,0.3)); } 100% { opacity: 0.9; } }
 
-.quest-choice-card.quest-level-1, 
-.quest-choice-card[style*="10b981"] { 
-  border-left: 4px solid #10b981 !important; 
-}
+/* Цветные полоски квестов (Обязательно после основного класса!) */
+.quest-choice-card[class*="quest-level-1"], .quest-choice-card[style*="10b981"] { border-left: 4px solid #10b981 !important; } 
+.quest-choice-card[class*="quest-level-2"], .quest-choice-card[style*="f59e0b"] { border-left: 4px solid #f59e0b !important; } 
+.quest-choice-card[class*="quest-level-3"], .quest-choice-card[style*="f43f5e"] { border-left: 4px solid #f43f5e !important; } 
+.quest-choice-card[style*="475569"] { border-left: 4px solid #475569 !important; }
 
-.quest-choice-card.quest-level-2, 
-.quest-choice-card[style*="f59e0b"] { 
-  border-left: 4px solid #f59e0b !important; 
+/* Светлая тема квестов */
+:root[data-theme="light"] .quest-choice-card {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important; 
+  border: 1px solid #cbd5e1 !important; 
+  box-shadow: 0 8px 15px rgba(15, 23, 42, 0.08), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
+:root[data-theme="light"] .quest-choice-card[class*="quest-level-1"], :root[data-theme="light"] .quest-choice-card[style*="10b981"] { border-left: 4px solid #10b981 !important; } 
+:root[data-theme="light"] .quest-choice-card[class*="quest-level-2"], :root[data-theme="light"] .quest-choice-card[style*="f59e0b"] { border-left: 4px solid #f59e0b !important; } 
+:root[data-theme="light"] .quest-choice-card[class*="quest-level-3"], :root[data-theme="light"] .quest-choice-card[style*="f43f5e"] { border-left: 4px solid #f43f5e !important; } 
+:root[data-theme="light"] .quest-choice-card[style*="475569"] { border-left: 4px solid #475569 !important; }
 
-.quest-choice-card.quest-level-3, 
-.quest-choice-card[style*="f43f5e"] { 
-  border-left: 4px solid #f43f5e !important; 
-}
+/* Пульсация цветных теней у квестов (только в темной теме) */
+:root:not([data-theme="light"]) .quest-choice-card[class*="quest-level-1"] { animation: pulseQuest1 1.5s infinite alternate ease-in-out !important; }
+:root:not([data-theme="light"]) .quest-choice-card[class*="quest-level-2"] { animation: pulseQuest2 1.5s infinite alternate ease-in-out !important; }
+:root:not([data-theme="light"]) .quest-choice-card[class*="quest-level-3"] { animation: pulseQuest3 1.5s infinite alternate ease-in-out !important; }
+@keyframes pulseQuest1 { 0% { box-shadow: -4px 0 8px rgba(16, 185, 129, 0.2) !important; } 100% { box-shadow: -6px 0 16px rgba(16, 185, 129, 0.6) !important; } }
+@keyframes pulseQuest2 { 0% { box-shadow: -4px 0 8px rgba(245, 158, 11, 0.2) !important; } 100% { box-shadow: -6px 0 16px rgba(245, 158, 11, 0.6) !important; } }
+@keyframes pulseQuest3 { 0% { box-shadow: -4px 0 8px rgba(244, 63, 94, 0.2) !important; } 100% { box-shadow: -6px 0 16px rgba(244, 63, 94, 0.6) !important; } }
