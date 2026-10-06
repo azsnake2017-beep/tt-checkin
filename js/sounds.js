@@ -107,4 +107,36 @@ document.addEventListener('DOMContentLoaded', function() {
   }
 });
 
+/* ==========================================
+   РАНДОМНЫЕ ЗВУКИ НАЖАТИЯ КНОПОК
+   ========================================== */
+// Массив с путями к вашим звукам (убедитесь, что названия совпадают с файлами в папке)
+var buttonSounds = [
+  'sound/1.mp3', 
+  'sound/2.mp3', 
+  'sound/3.mp3', 
+  'sound/4.mp3', 
+  'sound/5.mp3'
+];
 
+function playRandomClickSound() {
+  try {
+    var randomIndex = Math.floor(Math.random() * buttonSounds.length);
+    var audio = new Audio(buttonSounds[randomIndex]);
+    audio.volume = 0.4; // Громкость 40%
+    
+    audio.play().catch(function(e) {
+      // Игнорируем ошибку, если браузер заблокировал автовоспроизведение
+    }); 
+  } catch (err) {}
+}
+
+// Глобальный перехватчик кликов по всему приложению
+document.addEventListener('click', function(e) {
+  // Проверяем, кликнули ли по кнопке, вкладке меню или сворачиваемому окну
+  var isButton = e.target.closest('button, .btn, .btn-join, .btn-match-quick, .nav-item, .tab-btn, .card-top');
+  
+  if (isButton) {
+    playRandomClickSound();
+  }
+});
