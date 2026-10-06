@@ -1107,3 +1107,10 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
 .toast {
   animation: popInAlert 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
 }
+
+/* ==========================================
+   ФИКС: ВОЗВРАЩАЕМ ЦВЕТНЫЕ ПОЛОСКИ ЗАДАНИЯМ В СВЕТЛОЙ ТЕМЕ
+   ========================================== */
+:root[data-theme="light"] .quest-level-1 { border-left: 4px solid #10b981 !important; }
+:root[data-theme="light"] .quest-level-2 { border-left: 4px solid #f59e0b !important; }
+:root[data-theme="light"] .quest-level-3 { border-left: 4px solid #f43f5e !important; }
