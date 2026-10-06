@@ -2305,7 +2305,7 @@ window.shareMyRefLink = function() {
     prompt("Скопируйте ссылку для добавления участника:", refLink);
   }
 };
-};
+
 
 /* ==========================================
    ГЛОБАЛЬНАЯ ЗВУКОВАЯ СИСТЕМА (ИНТЕРЦЕПТОР)
@@ -2362,17 +2362,4 @@ window.customAlert = function(msg) {
   if (_originalCustomAlert) _originalCustomAlert(msg);
 };
 
-/* ==========================================
-   УНИВЕРСАЛЬНЫЙ ФИКС КНОПКИ РЕФЕРАЛА / QR
-   ========================================== */
-document.addEventListener('click', function(e) {
-  var btn = e.target.closest('#btn-app-qr-large, .btn-app-qr-large, [onclick*="RefQr"], [onclick*="shareMyRefLink"], #btn-share-ref');
-  if (btn) {
-    e.preventDefault();
-    if (typeof showRefQrModal === 'function') {
-      showRefQrModal();
-    } else if (typeof shareMyRefLink === 'function') {
-      shareMyRefLink();
-    }
-  }
-});
+
