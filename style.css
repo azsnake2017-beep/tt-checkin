@@ -495,3 +495,31 @@ body.island-active #main-top-header { margin-top: 14px; }
 @keyframes pulseQuest1 { 0% { box-shadow: -4px 0 8px rgba(16, 185, 129, 0.2) !important; } 100% { box-shadow: -6px 0 16px rgba(16, 185, 129, 0.6) !important; } }
 @keyframes pulseQuest2 { 0% { box-shadow: -4px 0 8px rgba(245, 158, 11, 0.2) !important; } 100% { box-shadow: -6px 0 16px rgba(245, 158, 11, 0.6) !important; } }
 @keyframes pulseQuest3 { 0% { box-shadow: -4px 0 8px rgba(244, 63, 94, 0.2) !important; } 100% { box-shadow: -6px 0 16px rgba(244, 63, 94, 0.6) !important; } }
+
+/* ==========================================
+   ИДЕАЛЬНЫЙ СКРОЛЛ ДЛЯ ВСЕХ ЭКРАНОВ
+   ========================================== */
+
+/* 1. Даем телу страницы свободно расти и скроллиться */
+html, body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: auto !important;
+  overscroll-behavior-x: none !important;
+  height: auto !important;
+  min-height: 100vh !important;
+  -webkit-overflow-scrolling: touch !important;
+}
+
+/* 2. Контейнер должен вмещать всё и иметь отступ снизу под меню */
+.container {
+  min-height: 100vh !important;
+  height: auto !important;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom)) !important;
+}
+
+/* 3. КЛЮЧЕВОЙ ФИКС: Указываем браузеру, что эти экраны скроллятся ВНИЗ нативно (игнорируя JS) */
+.main-view {
+  touch-action: pan-y !important;
+  padding-bottom: 24px !important;
+}
