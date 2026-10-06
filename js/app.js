@@ -2314,16 +2314,16 @@ document.addEventListener('touchmove', function(e) {
     swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
     
     if (swipeState.targetView) {
-      // ИСПОЛЬЗУЕМ АБСОЛЮТНЫЕ ЭКРАННЫЕ КООРДИНАТЫ (Защита от нахлестов)
-      var rect = swipeState.activeView.getBoundingClientRect();
+      // ИСПОЛЬЗУЕМ ВНУТРЕННИЕ КООРДИНАТЫ КОНТЕЙНЕРА (Защита от нахлестов)
+      var viewWidth = swipeState.activeView.offsetWidth;
       var gap = 20; 
-      var startLeft = swipeState.direction === 1 ? (rect.width + gap) : -(rect.width + gap);
+      var startLeft = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
 
       swipeState.targetView.style.display = 'flex';
       swipeState.targetView.style.position = 'absolute';
       swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
-      swipeState.targetView.style.left = rect.left + 'px';
-      swipeState.targetView.style.width = rect.width + 'px';
+      swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
+      swipeState.targetView.style.width = viewWidth + 'px';
       swipeState.targetView.style.setProperty('transform', 'translateX(' + startLeft + 'px)', 'important');
       
       swipeState.activeView.style.zIndex = '5';
@@ -2334,9 +2334,9 @@ document.addEventListener('touchmove', function(e) {
   if (swipeState.isDragging) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
-      var rectWidth = swipeState.activeView.getBoundingClientRect().width;
+      var viewWidth = swipeState.activeView.offsetWidth;
       var gap = 20; 
-      var offset = swipeState.direction === 1 ? (rectWidth + gap) : -(rectWidth + gap);
+      var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       
       swipeState.activeView.style.setProperty('transform', 'translateX(' + dx + 'px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + (offset + dx) + 'px)', 'important');
@@ -2347,7 +2347,7 @@ document.addEventListener('touchmove', function(e) {
 document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var rectWidth = swipeState.activeView.getBoundingClientRect().width;
+  var viewWidth = swipeState.activeView.offsetWidth;
   var gap = 20; 
   var threshold = 35; // Легкий свайп
 
@@ -2362,7 +2362,7 @@ document.addEventListener('touchend', function(e) {
       if (window.TTAudio) window.TTAudio.playRandomBounce();
       if (navigator.vibrate) navigator.vibrate(10);
       
-      var finalX = swipeState.direction === 1 ? -(rectWidth + gap) : (rectWidth + gap);
+      var finalX = swipeState.direction === 1 ? -(viewWidth + gap) : (viewWidth + gap);
       
       swipeState.activeView.style.setProperty('transform', 'translateX(' + finalX + 'px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(0px)', 'important');
@@ -2378,7 +2378,7 @@ document.addEventListener('touchend', function(e) {
         document.body.classList.remove('disable-animations');
       }, 250);
     } else {
-      var offset = swipeState.direction === 1 ? (rectWidth + gap) : -(rectWidth + gap);
+      var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       swipeState.activeView.style.setProperty('transform', 'translateX(0px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + offset + 'px)', 'important');
       
@@ -2395,7 +2395,6 @@ document.addEventListener('touchend', function(e) {
   }
   swipeState.isDragging = false;
 }, {passive: true});
-
 /* ==========================================
    ДВИЖОК ПЛАВАЮЩЕГО ИНДИКАТОРА МЕНЮ
    ========================================== */
