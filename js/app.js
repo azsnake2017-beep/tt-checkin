@@ -2242,3 +2242,40 @@ window.closeModalSmoothly = function(modalId) {
     }
   }, 300);
 };
+
+// ==========================================
+// УПРАВЛЕНИЕ ТЕМОЙ (СОХРАНЕНИЕ И СМЕНА ИКОНКИ)
+// ==========================================
+window.initTheme = function() {
+  // Читаем сохраненную тему из памяти телефона (по умолчанию 'dark')
+  var savedTheme = localStorage.getItem('tt_theme') || 'dark';
+  
+  // Устанавливаем тему для всего документа (:root и body)
+  document.documentElement.setAttribute('data-theme', savedTheme);
+  document.body.setAttribute('data-theme', savedTheme);
+  
+  // Меняем иконку на кнопке при загрузке
+  var btn = document.getElementById('btn-theme');
+  if (btn) {
+    btn.innerText = savedTheme === 'light' ? '🌙' : '☀️';
+  }
+};
+
+window.toggleTheme = function() {
+  var root = document.documentElement;
+  var current = root.getAttribute('data-theme') || 'dark';
+  var newTheme = current === 'light' ? 'dark' : 'light';
+  
+  // Применяем новую тему
+  root.setAttribute('data-theme', newTheme);
+  document.body.setAttribute('data-theme', newTheme);
+  
+  // Сохраняем выбор, чтобы после обновления страницы тема не сбрасывалась
+  localStorage.setItem('tt_theme', newTheme);
+  
+  // Меняем иконку (Луна для светлой темы, Солнце для темной)
+  var btn = document.getElementById('btn-theme');
+  if (btn) {
+    btn.innerText = newTheme === 'light' ? '🌙' : '☀️';
+  }
+};
