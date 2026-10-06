@@ -2281,29 +2281,9 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   КРУГОВАЯ КАРУСЕЛЬ ЭКРАНОВ БЕЗ НАЛОЖЕНИЯ (ОТЛАЖЕННАЯ ВЕРСИЯ)
+   ИДЕАЛЬНАЯ КАРУСЕЛЬ (С ЗАЗОРОМ, ЛЕГКИМ СВАЙПОМ И РОДНЫМ ЗВУКОМ)
    ========================================== */
 var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
-var audioCtx = null; 
-
-function playSystemSwipeSound() {
-  try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    var osc = audioCtx.createOscillator();
-    var gain = audioCtx.createGain();
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-    osc.type = 'sine';
-    osc.frequency.setValueAtTime(300, audioCtx.currentTime);
-    osc.frequency.exponentialRampToValueAtTime(50, audioCtx.currentTime + 0.05);
-    gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.05);
-    osc.start();
-    osc.stop(audioCtx.currentTime + 0.05);
-    if (navigator.vibrate) navigator.vibrate(15);
-  } catch(e) {}
-}
 
 document.addEventListener('touchstart', function(e) {
   if (document.querySelector('.modal-overlay[style*="display: flex"]')) return;
@@ -2319,14 +2299,12 @@ document.addEventListener('touchmove', function(e) {
   var dx = e.touches[0].clientX - swipeState.startX;
   var dy = e.touches[0].clientY - swipeState.startY;
 
-  if (!swipeState.isDragging && Math.abs(dx) > 15 && Math.abs(dx) > Math.abs(dy)) {
+  // Порог старта снижен до 10px (приложение реагирует на жест мгновенно)
+  if (!swipeState.isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { 
     swipeState.isDragging = true;
-    
-    // МАГИЯ №1: Жестко гасим CSS-анимации ДО начала сдвига, чтобы они не сопротивлялись пальцу
     document.body.classList.add('disable-animations'); 
 
     var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
-    
     var targetIndex;
     if (dx < 0) { 
       targetIndex = (currentIndex + 1) % swipeState.tabs.length;
@@ -2341,8 +2319,6 @@ document.addEventListener('touchmove', function(e) {
     if (swipeState.targetView) {
       var viewWidth = swipeState.activeView.offsetWidth;
 
-      // МАГИЯ №2: Активный экран оставляем на месте в верстке (чтобы высота страницы не прыгала)
-      // Целевой экран вырываем и ставим ровно поверх активного
       swipeState.targetView.style.display = 'flex';
       swipeState.targetView.style.position = 'absolute';
       swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
@@ -2358,9 +2334,9 @@ document.addEventListener('touchmove', function(e) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
       var viewWidth = swipeState.activeView.offsetWidth;
-      var offset = swipeState.direction === 1 ? viewWidth : -viewWidth;
+      var gap = 30; // Зазор между экранами при перетаскивании (30 пикселей)
+      var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       
-      // МАГИЯ №3: Двигаем оба экрана через JS с флагом 'important', жестко перебивая любые стили
       swipeState.activeView.style.setProperty('transform', 'translateX(' + dx + 'px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + (offset + dx) + 'px)', 'important');
     }
@@ -2371,15 +2347,22 @@ document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
   var viewWidth = swipeState.activeView.offsetWidth;
-  var threshold = viewWidth / 3; 
+  var gap = 30; // Тот же зазор
+  
+  // Легкий свайп: достаточно сдвинуть палец всего на 50 пикселей, чтобы экран переключился
+  var threshold = 50; 
 
   if (swipeState.targetView) {
-    swipeState.activeView.style.setProperty('transition', 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)', 'important');
-    swipeState.targetView.style.setProperty('transition', 'transform 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94)', 'important');
+    // Мягкая и плавная доводка экрана
+    swipeState.activeView.style.setProperty('transition', 'transform 0.3s ease-out', 'important');
+    swipeState.targetView.style.setProperty('transition', 'transform 0.3s ease-out', 'important');
 
     if (Math.abs(dx) > threshold) {
-      playSystemSwipeSound();
-      var finalX = swipeState.direction === 1 ? -viewWidth : viewWidth;
+      // ИСПОЛЬЗУЕМ ВАШИ ЗВУКИ ИЗ ПАПКИ SOUND
+      if (typeof playRandomClickSound === 'function') playRandomClickSound();
+      if (navigator.vibrate) navigator.vibrate(15);
+      
+      var finalX = swipeState.direction === 1 ? -(viewWidth + gap) : (viewWidth + gap);
       
       swipeState.activeView.style.setProperty('transform', 'translateX(' + finalX + 'px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(0px)', 'important');
@@ -2390,13 +2373,12 @@ document.addEventListener('touchend', function(e) {
       
       setTimeout(function() {
         if (typeof switchNavTab === 'function') switchNavTab(targetId);
-        // Зачищаем все временные стили, чтобы вернуть управление CSS
         activeEl.removeAttribute('style');
         targetEl.removeAttribute('style');
         document.body.classList.remove('disable-animations');
-      }, 250);
+      }, 300);
     } else {
-      var offset = swipeState.direction === 1 ? viewWidth : -viewWidth;
+      var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       swipeState.activeView.style.setProperty('transform', 'translateX(0px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + offset + 'px)', 'important');
       
@@ -2406,7 +2388,7 @@ document.addEventListener('touchend', function(e) {
         targetElRevert.removeAttribute('style');
         activeElRevert.removeAttribute('style');
         document.body.classList.remove('disable-animations');
-      }, 250);
+      }, 300);
     }
   } else {
     document.body.classList.remove('disable-animations');
