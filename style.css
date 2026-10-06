@@ -612,6 +612,56 @@ body.island-active #main-top-header {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.06), inset 0 1px 0 rgba(255, 255, 255, 1);
 }
 /* ==========================================
+   ОБЪЕМНАЯ СВЕТЛАЯ ТЕМА (ГРАДИЕНТЫ И КОНТРАСТ)
+   ========================================== */
+/* 1. Глубокий градиент и тени для всех карточек в светлой теме */
+:root[data-theme="light"] .card, 
+:root[data-theme="light"] .profile-card, 
+:root[data-theme="light"] .modal-box, 
+:root[data-theme="light"] .club-header, 
+:root[data-theme="light"] .auth-overlay-card, 
+:root[data-theme="light"] .quest-choice-card,
+:root[data-theme="light"] .tabs-container,
+:root[data-theme="light"] #view-news > .card {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 8px 15px rgba(15, 23, 42, 0.08), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
+}
+
+/* 2. Сочные цвета для кнопок матчей (Читаемый фиолетовый) */
+:root[data-theme="light"] #btn-match-glow,
+:root[data-theme="light"] #card-recent-matches {
+  background: linear-gradient(135deg, #f3e8ff 0%, #e9d5ff 100%) !important;
+  border: 1px solid #c084fc !important;
+  color: #7e22ce !important; /* Насыщенный темный фиолетовый */
+  box-shadow: 0 4px 10px rgba(168, 85, 247, 0.2) !important;
+}
+:root[data-theme="light"] #card-recent-matches .card-title {
+  color: #7e22ce !important;
+}
+
+/* 3. Кнопка инвайта (Читаемый синий) */
+:root[data-theme="light"] #btn-invite-glow {
+  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%) !important;
+  border: 1px solid #93c5fd !important;
+  color: #1d4ed8 !important; /* Насыщенный синий */
+  box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2) !important;
+}
+
+/* 4. Объемные кнопки профиля (Редактировать и Выйти) */
+:root[data-theme="light"] .btn-edit {
+  background: linear-gradient(145deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  color: #334155 !important;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+}
+:root[data-theme="light"] .btn-logout {
+  background: linear-gradient(145deg, #fff1f2 0%, #fecdd3 100%) !important;
+  border: 1px solid #fda4af !important;
+  color: #be123c !important; /* Темно-красный */
+  box-shadow: 0 2px 5px rgba(225,29,72,0.1) !important;
+}
+/* ==========================================
    ИДЕАЛЬНЫЕ ОТСТУПЫ (12px везде)
    ========================================== */
 .club-header {
@@ -651,22 +701,37 @@ body.island-active #main-top-header {
 #view-quests .card { --ambi-color: #f43f5e; }
 
 /* ==========================================
-   ИНДИВИДУАЛЬНОЕ СВЕЧЕНИЕ КАРТОЧЕК ЗАДАНИЙ (БОКОВУШКИ)
+   ИСПРАВЛЕНИЕ: БОКОВЫЕ ПОЛОСКИ ЗАДАНИЙ
    ========================================== */
-.quest-level-1 { --q-color: #10b981; }
-.quest-level-2 { --q-color: #f59e0b; }
-.quest-level-3 { --q-color: #f43f5e; }
+/* Базовые рамки (Видны всегда: и днем, и ночью) */
+.quest-level-1 { border-left: 4px solid #10b981 !important; }
+.quest-level-2 { border-left: 4px solid #f59e0b !important; }
+.quest-level-3 { border-left: 4px solid #f43f5e !important; }
 
-/* Анимация: пульсирует ТОЛЬКО левая грань, как неоновая трубка */
-@keyframes questSidePulse {
-  0%   { box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05), -2px 0 4px var(--q-color); }
-  100% { box-shadow: 0 4px 15px rgba(0,0,0,0.2), inset 0 1px 0 rgba(255,255,255,0.05), -8px 0 14px var(--q-color); }
+/* Неоновая пульсация теней (Только для темной темы) */
+:root:not([data-theme="light"]) .quest-level-1 { 
+  animation: pulseQuest1 1.5s infinite alternate ease-in-out !important; 
+}
+:root:not([data-theme="light"]) .quest-level-2 { 
+  animation: pulseQuest2 1.5s infinite alternate ease-in-out !important; 
+}
+:root:not([data-theme="light"]) .quest-level-3 { 
+  animation: pulseQuest3 1.5s infinite alternate ease-in-out !important; 
 }
 
-:root:not([data-theme="light"]) .quest-choice-card {
-  animation: questSidePulse 1.5s infinite alternate ease-in-out !important;
+/* Сами фильтры свечения (Оставляем как было) */
+@keyframes pulseQuest1 {
+  0%   { filter: drop-shadow(-2px 0 4px rgba(16, 185, 129, 0.4)); }
+  100% { filter: drop-shadow(-8px 0 12px rgba(16, 185, 129, 1)); }
 }
-
+@keyframes pulseQuest2 {
+  0%   { filter: drop-shadow(-2px 0 4px rgba(245, 158, 11, 0.4)); }
+  100% { filter: drop-shadow(-8px 0 12px rgba(245, 158, 11, 1)); }
+}
+@keyframes pulseQuest3 {
+  0%   { filter: drop-shadow(-2px 0 4px rgba(244, 63, 94, 0.4)); }
+  100% { filter: drop-shadow(-8px 0 12px rgba(244, 63, 94, 1)); }
+}
 /* ==========================================
    ЦЕНТРОВКА ЗАГОЛОВКОВ (РЕЙТИНГ И ЗАЛ СЛАВЫ)
    ========================================== */
