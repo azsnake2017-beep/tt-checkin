@@ -789,7 +789,7 @@ body.island-active #main-top-header {
   padding: 16px !important;
 }
 
-/* 2. Жестко глушим неон ТОЛЬКО у внутренних новостей (внутри контейнера) */
+/* 2. Жестко глушим неон ТОЛЬКО у внутренних новостей и исправляем цвет текста */
 #news-container .card {
   animation: none !important; 
   background: var(--list-bg) !important; 
@@ -797,4 +797,10 @@ body.island-active #main-top-header {
   box-shadow: none !important; 
   padding: 12px !important;
   border-radius: 12px !important;
+  color: var(--text) !important; /* Главный цвет текста */
+}
+
+/* Принудительно перекрашиваем все заголовки и тексты внутри новостей под текущую тему */
+#news-container .card * {
+  color: var(--text);
 }
