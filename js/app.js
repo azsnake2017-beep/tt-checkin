@@ -2279,3 +2279,68 @@ window.toggleTheme = function() {
     btn.innerText = newTheme === 'light' ? '☀️' : '🌙';
   }
 };
+
+// ==========================================
+// ГОРИЗОНТАЛЬНЫЕ СВАЙПЫ МЕЖДУ ЭКРАНАМИ
+// ==========================================
+var swipeStartX = 0;
+var swipeStartY = 0;
+// Строгий порядок вкладок (как они идут в нижнем меню слева направо)
+var appTabsOrder = ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'];
+
+document.addEventListener('touchstart', function(e) {
+  // Игнорируем свайп, если открыто ЛЮБОЕ модальное окно/шторка
+  var activeModal = document.querySelector('.modal-overlay[style*="display: flex"]');
+  if (activeModal) return;
+
+  swipeStartX = e.touches[0].clientX;
+  swipeStartY = e.touches[0].clientY;
+}, {passive: true});
+
+document.addEventListener('touchend', function(e) {
+  if (!swipeStartX || !swipeStartY) return;
+  
+  var activeModal = document.querySelector('.modal-overlay[style*="display: flex"]');
+  if (activeModal) return;
+
+  var swipeEndX = e.changedTouches[0].clientX;
+  var swipeEndY = e.changedTouches[0].clientY;
+
+  var diffX = swipeStartX - swipeEndX;
+  var diffY = swipeStartY - swipeEndY;
+
+  // Проверяем, что свайп был горизонтальным (diffX больше diffY) и достаточно длинным (более 60px)
+  if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 60) {
+    
+    // Ищем текущую активную вкладку
+    var activeNav = document.querySelector('.bottom-nav .nav-item.active');
+    if (!activeNav) return;
+
+    var currentTabId = activeNav.id.replace('nav-', '');
+    var currentIndex = appTabsOrder.indexOf(currentTabId);
+
+    if (diffX > 0) {
+      // СВАЙП ВЛЕВО (Хотим открыть экран СПРАВА)
+      if (currentIndex < appTabsOrder.length - 1) {
+        document.documentElement.setAttribute('data-swipe-dir', 'left');
+        if (typeof switchNavTab === 'function') switchNavTab(appTabsOrder[currentIndex + 1]);
+        if (typeof vibrate === 'function') vibrate('light'); 
+      }
+    } else {
+      // СВАЙП ВПРАВО (Хотим открыть экран СЛЕВА)
+      if (currentIndex > 0) {
+        document.documentElement.setAttribute('data-swipe-dir', 'right');
+        if (typeof switchNavTab === 'function') switchNavTab(appTabsOrder[currentIndex - 1]);
+        if (typeof vibrate === 'function') vibrate('light');
+      }
+    }
+    
+    // Очищаем направление свайпа через 400мс (чтобы обычные клики по меню работали как раньше)
+    setTimeout(function() {
+      document.documentElement.removeAttribute('data-swipe-dir');
+    }, 400);
+  }
+  
+  swipeStartX = 0;
+  swipeStartY = 0;
+}, {passive: true});
