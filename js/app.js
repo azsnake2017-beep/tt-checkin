@@ -2123,3 +2123,54 @@ window.renderUserHistoryList = function(matches, uid) {
   
   hEl.innerHTML = h;
 };
+
+/* ==========================================
+   СИСТЕМА ПЛАШЕК И ТИТУЛОВ (ИНФО-ОКНА)
+   ========================================== */
+
+// Словарь описаний всех плашек и титулов в клубе
+var BADGE_DESCRIPTIONS = {
+  "👑 Король стола": { title: "Король стола", icon: "👑", desc: "Выдается игроку, который провел больше всего суммарного времени за тренировками и играми в клубе. Докажи, что стол принадлежит тебе!" },
+  "🔥 Несокрушимый": { title: "Несокрушимый", icon: "🔥", desc: "Присваивается игроку с самой длинной активной серией побед в клубе (от 3 матчей подряд). Горячая рука не прощает соперников!" },
+  "⚔️ Гладиатор": { title: "Гладиатор", icon: "⚔️", desc: "Знак истинной стойкости. Выдается бойцам, которые сыграли наибольшее количество матчей в клубе (от 10 игр и выше)." },
+  "🤝 Амбассадор": { title: "Амбассадор", icon: "🤝", desc: "Особый статус за развитие клуба. Выдается игрокам, которые успешно пригласили в приложение 5 и более новых участников." },
+  "Админ ⭐": { title: "Администратор", icon: "⭐", desc: "Основатель и организатор клуба ЧМЗ. Управляет турнирами, ивентами, ботом и следит за порядком у столов." },
+  "Учитель 🎓": { title: "Учитель", icon: "🎓", desc: "Почетный статус наставника, который делится опытом и помогает новичкам улучшать технику игры." },
+  "Темщик 🕶️": { title: "Темщик", icon: "🕶️", desc: "Уникальный статус особого участника. Всегда на стиле, всегда в теме." },
+  "Хоккеист 🏒": { title: "Хоккеист", icon: "🏒", desc: "Двойная угроза: одинаково опасен как на льду с клюшкой, так и у стола с ракеткой!" },
+  "Бот 🤖": { title: "Бот", icon: "🤖", desc: "Системный аккаунт или роботизированный участник." },
+  "Тренер 📋": { title: "Тренер", icon: "📋", desc: "Официальный тренер клуба. Знает, как поставить правильный удар и передвижение." }
+};
+
+window.showBadgeInfo = function(badgeKey) {
+  if (typeof vibrate === 'function') vibrate('light'); // Легкая вибрация при клике
+  
+  var info = BADGE_DESCRIPTIONS[badgeKey];
+  
+  // Если плашка нестандартная (например, временная за квест)
+  if (!info) {
+    info = {
+      title: badgeKey.replace(/<[^>]*>?/gm, '').trim(),
+      icon: "🏅",
+      desc: "Это награда или особый статус участника клуба."
+    };
+  }
+
+  var titleEl = document.getElementById('badge-modal-title');
+  var descEl = document.getElementById('badge-modal-desc');
+  var iconEl = document.getElementById('badge-modal-icon');
+  var modal = document.getElementById('badge-info-modal');
+
+  if (titleEl) titleEl.innerText = info.title;
+  if (descEl) descEl.innerText = info.desc;
+  if (iconEl) iconEl.innerText = info.icon;
+  if (modal) modal.style.display = 'flex';
+};
+
+window.closeBadgeInfoModal = function() {
+  if (typeof closeModalSmoothly === 'function') {
+    closeModalSmoothly('badge-info-modal');
+  } else {
+    document.getElementById('badge-info-modal').style.display = 'none';
+  }
+};
