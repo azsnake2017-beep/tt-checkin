@@ -2306,3 +2306,58 @@ window.shareMyRefLink = function() {
   }
 };
 };
+
+/* ==========================================
+   ГЛОБАЛЬНАЯ ЗВУКОВАЯ СИСТЕМА (ИНТЕРЦЕПТОР)
+   ========================================== */
+
+// 1. Озвучиваем абсолютно все клики по интерфейсу
+document.addEventListener('click', function(e) {
+  // Ищем, кликнули ли мы по интерактивному элементу
+  var btn = e.target.closest('.btn, .btn-info, .btn-opt, .score-btn, .tab-btn, .nav-item, .clickable-name, .platform-badge, .quest-choice-card, .medal-item, .club-header-top');
+  
+  if (btn && window.TTAudio) {
+    // Звук отмены / закрытия
+    if (btn.classList.contains('btn-cancel-modal') || btn.closest('.close-btn')) {
+       if (typeof window.TTAudio.playSwoosh === 'function') window.TTAudio.playSwoosh();
+    } 
+    // Звук успеха / подтверждения
+    else if (btn.classList.contains('btn-join') || btn.innerText.includes('Сохранить')) {
+       if (typeof window.TTAudio.playSuccess === 'function') window.TTAudio.playSuccess();
+       else if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
+    }
+    // Обычный сочный клик для всего остального (табы, имена, плашки)
+    else {
+       if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
+    }
+  }
+});
+
+// 2. Озвучиваем открытие всех модальных окон (звук всплытия - Pop)
+var _originalOpenModal = window.openModalSmoothly;
+window.openModalSmoothly = function(modalId) {
+  if (window.TTAudio) {
+    if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
+    else if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
+  }
+  if (_originalOpenModal) _originalOpenModal(modalId);
+};
+
+// 3. Озвучиваем закрытие всех модальных окон (звук смахивания - Swoosh)
+var _originalCloseModal = window.closeModalSmoothly;
+window.closeModalSmoothly = function(modalId) {
+  if (window.TTAudio && typeof window.TTAudio.playSwoosh === 'function') {
+    window.TTAudio.playSwoosh();
+  }
+  if (_originalCloseModal) _originalCloseModal(modalId);
+};
+
+// 4. Озвучиваем системные уведомления и алерты (Notification)
+var _originalCustomAlert = window.customAlert;
+window.customAlert = function(msg) {
+  if (window.TTAudio) {
+    if (typeof window.TTAudio.playNotification === 'function') window.TTAudio.playNotification();
+    else if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
+  }
+  if (_originalCustomAlert) _originalCustomAlert(msg);
+};
