@@ -2281,12 +2281,14 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   ИДЕАЛЬНАЯ КАРУСЕЛЬ (С ЗАЗОРОМ, ЛЕГКИМ СВАЙПОМ И РОДНЫМ ЗВУКОМ)
+   ФИНАЛЬНАЯ КАРУСЕЛЬ (СИММЕТРИЧНЫЙ ЗАЗОР + ЛЕГКИЙ СВАЙП + ВАШИ ЗВУКИ)
    ========================================== */
 var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
 document.addEventListener('touchstart', function(e) {
-  if (document.querySelector('.modal-overlay[style*="display: flex"]')) return;
+  // Блокируем свайп, если открыты модалки или алерты
+  if (document.querySelector('.modal-overlay[style*="display: flex"]') || document.querySelector('.swal2-container')) return;
+  
   swipeState.startX = e.touches[0].clientX;
   swipeState.startY = e.touches[0].clientY;
   swipeState.isDragging = false;
@@ -2299,31 +2301,37 @@ document.addEventListener('touchmove', function(e) {
   var dx = e.touches[0].clientX - swipeState.startX;
   var dy = e.touches[0].clientY - swipeState.startY;
 
-  // Порог старта снижен до 10px (приложение реагирует на жест мгновенно)
+  // Начинаем тянуть экраны уже при сдвиге на 10px (максимальная отзывчивость)
   if (!swipeState.isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { 
     swipeState.isDragging = true;
     document.body.classList.add('disable-animations'); 
 
     var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
     var targetIndex;
+    
     if (dx < 0) { 
       targetIndex = (currentIndex + 1) % swipeState.tabs.length;
-      swipeState.direction = 1;
+      swipeState.direction = 1; // Свайп влево
     } else {      
       targetIndex = (currentIndex - 1 + swipeState.tabs.length) % swipeState.tabs.length;
-      swipeState.direction = -1;
+      swipeState.direction = -1; // Свайп вправо
     }
     
     swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
     
     if (swipeState.targetView) {
       var viewWidth = swipeState.activeView.offsetWidth;
+      var gap = 20; // Идеальный аккуратный зазор в 20px
 
       swipeState.targetView.style.display = 'flex';
       swipeState.targetView.style.position = 'absolute';
       swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
+      
+      // Изначально ставим целевой экран за границей с учетом зазора
+      var startLeft = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
       swipeState.targetView.style.width = viewWidth + 'px';
+      swipeState.targetView.style.setProperty('transform', 'translateX(' + startLeft + 'px)', 'important');
       
       swipeState.activeView.style.zIndex = '5';
       swipeState.targetView.style.zIndex = '5';
@@ -2334,9 +2342,10 @@ document.addEventListener('touchmove', function(e) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
       var viewWidth = swipeState.activeView.offsetWidth;
-      var gap = 30; // Зазор между экранами при перетаскивании (30 пикселей)
+      var gap = 20; 
       var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       
+      // Тянем оба экрана
       swipeState.activeView.style.setProperty('transform', 'translateX(' + dx + 'px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + (offset + dx) + 'px)', 'important');
     }
@@ -2347,20 +2356,19 @@ document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
   var viewWidth = swipeState.activeView.offsetWidth;
-  var gap = 30; // Тот же зазор
+  var gap = 20; 
   
-  // Легкий свайп: достаточно сдвинуть палец всего на 50 пикселей, чтобы экран переключился
-  var threshold = 50; 
+  // Супер-легкий свайп: достаточно сдвинуть палец всего на 35 пикселей!
+  var threshold = 35; 
 
   if (swipeState.targetView) {
-    // Мягкая и плавная доводка экрана
-    swipeState.activeView.style.setProperty('transition', 'transform 0.3s ease-out', 'important');
-    swipeState.targetView.style.setProperty('transition', 'transform 0.3s ease-out', 'important');
+    swipeState.activeView.style.setProperty('transition', 'transform 0.25s ease-out', 'important');
+    swipeState.targetView.style.setProperty('transition', 'transform 0.25s ease-out', 'important');
 
     if (Math.abs(dx) > threshold) {
-      // ИСПОЛЬЗУЕМ ВАШИ ЗВУКИ ИЗ ПАПКИ SOUND
+      // ВОСПРОИЗВЕДЕНИЕ ВАШЕГО ЗВУКА И ВИБРАЦИИ СРАЗУ ПОСЛЕ ЖЕСТА (браузер разрешит)
       if (typeof playRandomClickSound === 'function') playRandomClickSound();
-      if (navigator.vibrate) navigator.vibrate(15);
+      if (navigator.vibrate) navigator.vibrate(10);
       
       var finalX = swipeState.direction === 1 ? -(viewWidth + gap) : (viewWidth + gap);
       
@@ -2376,8 +2384,9 @@ document.addEventListener('touchend', function(e) {
         activeEl.removeAttribute('style');
         targetEl.removeAttribute('style');
         document.body.classList.remove('disable-animations');
-      }, 300);
+      }, 250);
     } else {
+      // Отмена свайпа (возврат)
       var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       swipeState.activeView.style.setProperty('transform', 'translateX(0px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + offset + 'px)', 'important');
@@ -2388,7 +2397,7 @@ document.addEventListener('touchend', function(e) {
         targetElRevert.removeAttribute('style');
         activeElRevert.removeAttribute('style');
         document.body.classList.remove('disable-animations');
-      }, 300);
+      }, 250);
     }
   } else {
     document.body.classList.remove('disable-animations');
