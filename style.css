@@ -1098,3 +1098,44 @@ body.is-swiping .main-view.active {
 :root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
+
+/* ==========================================
+   🚀 БЕЗОПАСНОЕ АППАРАТНОЕ УСКОРЕНИЕ (60 FPS)
+   ========================================== */
+/* 1. Нативная инерция скролла (как в родных приложениях iOS/Android) */
+.modal-box, 
+.scrollable-list, 
+.player-list,
+#info-modal-history,
+.main-view {
+  -webkit-overflow-scrolling: touch; 
+  overscroll-behavior-y: contain; /* Скролл внутри списков не дергает саму страницу */
+}
+
+/* 2. Запрещаем эффект "резинового натяжения" у всей страницы (анти-дергание) */
+html, body {
+  overscroll-behavior-y: none;
+}
+
+/* 3. Готовим видеокарту к тяжелым свайпам (Резервируем память заранее) */
+.main-view {
+  will-change: transform;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0); /* Включает GPU только для главных слоев-экранов */
+}
+
+/* 4. GPU-ускорение для мелких ползунков и иконок (чтобы не грузили процессор) */
+#nav-sliding-indicator,
+.nav-item .nav-icon,
+.preloader-bar-fill,
+.quest-progress-fill {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* 5. Идеальный рендеринг шрифтов при движении экранов */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
