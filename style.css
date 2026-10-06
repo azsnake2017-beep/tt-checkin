@@ -16,26 +16,8 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 
 /* Анимация переключения вкладок */
 .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; }
-/* ==========================================
-/* ==========================================
-   СТИЛИ ДЛЯ ИНТЕРАКТИВНЫХ СВАЙПОВ
-   ========================================== */
-/* ==========================================
-   ИСПРАВЛЕНО: ОТКЛЮЧЕНО МОРГАНИЕ ПОСЛЕ СВАЙПА
-   ========================================== */
 .main-view.active { 
   display: flex; 
-  animation: none !important; /* Убили анимацию, которая вызывала мерцание */
-}
-
-body.disable-animations * {
-  animation: none !important;
-  transition: none !important;
-}
-
-@keyframes fadeScaleIn { 
-  from { opacity: 0; transform: scale(0.98); } 
-  to { opacity: 1; transform: scale(1); } 
 }
 
 .outdated-browser-banner { display: none; background: #991b1b; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; text-align: center; margin-bottom: 8px; border: 1px solid #f87171; }
