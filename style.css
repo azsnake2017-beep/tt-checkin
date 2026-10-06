@@ -645,19 +645,16 @@ html, body {
 }
 
 /* ==========================================
-   ФИКС ТЕКСТА НОВОСТЕЙ В СВЕТЛОЙ ТЕМЕ
+   ТОЧЕЧНЫЙ ФИКС ТЕКСТА В НОВОСТЯХ (СВЕТЛАЯ ТЕМА)
    ========================================== */
-:root[data-theme="light"] #news-container,
-:root[data-theme="light"] .news-card,
-:root[data-theme="light"] #view-news,
 :root[data-theme="light"] #view-news .card,
-:root[data-theme="light"] .news-content,
-:root[data-theme="light"] .news-text {
-  color: #0f172a !important; /* Насыщенный темный цвет текста для светлой темы */
+:root[data-theme="light"] .news-card,
+:root[data-theme="light"] #news-container .card {
+  color: #0f172a !important; /* Глубокий темный цвет для основного текста */
 }
 
-:root[data-theme="light"] #view-news .card-desc,
-:root[data-theme="light"] #news-container .card-desc,
-:root[data-theme="light"] .news-date {
-  color: #64748b !important; /* Аккуратный приглушенный цвет для дат и описаний */
+:root[data-theme="light"] #view-news p,
+:root[data-theme="light"] #view-news span,
+:root[data-theme="light"] #news-container p {
+  color: #1e293b !important; /* Убеждаемся, что все параграфы внутри новостей видны */
 }
