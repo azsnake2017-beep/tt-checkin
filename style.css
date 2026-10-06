@@ -158,7 +158,7 @@ body.is-swiping .main-view {
   100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); } 
 }
 
-.platform-badge { display: inline-block; font-size: 10px; padding: 2px 6px; border-radius: 4px; font-weight: 700; flex-shrink: 0; user-select: none; }
+
 .badge-admin { background: rgba(245, 158, 11, 0.2); color: #d97706; margin-left: 4px; }
 .badge-admin-btn { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border: none; padding: 4px 8px; border-radius: 6px; font-size: 10px; font-weight: 700; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0; margin-left: 4px; }
 
@@ -235,7 +235,7 @@ body.is-swiping .main-view {
 .rating-card, .leaderboard-card { background: var(--card-bg); border-radius: 16px; padding: 16px; display: flex; flex-direction: column; gap: 12px; border: 1px solid var(--card-border); }
 .card-block-title { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 8px; user-select: none; justify-content: center !important; }
 .scrollable-list { display: flex; flex-direction: column; gap: 6px; }
-.leader-row { display: flex; align-items: center; justify-content: space-between; padding: 8px 10px; border-radius: 8px; background: var(--row-bg); font-size: 13px; }
+
 .leader-left { display: flex; align-items: center; gap: 8px; }
 .leader-rank { font-weight: 700; width: 22px; color: var(--text-muted); }
 .leader-rank-1 { color: #f59e0b; } .leader-rank-2 { color: #94a3b8; } .leader-rank-3 { color: #b45309; }
@@ -522,4 +522,64 @@ html, body {
 .main-view {
   touch-action: pan-y !important;
   padding-bottom: 24px !important;
+}
+
+/* ==========================================
+   УНИФИЦИРОВАННЫЕ ПЛАШКИ (BADGES)
+   ========================================== */
+.platform-badge {
+  display: inline-flex; align-items: center; justify-content: center; gap: 4px;
+  font-size: 10px; padding: 4px 8px; border-radius: 6px;
+  font-weight: 800; text-transform: uppercase; letter-spacing: 0.5px;
+  flex-shrink: 0; cursor: pointer !important; position: relative; z-index: 10;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  transition: transform 0.1s, filter 0.2s;
+  pointer-events: auto !important;
+}
+.platform-badge:active { transform: scale(0.95); }
+
+/* Премиальные градиенты для каждой роли */
+.badge-admin   { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; border-color: #fbbf24; }
+.badge-teacher { background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #fff; border-color: #60a5fa; }
+.badge-temshik { background: linear-gradient(135deg, #10b981 0%, #047857 100%); color: #fff; border-color: #34d399; }
+.badge-hockey  { background: linear-gradient(135deg, #ec4899 0%, #be185d 100%); color: #fff; border-color: #f472b6; }
+.badge-bot     { background: linear-gradient(135deg, #64748b 0%, #334155 100%); color: #fff; border-color: #94a3b8; }
+.badge-coach   { background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); color: #fff; border-color: #a78bfa; }
+.badge-king    { background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000 !important; border-color: #fcd34d; box-shadow: 0 0 8px rgba(245,158,11,0.5); }
+.badge-fire    { background: linear-gradient(135deg, #ef4444 0%, #991b1b 100%); color: #fff; border-color: #fca5a5; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+.badge-iron    { background: linear-gradient(135deg, #475569 0%, #1e293b 100%); color: #fff; border-color: #94a3b8; }
+.badge-ambassador { background: linear-gradient(135deg, #14b8a6 0%, #0f766e 100%); color: #fff; border-color: #5eead4; }
+
+/* ==========================================
+   ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ СПИСКОВ (ЛЕЙАУТ)
+   ========================================== */
+.leader-row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px; border-radius: 12px; background: var(--row-bg);
+  font-size: 13px; gap: 8px; margin-bottom: 6px;
+  border: 1px solid var(--card-border);
+}
+.leader-left { 
+  display: flex; align-items: center; gap: 10px; 
+  flex: 1; min-width: 0; overflow: hidden; /* Защита от вылезания текста */
+}
+.leader-info-col {
+  display: flex; flex-direction: column; flex: 1; min-width: 0; justify-content: center; gap: 2px;
+}
+.leader-name-row {
+  display: flex; align-items: center; gap: 6px; width: 100%;
+  flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; /* Плашки можно будет скроллить вбок, если их много */
+}
+.leader-name-row::-webkit-scrollbar { display: none; }
+.leader-name-text {
+  font-weight: 800; font-size: 14px; color: var(--text);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  max-width: 130px; flex-shrink: 0; /* Имя красиво обрезается троеточием */
+}
+.leader-right {
+  display: flex; align-items: center; gap: 10px; flex-shrink: 0;
+}
+.leader-stats-col {
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
 }
