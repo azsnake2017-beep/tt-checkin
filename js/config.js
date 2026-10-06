@@ -141,11 +141,12 @@ function initTheme() {
   updateThemeIcon(savedTheme);
 }
 function toggleTheme() {
-  var currentTheme = document.documentElement.getAttribute('data-theme');
-  var newTheme = currentTheme === 'dark' ? 'light' : 'dark';
-  document.documentElement.setAttribute('data-theme', newTheme);
-  localStorage.setItem('tt_theme', newTheme);
-  updateThemeIcon(newTheme);
+  var root = document.documentElement; // Это и есть :root
+  if (root.getAttribute('data-theme') === 'light') {
+    root.removeAttribute('data-theme'); // Возврат к темной
+  } else {
+    root.setAttribute('data-theme', 'light');
+  }
 }
 function updateThemeIcon(theme) {
   var btn = document.getElementById('btn-theme');
