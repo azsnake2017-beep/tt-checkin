@@ -967,17 +967,23 @@ body.island-active #main-top-header {
 }
 
 /* ==========================================
-   КРИТИЧЕСКИЙ ФИКС: ЗАЩИТА ОТ ГОРИЗОНТАЛЬНОГО СЪЕЗДА
+   ИСПРАВЛЕННЫЙ ФИКС: ЗАЩИТА ОТ СЪЕЗДА + ВОЗВРАТ ТЕНЕЙ
    ========================================== */
-/* 1. Жестко блокируем расширение экрана вбок */
+/* 1. Блокируем скролл только у самого тела страницы, без обрезки по vw */
 html, body {
-  overflow-x: hidden !important;
-  width: 100vw !important;
-  max-width: 100% !important;
+  overflow-x: hidden !important; 
+  width: 100% !important; 
   position: relative;
 }
 
-/* 2. Намертво фиксируем нижнее меню внизу экрана */
+/* 2. Разрешаем внутренним контейнерам "выпускать" свечение наружу */
+.main-view {
+  width: 100% !important;
+  box-sizing: border-box;
+  overflow-x: visible !important; /* Именно это свойство возвращает обрезанный неон! */
+}
+
+/* 3. Нижнее меню остается прибитым намертво */
 .bottom-nav {
   position: fixed !important;
   bottom: 0 !important;
@@ -985,13 +991,4 @@ html, body {
   right: 0 !important;
   width: 100% !important;
   z-index: 9999 !important;
-  box-sizing: border-box;
-}
-
-/* 3. Гарантируем, что контейнеры экранов не будут распирать ширину */
-.main-view {
-  width: 100% !important;
-  max-width: 100vw !important;
-  box-sizing: border-box;
-  overflow-x: hidden !important;
 }
