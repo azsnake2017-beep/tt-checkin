@@ -640,14 +640,6 @@ body.island-active #main-top-header {
   animation: neonEdgeRun 3s linear infinite !important; 
 }
 
-/* 3. ИСПРАВЛЕНИЕ: Светится только главная рамка новостей, а статьи внутри - нет */
-:root:not([data-theme="light"]) #view-news > .card {
-  animation: neonEdgeRun 3s linear infinite !important; 
-}
-:root:not([data-theme="light"]) #news-container .card {
-  animation: none !important;
-  box-shadow: 0 4px 10px rgba(0,0,0,0.2) !important; /* Успокаиваем тени внутренних карточек */
-}
 
 /* 4. Яркие базовые цвета */
 .club-header { --ambi-color: #38bdf8; }
@@ -779,28 +771,30 @@ body.island-active #main-top-header {
 }
 
 /* ==========================================
-   ИСПРАВЛЕНИЕ: ОБЩИЙ СВЕТЯЩИЙСЯ БЛОК ДЛЯ НОВОСТЕЙ
+   ИДЕАЛЬНЫЙ БЛОК НОВОСТЕЙ (СВЕТИТСЯ ТОЛЬКО РАМКА)
    ========================================== */
-/* 1. Превращаем прозрачный контейнер в настоящую стеклянную карточку */
-#view-news > .card {
+/* 1. Включаем свечение и фон СТРОГО для главной внешней карточки новостей */
+:root:not([data-theme="light"]) #view-news > .card {
+  animation: neonEdgeRun 3s linear infinite !important;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   padding: 16px !important;
+  --ambi-color: #0ea5e9; /* Голубой неон */
 }
 
-/* 1.1 Для светлой темы возвращаем белое стекло */
+/* Фон для главной рамки новостей в светлой теме */
 :root[data-theme="light"] #view-news > .card {
   background: linear-gradient(145deg, #ffffff 0%, #f1f5f9 100%) !important;
   border: 1px solid rgba(0, 0, 0, 0.08) !important;
+  padding: 16px !important;
 }
 
-/* 2. Успокаиваем внутренние новости (убираем двойные тени и свечения) */
-:root:not([data-theme="light"]) #news-container .card,
+/* 2. Жестко глушим неон ТОЛЬКО у внутренних новостей (внутри контейнера) */
 #news-container .card {
-  animation: none !important; /* Жестко глушим неон на внутренних статьях */
-  background: var(--list-bg) !important; /* Делаем фон чуть темнее основного */
+  animation: none !important; 
+  background: var(--list-bg) !important; 
   border: 1px solid var(--card-border) !important;
-  box-shadow: none !important; /* Убираем лишние тени */
+  box-shadow: none !important; 
   padding: 12px !important;
   border-radius: 12px !important;
 }
