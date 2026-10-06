@@ -632,13 +632,13 @@ body.island-active #main-top-header {
   }
 }
 
-/* 2. Включаем анимацию ТОЛЬКО для темной темы (чтобы в светлой не было грязи) */
+/* 2. Запускаем пульсацию ВЕЗДЕ, КРОМЕ светлой темы */
 :root:not([data-theme="light"]) .profile-card,
 :root:not([data-theme="light"]) .card,
 :root:not([data-theme="light"]) .rating-card,
 :root:not([data-theme="light"]) .club-header,
 :root:not([data-theme="light"]) .quest-choice-card {
-  animation: ambilightPulse 4s infinite alternate ease-in-out;
+  animation: ambilightPulse 3s infinite alternate ease-in-out !important;
 }
 
 /* 3. НАЗНАЧАЕМ ЛОГИЧНЫЕ ЦВЕТА СВЕЧЕНИЯ ДЛЯ КАЖДОГО БЛОКА */
