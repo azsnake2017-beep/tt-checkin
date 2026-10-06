@@ -643,3 +643,21 @@ html, body {
   animation: pulseQuestSmooth 2s infinite alternate ease-in-out !important;
   box-shadow: none !important;
 }
+
+/* ==========================================
+   ФИКС ТЕКСТА НОВОСТЕЙ В СВЕТЛОЙ ТЕМЕ
+   ========================================== */
+:root[data-theme="light"] #news-container,
+:root[data-theme="light"] .news-card,
+:root[data-theme="light"] #view-news,
+:root[data-theme="light"] #view-news .card,
+:root[data-theme="light"] .news-content,
+:root[data-theme="light"] .news-text {
+  color: #0f172a !important; /* Насыщенный темный цвет текста для светлой темы */
+}
+
+:root[data-theme="light"] #view-news .card-desc,
+:root[data-theme="light"] #news-container .card-desc,
+:root[data-theme="light"] .news-date {
+  color: #64748b !important; /* Аккуратный приглушенный цвет для дат и описаний */
+}
