@@ -454,25 +454,34 @@ body.island-active #main-top-header { margin-top: 14px; }
 @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(15%); } }
 
 /* ==========================================
-   ФИНАЛЬНЫЙ ФИКС КВЕСТОВ: ПОЛОСКИ СЛЕВА И ЧИСТЫЙ НЕОН
+   ЖЕСТКИЙ ФИКС КВЕСТОВ: УБИРАЕМ ЛИШНИЙ НЕОН И ВОЗВРАЩАЕМ ПОЛОСКИ
    ========================================== */
 
-/* 1. Возвращаем цветные полоски слева для заданий (игнорируем общие сбросы) */
-.quest-choice-card.quest-level-1 { border-left: 4px solid #10b981 !important; }
-.quest-choice-card.quest-level-2 { border-left: 4px solid #f59e0b !important; }
-.quest-choice-card.quest-level-3 { border-left: 4px solid #f43f5e !important; }
-
-/* 2. Убираем лишнее свечение и красный фон у внутренних элементов заданий */
-.quest-choice-card .card,
-.quest-choice-card div {
+/* 1. Отключаем любое свечение и анимацию внутри экрана заданий */
+#view-quests .card,
+#view-quests .quest-choice-card {
   animation: none !important;
   box-shadow: none !important;
 }
 
-/* 3. Делаем внешнюю рамку экрана заданий аккуратной (единый бегущий неон по кромке) */
-:root:not([data-theme="light"]) #view-quests .card {
+/* 2. Настраиваем внешнюю рамку экрана заданий */
+:root:not([data-theme="light"]) #view-quests > .card {
   animation: neonEdgeRun 3s linear infinite !important;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  --ambi-color: #ef4444 !important; /* Красный неон строго по внешнему контуру */
+  --ambi-color: #ef4444 !important; /* Красный неон строго по контуру */
+}
+
+/* 3. Гарантированно возвращаем цветные полоски слева для карточек квестов */
+.quest-choice-card.quest-level-1, 
+.quest-choice-card[style*="#10b981"] { 
+  border-left: 4px solid #10b981 !important; 
+}
+.quest-choice-card.quest-level-2, 
+.quest-choice-card[style*="#f59e0b"] { 
+  border-left: 4px solid #f59e0b !important; 
+}
+.quest-choice-card.quest-level-3, 
+.quest-choice-card[style*="#f43f5e"] { 
+  border-left: 4px solid #f43f5e !important; 
 }
