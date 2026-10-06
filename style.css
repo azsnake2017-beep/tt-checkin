@@ -453,14 +453,47 @@ body.island-active #main-top-header { margin-top: 14px; }
 #card-park.weather-clouds::before { content: ''; position: absolute; top: 0; left: -100%; right: 0; bottom: 0; width: 200%; background: radial-gradient(ellipse at top, rgba(148, 163, 184, 0.1) 0%, transparent 70%); animation: cloudDrift 10s linear infinite alternate; pointer-events: none; z-index: 1; }
 @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(15%); } }
 
-/* Убираем лишнее свечение и рамки у карточек заданий */
+/* ==========================================
+   ФИНАЛЬНЫЙ ФИКС: СКРОЛЛ, КВЕСТЫ И ТЕНИ
+   ========================================== */
+
+/* 1. Возвращаем нормальный скролл для всей страницы и списков */
+html, body {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  overscroll-behavior-y: auto !important;
+}
+
+.scrollable-list, .player-list, #info-modal-history, .modal-box, .main-view.active {
+  -webkit-overflow-scrolling: touch;
+}
+
+/* 2. Чистим лишнее свечение внутри вкладки заданий */
+#view-quests .card,
 #view-quests .quest-choice-card {
   animation: none !important;
   box-shadow: none !important;
-  border: 1px solid var(--card-border) !important;
 }
 
+/* 3. Гарантированно возвращаем цветные полоски слева для заданий (и в темной, и в светлой теме) */
+.quest-choice-card {
+  border-left: none !important; /* Сбрасываем стандарт */
+  border-top: 1px solid var(--card-border) !important;
+  border-right: 1px solid var(--card-border) !important;
+  border-bottom: 1px solid var(--card-border) !important;
+}
 
-.quest-choice-card.quest-level-1 { border-left: 4px solid #10b981 !important; }
-.quest-choice-card.quest-level-2 { border-left: 4px solid #f59e0b !important; }
-.quest-choice-card.quest-level-3 { border-left: 4px solid #f43f5e !important; }
+.quest-choice-card.quest-level-1, 
+.quest-choice-card[style*="10b981"] { 
+  border-left: 4px solid #10b981 !important; 
+}
+
+.quest-choice-card.quest-level-2, 
+.quest-choice-card[style*="f59e0b"] { 
+  border-left: 4px solid #f59e0b !important; 
+}
+
+.quest-choice-card.quest-level-3, 
+.quest-choice-card[style*="f43f5e"] { 
+  border-left: 4px solid #f43f5e !important; 
+}
