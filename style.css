@@ -1064,3 +1064,64 @@ body.is-swiping .main-view.active {
   /* Снимаем блокировку левой рамки, чтобы скрипт квестов мог её красить */
   border-left: none; 
 }
+
+/* ==========================================
+   🚀 ГЛОБАЛЬНОЕ АППАРАТНОЕ УСКОРЕНИЕ (GPU / 60 FPS)
+   ========================================== */
+
+/* 1. Отправляем все тяжелые контейнеры на обработку в видеокарту */
+.main-view,
+.modal-box,
+.swal2-popup,
+.bottom-nav,
+.scrollable-list,
+.player-list,
+#info-modal-history {
+  -webkit-transform: translateZ(0); /* Форсирует создание GPU-слоя */
+  transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  perspective: 1000px; /* Защита от размытия шрифтов при 3D-ускорении */
+}
+
+/* 2. Резервируем память под элементы, которые будут двигаться или мигать */
+.modal-overlay,
+.modal-box,
+#nav-sliding-indicator,
+.nav-item .nav-icon,
+.preloader-bar-fill,
+.quest-progress-fill {
+  will-change: transform, opacity;
+}
+
+/* 3. Оптимизация перерисовки (Layout Containment) 
+   Если меняется текст в карточке, браузер не пересчитывает весь остальной сайт */
+.card,
+.profile-card,
+.quest-choice-card,
+.leader-row {
+  contain: content; 
+}
+
+/* 4. Нативный плавный скролл с инерцией для мобильных устройств */
+html, body, 
+.main-view, 
+.modal-box, 
+.scrollable-list {
+  -webkit-overflow-scrolling: touch; 
+  scroll-behavior: smooth;
+  overscroll-behavior-y: contain; /* Убирает эффект "резинки" у всего сайта, оставляя только у списков */
+}
+
+/* 5. Идеальный рендеринг текста и картинок в движении */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+img, svg {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  will-change: transform;
+}
