@@ -2254,10 +2254,10 @@ window.initTheme = function() {
   document.documentElement.setAttribute('data-theme', savedTheme);
   document.body.setAttribute('data-theme', savedTheme);
   
-  // Меняем иконку на кнопке при загрузке
+  // Светлая тема = ☀️, Темная тема = 🌙
   var btn = document.getElementById('btn-theme');
   if (btn) {
-    btn.innerText = savedTheme === 'light' ? '🌙' : '☀️';
+    btn.innerText = savedTheme === 'light' ? '☀️' : '🌙';
   }
 };
 
@@ -2273,9 +2273,9 @@ window.toggleTheme = function() {
   // Сохраняем выбор, чтобы после обновления страницы тема не сбрасывалась
   localStorage.setItem('tt_theme', newTheme);
   
-  // Меняем иконку (Луна для светлой темы, Солнце для темной)
+  // Светлая тема = ☀️, Темная тема = 🌙
   var btn = document.getElementById('btn-theme');
   if (btn) {
-    btn.innerText = newTheme === 'light' ? '🌙' : '☀️';
+    btn.innerText = newTheme === 'light' ? '☀️' : '🌙';
   }
 };
