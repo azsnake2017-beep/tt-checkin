@@ -339,7 +339,7 @@ function handleEditProfileClick() {
     document.getElementById('rubber-l-input').value = currentUserProfile.rubberL || ''; 
     document.getElementById('rubber-r-input').value = currentUserProfile.rubberR || ''; 
     document.getElementById('rttf-input').value = currentUserProfile.rttf || ''; 
-    document.getElementById('name-modal').style.display = 'flex'; 
+    openModalSmoothly('name-modal');
   } else {
     if(typeof customAlert==='function') customAlert("Требуется авторизация!");
   }
@@ -379,7 +379,7 @@ function saveCustomNameWithCheck() {
 }
 
 function openAdminMenu() { 
-  document.getElementById('admin-modal').style.display = 'flex'; 
+  openModalSmoothly('admin-modal');
   if (isSuperAdmin()) {
     db.collection('users').orderBy('elo', 'desc').get().then(function(snap) {
       var sel = document.getElementById('admin-bounty-select');
@@ -570,7 +570,7 @@ function openAnnouncementModal(loc) {
       dateInput.value = '';
       descInput.value = aData || '';
   }
-  document.getElementById('announcement-modal').style.display = 'flex'; 
+  openModalSmoothly('announcement-modal'); 
 }
 
 function closeAnnouncementModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('announcement-modal'); }
