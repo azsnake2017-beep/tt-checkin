@@ -1981,3 +1981,145 @@ document.addEventListener('DOMContentLoaded', function() {
   window.addEventListener('resize', moveIndicator);
   setTimeout(moveIndicator, 300);
 });
+
+/* ==========================================
+   ФИНАЛЬНЫЕ ФИКСЫ: АЛЕРТЫ И ИСТОРИЯ МАТЧЕЙ
+   ========================================== */
+
+// 1. ИСПРАВЛЕНИЕ АЛЕРТОВ (ТЕПЕРЬ ТЕГИ <br> И <b> РАБОТАЮТ КОРРЕКТНО)
+window.customAlert = function(htmlMsg) {
+  var el = document.getElementById('custom-alert-modal');
+  var txt = document.getElementById('custom-alert-text');
+  if (txt) txt.innerHTML = htmlMsg; // Заменили innerText на innerHTML
+  if (el) el.style.display = 'flex';
+};
+
+window.openConfirmModal = function(htmlText, onConfirm) {
+  var el = document.getElementById('confirm-modal-text');
+  if (el) el.innerHTML = htmlText; // Заменили innerText на innerHTML
+  window.confirmCallback = onConfirm;
+  var modal = document.getElementById('confirm-modal');
+  if (modal) modal.style.display = 'flex';
+};
+
+window.executeConfirm = function() {
+  if (typeof window.confirmCallback === 'function') window.confirmCallback();
+  if (typeof closeModalSmoothly === 'function') closeModalSmoothly('confirm-modal');
+};
+
+window.closeConfirmModal = function() {
+  if (typeof closeModalSmoothly === 'function') closeModalSmoothly('confirm-modal');
+  window.confirmCallback = null;
+};
+
+// 2. ИДЕАЛЬНАЯ ИСТОРИЯ МАТЧЕЙ (КЛИКАБЕЛЬНЫЕ ИМЕНА 2х2 И ВЫРАВНИВАНИЕ)
+window.renderUserHistoryList = function(matches, uid) {
+  var hEl = document.getElementById('info-modal-history');
+  if (!hEl) return;
+  if (!matches || matches.length === 0) { 
+    hEl.innerHTML = '<span class="empty-note">Матчей пока нет</span>'; 
+    return; 
+  }
+  
+  // Сортировка от новых к старым
+  matches.sort(function(a, b) { 
+      var timeA = typeof parseTime === 'function' ? parseTime(a.timestamp) : a.timestamp;
+      var timeB = typeof parseTime === 'function' ? parseTime(b.timestamp) : b.timestamp;
+      return timeB - timeA; 
+  });
+  
+  var recentMatches = matches.slice(0, 10);
+  var h = '';
+  
+  recentMatches.forEach(function(mx) {
+    try {
+      var isDoubles = mx.type === 'doubles';
+      var isTeam1 = isDoubles ? (mx.team1Uids && mx.team1Uids.indexOf(uid) !== -1) : (mx.p1Uid === uid);
+      
+      var s1 = mx.team1Score !== undefined ? mx.team1Score : (mx.scoreTeam1 !== undefined ? mx.scoreTeam1 : (mx.p1Score !== undefined ? mx.p1Score : "?"));
+      var s2 = mx.team2Score !== undefined ? mx.team2Score : (mx.scoreTeam2 !== undefined ? mx.scoreTeam2 : (mx.p2Score !== undefined ? mx.p2Score : "?"));
+
+      var myS = isTeam1 ? s1 : s2;
+      var opS = isTeam1 ? s2 : s1;
+      var isWin = (myS !== "?" && opS !== "?") ? myS > opS : false;
+      
+      var myColor = isWin ? '#10b981' : 'var(--text-muted)';
+      var opColor = !isWin ? '#10b981' : 'var(--text-muted)';
+      var myWeight = isWin ? '700' : '500';
+      var opWeight = !isWin ? '700' : '500';
+      
+      var myEmoji = isWin ? '<span style="color: #10b981; font-size: 10px; flex-shrink:0;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; flex-shrink:0;">▼</span>';
+      var opEmoji = !isWin ? '<span style="color: #10b981; font-size: 10px; flex-shrink:0;">▲</span>' : '<span style="color: var(--text-muted); font-size: 10px; opacity: 0.5; flex-shrink:0;">▼</span>';
+
+      var timestamp = typeof parseTime === 'function' ? parseTime(mx.timestamp) : mx.timestamp;
+      var dtStr = new Date(timestamp).toLocaleDateString();
+      var modeBadge = isDoubles ? '<span class="badge-mode badge-mode-doubles" style="margin-right: 6px; flex-shrink:0;">2x2</span>' : '<span class="badge-mode badge-mode-singles" style="margin-right: 6px; flex-shrink:0;">1x1</span>';
+      
+      var leftContentHtml = '';
+      
+      // Единый стиль для обрезки длинных имен (max-width + ellipsis)
+      var nameStyleTemplate = 'display: inline-block; max-width: 85px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; vertical-align: bottom; transition: 0.2s;';
+
+      if (isDoubles) {
+          var tArr = isTeam1 ? mx.team1NamesArr : mx.team2NamesArr;
+          var tUids = isTeam1 ? mx.team1Uids : mx.team2Uids;
+          var myPartner = null, myPartnerUid = null;
+          
+          if (tArr && tUids) {
+              if (tUids[0] === uid) { myPartner = tArr[1]; myPartnerUid = tUids[1]; }
+              else { myPartner = tArr[0]; myPartnerUid = tUids[0]; }
+          }
+          
+          // Кликабельный напарник
+          var partnerHtml = myPartner ? '<span class="clickable-name" style="color:'+myColor+'; font-weight:'+myWeight+'; '+nameStyleTemplate+'" onclick="showUserInfoModal(\''+escapeJS(myPartnerUid)+'\')">' + cleanHtml(myPartner) + '</span>' : '<span style="color:'+myColor+'; font-weight:'+myWeight+';">Неизвестно</span>';
+          
+          var opArr = isTeam1 ? mx.team2NamesArr : mx.team1NamesArr;
+          var opUids = isTeam1 ? mx.team2Uids : mx.team1Uids;
+          var opHtml = '';
+          
+          // Кликабельные соперники
+          if (opArr && opUids && opArr.length > 1) {
+              opHtml = '<span class="clickable-name" style="color:'+opColor+'; font-weight:'+opWeight+'; '+nameStyleTemplate+'" onclick="showUserInfoModal(\''+escapeJS(opUids[0])+'\')">' + cleanHtml(opArr[0]) + '</span>' +
+                       '<span style="color:var(--text-muted); font-size: 10px; margin: 0 3px; flex-shrink:0;">&</span>' +
+                       '<span class="clickable-name" style="color:'+opColor+'; font-weight:'+opWeight+'; '+nameStyleTemplate+'" onclick="showUserInfoModal(\''+escapeJS(opUids[1])+'\')">' + cleanHtml(opArr[1]) + '</span>';
+          } else {
+              var opN = isTeam1 ? mx.team2Names : mx.team1Names;
+              opHtml = '<span style="color:'+opColor+'; font-weight:'+opWeight+'; '+nameStyleTemplate+' max-width: 140px;">' + cleanHtml(opN || "Неизвестные игроки") + '</span>';
+          }
+
+          leftContentHtml = '<div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px; width: 100%;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted); flex-shrink:0;">в паре с:</span> ' + myEmoji + partnerHtml + '</div>' +
+                            '<div style="display: flex; align-items: center; gap: 6px; width: 100%;"><span style="font-size: 11px; color: var(--text-muted); flex-shrink:0;">против:</span> ' + opEmoji + opHtml + '</div>';
+
+      } else {
+          var opUid = isTeam1 ? mx.p2Uid : mx.p1Uid;
+          var opName = isTeam1 ? mx.p2Name : mx.p1Name;
+          
+          // Кликабельный соперник 1x1
+          var opHtml = '<span class="clickable-name" style="color:'+opColor+'; font-weight:'+opWeight+'; '+nameStyleTemplate+' max-width: 130px;" onclick="showUserInfoModal(\''+escapeJS(opUid)+'\')">' + cleanHtml(opName || "Неизвестно") + '</span>';
+          
+          leftContentHtml = '<div style="display: flex; align-items: center; gap: 6px; width: 100%; margin-top: 2px;">' + modeBadge + '<span style="font-size: 11px; color: var(--text-muted); flex-shrink:0;">против:</span> ' + opEmoji + opHtml + '</div>';
+      }
+
+      var adminDelBtn = (typeof isSuperAdmin === 'function' && isSuperAdmin() && mx.docId) ? '<div style="margin-left: 10px; cursor: pointer; font-size: 14px; opacity: 0.6; padding: 4px;" onclick="deleteHistoryMatch(\'' + escapeJS(mx.docId) + '\', \'' + escapeJS(uid) + '\')" title="Удалить из истории">🗑</div>' : '';
+
+      h += '<div style="background: var(--card-bg); padding: 10px 12px; border: 1px solid var(--card-border); border-radius: 8px; display:flex; justify-content:space-between; align-items:center; font-size:13px; gap: 8px; margin-bottom: 6px; overflow: hidden;">' +
+             '<div style="display: flex; flex-direction: column; flex: 1; min-width: 0;">' + 
+               leftContentHtml +
+               '<div style="color:var(--text-muted); font-size:10px; margin-top:8px;">' + dtStr + '</div>' +
+             '</div>' +
+             '<div style="display: flex; align-items: center; flex-shrink: 0;">' +
+               '<div style="display: flex; align-items: center; justify-content: center; font-weight:800; font-size: 16px; background: var(--row-bg); padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.05);">' +
+                 '<span style="color:' + myColor + '">' + myS + '</span>' +
+                 '<span style="color:var(--text-muted); opacity: 0.5; margin: 0 4px;">:</span>' +
+                 '<span style="color:' + opColor + '">' + opS + '</span>' +
+               '</div>' +
+               adminDelBtn +
+             '</div>' +
+           '</div>';
+    } catch(errRow) {
+      console.log("Пропуск записи матча", errRow);
+    }
+  });
+  
+  hEl.innerHTML = h;
+};
