@@ -2240,72 +2240,27 @@ window.showBadgeInfo = function(badgeKey) {
   
   openModalSmoothly('badge-info-modal');
 
-  /* ==========================================
-   РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
+/* ==========================================
+   ПРИНУДИТЕЛЬНАЯ ПРИВЯЗКА КНОПКИ QR / РЕФЕРАЛА
    ========================================== */
-var BOT_USERNAME = "tennis_club_chmz_bot"; 
-
-window.showRefQrModal = function() {
-  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  if (!myUid) {
-    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
-    else alert("Сначала необходимо авторизоваться!");
-    return;
-  }
+document.addEventListener('DOMContentLoaded', function() {
+  // Ищем все возможные варианты кнопок QR или шаринга в шапке
+  var qrButtons = document.querySelectorAll('#btn-app-qr-large, .btn-app-qr-large, .btn-qr-icon-only, [id*="qr"], [id*="ref"], [onclick*="Ref"]');
   
-  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
-  var qrContainer = document.getElementById("ref-qrcode");
-  if (qrContainer) {
-      qrContainer.innerHTML = ""; 
-      new QRCode(qrContainer, {
-        text: refLink,
-        width: 200,
-        height: 200,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
-        correctLevel : QRCode.CorrectLevel.H
-      });
-  }
-
-  // Вызываем наше новое супер-плавное окно!
-  openModalSmoothly('ref-qr-modal');
-};
-
-window.closeRefQrModal = function() { 
-  if(typeof closeModalSmoothly === 'function') closeModalSmoothly('ref-qr-modal'); 
-};
-
-window.shareMyRefLink = function() {
-  var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  if (!myUid) {
-    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
-    else alert("Сначала необходимо авторизоваться!");
-    return;
-  }
-
-  var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
-  var inviteTitle = "Клуб настольного тенниса ЧМЗ";
-  var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
-
-  if (navigator.share) {
-    navigator.share({
-      title: inviteTitle,
-      text: inviteText,
-      url: refLink
-    }).then(function() {}).catch(function(error) {});
-  } else if (navigator.clipboard && navigator.clipboard.writeText) {
-    navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
-      if (typeof customAlert === 'function') {
-        customAlert("Ссылка скопирована!\nОтправьте её будущему участнику.");
+  for (var i = 0; i < qrButtons.length; i++) {
+    qrButtons[i].onclick = function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      if (typeof showRefQrModal === 'function') {
+        showRefQrModal();
+      } else if (typeof shareMyRefLink === 'function') {
+        shareMyRefLink();
       } else {
-        alert("Ссылка скопирована в буфер обмена!");
+        console.log("Функция показа QR не найдена");
       }
-    });
-  } else {
-    prompt("Скопируйте ссылку для добавления участника:", refLink);
+    };
   }
-};
-};
+});
 
 /* ==========================================
    ГЛОБАЛЬНАЯ ЗВУКОВАЯ СИСТЕМА (ИНТЕРЦЕПТОР)
