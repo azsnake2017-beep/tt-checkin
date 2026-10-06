@@ -460,15 +460,7 @@ body.island-active #main-top-header { margin-top: 14px; }
   border: 1px solid var(--card-border) !important;
 }
 
-/* Возвращаем цветные полоски слева для темной темы */
-:root:not([data-theme="light"]) .quest-choice-card.quest-level-1 {
-  border-left: 4px solid #10b981 !important;
-}
 
-:root:not([data-theme="light"]) .quest-choice-card.quest-level-2 {
-  border-left: 4px solid #f59e0b !important;
-}
-
-:root:not([data-theme="light"]) .quest-choice-card.quest-level-3 {
-  border-left: 4px solid #f43f5e !important;
-}
+.quest-choice-card.quest-level-1 { border-left: 4px solid #10b981 !important; }
+.quest-choice-card.quest-level-2 { border-left: 4px solid #f59e0b !important; }
+.quest-choice-card.quest-level-3 { border-left: 4px solid #f43f5e !important; }
