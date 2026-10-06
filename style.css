@@ -719,3 +719,10 @@ body.island-active #main-top-header {
   80%  { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.6)); }   /* Изумрудный */
   100% { filter: drop-shadow(0 0 25px rgba(56, 189, 248, 0.6)); }   /* Возврат к небесному */
 }
+
+/* ==========================================
+   СКРЫТИЕ ИНВЕНТАРЯ НА ГЛАВНОЙ СТРАНИЦЕ
+   ========================================== */
+#user-inventory-container {
+  display: none !important;
+}
