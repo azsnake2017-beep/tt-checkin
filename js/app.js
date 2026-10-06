@@ -2281,9 +2281,9 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   АБСОЛЮТНАЯ КАРУСЕЛЬ (60 FPS + АНТИ-НАЛОЖЕНИЕ + ЗВУКИ)
+   АБСОЛЮТНАЯ КАРУСЕЛЬ (ЖЕЛЕЗНАЯ МАТЕМАТИКА БЕЗ НАХЛЕСТОВ)
    ========================================== */
-var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
+var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, width: 0, gap: 20, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
 document.addEventListener('touchstart', function(e) {
   if (document.querySelector('.modal-overlay[style*="display: flex"]') || document.querySelector('.swal2-container')) return;
@@ -2301,9 +2301,10 @@ document.addEventListener('touchmove', function(e) {
 
   if (!swipeState.isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { 
     swipeState.isDragging = true;
-    
-    // Включаем режим аппаратного ускорения и отключаем мерцание
     document.body.classList.add('is-swiping'); 
+    
+    // КЭШИРУЕМ ШИРИНУ ЭКРАНА ОДИН РАЗ (Убивает баг с нахлестом!)
+    swipeState.width = swipeState.activeView.offsetWidth;
 
     var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
     if (dx < 0) swipeState.direction = 1; // Влево
@@ -2313,19 +2314,13 @@ document.addEventListener('touchmove', function(e) {
     swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
     
     if (swipeState.targetView) {
-      // Вычисляем ширину ОДИН раз (ускоряет работу в 10 раз)
-      var viewWidth = swipeState.activeView.getBoundingClientRect().width;
-      var gap = 20; 
-      var startOffset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
+      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
 
-      // Идеальное позиционирование поверх старого экрана
       swipeState.targetView.style.display = 'flex';
       swipeState.targetView.style.position = 'absolute';
       swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
       swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
-      swipeState.targetView.style.width = viewWidth + 'px';
-      
-      // 3D-ускорение графики: отправляем за экран силами видеокарты
+      swipeState.targetView.style.width = swipeState.width + 'px';
       swipeState.targetView.style.setProperty('transform', 'translate3d(' + startOffset + 'px, 0, 0)', 'important');
       
       swipeState.activeView.style.zIndex = '5';
@@ -2336,11 +2331,7 @@ document.addEventListener('touchmove', function(e) {
   if (swipeState.isDragging) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
-      var viewWidth = swipeState.activeView.getBoundingClientRect().width;
-      var gap = 20; 
-      var startOffset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
-      
-      // Двигаем оба экрана синхронно (0 нахлестов)
+      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
       swipeState.activeView.style.setProperty('transform', 'translate3d(' + dx + 'px, 0, 0)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translate3d(' + (startOffset + dx) + 'px, 0, 0)', 'important');
     }
@@ -2350,25 +2341,21 @@ document.addEventListener('touchmove', function(e) {
 document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var viewWidth = swipeState.activeView.getBoundingClientRect().width;
-  var gap = 20; 
-  var threshold = 35; // Очень легкий свайп
+  var threshold = 35; 
 
   if (swipeState.targetView) {
-    // Плавная доводка 3D-анимации
     swipeState.activeView.style.setProperty('transition', 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
     swipeState.targetView.style.setProperty('transition', 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)', 'important');
 
     var isValidSwipe = (swipeState.direction === 1 && dx < -threshold) || (swipeState.direction === -1 && dx > threshold);
 
     if (isValidSwipe) {
-      // ИГРАЕМ РОДНОЙ ЗВУК ИЗ ВАШЕГО SOUNDS.JS
       if (window.TTAudio && typeof window.TTAudio.playRandomBounce === 'function') {
         window.TTAudio.playRandomBounce();
       }
       if (navigator.vibrate) navigator.vibrate(10);
       
-      var finalX = swipeState.direction === 1 ? -(viewWidth + gap) : (viewWidth + gap);
+      var finalX = swipeState.direction === 1 ? -(swipeState.width + swipeState.gap) : (swipeState.width + swipeState.gap);
       
       swipeState.activeView.style.setProperty('transform', 'translate3d(' + finalX + 'px, 0, 0)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translate3d(0px, 0, 0)', 'important');
@@ -2384,7 +2371,7 @@ document.addEventListener('touchend', function(e) {
         document.body.classList.remove('is-swiping');
       }, 250);
     } else {
-      var startOffset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
+      var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
       swipeState.activeView.style.setProperty('transform', 'translate3d(0px, 0, 0)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translate3d(' + startOffset + 'px, 0, 0)', 'important');
       
