@@ -994,64 +994,47 @@ html, body {
 }
 
 /* ==========================================
-   ФИКС: ЭКРАН ЗАГРУЗКИ ПОВЕРХ ВСЕГО
+   1. ФИКС: РОВНЫЕ ЭКРАНЫ БЕЗ ПРЫЖКОВ
    ========================================== */
-#app-preloader,
-#loading-screen, 
-.loading-screen,
-[id*="loading"] {
-  z-index: 100000 !important; /* Гарантированно перекрывает нижнее меню */
+.btn-match-quick, .tabs-container { margin-top: 0 !important; }
+.main-view { gap: 12px !important; }
+
+/* ==========================================
+   2. ФИКС: АППАРАТНОЕ 3D-УСКОРЕНИЕ (60 FPS) И АНТИ-МЕРЦАНИЕ
+   ========================================== */
+body.is-swiping .main-view,
+body.is-swiping .main-view.active {
+  animation: none !important;
+  transition: none !important;
+}
+.main-view {
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
 }
 
 /* ==========================================
-   ДИНАМИЧЕСКАЯ ТЕМАТИЗАЦИЯ СВЕЧЕНИЯ ПО ВКЛАДКАМ
+   3. ФИКС: МОДАЛЬНЫЕ ОКНА (КРАСИВОЕ ПОЯВЛЕНИЕ + СВЕЧЕНИЕ)
    ========================================== */
-/* 1. Умная система: задаем главный цвет в зависимости от того, какой экран активен */
-body:has(#view-profile.active) { --theme-glow: #3b82f6; }       /* Профиль: Синий */
-body:has(#view-radar.active) { --theme-glow: #10b981; }         /* Радар: Зеленый */
-body:has(#view-ratings.active) { --theme-glow: #a855f7; }       /* Рейтинг: Фиолетовый */
-body:has(#view-tournaments.active) { --theme-glow: #f97316; }   /* Турниры: Оранжевый */
-body:has(#view-quests.active) { --theme-glow: #ef4444; }        /* Задания: Красный */
-body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новости: Светло-голубой */
-
-/* 2. Титульный блок теперь ВСЕГДА светится благородным серым/серебристым неонам */
-.club-header { 
-  --ambi-color: #94a3b8 !important; /* Серебристо-серый оттенок */
+/* Разделяем конфликтующие стили: появление делаем через transition, а свечение через animation */
+.modal-overlay {
+  opacity: 0;
+  transition: opacity 0.25s ease-out !important;
+}
+.modal-overlay[style*="display: flex"], .swal2-container {
+  opacity: 1 !important;
 }
 
-/* 3. Применяем цвет ко ВСЕМ бегающим неоновым рамкам внутри текущей вкладки */
-.main-view.active .card,
-.main-view.active .profile-card,
-.main-view.active .rating-card,
-.main-view.active .leaderboard-card,
-.main-view.active .tabs-container,
-.main-view.active #btn-match-glow,
-.main-view.active #btn-invite-glow,
-.main-view.active #card-recent-matches,
-.main-view.active .quest-choice-card,
-.main-view.active #view-news > .card {
-  --ambi-color: var(--theme-glow) !important;
+.modal-box, .swal2-popup, .toast {
+  transform: scale(0.85) translateY(20px);
+  transition: transform 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) !important;
+}
+.modal-overlay[style*="display: flex"] > .modal-box,
+.swal2-popup[style*="display: flex"] {
+  transform: scale(1) translateY(0) !important;
 }
 
-/* 4. Обновляем цвета иконок в нижнем меню, чтобы они совпадали с темой */
-#nav-ratings { --nav-glow: #a855f7 !important; } /* Рейтинг теперь фиолетовый */
-#nav-quests { --nav-glow: #ef4444 !important; }  /* Задания теперь красные */
-
-/* ==========================================
-   ФИКС: ВСПЛЫВАЮЩИЕ ОКНА ПОВЕРХ НИЖНЕГО МЕНЮ
-   ========================================== */
-.modal-overlay, 
-.modal,
-[id*="modal"],
-.toast,
-.alert {
-  z-index: 100005 !important; /* Ставим приоритет выше, чем у меню (9999) */
-}
-
-/* ==========================================
-   ИДЕАЛЬНОЕ СВЕЧЕНИЕ И ВЫРАВНИВАНИЕ ЭКРАНОВ
-   ========================================== */
-/* Свечение только для внешних блоков модалок (используем строгий селектор >) */
+/* Возвращаем свечение ТОЛЬКО внешним рамкам в темной теме */
 :root:not([data-theme="light"]) .modal-overlay > .modal-box,
 :root:not([data-theme="light"]) .swal2-popup,
 :root:not([data-theme="light"]) .toast {
@@ -1059,15 +1042,6 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   --ambi-color: var(--theme-glow, #3b82f6) !important;
-}
-
-/* Светлая тема для модалок */
-:root[data-theme="light"] .modal-overlay > .modal-box,
-:root[data-theme="light"] .swal2-popup,
-:root[data-theme="light"] .toast {
-  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
 }
 
 /* Принудительно глушим неон у внутренних карточек */
@@ -1080,36 +1054,13 @@ body:has(#view-news.active) { --theme-glow: #0ea5e9; }          /* Новост�
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Жестко выравниваем верхний край всех экранов (убирает скачки при свайпе) */
-.main-view { gap: 12px !important; }
-.main-view > * { margin-top: 0 !important; }
-
 /* ==========================================
-   АНИМАЦИЯ ПОЯВЛЕНИЯ ОКОН
+   4. ФИКС: ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ В СВЕТЛОЙ ТЕМЕ
    ========================================== */
-@keyframes popInAlert {
-  0%   { opacity: 0; transform: scale(0.85) translateY(20px); }
-  100% { opacity: 1; transform: scale(1) translateY(0); }
+:root[data-theme="light"] .quest-choice-card {
+  border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
+  /* Снимаем блокировку левой рамки, чтобы скрипт квестов мог её красить */
+  border-left: none; 
 }
-@keyframes fadeInBg { 0% { opacity: 0; } 100% { opacity: 1; } }
-
-.modal-overlay[style*="display: flex"],
-.swal2-container {
-  animation: fadeInBg 0.25s ease-out !important;
-}
-
-.modal-overlay[style*="display: flex"] > .modal-box,
-.swal2-popup,
-.toast {
-  animation: popInAlert 0.35s cubic-bezier(0.34, 1.56, 0.64, 1) forwards !important;
-}
-
-
-
-/* ==========================================
-   ФИКС: ВОЗВРАЩАЕМ ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ В СВЕТЛОЙ ТЕМЕ
-   ========================================== */
-:root[data-theme="light"] .quest-choice-card[style*="#10b981"] { border-left: 4px solid #10b981 !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
-:root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
