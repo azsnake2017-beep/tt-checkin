@@ -232,7 +232,7 @@
         <button class="btn-logout" id="btn-logout" onclick="logoutProfile()" style="display:none;">Выйти</button>
       </div>
     </div>
-<button id="btn-invite-glow" class="btn btn-join" style="margin-top: 10px; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
+<button id="btn-invite-glow" class="btn btn-join" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
   <span>➕</span> Добавить участника в клуб
 </button>    
     <div class="profile-logo-container">
@@ -302,13 +302,22 @@
 
   <!-- ЭКРАН 3: РЕЙТИНГИ И ИСТОРИЯ МАТЧЕЙ -->
   <div id="view-ratings" class="main-view">
-   <button class="btn-match-quick" onclick="handleMatchClick()" style="margin-top: 0; position: relative;">
+   <button id="btn-match-glow" class="btn-match-quick" onclick="handleMatchClick()" style="position: relative;">
       <span>⚔️</span><span>Записать результат матча</span>
       <!-- БЕЙДЖ БУСТА НА КНОПКЕ -->
       <div id="match-btn-boost-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 8px; border: 2px solid var(--bg-color, #0f172a); box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);">🔥 x2</div>
     </button>
     <div id="pending-matches-container"></div>
-    <div id="recent-matches-container"></div>
+    <div class="card" id="card-recent-matches">
+  <div class="card-top" onclick="this.parentElement.classList.toggle('expanded')">
+    <div class="card-title" style="width: 100%; justify-content: center;">🕒 Последние матчи</div>
+  </div>
+  <div class="card-collapse-wrapper">
+    <div class="card-body-collapse">
+      <div class="card-body-inner" id="recent-matches-container" style="padding-top: 8px;"></div>
+    </div>
+  </div>
+</div>
 
     <div class="tabs-container">
       <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
@@ -328,21 +337,21 @@
 
  <!-- ЭКРАН 4: ТУРНИРЫ -->
   <div id="view-tournaments" class="main-view">
-    <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+    <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
       <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 4px;">
   <h2 style="font-size: 18px; color: var(--accent-amber); margin: 0;">🏆 Активные турниры</h2>
         <button id="btn-add-tournament" class="badge-admin-btn" style="display:none; padding: 6px 12px; font-size: 12px; margin: 0;" onclick="openTournamentModal()">+ Добавить</button>
       </div>
       <div id="tournaments-list-active" style="display: flex; flex-direction: column; gap: 12px;"></div>
       
-      <h2 style="font-size: 16px; color: var(--text-muted); margin-top: 16px;">📂 Архив турниров</h2>
+      <h2 style="font-size: 16px; color: var(--text-muted); margin-top: 24px; text-align: center;">📂 Архив турниров</h2>
       <div id="tournaments-list-archive" style="display: flex; flex-direction: column; gap: 12px;"></div>
     </div>
   </div>
 
   <!-- ЭКРАН 5: НОВОСТИ (ОБЯЗАТЕЛЬНО ДОЛЖЕН БЫТЬ ЗДЕСЬ) -->
   <div id="view-news" class="main-view">
-    <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+    <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
   <h2 style="font-size: 18px; color: #3b82f6; margin: 0;">📰 Мир настольного тенниса</h2>
       </div>
@@ -353,7 +362,7 @@
   </div>
 <!-- ЭКРАН 6: ЗАДАНИЯ -->
   <div id="view-quests" class="main-view">
-    <div class="card" style="background: transparent; border: none; padding: 0; box-shadow: none;">
+    <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
      <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 12px;">
   <h2 style="font-size: 18px; color: var(--accent-purple); margin: 0;">🎯 Еженедельные задания</h2>
         <button class="btn-info" onclick="customAlert('Испытания на неделю, выполняйте их в матчах и получайте бонусное Эло и уникальные статусы в профиль!')">?</button>
