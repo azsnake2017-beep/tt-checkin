@@ -2281,14 +2281,26 @@ window.toggleTheme = function() {
 };
 
 /* ==========================================
-   ФИНАЛЬНАЯ КАРУСЕЛЬ (СИММЕТРИЧНЫЙ ЗАЗОР + ЛЕГКИЙ СВАЙП + ВАШИ ЗВУКИ)
+   АБСОЛЮТНАЯ КАРУСЕЛЬ (СИММЕТРИЯ + ЛЕГКИЙ СВАЙП + ЗВУК)
    ========================================== */
 var swipeState = { isDragging: false, startX: 0, startY: 0, activeView: null, targetView: null, direction: 0, tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news'] };
 
+// Надежная функция воспроизведения ваших звуков
+function playNativeSwipeSound() {
+  try {
+    var sounds = ['sound/1.mp3', 'sound/2.mp3', 'sound/3.mp3', 'sound/4.mp3', 'sound/5.mp3'];
+    var randomSrc = sounds[Math.floor(Math.random() * sounds.length)];
+    var audio = new Audio(randomSrc);
+    audio.volume = 0.5;
+    var playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(function(error) { /* Игнорируем ошибку автоплея */ });
+    }
+  } catch(e) {}
+}
+
 document.addEventListener('touchstart', function(e) {
-  // Блокируем свайп, если открыты модалки или алерты
   if (document.querySelector('.modal-overlay[style*="display: flex"]') || document.querySelector('.swal2-container')) return;
-  
   swipeState.startX = e.touches[0].clientX;
   swipeState.startY = e.touches[0].clientY;
   swipeState.isDragging = false;
@@ -2301,34 +2313,29 @@ document.addEventListener('touchmove', function(e) {
   var dx = e.touches[0].clientX - swipeState.startX;
   var dy = e.touches[0].clientY - swipeState.startY;
 
-  // Начинаем тянуть экраны уже при сдвиге на 10px (максимальная отзывчивость)
   if (!swipeState.isDragging && Math.abs(dx) > 10 && Math.abs(dx) > Math.abs(dy)) { 
     swipeState.isDragging = true;
     document.body.classList.add('disable-animations'); 
 
     var currentIndex = swipeState.tabs.indexOf(swipeState.activeView.id.replace('view-', ''));
-    var targetIndex;
-    
     if (dx < 0) { 
-      targetIndex = (currentIndex + 1) % swipeState.tabs.length;
-      swipeState.direction = 1; // Свайп влево
+      swipeState.direction = 1; // Тянем влево (следующий)
     } else {      
-      targetIndex = (currentIndex - 1 + swipeState.tabs.length) % swipeState.tabs.length;
-      swipeState.direction = -1; // Свайп вправо
+      swipeState.direction = -1; // Тянем вправо (предыдущий)
     }
     
+    var targetIndex = (currentIndex + swipeState.direction + swipeState.tabs.length) % swipeState.tabs.length;
     swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
     
     if (swipeState.targetView) {
-      var viewWidth = swipeState.activeView.offsetWidth;
-      var gap = 20; // Идеальный аккуратный зазор в 20px
+      // Используем самую точную ширину с долями пикселей, чтобы избежать наложений
+      var viewWidth = swipeState.activeView.getBoundingClientRect().width;
+      var gap = 20; 
+      var startLeft = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
 
       swipeState.targetView.style.display = 'flex';
       swipeState.targetView.style.position = 'absolute';
       swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
-      
-      // Изначально ставим целевой экран за границей с учетом зазора
-      var startLeft = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
       swipeState.targetView.style.width = viewWidth + 'px';
       swipeState.targetView.style.setProperty('transform', 'translateX(' + startLeft + 'px)', 'important');
@@ -2341,11 +2348,10 @@ document.addEventListener('touchmove', function(e) {
   if (swipeState.isDragging) {
     if (e.cancelable) e.preventDefault(); 
     if (swipeState.targetView) {
-      var viewWidth = swipeState.activeView.offsetWidth;
+      var viewWidth = swipeState.activeView.getBoundingClientRect().width;
       var gap = 20; 
       var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       
-      // Тянем оба экрана
       swipeState.activeView.style.setProperty('transform', 'translateX(' + dx + 'px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + (offset + dx) + 'px)', 'important');
     }
@@ -2355,19 +2361,22 @@ document.addEventListener('touchmove', function(e) {
 document.addEventListener('touchend', function(e) {
   if (!swipeState.isDragging || !swipeState.activeView) return;
   var dx = e.changedTouches[0].clientX - swipeState.startX;
-  var viewWidth = swipeState.activeView.offsetWidth;
+  var viewWidth = swipeState.activeView.getBoundingClientRect().width;
   var gap = 20; 
   
-  // Супер-легкий свайп: достаточно сдвинуть палец всего на 35 пикселей!
-  var threshold = 35; 
+  // Легчайший свайп: достаточно сдвинуть палец на 30 пикселей!
+  var threshold = 30; 
 
   if (swipeState.targetView) {
     swipeState.activeView.style.setProperty('transition', 'transform 0.25s ease-out', 'important');
     swipeState.targetView.style.setProperty('transition', 'transform 0.25s ease-out', 'important');
 
-    if (Math.abs(dx) > threshold) {
-      // ВОСПРОИЗВЕДЕНИЕ ВАШЕГО ЗВУКА И ВИБРАЦИИ СРАЗУ ПОСЛЕ ЖЕСТА (браузер разрешит)
-      if (typeof playRandomClickSound === 'function') playRandomClickSound();
+    // Проверяем, в ту ли сторону был сдвинут палец
+    var isValidSwipe = (swipeState.direction === 1 && dx < -threshold) || (swipeState.direction === -1 && dx > threshold);
+
+    if (isValidSwipe) {
+      // ИГРАЕМ ЗВУК И ВИБРАЦИЮ
+      playNativeSwipeSound();
       if (navigator.vibrate) navigator.vibrate(10);
       
       var finalX = swipeState.direction === 1 ? -(viewWidth + gap) : (viewWidth + gap);
@@ -2386,7 +2395,6 @@ document.addEventListener('touchend', function(e) {
         document.body.classList.remove('disable-animations');
       }, 250);
     } else {
-      // Отмена свайпа (возврат)
       var offset = swipeState.direction === 1 ? (viewWidth + gap) : -(viewWidth + gap);
       swipeState.activeView.style.setProperty('transform', 'translateX(0px)', 'important');
       swipeState.targetView.style.setProperty('transform', 'translateX(' + offset + 'px)', 'important');
