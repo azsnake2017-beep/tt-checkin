@@ -453,39 +453,22 @@ body.island-active #main-top-header { margin-top: 14px; }
 #card-park.weather-clouds::before { content: ''; position: absolute; top: 0; left: -100%; right: 0; bottom: 0; width: 200%; background: radial-gradient(ellipse at top, rgba(148, 163, 184, 0.1) 0%, transparent 70%); animation: cloudDrift 10s linear infinite alternate; pointer-events: none; z-index: 1; }
 @keyframes cloudDrift { 0% { transform: translateX(0); } 100% { transform: translateX(15%); } }
 
-/* ==========================================
-   ФИНАЛЬНЫЙ СТРОГИЙ ФИКС КВЕСТОВ И СВЕЧЕНИЯ
-   ========================================== */
-
-/* 1. Возвращаем красный неон строго для внешней рамки экрана заданий */
-:root:not([data-theme="light"]) #view-quests > .card {
-  animation: neonEdgeRun 3s linear infinite !important;
-  background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  --ambi-color: #ef4444 !important; /* Красный неон */
+/* Убираем лишнее свечение и рамки у карточек заданий */
+#view-quests .quest-choice-card {
+  animation: none !important;
+  box-shadow: none !important;
+  border: 1px solid var(--card-border) !important;
 }
 
-/* 2. Гарантированно возвращаем цветные полоски слева для каждой карточки квеста */
-.quest-choice-card {
-  border-top: 1px solid var(--card-border) !important;
-  border-right: 1px solid var(--card-border) !important;
-  border-bottom: 1px solid var(--card-border) !important;
+/* Возвращаем цветные полоски слева для темной темы */
+:root:not([data-theme="light"]) .quest-choice-card.quest-level-1 {
+  border-left: 4px solid #10b981 !important;
 }
 
-/* Уровень 1 (Зеленый) */
-.quest-choice-card.quest-level-1, 
-.quest-choice-card[style*="10b981"] { 
-  border-left: 4px solid #10b981 !important; 
+:root:not([data-theme="light"]) .quest-choice-card.quest-level-2 {
+  border-left: 4px solid #f59e0b !important;
 }
 
-/* Уровень 2 (Оранжевый) */
-.quest-choice-card.quest-level-2, 
-.quest-choice-card[style*="f59e0b"] { 
-  border-left: 4px solid #f59e0b !important; 
-}
-
-/* Уровень 3 (Красный) */
-.quest-choice-card.quest-level-3, 
-.quest-choice-card[style*="f43f5e"] { 
-  border-left: 4px solid #f43f5e !important; 
+:root:not([data-theme="light"]) .quest-choice-card.quest-level-3 {
+  border-left: 4px solid #f43f5e !important;
 }
