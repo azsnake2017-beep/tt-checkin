@@ -615,8 +615,7 @@ function showUserInfoModal(uid) {
   var mInv = document.getElementById('info-modal-inventory');
   if(mInv) mInv.style.display = 'none';
   
-  var modal = document.getElementById('user-info-modal');
-  if (modal) modal.style.display = 'flex';
+openModalSmoothly('user-info-modal');
   
   var userPromise = db.collection('users').doc(uid).get({ source: 'server' }).catch(function() {
       return db.collection('users').doc(uid).get(); 
