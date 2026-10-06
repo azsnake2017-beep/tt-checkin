@@ -994,29 +994,51 @@ html, body {
 }
 
 /* ==========================================
-   1. ФИКС: РОВНЫЕ ЭКРАНЫ БЕЗ ПРЫЖКОВ
+   1. ДИНАМИЧЕСКАЯ ТЕМАТИЗАЦИЯ СВЕЧЕНИЯ ПО ВКЛАДКАМ
+   ========================================== */
+body:has(#view-profile.active) { --theme-glow: #3b82f6; }
+body:has(#view-radar.active) { --theme-glow: #10b981; }
+body:has(#view-ratings.active) { --theme-glow: #a855f7; }
+body:has(#view-tournaments.active) { --theme-glow: #f97316; }
+body:has(#view-quests.active) { --theme-glow: #ef4444; }
+body:has(#view-news.active) { --theme-glow: #0ea5e9; }
+
+/* Титульный блок всегда благородно серый */
+.club-header { --ambi-color: #94a3b8 !important; }
+
+/* Динамический неон для всех активных окон */
+.main-view.active .card,
+.main-view.active .profile-card,
+.main-view.active .rating-card,
+.main-view.active .leaderboard-card,
+.main-view.active .tabs-container,
+.main-view.active #btn-match-glow,
+.main-view.active #btn-invite-glow,
+.main-view.active #card-recent-matches,
+.main-view.active .quest-choice-card,
+.main-view.active #view-news > .card {
+  --ambi-color: var(--theme-glow) !important;
+}
+
+#nav-ratings { --nav-glow: #a855f7 !important; }
+#nav-quests { --nav-glow: #ef4444 !important; }
+
+/* ==========================================
+   2. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ И АНТИ-МЕРЦАНИЕ
    ========================================== */
 .btn-match-quick, .tabs-container { margin-top: 0 !important; }
 .main-view { gap: 12px !important; }
 
-/* ==========================================
-   2. ФИКС: АППАРАТНОЕ 3D-УСКОРЕНИЕ (60 FPS) И АНТИ-МЕРЦАНИЕ
-   ========================================== */
+/* Блокируем моргание экранов во время свайпа */
 body.is-swiping .main-view,
 body.is-swiping .main-view.active {
   animation: none !important;
   transition: none !important;
 }
-.main-view {
-  will-change: transform;
-  -webkit-backface-visibility: hidden;
-  backface-visibility: hidden;
-}
 
 /* ==========================================
-   3. ФИКС: МОДАЛЬНЫЕ ОКНА (КРАСИВОЕ ПОЯВЛЕНИЕ + СВЕЧЕНИЕ)
+   3. МОДАЛЬНЫЕ ОКНА (АНИМАЦИИ И СВЕЧЕНИЕ)
    ========================================== */
-/* Разделяем конфликтующие стили: появление делаем через transition, а свечение через animation */
 .modal-overlay {
   opacity: 0;
   transition: opacity 0.25s ease-out !important;
@@ -1034,7 +1056,7 @@ body.is-swiping .main-view.active {
   transform: scale(1) translateY(0) !important;
 }
 
-/* Возвращаем свечение ТОЛЬКО внешним рамкам в темной теме */
+/* Свечение только внешних рамок модалок */
 :root:not([data-theme="light"]) .modal-overlay > .modal-box,
 :root:not([data-theme="light"]) .swal2-popup,
 :root:not([data-theme="light"]) .toast {
@@ -1054,74 +1076,25 @@ body.is-swiping .main-view.active {
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
+/* Светлая тема модалок */
+:root[data-theme="light"] .modal-overlay > .modal-box,
+:root[data-theme="light"] .swal2-popup,
+:root[data-theme="light"] .toast {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
+}
+
 /* ==========================================
-   4. ФИКС: ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ В СВЕТЛОЙ ТЕМЕ
+   4. ФИКС: ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ (СВЕТЛАЯ ТЕМА)
    ========================================== */
 :root[data-theme="light"] .quest-choice-card {
   border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-right: 1px solid rgba(0, 0, 0, 0.08) !important;
   border-bottom: 1px solid rgba(0, 0, 0, 0.08) !important;
-  /* Снимаем блокировку левой рамки, чтобы скрипт квестов мог её красить */
   border-left: none; 
 }
-
-/* ==========================================
-   🚀 ГЛОБАЛЬНОЕ АППАРАТНОЕ УСКОРЕНИЕ (GPU / 60 FPS)
-   ========================================== */
-
-/* 1. Отправляем все тяжелые контейнеры на обработку в видеокарту */
-.main-view,
-.modal-box,
-.swal2-popup,
-.bottom-nav,
-.scrollable-list,
-.player-list,
-#info-modal-history {
-  -webkit-transform: translateZ(0); /* Форсирует создание GPU-слоя */
-  transform: translateZ(0);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  perspective: 1000px; /* Защита от размытия шрифтов при 3D-ускорении */
-}
-
-/* 2. Резервируем память под элементы, которые будут двигаться или мигать */
-.modal-overlay,
-.modal-box,
-#nav-sliding-indicator,
-.nav-item .nav-icon,
-.preloader-bar-fill,
-.quest-progress-fill {
-  will-change: transform, opacity;
-}
-
-/* 3. Оптимизация перерисовки (Layout Containment) 
-   Если меняется текст в карточке, браузер не пересчитывает весь остальной сайт */
-.card,
-.profile-card,
-.quest-choice-card,
-.leader-row {
-  contain: content; 
-}
-
-/* 4. Нативный плавный скролл с инерцией для мобильных устройств */
-html, body, 
-.main-view, 
-.modal-box, 
-.scrollable-list {
-  -webkit-overflow-scrolling: touch; 
-  scroll-behavior: smooth;
-  overscroll-behavior-y: contain; /* Убирает эффект "резинки" у всего сайта, оставляя только у списков */
-}
-
-/* 5. Идеальный рендеринг текста и картинок в движении */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-rendering: optimizeLegibility;
-}
-
-img, svg {
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
-  will-change: transform;
-}
+:root[data-theme="light"] .quest-choice-card[style*="#10b981"] { border-left: 4px solid #10b981 !important; }
+:root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
+:root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
+:root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
