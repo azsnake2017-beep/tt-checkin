@@ -968,44 +968,42 @@ body.island-active #main-top-header {
 }
 
 /* ==========================================
-   ИСПРАВЛЕННЫЙ ФИКС: ЗАЩИТА ОТ СЪЕЗДА + ВОЗВРАТ ТЕНЕЙ
-   ========================================== */
-/* 1. Блокируем скролл только у самого тела страницы, без обрезки по vw */
-html, body {
-  overflow-x: hidden !important; 
-  width: 100% !important; 
-  position: relative;
-}
-
-/* 2. Разрешаем внутренним контейнерам "выпускать" свечение наружу */
-.main-view {
-  width: 100% !important;
-  box-sizing: border-box;
-  overflow-x: visible !important; /* Именно это свойство возвращает обрезанный неон! */
-}
-
-/* 3. Нижнее меню остается прибитым намертво */
-.bottom-nav {
-  position: fixed !important;
-  bottom: 0 !important;
-  left: 0 !important;
-  right: 0 !important;
-  width: 100% !important;
-  z-index: 9999 !important;
-}
-
-/* ==========================================
-   ЖЕЛЕЗОБЕТОННАЯ ИЕРАРХИЯ СЛОЕВ (Z-INDEX)
+   1. ЖЕЛЕЗОБЕТОННАЯ ИЕРАРХИЯ СЛОЕВ (Z-INDEX)
    ========================================== */
 .bottom-nav { z-index: 1000 !important; }
 .dynamic-island { z-index: 9000 !important; }
 .modal-overlay, .swal2-container { z-index: 99999 !important; }
-#app-preloader, #loading-screen, .loading-screen { z-index: 999999 !important; }
+#app-preloader, #loading-screen, .loading-screen, [id*="loading"] { z-index: 999999 !important; }
 
 /* ==========================================
-   ПРАВИЛЬНЫЕ ЦВЕТА (БЕЗ СМЕШИВАНИЯ ПРИ СВАЙПЕ)
+   2. ЗАЩИТА СКРОЛЛА И БЕЗОПАСНОЕ УСКОРЕНИЕ (60 FPS)
    ========================================== */
-/* Привязываем цвет жестко к экрану, а не к его активности */
+html, body {
+  overflow-x: hidden !important; 
+  overflow-y: auto !important;
+  overscroll-behavior-y: none; /* Убирает "резинку" у всего сайта */
+}
+.scrollable-list, .player-list, #info-modal-history, .modal-box {
+  -webkit-overflow-scrolling: touch; /* Плавная нативная инерция */
+  overscroll-behavior-y: contain;
+}
+/* Ускоряем только контейнеры экранов, не трогая модалки и меню (чтобы не ломать слои) */
+.main-view {
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}
+
+/* ==========================================
+   3. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ
+   ========================================== */
+.main-view { gap: 12px !important; }
+.main-view > * { margin-top: 0 !important; }
+.btn-match-quick, .tabs-container { margin-top: 0 !important; }
+
+/* ==========================================
+   4. ПРАВИЛЬНЫЕ ЦВЕТА СВЕЧЕНИЯ (ЖЕСТКАЯ ПРИВЯЗКА К ID)
+   ========================================== */
 #view-profile { --theme-glow: #3b82f6; }
 #view-radar { --theme-glow: #10b981; }
 #view-ratings { --theme-glow: #a855f7; }
@@ -1013,10 +1011,9 @@ html, body {
 #view-quests { --theme-glow: #ef4444; }
 #view-news { --theme-glow: #0ea5e9; }
 
-/* Шапка всегда серая */
-.club-header { --ambi-color: #94a3b8 !important; }
+.club-header { --ambi-color: #94a3b8 !important; } /* Шапка всегда серая */
 
-/* Карточки берут цвет своего родного экрана, даже когда они уезжают вбок */
+/* Карточки берут цвет своего родного экрана, даже когда они уезжают вбок при свайпе */
 .main-view .card,
 .main-view .profile-card,
 .main-view .rating-card,
@@ -1030,31 +1027,14 @@ html, body {
   --ambi-color: var(--theme-glow) !important;
 }
 
-#nav-ratings { --nav-glow: #a855f7 !important; }
-#nav-quests { --nav-glow: #ef4444 !important; }
-/* ==========================================
-   2. ИДЕАЛЬНОЕ ВЫРАВНИВАНИЕ И АНТИ-МЕРЦАНИЕ
-   ========================================== */
-.btn-match-quick, .tabs-container { margin-top: 0 !important; }
-.main-view { gap: 12px !important; }
-
-/* Блокируем моргание экранов во время свайпа */
-body.is-swiping .main-view,
-body.is-swiping .main-view.active {
-  animation: none !important;
-  transition: none !important;
-}
+#nav-ratings.active { --nav-glow: #a855f7 !important; }
+#nav-quests.active { --nav-glow: #ef4444 !important; }
 
 /* ==========================================
-   3. МОДАЛЬНЫЕ ОКНА (АНИМАЦИИ И СВЕЧЕНИЕ)
+   5. СИСТЕМНЫЙ СЕРЫЙ СВЕТ ДЛЯ МОДАЛЬНЫХ ОКОН
    ========================================== */
-.modal-overlay {
-  opacity: 0;
-  transition: opacity 0.25s ease-out !important;
-}
-.modal-overlay[style*="display: flex"], .swal2-container {
-  opacity: 1 !important;
-}
+.modal-overlay { opacity: 0; transition: opacity 0.25s ease-out !important; }
+.modal-overlay[style*="display: flex"], .swal2-container { opacity: 1 !important; }
 
 .modal-box, .swal2-popup, .toast {
   transform: scale(0.85) translateY(20px);
@@ -1065,17 +1045,23 @@ body.is-swiping .main-view.active {
   transform: scale(1) translateY(0) !important;
 }
 
-/* Свечение только внешних рамок модалок (СТРОГО СЕРЫЙ ЦВЕТ) */
 :root:not([data-theme="light"]) .modal-overlay > .modal-box,
 :root:not([data-theme="light"]) .swal2-popup,
 :root:not([data-theme="light"]) .toast {
   animation: neonEdgeRun 3s linear infinite !important;
   background: linear-gradient(145deg, #1e293b 0%, #0f172a 100%) !important;
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  --ambi-color: #94a3b8 !important; /* Системный серебристо-серый, как у титульного окна */
+  --ambi-color: #94a3b8 !important;
 }
 
-/* Принудительно глушим неон у внутренних карточек */
+:root[data-theme="light"] .modal-overlay > .modal-box,
+:root[data-theme="light"] .swal2-popup,
+:root[data-theme="light"] .toast {
+  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
+  border: 1px solid #cbd5e1 !important;
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
+}
+
 .modal-box .card, 
 .modal-box [class*="box"],
 .profile-card .card,
@@ -1085,17 +1071,8 @@ body.is-swiping .main-view.active {
   border: 1px solid rgba(255, 255, 255, 0.05) !important;
 }
 
-/* Светлая тема модалок */
-:root[data-theme="light"] .modal-overlay > .modal-box,
-:root[data-theme="light"] .swal2-popup,
-:root[data-theme="light"] .toast {
-  background: linear-gradient(145deg, #ffffff 0%, #e2e8f0 100%) !important;
-  border: 1px solid #cbd5e1 !important;
-  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.15), inset 0 2px 0 rgba(255, 255, 255, 1) !important;
-}
-
 /* ==========================================
-   4. ФИКС: ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ (СВЕТЛАЯ ТЕМА)
+   6. ЦВЕТНЫЕ ПОЛОСКИ КВЕСТОВ В СВЕТЛОЙ ТЕМЕ
    ========================================== */
 :root[data-theme="light"] .quest-choice-card {
   border-top: 1px solid rgba(0, 0, 0, 0.08) !important;
@@ -1107,44 +1084,3 @@ body.is-swiping .main-view.active {
 :root[data-theme="light"] .quest-choice-card[style*="#f59e0b"] { border-left: 4px solid #f59e0b !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#f43f5e"] { border-left: 4px solid #f43f5e !important; }
 :root[data-theme="light"] .quest-choice-card[style*="#475569"] { border-left: 4px solid #475569 !important; }
-
-/* ==========================================
-   🚀 БЕЗОПАСНОЕ АППАРАТНОЕ УСКОРЕНИЕ (60 FPS)
-   ========================================== */
-/* 1. Нативная инерция скролла (как в родных приложениях iOS/Android) */
-.modal-box, 
-.scrollable-list, 
-.player-list,
-#info-modal-history,
-.main-view {
-  -webkit-overflow-scrolling: touch; 
-  overscroll-behavior-y: contain; /* Скролл внутри списков не дергает саму страницу */
-}
-
-/* 2. Запрещаем эффект "резинового натяжения" у всей страницы (анти-дергание) */
-html, body {
-  overscroll-behavior-y: none;
-}
-
-/* 3. Готовим видеокарту к тяжелым свайпам (Резервируем память заранее) */
-.main-view {
-  will-change: transform;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-  transform: translateZ(0); /* Включает GPU только для главных слоев-экранов */
-}
-
-/* 4. GPU-ускорение для мелких ползунков и иконок (чтобы не грузили процессор) */
-#nav-sliding-indicator,
-.nav-item .nav-icon,
-.preloader-bar-fill,
-.quest-progress-fill {
-  transform: translateZ(0);
-  will-change: transform;
-}
-
-/* 5. Идеальный рендеринг шрифтов при движении экранов */
-body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
