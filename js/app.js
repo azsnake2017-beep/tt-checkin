@@ -2174,3 +2174,69 @@ window.closeBadgeInfoModal = function() {
     document.getElementById('badge-info-modal').style.display = 'none';
   }
 };
+
+/* ==========================================
+   60 FPS ДВИЖОК МОДАЛЬНЫХ ОКОН И АЛЕРТОВ
+   ========================================== */
+
+// Умная функция открытия (Дает браузеру 1 кадр на отрисовку DOM перед анимацией)
+window.openModalSmoothly = function(modalId) {
+  if (typeof vibrate === 'function') vibrate('light');
+  var overlay = document.getElementById(modalId);
+  if (!overlay) return;
+  var box = overlay.querySelector('.modal-box');
+
+  // 1. Делаем окно "физически" видимым, но полностью прозрачным и опущенным вниз
+  overlay.style.transition = 'none';
+  overlay.style.opacity = '0';
+  overlay.style.display = 'flex';
+  
+  if (box) {
+    box.style.transition = 'none';
+    box.style.transform = 'translateY(100%)';
+  }
+
+  // 2. Ждем ровно 1 кадр (около 16мс), чтобы телефон "переварил" display: flex
+  requestAnimationFrame(function() {
+    requestAnimationFrame(function() {
+      // 3. Плавно включаем свет и выкатываем окно с красивой Apple-физикой
+      overlay.style.transition = 'opacity 0.35s ease-out';
+      overlay.style.opacity = '1';
+      
+      if (box) {
+        box.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
+        box.style.transform = 'translateY(0)';
+      }
+    });
+  });
+};
+
+// --- ПЕРЕОПРЕДЕЛЯЕМ ВСЕ СТАРЫЕ АЛЕРТЫ НА НОВЫЙ ДВИЖОК ---
+
+window.customAlert = function(htmlMsg) {
+  var txt = document.getElementById('custom-alert-text');
+  if (txt) txt.innerHTML = htmlMsg; 
+  openModalSmoothly('custom-alert-modal');
+};
+
+window.openConfirmModal = function(htmlText, onConfirm) {
+  var el = document.getElementById('confirm-modal-text');
+  if (el) el.innerHTML = htmlText; 
+  window.confirmCallback = onConfirm;
+  openModalSmoothly('confirm-modal');
+};
+
+window.showBadgeInfo = function(badgeKey) {
+  var info = BADGE_DESCRIPTIONS ? BADGE_DESCRIPTIONS[badgeKey] : null;
+  if (!info) info = { title: badgeKey.replace(/<[^>]*>?/gm, '').trim(), icon: "🏅", desc: "Это награда или особый статус участника." };
+  
+  var titleEl = document.getElementById('badge-modal-title');
+  var descEl = document.getElementById('badge-modal-desc');
+  var iconEl = document.getElementById('badge-modal-icon');
+  
+  if (titleEl) titleEl.innerText = info.title;
+  if (descEl) descEl.innerText = info.desc;
+  if (iconEl) iconEl.innerText = info.icon;
+  
+  openModalSmoothly('badge-info-modal');
+};
