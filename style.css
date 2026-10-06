@@ -17,38 +17,25 @@ body { background-color: var(--bg); color: var(--text); padding: 16px; display: 
 /* Анимация переключения вкладок */
 .main-view { display: none; flex-direction: column; gap: 12px; flex-grow: 1; }
 /* ==========================================
-   ПЛАВНЫЕ ГОРИЗОНТАЛЬНЫЕ СВАЙПЫ (АНИМАЦИЯ ЭКРАНОВ)
+/* ==========================================
+   СТИЛИ ДЛЯ ИНТЕРАКТИВНЫХ СВАЙПОВ
    ========================================== */
-/* Базовая анимация (для обычных кликов по нижнему меню - мягкое проявление) */
+/* Базовая анимация (для кликов по нижнему меню - мягкое проявление) */
 .main-view.active { 
   display: flex; 
-  animation: fadeScaleIn 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important; 
+  animation: fadeScaleIn 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards !important; 
 }
 
-/* Анимация при свайпе ВЛЕВО (новый экран плавно выезжает СПРАВА) */
-:root[data-swipe-dir="left"] .main-view.active {
-  animation: slideInFromRight 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
+/* МАГИЯ АНТИ-МОРГАНИЯ: Полное отключение CSS-вспышек во время перетаскивания */
+body.disable-animations .main-view {
+  animation: none !important;
+  transition: none !important;
 }
 
-/* Анимация при свайпе ВПРАВО (новый экран плавно выезжает СЛЕВА) */
-:root[data-swipe-dir="right"] .main-view.active {
-  animation: slideInFromLeft 0.35s cubic-bezier(0.32, 0.72, 0, 1) forwards !important;
-}
-
-/* Ключевые кадры движений */
 @keyframes fadeScaleIn { 
   from { opacity: 0; transform: scale(0.98); } 
   to { opacity: 1; transform: scale(1); } 
 }
-@keyframes slideInFromRight { 
-  from { opacity: 0; transform: translateX(50px); } 
-  to { opacity: 1; transform: translateX(0); } 
-}
-@keyframes slideInFromLeft { 
-  from { opacity: 0; transform: translateX(-50px); } 
-  to { opacity: 1; transform: translateX(0); } 
-}
-@keyframes slideFadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
 .outdated-browser-banner { display: none; background: #991b1b; color: #fff; padding: 12px; border-radius: 12px; font-size: 13px; line-height: 1.4; text-align: center; margin-bottom: 8px; border: 1px solid #f87171; }
 .outdated-browser-banner a { color: #fef08a; font-weight: 700; text-decoration: underline; }
@@ -900,4 +887,81 @@ body.island-active #main-top-header {
 #news-container .card,
 #news-container .card * {
   color: var(--text) !important;
+}
+
+/* ==========================================
+   АНИМАЦИЯ НИЖНЕГО МЕНЮ (ПЛАВАЮЩИЙ НЕОН)
+   ========================================== */
+.bottom-nav {
+  position: relative; /* Необходимо для правильного позиционирования бегущей линии */
+}
+
+/* Плавность смены цвета для всех иконок */
+.nav-item {
+  transition: color 0.3s ease !important;
+}
+
+/* Физика подпрыгивания самой иконки */
+.nav-item .nav-icon {
+  display: block;
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s;
+}
+
+/* Состояние активной вкладки (Иконка летит вверх и увеличивается) */
+.nav-item.active .nav-icon {
+  transform: translateY(-4px) scale(1.25);
+}
+
+/* Неоновое свечение текста и иконки (только для Темной темы) */
+:root:not([data-theme="light"]) .nav-item.active {
+  text-shadow: 0 0 12px var(--nav-glow);
+}
+:root:not([data-theme="light"]) .nav-item.active .nav-icon {
+  filter: drop-shadow(0 4px 6px rgba(0,0,0,0.4));
+}
+
+/* Уникальные цвета для каждой вкладки меню */
+#nav-profile { --nav-glow: #3b82f6; }       /* Синий */
+#nav-profile.active { color: var(--nav-glow) !important; }
+
+#nav-radar { --nav-glow: #10b981; }         /* Зеленый */
+#nav-radar.active { color: var(--nav-glow) !important; }
+
+#nav-ratings { --nav-glow: #fbbf24; }       /* Золотой */
+#nav-ratings.active { color: var(--nav-glow) !important; }
+
+#nav-tournaments { --nav-glow: #f97316; }   /* Оранжевый */
+#nav-tournaments.active { color: var(--nav-glow) !important; }
+
+#nav-quests { --nav-glow: #f43f5e; }        /* Розовый */
+#nav-quests.active { color: var(--nav-glow) !important; }
+
+#nav-news { --nav-glow: #0ea5e9; }          /* Голубой */
+#nav-news.active { color: var(--nav-glow) !important; }
+
+/* ==========================================
+   БЕГУЩИЙ ИНДИКАТОР (СОЗДАЕТСЯ ЧЕРЕЗ JS)
+   ========================================== */
+#nav-sliding-indicator {
+  position: absolute;
+  top: 0; 
+  left: 0;
+  width: 36px;
+  height: 4px;
+  background: var(--nav-glow, #3b82f6);
+  border-radius: 0 0 6px 6px;
+  /* Идеальная кинематографичная кривая скорости для скольжения */
+  transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.4s, box-shadow 0.4s;
+  pointer-events: none;
+  z-index: 10;
+}
+
+/* Свечение каретки в Темной теме */
+:root:not([data-theme="light"]) #nav-sliding-indicator {
+  box-shadow: 0 2px 12px var(--nav-glow, #3b82f6);
+}
+
+/* Свечение каретки в Светлой теме */
+:root[data-theme="light"] #nav-sliding-indicator {
+  box-shadow: 0 2px 6px rgba(0,0,0,0.2);
 }
