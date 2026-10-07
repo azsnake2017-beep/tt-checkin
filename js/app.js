@@ -816,7 +816,10 @@ function showUserInfoModal(uid) {
   ? '<span class="platform-badge" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; margin-left: 4px; font-weight: 700; border: none; padding: 2px 7px; border-radius: 6px; font-size: 11px; cursor: pointer;" onclick="showBadgeInfo(\'🤝 Амбассадор\')">Амбассадор 🤝</span>' 
   : '';
 
-    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + ambassadorBadge;
+    var customTagBadge = u.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(u.customTag) + '\')">' + cleanHtml(u.customTag) + '</span>' : '';
+
+    // Заодно мы починили баг: вернули переменную qBadge, чтобы временные бейджи за квесты тоже отображались!
+    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + qBadge + " " + ambassadorBadge + " " + customTagBadge;
 
     var invitesHtml = '';
     if (confirmedInvites > 0 || pendingInvites > 0) {
