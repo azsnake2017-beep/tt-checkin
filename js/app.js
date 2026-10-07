@@ -1838,6 +1838,9 @@ document.addEventListener('touchstart', function(evt) {
 }, {passive: true});
 
 document.addEventListener('touchmove', function(evt) {
+  // ВАЖНО: Если мы находимся в аркаде, полностью отключаем перехват свайпов модалок
+  var activeV = document.querySelector('.main-view.active');
+  if (activeV && activeV.id === 'view-arcade') return;
   if (!sheetYDown || !activeSheet) return;
   var yUp = evt.touches[0].clientY;
   currentYDiff = Math.max(0, yUp - sheetYDown); 
@@ -1849,6 +1852,8 @@ document.addEventListener('touchmove', function(evt) {
 }, {passive: false});
 
 document.addEventListener('touchend', function(evt) {
+  var activeV = document.querySelector('.main-view.active');
+  if (activeV && activeV.id === 'view-arcade') return;
   if (!activeSheet) return;
   
   var currentBox = activeSheet; 
