@@ -523,24 +523,30 @@ function initArcadeGame() {
         renderer.setSize(w, h);
     });
 
-    // Логика стартовой кнопки
+   // Жесткий перехват клика по кнопке старта в обход любых блокировок интерфейса
     const startBtn = document.getElementById('btn-start-arcade');
-    const triggerStart = (e) => {
-        e.preventDefault(); 
-        document.getElementById('arcade-start-screen').style.display = 'none';
-        window.isArcadeGameRunning = true;
-        sound.init(); 
-        resetBall();
-        animate();
-    };
-    startBtn.addEventListener('click', triggerStart);
-    startBtn.addEventListener('touchstart', triggerStart, { passive: false });
-
-    window.resumeArcade = function() {
-        if (window.isArcadeGameRunning) {
+    if (startBtn) {
+        const triggerStart = (e) => {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+                e.stopImmediatePropagation();
+            }
+            const startScreen = document.getElementById('arcade-start-screen');
+            if (startScreen) startScreen.style.display = 'none';
+            window.isArcadeGameRunning = true;
+            sound.init(); 
+            resetBall();
             animate();
-        }
-    };
+            return false;
+        };
+
+        // Вешаем события на саму кнопку
+        startBtn.onclick = triggerStart;
+        startBtn.addEventListener('click', triggerStart, { capture: true, passive: false });
+        startBtn.addEventListener('pointerdown', triggerStart, { capture: true, passive: false });
+        startBtn.addEventListener('touchstart', triggerStart, { capture: true, passive: false });
+    }
     
     setTimeout(() => {
         const w = window.innerWidth;
