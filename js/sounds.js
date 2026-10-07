@@ -4,9 +4,9 @@
 window.TTAudio = {
   soundEnabled: localStorage.getItem('tt_sound_enabled') !== 'false', 
   bounces: [
-    new Audio('sound/1.mp3'), new Audio('sound/2.mp3'),
-    new Audio('sound/3.mp3'), new Audio('sound/4.mp3'),
-    new Audio('sound/5.mp3')
+    new Audio('sounds/1.mp3'), new Audio('sounds/2.mp3'),
+    new Audio('sounds/3.mp3'), new Audio('sounds/4.mp3'),
+    new Audio('sounds/5.mp3')
   ],
   vibrate: function(type) {
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
