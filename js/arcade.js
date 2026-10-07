@@ -138,16 +138,21 @@ function initArcadeGame() {
     function vibrate(time) { if (navigator.vibrate) try { navigator.vibrate(time); } catch(e){} }
 
     const container = document.getElementById('canvas-container');
+    container.style.touchAction = 'none'; // Отключаем дефолтный скролл телефона для игры[cite: 4]
     const scene = new THREE.Scene(); scene.background = null; 
 
-    // ОБЯЗАТЕЛЬНО используем ширину и высоту контейнера для пропорций!
-    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
-    camera.position.set(0, 1.6, 3.8); // Чуть дальше назад, чтобы стол и скамейка точно влезли в кадр
+    // Используем размеры экрана, чтобы камера не сжималась при скрытом контейнере
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(0, 1.6, 3.8); // Идеальное расстояние со столом и скамейкой
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-    renderer.setSize(container.clientWidth, container.clientHeight);
+    renderer.setSize(width, height);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.innerHTML = '';
     container.appendChild(renderer.domElement);
 
     const ambient = new THREE.AmbientLight(0xffffff, 0.7); scene.add(ambient);
@@ -176,7 +181,6 @@ function initArcadeGame() {
     const seat = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 0.6), new THREE.MeshToonMaterial({color: 0xa16207})); seat.position.y = 0.4;
     const back = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 0.1), new THREE.MeshToonMaterial({color: 0xa16207})); back.position.set(0, 0.7, -0.25);
     addOutline(seat); addOutline(back); benchGroup.add(seat, back);
-    // Скамейка сбоку от стола, чтобы попадать в кадр камеры
     benchGroup.position.set(-2.2, -0.5, 0.5); 
     benchGroup.rotation.y = Math.PI / 4; 
     scene.add(benchGroup);
@@ -219,15 +223,12 @@ function initArcadeGame() {
 
     function createRealisticRacket() {
         const group = new THREE.Group();
-        
-        // Основание ракетки (лопасть)
         const bladeGeo = new THREE.CylinderGeometry(0.22, 0.22, 0.03, 32);
-        const bladeMat = new THREE.MeshToonMaterial({ color: 0x854d0e }); // Деревянный торец
+        const bladeMat = new THREE.MeshToonMaterial({ color: 0x854d0e });
         const blade = new THREE.Mesh(bladeGeo, bladeMat);
         blade.rotateX(Math.PI / 2);
         addOutline(blade);
 
-        // Накладки (красная и черная сторона)
         const rubberGeo = new THREE.CylinderGeometry(0.21, 0.21, 0.032, 32);
         const rubberRed = new THREE.Mesh(rubberGeo, new THREE.MeshToonMaterial({ color: 0xef4444 }));
         rubberRed.rotateX(Math.PI / 2);
@@ -237,7 +238,6 @@ function initArcadeGame() {
         rubberBlack.rotateX(Math.PI / 2);
         rubberBlack.position.z = -0.002;
 
-        // Ручка ракетки
         const handleGeo = new THREE.BoxGeometry(0.08, 0.35, 0.04);
         const handleMat = new THREE.MeshToonMaterial({ color: 0x78350f });
         const handle = new THREE.Mesh(handleGeo, handleMat);
@@ -275,35 +275,45 @@ function initArcadeGame() {
 
     function updatePointer(clientX, clientY) {
         let rect = container.getBoundingClientRect();
-        let nx = ((clientX - rect.left) / container.clientWidth)  * 2 - 1;
-        let ny = -((clientY - rect.top) / container.clientHeight) * 2 + 1;
-        state.targetX = nx * (TABLE_W * 1.2); state.targetY = TABLE_H + 0.2 + (ny + 1) * 0.4;
+        let nx = ((clientX - rect.left) / (container.clientWidth || window.innerWidth)) * 2 - 1;
+        let ny = -((clientY - rect.top) / (container.clientHeight || window.innerHeight)) * 2 + 1;
+        state.targetX = nx * (TABLE_W * 1.2); 
+        state.targetY = TABLE_H + 0.2 + (ny + 1) * 0.4;
     }
 
     function tryServe() {
         if (state.status === 'serve_wait' && state.serving === 'player') {
-            sound.init(); state.status = 'serve_toss'; state.vel.set(0, 4.5, 0); setBanner("ПОДБРОС!");
+            sound.init(); 
+            state.status = 'serve_toss'; 
+            state.vel.set(0, 4.5, 0); 
+            setBanner("ПОДБРОС!");[cite: 4]
         }
     }
 
-   container.addEventListener('pointermove', (e) => updatePointer(e.clientX, e.clientY));
-    container.addEventListener('pointerdown', (e) => { updatePointer(e.clientX, e.clientY); tryServe(); });
-    
-    // Дополнительно страхуем тач-события для мобильных
+    // Надежные глобальные слушатели на весь документ для уверенного перехвата кликов и тапов в игре
+    document.addEventListener('pointermove', (e) => {
+        if (window.arcadeActive && window.isArcadeGameRunning) updatePointer(e.clientX, e.clientY);
+    }, { passive: true });
+
+    container.addEventListener('pointerdown', (e) => {
+        updatePointer(e.clientX, e.clientY);
+        tryServe();
+    }, { passive: false });
+
     container.addEventListener('touchstart', (e) => {
-        if (e.touches.length > 0) {
+        if (e.touches && e.touches.length > 0) {
             updatePointer(e.touches[0].clientX, e.touches[0].clientY);
             tryServe();
         }
-    }, {passive: true});
+    }, { passive: false });
 
     container.addEventListener('touchmove', (e) => { 
-        if (e.touches.length > 0) {
+        if (e.touches && e.touches.length > 0) {
             updatePointer(e.touches[0].clientX, e.touches[0].clientY); 
         }
-    }, {passive: true});
+    }, { passive: true });
     
-   function performArcadeHit(isPlayer) {
+    function performArcadeHit(isPlayer) {
         let isServe = (state.status === 'serve_toss' || state.status === 'serve_bounce');
         state.status = 'playing'; 
         let sign = isPlayer ? -1 : 1; 
@@ -312,12 +322,10 @@ function initArcadeGame() {
         let targetZ, targetX, targetY, time = diff.flightTime;
 
         if (isServe) {
-            // Траектория для подачи: летит на сторону противника с отскоком
             targetZ = sign * (TABLE_L / 4 + Math.random() * (TABLE_L / 4));
             targetX = (Math.random() - 0.5) * (TABLE_W * 0.7);
             targetY = TABLE_H;
         } else {
-            // Обычный игровой удар
             targetZ = sign * (TABLE_L / 4 + Math.random() * (TABLE_L / 4));
             let aimWidth = isPlayer ? 0.85 : diff.aiAim;
             targetX = (Math.random() - 0.5) * (TABLE_W * aimWidth);
@@ -379,7 +387,7 @@ function initArcadeGame() {
                 if(state.status === 'serve_wait') { 
                     state.status = 'serve_toss'; 
                     state.vel.set(0, 5, 0); 
-                    setBanner("ПОДБРОС!"); 
+                    setBanner("ПОДБРОС!");[cite: 4]
                 }
             }, 1000);
         }
@@ -433,41 +441,34 @@ function initArcadeGame() {
 
             if (state.ball.y < -1.5) scorePoint(state.vel.z > 0 ? 'ai' : 'player');
         } else if (state.status === 'serve_toss') {
-            // Подброс мяча вверх
             state.vel.y += GRAVITY * dt; 
             state.ball.y += state.vel.y * dt; 
             ball.position.copy(state.ball); 
             ball.rotation.x += 10 * dt;
 
-            // Когда мяч падает вниз после подброса — бьем о СВОЮ сторону стола
             let hitHeight = state.serving === 'player' ? paddlePlayer.position.y : paddleAi.position.y;
             if (state.vel.y < 0 && state.ball.y <= hitHeight + 0.1) {
                 sound.hit();
                 vibrate(20);
                 state.status = 'serve_bounce';
                 
-                // Направляем мяч в свою половину стола для обязательного отскока перед сеткой
                 let mySign = state.serving === 'player' ? 1 : -1;
                 let bounceZ = mySign * (TABLE_L / 4);
                 let bounceX = (Math.random() - 0.5) * 0.4;
-                let tTime = 0.35; // Время полета до отскока на своей половине
+                let tTime = 0.35; 
                 
                 state.vel.x = (bounceX - state.ball.x) / tTime;
                 state.vel.z = (bounceZ - state.ball.z) / tTime;
                 state.vel.y = (TABLE_H - state.ball.y - 0.5 * GRAVITY * tTime * tTime) / tTime;
             }
         } else if (state.status === 'serve_bounce') {
-            // Полет мяча до удара о свою сторону перед перелетом через сетку
             state.vel.y += GRAVITY * dt; 
             state.ball.addScaledVector(state.vel, dt); 
             ball.position.copy(state.ball);
 
-            // Проверяем удар о свою половину стола
             if (state.ball.y - BALL_RADIUS <= TABLE_H && state.vel.y < 0) {
                 state.ball.y = TABLE_H + BALL_RADIUS;
                 sound.bounce();
-                
-                // Сразу после отскока от своей стороны отправляем мяч через сетку к противнику
                 performArcadeHit(state.serving === 'player');
             }
         } else if (state.status === 'serve_wait') {
@@ -515,15 +516,17 @@ function initArcadeGame() {
 
     window.addEventListener('resize', () => {
         if (!container) return;
-        camera.aspect = container.clientWidth / container.clientHeight;
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        camera.aspect = w / h;
         camera.updateProjectionMatrix();
-        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setSize(w, h);
     });
 
     // Логика стартовой кнопки
     const startBtn = document.getElementById('btn-start-arcade');
     const triggerStart = (e) => {
-        e.preventDefault(); // Защита от двойного срабатывания тапа и клика
+        e.preventDefault(); 
         document.getElementById('arcade-start-screen').style.display = 'none';
         window.isArcadeGameRunning = true;
         sound.init(); 
@@ -533,13 +536,20 @@ function initArcadeGame() {
     startBtn.addEventListener('click', triggerStart);
     startBtn.addEventListener('touchstart', triggerStart, { passive: false });
 
-    // Метод для возобновления рендеринга при возврате на вкладку
     window.resumeArcade = function() {
         if (window.isArcadeGameRunning) {
             animate();
         }
     };
     
-    // Сцена отрендерится 1 раз статично (до старта), чтобы не было черного экрана сзади кнопки
+    setTimeout(() => {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        camera.aspect = w / h;
+        camera.updateProjectionMatrix();
+        renderer.setSize(w, h);
+        renderer.render(scene, camera);
+    }, 100);
+
     renderer.render(scene, camera); 
 }
