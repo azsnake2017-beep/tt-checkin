@@ -663,22 +663,27 @@ html, body {
    ФИКС ДЛЯ ЯНДЕКС.БРАУЗЕРА И SAFARI (ПАНЕЛЬ НАВИГАЦИИ)
    ========================================== */
 html, body {
-  height: 100%;
-  height: 100dvh; 
+  height: auto !important;
+  min-height: 100dvh !important; 
   margin: 0;
   padding: 0;
-  overflow: hidden;
+  overflow-x: hidden !important;
+  overflow-y: auto !important; /* ВАЖНО: возвращаем скролл, чтобы низ не обрезался */
+}
+
+/* Гарантированная "подушка безопасности" снизу для всех экранов */
+.main-view {
+  padding-bottom: calc(115px + env(safe-area-inset-bottom, 24px)) !important;
 }
 
 /* Привязываем оверлей к динамической высоте, отключаем нижнюю привязку */
 .modal-overlay {
   top: 0 !important;
   bottom: auto !important;
-  height: 100dvh !important; /* Теперь оверлей заканчивается ровно там, где начинается панель Яндекса */
+  height: 100dvh !important; /* Теперь оверлей заканчивается ровно там, где начинается системная панель */
 }
 
-/* Чуть увеличиваем отступ внутри самой шторки, чтобы кнопкам было свободнее */
+/* Увеличиваем отступ внутри самой шторки, чтобы кнопкам было свободнее */
 .modal-box {
-  padding-bottom: max(env(safe-area-inset-bottom, 20px), 30px) !important; 
+  padding-bottom: max(env(safe-area-inset-bottom, 24px), 30px) !important; 
 }
-
