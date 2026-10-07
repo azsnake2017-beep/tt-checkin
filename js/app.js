@@ -303,7 +303,8 @@ function updateProfileDisplay() {
   var qCompleted = parseInt(currentUserProfile.questsCompleted, 10) || 0;
   var questStatsHtml = qCompleted > 0 ? '<div style="font-size: 11px; color: var(--accent-purple); font-weight: 700; margin-top: 4px;">🎯 Выполнено квестов: ' + qCompleted + '</div>' : '';
 
-  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + pStatus + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span>' + questStatsHtml + '</div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+  // ВАЖНО: Добавил плашку с ID main-profile-last-match для главной страницы профиля
+  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + pStatus + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span><span id="main-profile-last-match" class="player-status-tag" style="color: var(--accent-sky);">🗓 Последняя игра: загрузка...</span>' + questStatsHtml + '</div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
   
   if (typeof renderQuestBoard === 'function') renderQuestBoard();
 
@@ -329,6 +330,36 @@ function updateProfileDisplay() {
 
   var bEdit = document.getElementById('btn-edit-profile'); if (bEdit) bEdit.style.display = 'block';
   var bLogout = document.getElementById('btn-logout'); if (bLogout) bLogout.style.display = 'block';
+
+  // --- ФОНОВЫЙ ПОИСК МАТЧЕЙ ИМЕННО ДЛЯ ГЛАВНОГО ЭКРАНА ПРОФИЛЯ ---
+  try {
+      db.collection('matches_history').where('participants', 'array-contains', currentUserProfile.uid).get().then(function(allSnaps) {
+          var matches = [];
+          allSnaps.forEach(function(docX) { matches.push(docX.data()); });
+          var lastMatchStr = 'Ещё не играл';
+          if (matches.length > 0) {
+              matches.sort(function(a, b) { return (typeof parseTime==='function'?parseTime(b.timestamp):b.timestamp) - (typeof parseTime==='function'?parseTime(a.timestamp):a.timestamp); });
+              try {
+                  var lastTs = typeof parseTime==='function'?parseTime(matches[0].timestamp):matches[0].timestamp;
+                  if (lastTs) {
+                      var mDate = new Date(lastTs);
+                      var day = ('0' + mDate.getDate()).slice(-2);
+                      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+                      var today = new Date(); today.setHours(0,0,0,0);
+                      var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
+                      var diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+                      var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (' + diffDays + ' дн. назад)';
+                      lastMatchStr = day + '.' + month + '.' + mDate.getFullYear() + daysText;
+                  }
+              } catch(e) {}
+          }
+          var el = document.getElementById('main-profile-last-match');
+          if (el) el.innerHTML = '🗓 Последняя игра: ' + lastMatchStr;
+      }).catch(function(e) {
+          var el = document.getElementById('main-profile-last-match');
+          if (el) el.innerHTML = '🗓 Последняя игра: Ошибка';
+      });
+  } catch(e) {}
 }
 
 function handleEditProfileClick() { 
