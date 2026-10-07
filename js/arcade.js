@@ -140,9 +140,9 @@ function initArcadeGame() {
     const container = document.getElementById('canvas-container');
     const scene = new THREE.Scene(); scene.background = null; 
 
-    const camera = new THREE.PerspectiveCamera(50, container.clientWidth / container.clientHeight, 0.1, 100);
-    // Возвращаем идеальный ракурс из превьюшки
-    camera.position.set(0, 1.8, 3.2); 
+    // ОБЯЗАТЕЛЬНО используем ширину и высоту контейнера для пропорций!
+    const camera = new THREE.PerspectiveCamera(45, container.clientWidth / container.clientHeight, 0.1, 100);
+    camera.position.set(0, 1.6, 3.8); // Чуть дальше назад, чтобы стол и скамейка точно влезли в кадр
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
