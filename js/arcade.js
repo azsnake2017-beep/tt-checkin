@@ -285,7 +285,7 @@ function initArcadeGame() {
             sound.init(); 
             state.status = 'serve_toss'; 
             state.vel.set(0, 4.5, 0); 
-            setBanner("ПОДБРОС!");[cite: 4]
+            setBanner("ПОДБРОС!");
         }
     }
 
