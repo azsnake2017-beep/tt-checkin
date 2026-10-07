@@ -399,8 +399,4 @@ function renderAll() {
     } else { document.getElementById('extend-modal').style.display = 'none'; } 
   } else { document.getElementById('extend-modal').style.display = 'none'; hasTriggeredPush = false; }
 }
-// === ПАТЧ: ОБНОВЛЯЕМ ПОГОДУ ПОСЛЕ ОТРИСОВКИ РАДАРА ===
-  if (typeof loadParkWeather === 'function') {
-      loadParkWeather();
-  }
-}
+
