@@ -1943,6 +1943,10 @@ document.addEventListener('touchstart', function(e) {
   swipeState.isDragging = false;
   swipeState.isVerticalScroll = false;
   swipeState.activeView = document.querySelector('.main-view.active');
+ 
+  // ВАЖНО: ОТКЛЮЧАЕМ СВАЙПЫ НА ВКЛАДКЕ АРКАДЫ (ЧТОБЫ НЕ ЛАГАЛО И НЕ ПЕРЕКЛЮЧАЛОСЬ)
+  if (swipeState.activeView && swipeState.activeView.id === 'view-arcade') return;
+  
   swipeState.targetView = null;
 }, {passive: true});
 
