@@ -1319,12 +1319,42 @@ function listenLeaderboard() {
 }
 
 // ==========================================
-// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ
+// ТОЧКА СТАРТА ПРИЛОЖЕНИЯ И ОТЛОЖЕННАЯ ИНИЦИАЛИЗАЦИЯ
 // ==========================================
 document.addEventListener('DOMContentLoaded', function() {
+  
+  // 30 ВРЕДНЫХ СОВЕТОВ ПРО НАСТОЛЬНЫЙ ТЕННИС (И КЛУБ ЧМЗ)
   var ttJokes = [
     "Если ты продул всухую<br>И твой Эло покатился,<br>Ни за что не жми на кнопку<br>«Записать свой результат».",
-    "Если вдруг удар не вышел,<br>Сразу жалуйся на ветер,<br>Даже если ты играешь<br>В самом центре ДК «Восток»."
+    "Если вдруг удар не вышел,<br>Сразу жалуйся на ветер,<br>Даже если ты играешь<br>В самом центре ДК «Восток».",
+    "Если лупишь ты по сетке<br>Уже пятый раз подряд,<br>Громко крикни: «Это тактика!»<br>Пусть соперник задрожит.",
+    "Если стол тебе не нравится<br>В нашем клубе ЧМЗ,<br>Смело двигай его к выходу,<br>Там прохладней и свежей.",
+    "Чтобы точно взять победу<br>И поднять свой рейтинг вверх,<br>Прячь ракетку под футболку,<br>Отбивай мячи рукой.",
+    "Если Эло стало падать,<br>Удали скорее бота,<br>Нету бота — нет проблемы,<br>Ты по-прежнему звезда.",
+    "Выходя к столу в «Востоке»,<br>Сразу делай грозный вид.<br>Промахнешься — смело требуй,<br>Чтобы дали переигровку.",
+    "На подаче прячь свой мячик<br>Глубоко в карман штанов,<br>А потом кидай внезапно<br>Прямо в глаз оппоненту.",
+    "Если кто-то крутит топсы,<br>Не пытайся отбивать.<br>Лучше просто отвернись<br>И скажи, что ты устал.",
+    "Если счет летит к 10:0,<br>И не в твою, увы, пользу,<br>Сделай вид, что ты размялся,<br>И иди попей воды.",
+    "Приходи в ДК «Восток»<br>В зимних валенках с шипами.<br>Сцепление будет просто супер,<br>Только пол придется мыть.",
+    "Если мяч улетел в угол,<br>Не спеши за ним бежать.<br>Пусть соперник сам приносит,<br>Ему нужнее этот балл.",
+    "Чтобы сбить прицел чужой,<br>Громко топай под столом.<br>Теннис — это вам не шахматы,<br>Здесь важна звуковая атака.",
+    "Покупай себе ракетку<br>С самой длинною резиной.<br>Чтобы сам не понимал ты,<br>Как и куда летит твой мяч.",
+    "Если рейтинг твой пробит,<br>И в таблице ты на дне,<br>Говори, что ты играешь<br>Чисто ради фана, бро.",
+    "Перед матчем съешь беляш,<br>Руки вытри об шорты.<br>Хват ракетки будет жестким,<br>И соперник убежит.",
+    "На турнире всем кричи:<br>«Я играю в поддавки!»<br>Если выиграл — ты гений,<br>Проиграл — ну, так и было.",
+    "Если сетка помешала<br>Перебросить мяч тебе,<br>Аккуратно, незаметно<br>Опусти ее пониже.",
+    "Забывай считать очки,<br>Особенно когда летишь.<br>А в конце скажи уверенно:<br>«Ноль одиннадцать, я вин!»",
+    "Если в клубе ЧМЗ<br>Места нет, столы заняты,<br>Доставай свою фанеру<br>И играй прям на полу.",
+    "Мажь ракетку майонезом,<br>Чтоб крутило как в кино.<br>Пусть соперник долго плачет,<br>Оттирая белый шар.",
+    "Спорь до хрипоты с соседом,<br>Что был край, а не ребро.<br>Пусть весь зал ДК «Восток»<br>Изучает геометрию.",
+    "Не регистрируйся в боте,<br>Играй тайно по ночам.<br>Чтобы Эло твой высокий<br>Не достался никому.",
+    "Бросай ракетку прямо в стену,<br>Если слил ты важный сет.<br>Ракетка новая найдется,<br>А вот гордость — никогда.",
+    "Говори, что у тебя<br>Травма пальца на ноге.<br>Это лучшее прикрытие<br>Для любых твоих провалов.",
+    "Тренируйся только дома<br>С кошкой на кухонном столе.<br>А на турнире гордо скажи,<br>Что у вас разные весовые.",
+    "Если стол чуть-чуть шатается,<br>Не подкладывай картонку.<br>Лучше стой и балансируй,<br>Как на палубе матрос.",
+    "На разминке бей со всей дури<br>Прямо в стену иль в потолок.<br>Пусть соперник сразу видит,<br>Сколько дури у тебя.",
+    "Заяви, что ты сегодня<br>Будешь левой рукой играть.<br>Если что — всегда отмазка,<br>А если выиграл — ты герой.",
+    "После каждого удара<br>Громко хлопай сам себе.<br>Клуб любителей тенниса<br>Любит шоу и аплодисменты."
   ];
 
   var isFirstStart = !sessionStorage.getItem('tt_app_loaded');
@@ -1335,6 +1365,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   if (txt) txt.innerText = 'Загрузка приложения...';
 
+  // ОТОБРАЖЕНИЕ ПРЕЛОАДЕРА (Оставляем 8 секунд для чтения шуток)
   if (isFirstStart) {
     sessionStorage.setItem('tt_app_loaded', 'true');
     if (jokeEl) {
@@ -1363,7 +1394,7 @@ document.addEventListener('DOMContentLoaded', function() {
           loader.style.display = 'none';
         }, 600);
       }
-    }, 8000);
+    }, 8000); // 8 секунд на чтение шутки
     
   } else {
     if (jokeEl) jokeEl.style.display = 'none';
@@ -1380,47 +1411,48 @@ document.addEventListener('DOMContentLoaded', function() {
     };
   }
 
-  var tgAttempts = 0;
-  var tgCheck = setInterval(function() {
-    if (window.Telegram && window.Telegram.WebApp) {
-      try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
-      clearInterval(tgCheck);
-    }
-    if (++tgAttempts > 20) clearInterval(tgCheck);
-  }, 100);
-
+  // 1. МГНОВЕННАЯ ОТРИСОВКА ИНТЕРФЕЙСА (БЕЗ ЗАДЕРЖЕК)
   try { restoreCardStates(); } catch(e) {}
   try { initTheme(); } catch(e) {}
   try { initNavTab(); } catch(e) {}
-  
-  if (typeof renderQuestBoard === 'function') {
-      try { renderQuestBoard(); } catch(e) {}
-  }
-
+  if (typeof renderQuestBoard === 'function') { try { renderQuestBoard(); } catch(e) {} }
   if (typeof setAppProgress === 'function') setAppProgress(70, 'Подключение...');
 
-  try { initUserProfile(); } catch(e) {}
-  try { updateAdminControls(); } catch(e) {}
-  if(typeof listenPendingMatches === 'function') { try { listenPendingMatches(); } catch(e) {} }
-  
-  ['park', 'vostok'].forEach(function(loc) {
-    try {
-      db.collection('locations').doc(loc).onSnapshot(function(doc) { 
-          try { 
-              var data = doc.data() || {}; 
-              if(typeof locationsData !== 'undefined' && locationsData[loc]) {
-                 locationsData[loc].plans = data.plans || []; 
-                 locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) } : p; }); 
-                 if(typeof renderAll === 'function') renderAll(); 
-              }
-          } catch(e){} 
-      }, function(err) {});
-    } catch(e) {}
-  });
-
-  if (typeof setAppProgress === 'function') setAppProgress(100, 'Готово!');
-  
+  // 2. ОТЛОЖЕННАЯ ИНИЦИАЛИЗАЦИЯ БАЗЫ ДАННЫХ И TELEGRAM (через 100мс)
+  // Это позволяет браузеру моментально нарисовать шутку и анимацию загрузки
   setTimeout(function() {
+      // Инициализация виджета Telegram в фоне
+      var tgAttempts = 0;
+      var tgCheck = setInterval(function() {
+        if (window.Telegram && window.Telegram.WebApp) {
+          try { window.Telegram.WebApp.ready(); if (typeof window.Telegram.WebApp.expand === 'function') window.Telegram.WebApp.expand(); } catch(e) {}
+          clearInterval(tgCheck);
+        }
+        if (++tgAttempts > 20) clearInterval(tgCheck);
+      }, 100);
+
+      // Загрузка профиля (теперь она не блокирует начальный экран!)
+      try { initUserProfile(); } catch(e) {}
+      try { updateAdminControls(); } catch(e) {}
+      
+      // Запуск фоновых слушателей Firebase
+      if(typeof listenPendingMatches === 'function') { try { listenPendingMatches(); } catch(e) {} }
+      
+      ['park', 'vostok'].forEach(function(loc) {
+        try {
+          db.collection('locations').doc(loc).onSnapshot(function(doc) { 
+              try { 
+                  var data = doc.data() || {}; 
+                  if(typeof locationsData !== 'undefined' && locationsData[loc]) {
+                     locationsData[loc].plans = data.plans || []; 
+                     locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) } : p; }); 
+                     if(typeof renderAll === 'function') renderAll(); 
+                  }
+              } catch(e){} 
+          }, function(err) {});
+        } catch(e) {}
+      });
+
       try {
         db.collection('settings').doc('announcements').onSnapshot(function(doc) {
           try {
@@ -1473,7 +1505,9 @@ document.addEventListener('DOMContentLoaded', function() {
       }
       
       if (typeof loadTableTennisNews === 'function') loadTableTennisNews();
-          
+
+      if (typeof setAppProgress === 'function') setAppProgress(100, 'Готово!');
+      
   }, 100); 
 });
 
