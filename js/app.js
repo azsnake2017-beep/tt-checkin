@@ -2239,7 +2239,7 @@ window.showBadgeInfo = function(badgeKey) {
   if (iconEl) iconEl.innerText = info.icon;
   
   openModalSmoothly('badge-info-modal');
-
+};
   /* ==========================================
    РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
    ========================================== */
