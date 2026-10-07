@@ -683,38 +683,45 @@ html, body {
 }
 
 /* ==========================================
-   ФИКСЫ ПЕРЕКРЫТИЙ И ИДЕАЛЬНАЯ СИММЕТРИЯ (ФИНАЛ)
+   ФИНАЛЬНАЯ СИММЕТРИЯ И УЛЬТРА-ПЛАВНОСТЬ (60 FPS)
    ========================================== */
 
-/* 1. Шапка: задаем ровные боковые отступы 16px */
+/* 1. Идеальная шапка: отступы ровно 16px по бокам */
 #main-top-header {
   padding-top: max(env(safe-area-inset-top, 12px), 12px) !important;
+  padding-bottom: 12px !important;
   padding-left: 16px !important;
   padding-right: 16px !important;
-  padding-bottom: 8px !important;
-  box-sizing: border-box !important;
+  margin: 0 !important;
   width: 100% !important;
+  box-sizing: border-box !important;
+  /* Аппаратное ускорение для стабильности при скролле */
+  transform: translateZ(0); 
 }
 
-/* 2. Экраны контента: выравниваем бока (16px) */
+/* 2. Экраны контента: те же 16px по бокам, чтобы всё было вровень с шапкой */
 .main-view {
-  padding-top: 4px !important; /* Компактный зазор под шапкой */
+  padding-top: 0 !important; /* Убрали лишний верхний отступ, gap сделает всё сам */
   padding-left: 16px !important;
   padding-right: 16px !important;
-  padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)) !important; 
-  box-sizing: border-box !important;
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)) !important;
+  margin: 0 !important;
   width: 100% !important;
+  box-sizing: border-box !important;
   overflow-x: hidden !important;
+  /* Включаем GPU-ускорение для идеальных и плавных свайпов (60 FPS) */
+  transform: translateZ(0);
+  will-change: transform;
 }
 
-/* 3. Магия Flexbox для АКТИВНОГО экрана: делает идеальный зазор между всеми элементами */
+/* 3. Включаем Flexbox для идеальных зазоров по вертикали */
 .main-view.active {
   display: flex !important;
   flex-direction: column !important;
-  gap: 12px !important; /* Тот самый единый зазор между всеми карточками и кнопками */
+  gap: 12px !important; /* Единый ровный зазор между карточками */
 }
 
-/* 4. Убираем старые кривые отступы у всех блоков, теперь ими управляет Flexbox (gap) */
+/* 4. ГЛАВНЫЙ ФИКС ШИРИНЫ: Жестко убиваем старые боковые отступы у карточек! */
 .main-view > .card, 
 .main-view > .profile-card,
 .main-view > .rating-card,
@@ -722,21 +729,23 @@ html, body {
 .main-view > .tabs-container,
 .main-view > button,
 .main-view > div[id*="container"] {
-  margin-top: 0 !important;
-  margin-bottom: 0 !important;
+  margin: 0 !important; /* Сбрасываем margin полностью (и верх/низ, и право/лево) */
   width: 100% !important;
   box-sizing: border-box !important;
 }
 
-/* 5. Нижняя панель: защита от системной полоски Android/iOS */
+/* 5. Нижняя панель */
 .bottom-nav {
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+  transform: translateZ(0);
 }
 
-/* 6. Защита для модальных окон (всплывающих меню) */
+/* 6. Ультра-плавные модальные окна (как в нативных приложениях) */
 .modal-box {
   padding-bottom: max(env(safe-area-inset-bottom, 24px), 30px) !important;
   max-height: calc(100dvh - env(safe-area-inset-top, 40px)) !important;
+  /* GPU-ускорение для выезда шторки снизу */
+  will-change: transform;
 }
 
 .modal-box > div[style*="overflow-y: auto"] {
