@@ -1951,6 +1951,9 @@ document.addEventListener('touchstart', function(e) {
 }, {passive: true});
 
 document.addEventListener('touchmove', function(e) {
+  // ВАЖНО: Если мы на вкладке аркады, полностью блокируем свайп-переход наружу
+  var activeV = document.querySelector('.main-view.active');
+  if (activeV && activeV.id === 'view-arcade') return;
   if (swipeState.isAnimating || !swipeState.activeView) return;
 
   var dx = e.touches[0].clientX - swipeState.startX;
