@@ -1,11 +1,16 @@
-// ==========================================
-// js/arcade.js — 3D Аркадный Пинг-Понг в Парке (Оптимизированный)
-// ==========================================
-
 window.arcadeGameInitialized = false;
 
 function initArcadeGame() {
-    if (window.arcadeGameInitialized) return;
+    // Если Three.js еще не подгрузился из CDN, ждем 100мс и пробуем снова
+    if (typeof THREE === 'undefined') {
+        setTimeout(initArcadeGame, 100);
+        return;
+    }
+
+    if (window.arcadeGameInitialized) {
+        window.arcadeActive = true;
+        return;
+    }
     window.arcadeGameInitialized = true;
 
     // Тексты для ИИ и интерфейса
@@ -30,19 +35,22 @@ function initArcadeGame() {
         "Топ-спин крути, дубина!"
     ];
 
-    let currentDifficulty = 1; // 0: Легко, 1: Норма, 2: Хардкор
+    let currentDifficulty = 1;
     const DIFF_LEVELS = [
         { name: "ЛЕГКО", aiLerp: 4, aiMissChance: 0.30, flightTime: 0.75, aiAim: 0.5 },
         { name: "НОРМА", aiLerp: 8, aiMissChance: 0.15, flightTime: 0.55, aiAim: 0.85 },
         { name: "ХАРДКОР", aiLerp: 14, aiMissChance: 0.03, flightTime: 0.33, aiAim: 1.05 }
     ];
 
-    document.getElementById('arcade-diff-btn').addEventListener('click', () => {
-        currentDifficulty = (currentDifficulty + 1) % 3;
-        document.getElementById('arcade-diff-btn').textContent = "СЛОЖНОСТЬ: " + DIFF_LEVELS[currentDifficulty].name;
-        const colors = ['#4ade80', '#facc15', '#ef4444'];
-        document.getElementById('arcade-diff-btn').style.backgroundColor = colors[currentDifficulty];
-    });
+    const diffBtn = document.getElementById('arcade-diff-btn');
+    if (diffBtn) {
+        diffBtn.addEventListener('click', () => {
+            currentDifficulty = (currentDifficulty + 1) % 3;
+            diffBtn.textContent = "СЛОЖНОСТЬ: " + DIFF_LEVELS[currentDifficulty].name;
+            const colors = ['#4ade80', '#facc15', '#ef4444'];
+            diffBtn.style.backgroundColor = colors[currentDifficulty];
+        });
+    }
 
     function setBanner(text) {
         const banner = document.getElementById('arcade-joke-banner');
@@ -82,27 +90,17 @@ function initArcadeGame() {
     }
     const sound = new RetroSound();
 
-    document.getElementById('arcade-sound-btn').addEventListener('click', () => {
-        sound.init(); sound.enabled = !sound.enabled;
-        document.getElementById('arcade-sound-btn').textContent = sound.enabled ? '🔊' : '🔇';
-    });
-
-    function spawnVFX(type) {
-        const words = type === 'hit' ? ['BAM!', 'POW!', 'SMASH!'] : ['OOPS!', 'FAIL!'];
-        const el = document.createElement('div');
-        el.className = 'pow-text';
-        el.textContent = words[Math.floor(Math.random() * words.length)];
-        el.style.position = 'absolute';
-        el.style.left = Math.random() * 40 + 30 + '%'; el.style.top = Math.random() * 40 + 30 + '%';
-        el.style.fontFamily = "'Bangers', cursive";
-        el.style.fontSize = "3rem";
-        el.style.zIndex = "50";
-        el.style.color = type === 'hit' ? `hsl(${Math.random()*60 + 10}, 100%, 50%)` : '#94a3b8';
-        document.getElementById('arcade-vfx-layer').appendChild(el);
-        setTimeout(() => el.remove(), 600);
+    const soundBtn = document.getElementById('arcade-sound-btn');
+    if (soundBtn) {
+        soundBtn.addEventListener('click', () => {
+            sound.init(); sound.enabled = !sound.enabled;
+            soundBtn.textContent = sound.enabled ? '🔊' : '🔇';
+        });
     }
 
     const container = document.getElementById('arcade-canvas-container');
+    if (!container) return;
+
     const scene = new THREE.Scene();
     scene.background = null; 
 
@@ -135,76 +133,6 @@ function initArcadeGame() {
     ground.rotation.x = -Math.PI / 2;
     ground.position.y = -0.5;
     scene.add(ground);
-
-    function createTree(x, z) {
-        const group = new THREE.Group();
-        const trunk = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.3, 1.5), new THREE.MeshToonMaterial({color: 0x78350f}));
-        trunk.position.y = 0.25; addOutline(trunk);
-        const leaves = new THREE.Mesh(new THREE.SphereGeometry(1.2, 7, 7), new THREE.MeshToonMaterial({color: 0x15803d}));
-        leaves.position.y = 1.5; addOutline(leaves);
-        group.add(trunk, leaves); group.position.set(x, -0.5, z);
-        scene.add(group);
-    }
-    createTree(-4, -5); createTree(5, -6); createTree(-6, 2); createTree(6, 3);
-
-    // Скамейка со зрителями
-    const benchGroup = new THREE.Group();
-    const seat = new THREE.Mesh(new THREE.BoxGeometry(2, 0.1, 0.6), new THREE.MeshToonMaterial({color: 0xa16207}));
-    seat.position.y = 0.4;
-    const back = new THREE.Mesh(new THREE.BoxGeometry(2, 0.5, 0.1), new THREE.MeshToonMaterial({color: 0xa16207}));
-    back.position.set(0, 0.7, -0.25);
-    addOutline(seat); addOutline(back);
-    benchGroup.add(seat, back);
-    benchGroup.position.set(-3, -0.5, 0);
-    benchGroup.rotation.y = Math.PI / 3;
-    scene.add(benchGroup);
-
-    const silhouetteMat = new THREE.MeshToonMaterial({color: 0x1e293b});
-    function createSilhouette() {
-        const group = new THREE.Group();
-        const body = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.6), silhouetteMat);
-        body.position.y = 0.7;
-        const head = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 16), silhouetteMat);
-        head.position.y = 1.1;
-        addOutline(body); addOutline(head);
-        group.add(body, head);
-        return { group, head };
-    }
-    const spec1 = createSilhouette(); spec1.group.position.set(-0.5, 0, 0); benchGroup.add(spec1.group);
-    const spec2 = createSilhouette(); spec2.group.position.set(0.5, 0, 0); benchGroup.add(spec2.group);
-
-    let activeSpeaker = null;
-    let spectatorTimer = 0;
-    
-    function updateSpectators(dt) {
-        spectatorTimer -= dt;
-        const uiBubble = document.getElementById('arcade-spectator-ui');
-        if (!uiBubble) return;
-
-        if (spectatorTimer <= 0) {
-            if (Math.random() > 0.4) {
-                activeSpeaker = Math.random() > 0.5 ? spec1 : spec2;
-                document.getElementById('arcade-spectator-text').textContent = SPECTATOR_PHRASES[Math.floor(Math.random() * SPECTATOR_PHRASES.length)];
-                uiBubble.style.display = 'block';
-                spectatorTimer = 5 + Math.random() * 4;
-            } else {
-                activeSpeaker = null;
-                uiBubble.style.display = 'none';
-                spectatorTimer = 3 + Math.random() * 3;
-            }
-        }
-
-        if (activeSpeaker) {
-            const headPos = new THREE.Vector3();
-            activeSpeaker.head.getWorldPosition(headPos);
-            headPos.y += 0.4;
-            headPos.project(camera);
-            const targetX = (headPos.x * .5 + .5) * container.clientWidth;
-            const targetY = (headPos.y * -.5 + .5) * container.clientHeight;
-            uiBubble.style.left = `${targetX}px`;
-            uiBubble.style.top = `${targetY}px`;
-        }
-    }
 
     const TABLE_W = 2.0; const TABLE_L = 3.0; const TABLE_H = 0.5;
 
@@ -252,7 +180,8 @@ function initArcadeGame() {
         matchStartServer: 'player', serving: 'player'
     };
 
-    document.getElementById('arcade-ai-name').textContent = JOKES.aiNames[Math.floor(Math.random()*JOKES.aiNames.length)];
+    const aiNameEl = document.getElementById('arcade-ai-name');
+    if (aiNameEl) aiNameEl.textContent = JOKES.aiNames[Math.floor(Math.random()*JOKES.aiNames.length)];
 
     function updatePointer(clientX, clientY) {
         let rect = container.getBoundingClientRect();
@@ -276,7 +205,6 @@ function initArcadeGame() {
     container.addEventListener('touchmove', (e) => { e.preventDefault(); updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
 
     function performArcadeHit(isPlayer) {
-        let isServe = (state.status === 'serve_toss');
         state.status = 'playing';
         let sign = isPlayer ? -1 : 1;
         const diff = DIFF_LEVELS[currentDifficulty];
@@ -293,7 +221,7 @@ function initArcadeGame() {
         state.vel.z = (targetZ - state.ball.z) / time;
         state.vel.y = (targetY - state.ball.y - 0.5 * GRAVITY * time * time) / time;
 
-        sound.hit(); spawnVFX('hit');
+        sound.hit();
         setBanner(JOKES.hit[Math.floor(Math.random()*JOKES.hit.length)]);
     }
 
@@ -302,12 +230,16 @@ function initArcadeGame() {
         state.status = 'scored';
         
         if (winner === 'player') {
-            state.playerScore++; document.getElementById('arcade-player-score').textContent = state.playerScore;
+            state.playerScore++; 
+            const pScoreEl = document.getElementById('arcade-player-score');
+            if (pScoreEl) pScoreEl.textContent = state.playerScore;
             sound.score(); setBanner(JOKES.hit[Math.floor(Math.random()*JOKES.hit.length)]);
             showBotPhrase(false);
         } else {
-            state.aiScore++; document.getElementById('arcade-ai-score').textContent = state.aiScore;
-            sound.fail(); spawnVFX('miss'); setBanner(JOKES.miss[Math.floor(Math.random()*JOKES.miss.length)]);
+            state.aiScore++; 
+            const aiScoreEl = document.getElementById('arcade-ai-score');
+            if (aiScoreEl) aiScoreEl.textContent = state.aiScore;
+            sound.fail(); setBanner(JOKES.miss[Math.floor(Math.random()*JOKES.miss.length)]);
             showBotPhrase(true);
         }
 
@@ -315,8 +247,10 @@ function initArcadeGame() {
             state.serving = state.serving === 'player' ? 'ai' : 'player';
             setTimeout(resetBall, 1500);
         } else {
-            document.getElementById('arcade-modal').style.display = 'flex';
-            document.getElementById('arcade-modal-title').textContent = state.playerScore >= 11 ? "ПОБЕДА!" : "СЛИВ!";
+            const modal = document.getElementById('arcade-modal');
+            if (modal) modal.style.display = 'flex';
+            const modalTitle = document.getElementById('arcade-modal-title');
+            if (modalTitle) modalTitle.textContent = state.playerScore >= 11 ? "ПОБЕДА!" : "СЛИВ!";
         }
     }
 
@@ -340,11 +274,10 @@ function initArcadeGame() {
     const clock = new THREE.Clock();
     
     function animate() {
-        if (!window.arcadeActive) return; // Останавливаем рендеринг, если ушли с вкладки
+        if (!window.arcadeActive) return; 
         requestAnimationFrame(animate);
 
         const dt = Math.min(clock.getDelta(), 0.05);
-        updateSpectators(dt);
 
         paddlePlayer.position.x = THREE.MathUtils.lerp(paddlePlayer.position.x, state.targetX, 15 * dt);
         paddlePlayer.position.y = THREE.MathUtils.lerp(paddlePlayer.position.y, state.targetY, 15 * dt);
@@ -402,15 +335,22 @@ function initArcadeGame() {
         renderer.render(scene, camera);
     }
 
-    document.getElementById('arcade-modal-btn').addEventListener('click', () => {
-        document.getElementById('arcade-modal').style.display = 'none';
-        state.playerScore = 0; state.aiScore = 0;
-        document.getElementById('arcade-player-score').textContent = '0';
-        document.getElementById('arcade-ai-score').textContent = '0';
-        resetBall();
-    });
+    const modalBtn = document.getElementById('arcade-modal-btn');
+    if (modalBtn) {
+        modalBtn.addEventListener('click', () => {
+            const modal = document.getElementById('arcade-modal');
+            if (modal) modal.style.display = 'none';
+            state.playerScore = 0; state.aiScore = 0;
+            const pScoreEl = document.getElementById('arcade-player-score');
+            const aiScoreEl = document.getElementById('arcade-ai-score');
+            if (pScoreEl) pScoreEl.textContent = '0';
+            if (aiScoreEl) aiScoreEl.textContent = '0';
+            resetBall();
+        });
+    }
 
     window.addEventListener('resize', () => {
+        if (!container) return;
         camera.aspect = container.clientWidth / container.clientHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(container.clientWidth, container.clientHeight);
