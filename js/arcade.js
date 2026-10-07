@@ -141,12 +141,11 @@ function initArcadeGame() {
     container.style.touchAction = 'none'; // Отключаем дефолтный скролл телефона для игры[cite: 4]
     const scene = new THREE.Scene(); scene.background = null; 
 
-    // Используем размеры экрана, чтобы камера не сжималась при скрытом контейнере
     const width = window.innerWidth;
     const height = window.innerHeight;
 
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.6, 3.8); // Идеальное расстояние со столом и скамейкой
+    camera.position.set(0, 1.6, 3.8); 
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -290,7 +289,6 @@ function initArcadeGame() {
         }
     }
 
-    // Надежные глобальные слушатели на весь документ для уверенного перехвата кликов и тапов в игре
     document.addEventListener('pointermove', (e) => {
         if (window.arcadeActive && window.isArcadeGameRunning) updatePointer(e.clientX, e.clientY);
     }, { passive: true });
@@ -522,32 +520,16 @@ function initArcadeGame() {
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
     });
-// Надежный глобальный перехватчик клика по кнопке старта в аркаде
-    document.addEventListener('click', function(e) {
-        var target = e.target.closest('#btn-start-arcade');
-        if (target && window.arcadeActive) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            var startScreen = document.getElementById('arcade-start-screen');
-            if (startScreen) {
-                startScreen.style.display = 'none';
-            }
-            window.isArcadeGameRunning = true;
-            sound.init(); 
-            resetBall();
-            animate();
-        }
-    }, { capture: true });
 
-    // То же самое для тач-устройств
-    document.addEventListener('touchstart', function(e) {
-        var target = e.target.closest('#btn-start-arcade');
-        if (target && window.arcadeActive) {
-            e.preventDefault();
-            e.stopPropagation();
-            
-            var startScreen = document.getElementById('arcade-start-screen');
+    // --- АБСОЛЮТНО НАДЕЖНЫЙ СТАРТ ПО КНОПКЕ ---
+    const startBtn = document.getElementById('btn-start-arcade');
+    if (startBtn) {
+        const startGameHandler = function(e) {
+            if (e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }
+            const startScreen = document.getElementById('arcade-start-screen');
             if (startScreen) {
                 startScreen.style.display = 'none';
             }
@@ -555,9 +537,12 @@ function initArcadeGame() {
             sound.init(); 
             resetBall();
             animate();
-        }
-    }, { capture: true, passive: false });
-  
+        };
+
+        startBtn.onclick = startGameHandler;
+        startBtn.addEventListener('click', startGameHandler, { capture: true });
+        startBtn.addEventListener('touchstart', startGameHandler, { capture: true, passive: false });
+    }
     
     setTimeout(() => {
         const w = window.innerWidth;
