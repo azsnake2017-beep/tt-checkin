@@ -138,7 +138,7 @@ function initArcadeGame() {
     function vibrate(time) { if (navigator.vibrate) try { navigator.vibrate(time); } catch(e){} }
 
     const container = document.getElementById('canvas-container');
-    container.style.touchAction = 'none'; // Отключаем дефолтный скролл телефона для игры[cite: 4]
+    container.style.touchAction = 'none'; 
     const scene = new THREE.Scene(); scene.background = null; 
 
     const width = window.innerWidth;
@@ -385,7 +385,7 @@ function initArcadeGame() {
                 if(state.status === 'serve_wait') { 
                     state.status = 'serve_toss'; 
                     state.vel.set(0, 5, 0); 
-                    setBanner("ПОДБРОС!");[cite: 4]
+                    setBanner("ПОДБРОС!");
                 }
             }, 1000);
         }
