@@ -69,9 +69,9 @@ function initArcadeGame() {
 
     let currentDifficulty = 1; 
     const DIFF_LEVELS = [
-        { name: "ЛЕГКО", aiLerp: 4, aiMissChance: 0.30, flightTime: 0.75, aiAim: 0.5 },
-        { name: "НОРМА", aiLerp: 8, aiMissChance: 0.15, flightTime: 0.55, aiAim: 0.85 },
-        { name: "ХАРДКОР", aiLerp: 14, aiMissChance: 0.03, flightTime: 0.33, aiAim: 1.05 }
+        { name: "ЛЕГКО", aiLerp: 4, aiMissChance: 0.50, flightTime: 0.75, aiAim: 0.5 },
+        { name: "НОРМА", aiLerp: 8, aiMissChance: 0.30, flightTime: 0.55, aiAim: 0.85 },
+        { name: "ХАРДКОР", aiLerp: 14, aiMissChance: 0.15, flightTime: 0.33, aiAim: 1.05 }
     ];
 
     document.getElementById('diff-btn').addEventListener('click', () => {
