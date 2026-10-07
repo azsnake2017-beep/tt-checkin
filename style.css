@@ -693,9 +693,9 @@ html, body {
 
 /* 2. Сдвигаем весь контент страниц */
 .main-view {
-  /* Отступ сверху = высота шапки + высота челки/островка */
-  padding-top: calc(75px + env(safe-area-inset-top, 0px)) !important; 
-  /* Отступ снизу = высота твоего меню + системная полоса + запас для скролла */
+  /* Убрали лишние 75px, так как шапка сама толкает контент вниз */
+  padding-top: 12px !important; 
+  /* Нижний отступ оставляем (защита от перекрытия меню) */
   padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)) !important; 
 }
 
