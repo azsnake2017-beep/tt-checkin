@@ -457,7 +457,28 @@ window.saveBounty = function() {
     });
   });
 };
-
+window.saveEloBoost = function() {
+  if (!isSuperAdmin()) return;
+  
+  var selectEl = document.getElementById('admin-elo-boost');
+  if (!selectEl) return;
+  
+  var mult = parseInt(selectEl.value, 10) || 1;
+  
+  db.collection('settings').doc('elo_boost').set({ multiplier: mult }, { merge: true }).then(function() {
+    if (mult > 1) {
+      var msg = "🔥 <b>ВКЛЮЧЕН ГЛОБАЛЬНЫЙ БУСТ ЭЛО!</b> 🔥\n\nВсе победы теперь приносят в <b>" + mult + " раза</b> больше рейтинга!\n\n<i>Хватай ракетку и бегом к столу, пока действует бонус!</i> 🏓";
+      if (typeof sendTelegramAlert === 'function') sendTelegramAlert(msg);
+      if (typeof customAlert === 'function') customAlert("✅ Буст x" + mult + " успешно включен!");
+    } else {
+      if (typeof sendTelegramAlert === 'function') sendTelegramAlert("🛑 <b>Буст Эло отключен.</b> Рейтинг начисляется в стандартном (x1) режиме.");
+      if (typeof customAlert === 'function') customAlert("✅ Буст отключен!");
+    }
+    closeAdminMenu();
+  }).catch(function(e) {
+    if (typeof customAlert === 'function') customAlert("Ошибка сохранения: " + e.message);
+  });
+};
 window.clearBounty = function(silent) {
   if (!isSuperAdmin()) return;
   db.collection('settings').doc('bounty').delete().then(function() {
