@@ -13,8 +13,7 @@ function loadParkWeather() {
   var cachedTime = localStorage.getItem('tt_weather_cache_ts');
   if (cachedW && cachedTime && (Date.now() - parseInt(cachedTime, 10) < 600000)) {
     container.innerHTML = cachedW;
-    applyWeatherAnimation(cachedW); // <-- Включаем анимацию при загрузке из кэша
-    return;
+    return; // Просто выводим кэш, без анимаций
   }
 
   // 1. Локальная функция направления ветра
@@ -58,26 +57,23 @@ function loadParkWeather() {
           tmrStr = '<div class="weather-badge" style="background: rgba(168, 85, 247, 0.1); border-color: rgba(168, 85, 247, 0.2); color: #9333ea; margin-top: 4px;"><span>Завтра: ' + getW(d.weather_code[1]).split(' ')[1].toLowerCase() + ', от ' + Math.round(d.temperature_2m_min[1]) + '° до ' + Math.round(d.temperature_2m_max[1]) + '°C</span></div>';
       }
       
-      var weatherDesc = getW(c.weather_code); // Сохраняем текстовое описание
+      var weatherDesc = getW(c.weather_code); 
       var weatherHtml = '<div class="weather-badge"><span>' + weatherDesc + ', ' + Math.round(c.temperature_2m) + '°C • ветер ' + Math.round(c.wind_speed_10m) + ' м/с (' + getWindDirection(c.wind_direction_10m) + ')</span></div>' + tmrStr;
       
       container.innerHTML = weatherHtml;
       localStorage.setItem('tt_weather_cache', weatherHtml);
       localStorage.setItem('tt_weather_cache_ts', Date.now().toString());
-
-      applyWeatherAnimation(weatherDesc); // <-- Включаем анимацию после обновления данных
+      // Анимации убраны!
 
     } catch (innerE) { 
       if (cachedW) {
         container.innerHTML = cachedW;
-        applyWeatherAnimation(cachedW); // <-- Защита: анимация при сбое парсинга
       }
       else container.innerHTML = '<div class="weather-badge"><span>Парк: столы на открытом воздухе 🌳</span></div>'; 
     }
   }).catch(function(e) { 
     if (cachedW) {
       container.innerHTML = cachedW;
-      applyWeatherAnimation(cachedW); // <-- Защита: анимация при ошибке сети
     } else {
       container.innerHTML = '<div class="weather-badge"><span>Парк: столы на открытом воздухе 🌳</span></div>';
     }
