@@ -1,13 +1,16 @@
 // ==========================================
-// ЗВУКОВОЙ ДВИЖОК (РАНДОМНЫЕ ЗВУКИ 1-5)
+// ЗВУКОВОЙ ДВИЖОК (РАНДОМНЫЕ ЗВУКИ 1-5 + АНТИ-СПАМ)
 // ==========================================
 window.TTAudio = {
   soundEnabled: localStorage.getItem('tt_sound_enabled') !== 'false', 
+  lastPlayTime: 0, // Защита от двойного воспроизведения
+  
   bounces: [
     new Audio('sounds/1.mp3'), new Audio('sounds/2.mp3'),
     new Audio('sounds/3.mp3'), new Audio('sounds/4.mp3'),
     new Audio('sounds/5.mp3')
   ],
+  
   vibrate: function(type) {
     if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
       window.Telegram.WebApp.HapticFeedback.impactOccurred(type === 'success' ? 'heavy' : 'light');
@@ -15,17 +18,26 @@ window.TTAudio = {
       navigator.vibrate(type === 'success' ? [40, 60, 40] : [40]); 
     }
   },
+  
   playRandomBounce: function() {
     if (!this.soundEnabled) return; 
+    
+    var now = Date.now();
+    // Если с прошлого звука прошло меньше 50 миллисекунд - блокируем дубль!
+    if (now - this.lastPlayTime < 50) return; 
+    this.lastPlayTime = now;
+
     var sound = this.bounces[Math.floor(Math.random() * this.bounces.length)];
     if (sound) {
       try { sound.volume = 0.7; sound.currentTime = 0; sound.play().catch(function() {}); } catch(e) {}
     }
   },
+  
   playClick: function() { this.playRandomBounce(); },
   playPop: function() { this.playRandomBounce(); },
   playSwoosh: function() { this.playRandomBounce(); },
   playSuccess: function() { this.vibrate('success'); this.playRandomBounce(); },
+  
   toggleSound: function() {
     this.soundEnabled = !this.soundEnabled;
     localStorage.setItem('tt_sound_enabled', this.soundEnabled); 
@@ -34,14 +46,6 @@ window.TTAudio = {
     return this.soundEnabled;
   }
 };
-
-document.addEventListener('click', function(e) {
-  if (e.target.closest('#main-sound-toggle')) return;
-  var target = e.target.closest('button, .btn, .btn-info, .score-btn, .tab-btn, .nav-item, .clickable-name, .platform-badge, .card-top');
-  if (target && window.TTAudio) {
-    window.TTAudio.playRandomBounce();
-  }
-});
 
 window.toggleAppSound = function() {
   if (!window.TTAudio) return;
