@@ -2377,38 +2377,7 @@ var BADGE_DESCRIPTIONS = {
   "Тренер 📋": { title: "Тренер", icon: "📋", desc: "Официальный тренер клуба. Знает, как поставить мощный топс, грамотно выйти на мяч и разнести соперника тактически." }
 };
 
-window.showBadgeInfo = function(badgeKey) {
-  if (typeof vibrate === 'function') vibrate('light'); // Легкая вибрация при клике
-  
-  var info = BADGE_DESCRIPTIONS[badgeKey];
-  
-  // Если плашка нестандартная (например, временная за квест)
-  if (!info) {
-    info = {
-      title: badgeKey.replace(/<[^>]*>?/gm, '').trim(),
-      icon: "🏅",
-      desc: "Это награда или особый статус участника клуба."
-    };
-  }
 
-  var titleEl = document.getElementById('badge-modal-title');
-  var descEl = document.getElementById('badge-modal-desc');
-  var iconEl = document.getElementById('badge-modal-icon');
-  var modal = document.getElementById('badge-info-modal');
-
-  if (titleEl) titleEl.innerText = info.title;
-  if (descEl) descEl.innerText = info.desc;
-  if (iconEl) iconEl.innerText = info.icon;
-  if (modal) modal.style.display = 'flex';
-};
-
-window.closeBadgeInfoModal = function() {
-  if (typeof closeModalSmoothly === 'function') {
-    closeModalSmoothly('badge-info-modal');
-  } else {
-    document.getElementById('badge-info-modal').style.display = 'none';
-  }
-};
 
 /* ==========================================
    60 FPS ДВИЖОК МОДАЛЬНЫХ ОКОН И АЛЕРТОВ
@@ -2461,10 +2430,39 @@ window.openConfirmModal = function(htmlText, onConfirm) {
   openModalSmoothly('confirm-modal');
 };
 
+/* ==========================================
+   УМНАЯ СИСТЕМА ПЛАШЕК (АВТО-КЛИК И ПОИСК)
+   ========================================== */
 window.showBadgeInfo = function(badgeKey) {
-  var info = BADGE_DESCRIPTIONS ? BADGE_DESCRIPTIONS[badgeKey] : null;
-  if (!info) info = { title: badgeKey.replace(/<[^>]*>?/gm, '').trim(), icon: "🏅", desc: "Это награда или особый статус участника." };
+  if (typeof vibrate === 'function') vibrate('light');
   
+  var cleanKey = badgeKey.replace(/<[^>]*>?/gm, '').trim();
+  var info = null;
+
+  if (typeof BADGE_DESCRIPTIONS !== 'undefined') {
+      // 1. Ищем точное совпадение (например, "Учитель 🎓")
+      if (BADGE_DESCRIPTIONS[cleanKey]) {
+          info = BADGE_DESCRIPTIONS[cleanKey];
+      } else {
+          // 2. Ищем частичное совпадение (если передали просто "Учитель" или "Хоккеист")
+          for (var key in BADGE_DESCRIPTIONS) {
+              if (cleanKey.indexOf(BADGE_DESCRIPTIONS[key].title) !== -1 || key.indexOf(cleanKey) !== -1) {
+                  info = BADGE_DESCRIPTIONS[key];
+                  break;
+              }
+          }
+      }
+  }
+  
+  // Если описание так и не найдено, показываем заглушку, но берем реальное имя плашки
+  if (!info) {
+    info = {
+      title: cleanKey,
+      icon: "🏅",
+      desc: "Это награда или особый статус участника клуба."
+    };
+  }
+
   var titleEl = document.getElementById('badge-modal-title');
   var descEl = document.getElementById('badge-modal-desc');
   var iconEl = document.getElementById('badge-modal-icon');
@@ -2473,8 +2471,25 @@ window.showBadgeInfo = function(badgeKey) {
   if (descEl) descEl.innerText = info.desc;
   if (iconEl) iconEl.innerText = info.icon;
   
-  openModalSmoothly('badge-info-modal');
+  if (typeof openModalSmoothly === 'function') {
+      openModalSmoothly('badge-info-modal');
+  } else {
+      var modal = document.getElementById('badge-info-modal');
+      if (modal) modal.style.display = 'flex';
+  }
 };
+
+// Глобальный перехватчик: делает кликабельной АБСОЛЮТНО ЛЮБУЮ плашку
+document.addEventListener('click', function(e) {
+  var badge = e.target.closest('.platform-badge');
+  if (badge) {
+      // Если у плашки забыли прописать событие onclick в HTML
+      if (!badge.hasAttribute('onclick')) {
+          var text = badge.innerText.trim();
+          if (text) window.showBadgeInfo(text);
+      }
+  }
+});
   /* ==========================================
    РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
    ========================================== */
