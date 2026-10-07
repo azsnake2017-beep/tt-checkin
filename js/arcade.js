@@ -144,8 +144,9 @@ function initArcadeGame() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
+    // Идеальный масштаб и отдаление камеры
     const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.6, 3.8); 
+    camera.position.set(0, 1.8, 4.8); 
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -289,21 +290,27 @@ function initArcadeGame() {
         }
     }
 
+    // Надежная обработка тапов и движений для подачи
+    function handleGameInput(clientX, clientY) {
+        updatePointer(clientX, clientY);
+        if (window.isArcadeGameRunning) {
+            tryServe();
+        }
+    }
+
     document.addEventListener('pointermove', (e) => {
         if (window.arcadeActive && window.isArcadeGameRunning) updatePointer(e.clientX, e.clientY);
     }, { passive: true });
 
     container.addEventListener('pointerdown', (e) => {
-        updatePointer(e.clientX, e.clientY);
-        tryServe();
-    }, { passive: false });
+        handleGameInput(e.clientX, e.clientY);
+    });
 
     container.addEventListener('touchstart', (e) => {
         if (e.touches && e.touches.length > 0) {
-            updatePointer(e.touches[0].clientX, e.touches[0].clientY);
-            tryServe();
+            handleGameInput(e.touches[0].clientX, e.touches[0].clientY);
         }
-    }, { passive: false });
+    }, { passive: true });
 
     container.addEventListener('touchmove', (e) => { 
         if (e.touches && e.touches.length > 0) {
@@ -521,7 +528,7 @@ function initArcadeGame() {
         renderer.setSize(w, h);
     });
 
-    // --- АБСОЛЮТНО НАДЕЖНЫЙ СТАРТ ПО КНОПКЕ ---
+    // --- СТАРТ ПО КНОПКЕ PLAY GAME ---
     const startBtn = document.getElementById('btn-start-arcade');
     if (startBtn) {
         const startGameHandler = function(e) {
