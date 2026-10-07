@@ -681,3 +681,38 @@ html, body {
 .modal-box {
   padding-bottom: max(env(safe-area-inset-bottom, 20px), 30px) !important; 
 }
+
+/* ==========================================
+   ФИКСЫ ПЕРЕКРЫТИЙ: DYNAMIC ISLAND, ЧЕЛКИ И НИЖНИЕ ПАНЕЛИ
+   ========================================== */
+
+/* 1. Сдвигаем шапку вниз, чтобы Dynamic Island её не перекрывал */
+#main-top-header {
+  padding-top: max(env(safe-area-inset-top, 12px), 12px) !important;
+}
+
+/* 2. Сдвигаем весь контент страниц */
+.main-view {
+  /* Отступ сверху = высота шапки + высота челки/островка */
+  padding-top: calc(75px + env(safe-area-inset-top, 0px)) !important; 
+  /* Отступ снизу = высота твоего меню + системная полоса + запас для скролла */
+  padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)) !important; 
+}
+
+/* 3. Поднимаем иконки нижнего меню над системной полоской iPhone */
+.bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px) !important;
+}
+
+/* 4. Защита для модальных окон (включая "Кто у стола") */
+.modal-box {
+  /* Защита снизу: чтобы кнопки не прятались за клавиатурой или полоской */
+  padding-bottom: max(env(safe-area-inset-bottom, 24px), 30px) !important;
+  /* Ограничиваем высоту, чтобы модалка не упиралась в Dynamic Island */
+  max-height: calc(100dvh - env(safe-area-inset-top, 40px)) !important;
+}
+
+/* Добавляем воздух в самом низу скроллящихся списков внутри модалок */
+.modal-box > div[style*="overflow-y: auto"] {
+   padding-bottom: 30px !important;
+}
