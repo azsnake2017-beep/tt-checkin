@@ -981,13 +981,56 @@ function closeTournamentModal() { if(typeof closeModalSmoothly === 'function') c
 
 function saveTournament() {
   if (!isSuperAdmin()) return; 
-  var title = document.getElementById('tour-title').value.trim(), dateVal = document.getElementById('tour-date').value, desc = document.getElementById('tour-desc').value.trim();
+  var title = document.getElementById('tour-title').value.trim();
+  var dateVal = document.getElementById('tour-date').value;
+  var desc = document.getElementById('tour-desc').value.trim();
+  
   if (!title) { if(typeof customAlert === 'function') customAlert('Введите название турнира'); return; }
-  var dateStr = ''; if (dateVal) { var d = new Date(dateVal); dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); }
+  
+  var dateStr = ''; 
+  if (dateVal) { 
+      var d = new Date(dateVal); 
+      dateStr = d.toLocaleString([], {day: '2-digit', month: '2-digit', hour: '2-digit', minute:'2-digit'}); 
+  }
   
   var obj = { title: title, dateStr: dateStr, rawDate: dateVal, desc: desc };
-  if (currentEditingTourId) { db.collection('tournaments').doc(currentEditingTourId).update(obj).then(function() { if(typeof customAlert === 'function') customAlert('✅ Турнир обновлен'); closeTournamentModal(); }).catch(function(e) { if(typeof customAlert === 'function') customAlert('Ошибка сохранения: ' + e.message); }); } 
-  else { obj.status = 'registration'; obj.likes = []; obj.dislikes = []; obj.participants = []; obj.groups = {A:[], B:[]}; obj.matches = []; obj.playoffs = {}; obj.results = null; obj.createdAt = Date.now(); db.collection('tournaments').add(obj).then(function() { if(typeof customAlert === 'function') customAlert('✅ Турнир успешно создан'); closeTournamentModal(); }).catch(function(e) { if(typeof customAlert === 'function') customAlert('Ошибка сохранения: ' + e.message); }); }
+  
+  if (currentEditingTourId) { 
+      // Режим редактирования существующего турнира
+      db.collection('tournaments').doc(currentEditingTourId).update(obj).then(function() { 
+          if(typeof customAlert === 'function') customAlert('✅ Турнир обновлен'); 
+          closeTournamentModal(); 
+      }).catch(function(e) { 
+          if(typeof customAlert === 'function') customAlert('Ошибка сохранения: ' + e.message); 
+      }); 
+  } else { 
+      // Режим создания НОВОГО турнира
+      obj.status = 'registration'; 
+      obj.likes = []; 
+      obj.dislikes = []; 
+      obj.participants = []; 
+      obj.groups = {A:[], B:[]}; 
+      obj.matches = []; 
+      obj.playoffs = {}; 
+      obj.results = null; 
+      obj.createdAt = Date.now(); 
+      
+      db.collection('tournaments').add(obj).then(function() { 
+          if(typeof customAlert === 'function') customAlert('✅ Турнир успешно создан'); 
+          closeTournamentModal(); 
+          
+          // --- ОТПРАВКА АНОНСА В TELEGRAM ---
+          var tgMsg = "🏆 <b>АНОНС ТУРНИРА!</b>\n\nОткрыта регистрация на турнир <b>«" + cleanHtml(title) + "»</b>!\n";
+          if (dateStr) tgMsg += "🗓 <b>Дата и время:</b> " + dateStr + "\n";
+          if (desc) tgMsg += "\n📝 <b>Информация:</b>\n" + cleanHtml(desc) + "\n";
+          tgMsg += "\n<i>Заходите в приложение во вкладку «Турниры», чтобы успеть занять место!</i> 🏓";
+          
+          if(typeof sendTelegramAlert === 'function') sendTelegramAlert(tgMsg);
+          
+      }).catch(function(e) { 
+          if(typeof customAlert === 'function') customAlert('Ошибка сохранения: ' + e.message); 
+      }); 
+  }
 }
 
 function deleteTournament(id) { 
