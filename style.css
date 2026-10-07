@@ -664,18 +664,20 @@ html, body {
    ========================================== */
 html, body {
   height: 100%;
-  height: 100dvh; /* Магическое свойство: учитывает уезжающую панель браузера */
+  height: 100dvh; 
   margin: 0;
   padding: 0;
   overflow: hidden;
 }
 
-/* Защита для модалок, чтобы они точно отталкивались от низа */
+/* Привязываем оверлей к динамической высоте, отключаем нижнюю привязку */
 .modal-overlay {
-  bottom: env(safe-area-inset-bottom, 0px);
+  top: 0 !important;
+  bottom: auto !important;
+  height: 100dvh !important; /* Теперь оверлей заканчивается ровно там, где начинается панель Яндекса */
 }
 
-/* Безопасный отступ внутри окна, чтобы контент не прилипал к системной полоске */
+/* Чуть увеличиваем отступ внутри самой шторки, чтобы кнопкам было свободнее */
 .modal-box {
-  padding-bottom: calc(env(safe-area-inset-bottom, 16px) + 24px) !important; 
+  padding-bottom: max(env(safe-area-inset-bottom, 20px), 30px) !important; 
 }
