@@ -467,13 +467,30 @@ window.saveEloBoost = function() {
   
   db.collection('settings').doc('elo_boost').set({ multiplier: mult }, { merge: true }).then(function() {
     if (mult > 1) {
-      var msg = "🔥 <b>ВКЛЮЧЕН ГЛОБАЛЬНЫЙ БУСТ ЭЛО!</b> 🔥\n\nВсе победы теперь приносят в <b>" + mult + " раза</b> больше рейтинга!\n\n<i>Хватай ракетку и бегом к столу, пока действует бонус!</i> 🏓";
-      if (typeof sendTelegramAlert === 'function') sendTelegramAlert(msg);
+      var tgMsg = "";
+      
+      // Генерируем веселые сообщения в зависимости от уровня безумия
+      if (mult === 2) {
+          tgMsg = "🔥 <b>ДВОЙНОЙ ФОРСАЖ! (БУСТ x2)</b> 🔥\n\nАдмин сегодня в хорошем настроении! Все победы приносят в 2 раза больше рейтинга.\n\n<i>Идеальное время, чтобы поднять свой статус!</i> 🏓";
+      } else if (mult === 3) {
+          tgMsg = "🚀 <b>ТРОЙНОЙ КУШ! (БУСТ x3)</b> 🚀\n\nВ клубе становится жарко! Залетайте за столы, Эло умножается на 3!\n\n<i>Рискуй, побеждай, доминируй!</i> 🏓";
+      } else if (mult === 5) {
+          tgMsg = "😱 <b>АДМИН СОШЕЛ С УМА! (БУСТ x5)</b> 😱\n\nПолная анархия в клубе ЧМЗ! За победу насыпают в 5 РАЗ БОЛЬШЕ рейтинга!\n\n<i>Хватай ракетку, бросай все дела, Эло само себя не заработает!</i> 🌪️";
+      } else if (mult >= 10) {
+          tgMsg = "🤯 <b>ПОЛНЫЙ БЕСПРЕДЕЛ! (БУСТ x10)</b> 🤯\n\nКнопка сломалась! Неслыханная щедрость! Рейтинг летит в космос!\n\n<i>Один матч может сделать тебя легендой. Бегом к столу!</i> 💥";
+      } else {
+          tgMsg = "🔥 <b>ВКЛЮЧЕН ГЛОБАЛЬНЫЙ БУСТ x" + mult + "!</b> 🔥\n\nОчки за победу умножены!\n\n<i>Скорее за стол!</i> 🏓";
+      }
+      
+      if (typeof sendTelegramAlert === 'function') sendTelegramAlert(tgMsg);
       if (typeof customAlert === 'function') customAlert("✅ Буст x" + mult + " успешно включен!");
+      
     } else {
-      if (typeof sendTelegramAlert === 'function') sendTelegramAlert("🛑 <b>Буст Эло отключен.</b> Рейтинг начисляется в стандартном (x1) режиме.");
+      // Сообщение об отключении
+      if (typeof sendTelegramAlert === 'function') sendTelegramAlert("🛑 <b>Халява кончилась.</b> Буст Эло отключен, возвращаемся к суровым будням и стандартному начислению (x1).");
       if (typeof customAlert === 'function') customAlert("✅ Буст отключен!");
     }
+    
     closeAdminMenu();
   }).catch(function(e) {
     if (typeof customAlert === 'function') customAlert("Ошибка сохранения: " + e.message);
