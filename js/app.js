@@ -615,7 +615,7 @@ function showUserInfoModal(uid) {
   var mInv = document.getElementById('info-modal-inventory');
   if(mInv) mInv.style.display = 'none';
   
-openModalSmoothly('user-info-modal');
+  openModalSmoothly('user-info-modal');
   
   var userPromise = db.collection('users').doc(uid).get({ source: 'server' }).catch(function() {
       return db.collection('users').doc(uid).get(); 
@@ -712,11 +712,13 @@ openModalSmoothly('user-info-modal');
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
 
-    db.collection('matches_history').get().then(function(allSnaps) {
+    // СУПЕР-ОПТИМИЗАЦИЯ: Грузим ТОЛЬКО матчи этого игрока, а не всего клуба!
+    db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(allSnaps) {
         var matches = [];
         allSnaps.forEach(function(docX) {
           var mx = docX.data();
-          if (mx && mx.participants && mx.participants.indexOf(uid) !== -1) { mx.docId = docX.id; matches.push(mx); }
+          mx.docId = docX.id; 
+          matches.push(mx);
         });
 
         var lastMatchStr = '<span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ещё не играл</span>';
@@ -744,7 +746,7 @@ openModalSmoothly('user-info-modal');
     }).catch(function(err) {
         document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
         var dynRow = document.getElementById('dynamic-last-match-date');
-        if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка</span>';
+        if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted); opacity: 0.6;">Ошибка сети</span>';
     });
   }).catch(function(e) { closeUserInfoModal(); });
 }
