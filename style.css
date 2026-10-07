@@ -683,39 +683,62 @@ html, body {
 }
 
 /* ==========================================
-   ФИКСЫ ПЕРЕКРЫТИЙ И ИДЕАЛЬНАЯ СИММЕТРИЯ
+   ФИКСЫ ПЕРЕКРЫТИЙ И ИДЕАЛЬНАЯ СИММЕТРИЯ (ФИНАЛ)
    ========================================== */
 
-/* Шапка: защищаем края от обрезки и задаем симметричные боковые отступы */
+/* 1. Шапка: задаем ровные боковые отступы 16px */
 #main-top-header {
   padding-top: max(env(safe-area-inset-top, 12px), 12px) !important;
-  padding-left: 12px !important;
-  padding-right: 12px !important;
+  padding-left: 16px !important;
+  padding-right: 16px !important;
+  padding-bottom: 8px !important;
   box-sizing: border-box !important;
   width: 100% !important;
 }
 
-/* Контент страниц: подтягиваем ближе к шапке и выравниваем зазоры */
+/* 2. Экраны контента: выравниваем бока (16px) */
 .main-view {
-  padding-top: 8px !important; /* Уменьшили верхний зазор для аккуратности */
+  padding-top: 4px !important; /* Компактный зазор под шапкой */
+  padding-left: 16px !important;
+  padding-right: 16px !important;
   padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px)) !important; 
   box-sizing: border-box !important;
   width: 100% !important;
-  overflow-x: hidden !important; /* Защита от горизонтального скролла */
+  overflow-x: hidden !important;
 }
 
-/* Нижняя панель: защита от слияния с системной полоской */
+/* 3. Магия Flexbox для АКТИВНОГО экрана: делает идеальный зазор между всеми элементами */
+.main-view.active {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 12px !important; /* Тот самый единый зазор между всеми карточками и кнопками */
+}
+
+/* 4. Убираем старые кривые отступы у всех блоков, теперь ими управляет Flexbox (gap) */
+.main-view > .card, 
+.main-view > .profile-card,
+.main-view > .rating-card,
+.main-view > .leaderboard-card,
+.main-view > .tabs-container,
+.main-view > button,
+.main-view > div[id*="container"] {
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* 5. Нижняя панель: защита от системной полоски Android/iOS */
 .bottom-nav {
   padding-bottom: env(safe-area-inset-bottom, 0px) !important;
 }
 
-/* Защита для модальных окон (включая "Кто у стола") */
+/* 6. Защита для модальных окон (всплывающих меню) */
 .modal-box {
   padding-bottom: max(env(safe-area-inset-bottom, 24px), 30px) !important;
   max-height: calc(100dvh - env(safe-area-inset-top, 40px)) !important;
 }
 
-/* Воздух в самом низу скроллящихся списков внутри модалок */
 .modal-box > div[style*="overflow-y: auto"] {
    padding-bottom: 30px !important;
 }
