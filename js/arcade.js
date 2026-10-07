@@ -303,23 +303,36 @@ function initArcadeGame() {
         }
     }, {passive: true});
     
-    function performArcadeHit(isPlayer) {
-        let isServe = (state.status === 'serve_toss');
-        state.status = 'playing'; let sign = isPlayer ? -1 : 1; const diff = DIFF_LEVELS[currentDifficulty];
+   function performArcadeHit(isPlayer) {
+        let isServe = (state.status === 'serve_toss' || state.status === 'serve_bounce');
+        state.status = 'playing'; 
+        let sign = isPlayer ? -1 : 1; 
+        const diff = DIFF_LEVELS[currentDifficulty];
         
-        let targetZ = sign * (TABLE_L / 4 + Math.random() * (TABLE_L / 4));
-        let aimWidth = isPlayer ? 0.85 : diff.aiAim;
-        let targetX = (Math.random() - 0.5) * (TABLE_W * aimWidth);
-        if (!isPlayer && currentDifficulty === 2 && !isServe) targetZ = sign * (Math.random() > 0.5 ? TABLE_L / 2 - 0.1 : TABLE_L / 6);
-        let targetY = TABLE_H; 
-        
-        let time = diff.flightTime; if (!isPlayer) time *= (0.9 + Math.random() * 0.2);
+        let targetZ, targetX, targetY, time = diff.flightTime;
+
+        if (isServe) {
+            // Траектория для подачи: летит на сторону противника с отскоком
+            targetZ = sign * (TABLE_L / 4 + Math.random() * (TABLE_L / 4));
+            targetX = (Math.random() - 0.5) * (TABLE_W * 0.7);
+            targetY = TABLE_H;
+        } else {
+            // Обычный игровой удар
+            targetZ = sign * (TABLE_L / 4 + Math.random() * (TABLE_L / 4));
+            let aimWidth = isPlayer ? 0.85 : diff.aiAim;
+            targetX = (Math.random() - 0.5) * (TABLE_W * aimWidth);
+            targetY = TABLE_H; 
+            if (!isPlayer) time *= (0.9 + Math.random() * 0.2);
+        }
         
         state.vel.x = (targetX - state.ball.x) / time;
         state.vel.z = (targetZ - state.ball.z) / time;
         state.vel.y = (targetY - state.ball.y - 0.5 * GRAVITY * time * time) / time;
 
-        sound.hit(); vibrate(30); spawnVFX('hit'); setBanner(JOKES.hit[Math.floor(Math.random()*JOKES.hit.length)]);
+        sound.hit(); 
+        vibrate(30); 
+        spawnVFX('hit'); 
+        setBanner(JOKES.hit[Math.floor(Math.random()*JOKES.hit.length)]);
     }
 
     function checkWinCondition() {
@@ -356,13 +369,18 @@ function initArcadeGame() {
     }
 
     function resetBall() {
-        state.status = 'serve_wait'; state.vel.set(0,0,0);
+        state.status = 'serve_wait'; 
+        state.vel.set(0,0,0);
         if (state.serving === 'player') {
             setBanner("КЛИКАЙ ПО ЭКРАНУ ДЛЯ ПОДАЧИ!");
         } else {
             setBanner("Подача Бота...");
             setTimeout(() => { 
-                if(state.status === 'serve_wait') { state.status = 'serve_toss'; state.vel.set(0, 4.5, 0); setBanner("ПОДБРОС!"); }
+                if(state.status === 'serve_wait') { 
+                    state.status = 'serve_toss'; 
+                    state.vel.set(0, 5, 0); 
+                    setBanner("ПОДБРОС!"); 
+                }
             }, 1000);
         }
     }
