@@ -1158,7 +1158,12 @@ function completeTournament(id) {
               if (uDoc.exists) {
                   var uData = uDoc.data(); var m = uData.medals || {gold:0, silver:0, bronze:0};
                   if (puid === gld.uid) m.gold++; if (puid === slv.uid) m.silver++; if (puid === brn.uid) m.bronze++;
-                  batch.update(uRef, { tournamentsPlayed: (uData.tournamentsPlayed||0) + 1, medals: m });
+                  var updateObj = { tournamentsPlayed: (uData.tournamentsPlayed||0) + 1, medals: m };
+                  // Автоматическая выдача уникального титула за турнир "Супер Ниндзя"
+                  if (puid === gld.uid && data.title && data.title.toLowerCase().indexOf('ниндзя') !== -1) {
+                      updateObj.customTag = 'Супер Ниндзя 🥷';
+                  }
+                  batch.update(uRef, updateObj);
               }
           };
       })(p.uid)));
