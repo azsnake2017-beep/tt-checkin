@@ -145,9 +145,9 @@ function initArcadeGame() {
     const height = window.innerHeight;
 
     // Увеличенный угол обзора (FOV 55) и большее расстояние (Z = 5.5), чтобы всё идеально влезло
-    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 100);
-    camera.position.set(0, 2.0, 5.5); 
-    camera.lookAt(0, 0, 0);
+    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
+    camera.position.set(0, 1.5, 3.2); // Ставим камеру за спиной игрока
+    camera.lookAt(0, 0.4, 0);         // Направляем взгляд на центр стола
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
