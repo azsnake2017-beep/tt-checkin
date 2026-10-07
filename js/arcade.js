@@ -144,10 +144,10 @@ function initArcadeGame() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Увеличенный угол обзора (FOV 55) и большее расстояние (Z = 5.5), чтобы всё идеально влезло
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.5, 3.2); // Ставим камеру за спиной игрока
-    camera.lookAt(0, 0.4, 0);         // Направляем взгляд на центр стола
+    // Идеальный общий план: широкий угол (FOV 60) и камера отведена назад и вверх (Z = 6.2), чтобы вошла вся арена
+    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
+    camera.position.set(0, 2.4, 6.2); 
+    camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -290,7 +290,6 @@ function initArcadeGame() {
         }
     }
 
-    // --- УНИВЕРСАЛЬНЫЙ ПЕРЕХВАТ ТАПОВ ДЛЯ ПОДАЧИ И УДАРОВ ---
     function handleGameInput(clientX, clientY) {
         updatePointer(clientX, clientY);
         if (window.isArcadeGameRunning) {
@@ -302,7 +301,6 @@ function initArcadeGame() {
         if (window.arcadeActive && window.isArcadeGameRunning) updatePointer(e.clientX, e.clientY);
     }, { passive: true });
 
-    // Вешаем слушатели и на контейнер, и глобально на документ для надежности
     document.addEventListener('pointerdown', (e) => {
         if (window.isArcadeGameRunning && window.arcadeActive) {
             handleGameInput(e.clientX, e.clientY);
