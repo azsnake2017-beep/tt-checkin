@@ -1,5 +1,5 @@
 // ==========================================
-// js/arcade.js — 3D Аркадный Пинг-Понг (Полная версия с кнопкой и наградой)
+// js/arcade.js — 3D Аркадный Пинг-Понг (Финальная мобильная версия)
 // ==========================================
 
 window.arcadeGameInitialized = false;
@@ -144,10 +144,10 @@ function initArcadeGame() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Идеальный общий план: широкий угол (FOV 60) и камера отведена назад и вверх (Z = 6.2), чтобы вошла вся арена
-    const camera = new THREE.PerspectiveCamera(60, width / height, 0.1, 100);
-    camera.position.set(0, 2.4, 6.2); 
-    camera.lookAt(0, 0, 0);
+    // --- ФИНАЛЬНЫЙ РАКУРС: Вид сверху-сзади, чтобы и стол, и ножки, и скамейка были как на ладони ---
+    const camera = new THREE.PerspectiveCamera(50, width / height, 0.1, 100);
+    camera.position.set(0, 3.2, 4.5); 
+    camera.lookAt(0, -0.2, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
     renderer.setSize(width, height);
@@ -217,6 +217,19 @@ function initArcadeGame() {
     const TABLE_W = 2.0; const TABLE_L = 3.0; const TABLE_H = 0.5;
     const table = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W, 0.1, TABLE_L), new THREE.MeshToonMaterial({ color: 0x0ea5e9 }));
     table.position.y = TABLE_H; addOutline(table); scene.add(table);
+
+    // --- ДОБАВЛЯЕМ НОЖКИ СТОЛА ---
+    const legMat = new THREE.MeshToonMaterial({ color: 0x334155 });
+    function createLeg(x, z) {
+        const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.05, TABLE_H + 0.5), legMat);
+        leg.position.set(x, TABLE_H / 2, z);
+        addOutline(leg);
+        scene.add(leg);
+    }
+    createLeg(-TABLE_W / 2 + 0.1, -TABLE_L / 2 + 0.1);
+    createLeg(TABLE_W / 2 - 0.1, -TABLE_L / 2 + 0.1);
+    createLeg(-TABLE_W / 2 + 0.1, TABLE_L / 2 - 0.1);
+    createLeg(TABLE_W / 2 - 0.1, TABLE_L / 2 - 0.1);
 
     const net = new THREE.Mesh(new THREE.BoxGeometry(TABLE_W + 0.2, 0.2, 0.05), new THREE.MeshToonMaterial({ color: 0xf97316 }));
     net.position.set(0, TABLE_H + 0.15, 0); addOutline(net); scene.add(net);
