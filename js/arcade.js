@@ -144,9 +144,9 @@ function initArcadeGame() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Идеальный масштаб и отдаление камеры
-    const camera = new THREE.PerspectiveCamera(45, width / height, 0.1, 100);
-    camera.position.set(0, 1.8, 4.8); 
+    // Увеличенный угол обзора (FOV 55) и большее расстояние (Z = 5.5), чтобы всё идеально влезло
+    const camera = new THREE.PerspectiveCamera(55, width / height, 0.1, 100);
+    camera.position.set(0, 2.0, 5.5); 
     camera.lookAt(0, 0, 0);
 
     const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
@@ -290,7 +290,7 @@ function initArcadeGame() {
         }
     }
 
-    // Надежная обработка тапов и движений для подачи
+    // --- УНИВЕРСАЛЬНЫЙ ПЕРЕХВАТ ТАПОВ ДЛЯ ПОДАЧИ И УДАРОВ ---
     function handleGameInput(clientX, clientY) {
         updatePointer(clientX, clientY);
         if (window.isArcadeGameRunning) {
@@ -302,18 +302,21 @@ function initArcadeGame() {
         if (window.arcadeActive && window.isArcadeGameRunning) updatePointer(e.clientX, e.clientY);
     }, { passive: true });
 
-    container.addEventListener('pointerdown', (e) => {
-        handleGameInput(e.clientX, e.clientY);
+    // Вешаем слушатели и на контейнер, и глобально на документ для надежности
+    document.addEventListener('pointerdown', (e) => {
+        if (window.isArcadeGameRunning && window.arcadeActive) {
+            handleGameInput(e.clientX, e.clientY);
+        }
     });
 
-    container.addEventListener('touchstart', (e) => {
-        if (e.touches && e.touches.length > 0) {
+    document.addEventListener('touchstart', (e) => {
+        if (window.isArcadeGameRunning && window.arcadeActive && e.touches && e.touches.length > 0) {
             handleGameInput(e.touches[0].clientX, e.touches[0].clientY);
         }
     }, { passive: true });
 
-    container.addEventListener('touchmove', (e) => { 
-        if (e.touches && e.touches.length > 0) {
+    document.addEventListener('touchmove', (e) => { 
+        if (window.isArcadeGameRunning && window.arcadeActive && e.touches && e.touches.length > 0) {
             updatePointer(e.touches[0].clientX, e.touches[0].clientY); 
         }
     }, { passive: true });
