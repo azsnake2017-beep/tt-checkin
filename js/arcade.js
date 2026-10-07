@@ -433,9 +433,43 @@ function initArcadeGame() {
 
             if (state.ball.y < -1.5) scorePoint(state.vel.z > 0 ? 'ai' : 'player');
         } else if (state.status === 'serve_toss') {
-            state.vel.y += GRAVITY * dt; state.ball.y += state.vel.y * dt; ball.position.copy(state.ball); ball.rotation.x += 10 * dt;
+            // Подброс мяча вверх
+            state.vel.y += GRAVITY * dt; 
+            state.ball.y += state.vel.y * dt; 
+            ball.position.copy(state.ball); 
+            ball.rotation.x += 10 * dt;
+
+            // Когда мяч падает вниз после подброса — бьем о СВОЮ сторону стола
             let hitHeight = state.serving === 'player' ? paddlePlayer.position.y : paddleAi.position.y;
-            if (state.vel.y < 0 && state.ball.y <= hitHeight + 0.1) performArcadeHit(state.serving === 'player');
+            if (state.vel.y < 0 && state.ball.y <= hitHeight + 0.1) {
+                sound.hit();
+                vibrate(20);
+                state.status = 'serve_bounce';
+                
+                // Направляем мяч в свою половину стола для обязательного отскока перед сеткой
+                let mySign = state.serving === 'player' ? 1 : -1;
+                let bounceZ = mySign * (TABLE_L / 4);
+                let bounceX = (Math.random() - 0.5) * 0.4;
+                let tTime = 0.35; // Время полета до отскока на своей половине
+                
+                state.vel.x = (bounceX - state.ball.x) / tTime;
+                state.vel.z = (bounceZ - state.ball.z) / tTime;
+                state.vel.y = (TABLE_H - state.ball.y - 0.5 * GRAVITY * tTime * tTime) / tTime;
+            }
+        } else if (state.status === 'serve_bounce') {
+            // Полет мяча до удара о свою сторону перед перелетом через сетку
+            state.vel.y += GRAVITY * dt; 
+            state.ball.addScaledVector(state.vel, dt); 
+            ball.position.copy(state.ball);
+
+            // Проверяем удар о свою половину стола
+            if (state.ball.y - BALL_RADIUS <= TABLE_H && state.vel.y < 0) {
+                state.ball.y = TABLE_H + BALL_RADIUS;
+                sound.bounce();
+                
+                // Сразу после отскока от своей стороны отправляем мяч через сетку к противнику
+                performArcadeHit(state.serving === 'player');
+            }
         } else if (state.status === 'serve_wait') {
             if (state.serving === 'player') state.ball.set(paddlePlayer.position.x, paddlePlayer.position.y + 0.1, paddlePlayer.position.z - 0.1);
             else state.ball.set(paddleAi.position.x, paddleAi.position.y + 0.1, paddleAi.position.z + 0.1);
