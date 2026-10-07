@@ -522,31 +522,42 @@ function initArcadeGame() {
         camera.updateProjectionMatrix();
         renderer.setSize(w, h);
     });
-
-   // Жесткий перехват клика по кнопке старта в обход любых блокировок интерфейса
-    const startBtn = document.getElementById('btn-start-arcade');
-    if (startBtn) {
-        const triggerStart = (e) => {
-            if (e) {
-                e.preventDefault();
-                e.stopPropagation();
-                e.stopImmediatePropagation();
+// Надежный глобальный перехватчик клика по кнопке старта в аркаде
+    document.addEventListener('click', function(e) {
+        var target = e.target.closest('#btn-start-arcade');
+        if (target && window.arcadeActive) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var startScreen = document.getElementById('arcade-start-screen');
+            if (startScreen) {
+                startScreen.style.display = 'none';
             }
-            const startScreen = document.getElementById('arcade-start-screen');
-            if (startScreen) startScreen.style.display = 'none';
             window.isArcadeGameRunning = true;
             sound.init(); 
             resetBall();
             animate();
-            return false;
-        };
+        }
+    }, { capture: true });
 
-        // Вешаем события на саму кнопку
-        startBtn.onclick = triggerStart;
-        startBtn.addEventListener('click', triggerStart, { capture: true, passive: false });
-        startBtn.addEventListener('pointerdown', triggerStart, { capture: true, passive: false });
-        startBtn.addEventListener('touchstart', triggerStart, { capture: true, passive: false });
-    }
+    // То же самое для тач-устройств
+    document.addEventListener('touchstart', function(e) {
+        var target = e.target.closest('#btn-start-arcade');
+        if (target && window.arcadeActive) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            var startScreen = document.getElementById('arcade-start-screen');
+            if (startScreen) {
+                startScreen.style.display = 'none';
+            }
+            window.isArcadeGameRunning = true;
+            sound.init(); 
+            resetBall();
+            animate();
+        }
+    }, { capture: true, passive: false });
+  
     
     setTimeout(() => {
         const w = window.innerWidth;
