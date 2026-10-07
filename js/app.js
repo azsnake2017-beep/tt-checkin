@@ -1432,6 +1432,10 @@ function listenRatings() {
         var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
         var adminBadgeHTML = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(docId) !== -1) ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
         var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : '';
+        
+        // Генерация премиум-плашки Ниндзя
+        var customTagBadge = d.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(d.customTag) + '\')">' + cleanHtml(d.customTag) + '</span>' : '';
+        
         var rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
         
         var streakHtml = (d.winStreak && d.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + d.winStreak + '</span>' : '';
