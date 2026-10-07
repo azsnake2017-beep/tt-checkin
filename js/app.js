@@ -2073,6 +2073,14 @@ window.switchNavTab = function(tabId) {
   window.scrollTo(0, 0); 
   
   sessionStorage.setItem('tt_session_tab', tabId);
+
+  // Управляем активностью 3D-игры
+  if (tabId === 'arcade') {
+      window.arcadeActive = true;
+      if (typeof initArcadeGame === 'function') initArcadeGame();
+  } else {
+      window.arcadeActive = false; // Тормозим рендеринг вне вкладки аркады
+  }
   
   if (tabId === 'radar' && typeof updateAdminControls === 'function') updateAdminControls();
   if (tabId === 'quests' && typeof renderQuestBoard === 'function') renderQuestBoard();
