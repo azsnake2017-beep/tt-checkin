@@ -368,6 +368,55 @@ function updateProfileDisplay() {
       });
   } catch(e) {}
 }
+// --- ПРОВЕРКА НЕАКТИВНОСТИ ДЛЯ ПРЕДУПРЕЖДЕНИЯ О ШТРАФЕ ---
+  try {
+      db.collection('matches_history').get().then(function(allSnaps) {
+          var matches = [];
+          allSnaps.forEach(function(docX) {
+              var mx = docX.data();
+              if (mx && mx.participants && mx.participants.indexOf(currentUserProfile.uid) !== -1) { 
+                  matches.push(mx); 
+              }
+          });
+          
+          var lastMatchStr = 'Ещё не играл';
+          var diffDays = 999; // Если вообще не играл, пока не трогаем новичков по таймеру регистрации
+
+          if (matches.length > 0) {
+              matches.sort(function(a, b) { return (typeof parseTime==='function'?parseTime(b.timestamp):b.timestamp) - (typeof parseTime==='function'?parseTime(a.timestamp):a.timestamp); });
+              try {
+                  var lastTs = typeof parseTime==='function'?parseTime(matches[0].timestamp):matches[0].timestamp;
+                  if (lastTs) {
+                      var mDate = new Date(lastTs);
+                      var day = ('0' + mDate.getDate()).slice(-2);
+                      var month = ('0' + (mDate.getMonth() + 1)).slice(-2);
+                      var today = new Date(); today.setHours(0,0,0,0);
+                      var matchDay = new Date(lastTs); matchDay.setHours(0,0,0,0);
+                      diffDays = Math.round((today.getTime() - matchDay.getTime()) / 86400000);
+                      
+                      var daysText = (diffDays === 0) ? " (Сегодня)" : (diffDays === 1) ? " (Вчера)" : ' (' + diffDays + ' дн. назад)';
+                      lastMatchStr = day + '.' + month + '.' + mDate.getFullYear() + daysText;
+                  }
+              } catch(e) {}
+          }
+
+          var el = document.getElementById('main-profile-last-match');
+          if (el) {
+              // Если прошло 5 или 6 дней — выводим тревожное предупреждение!
+              if (diffDays >= 5 && diffDays < 7) {
+                  var daysLeft = 7 - diffDays;
+                  el.innerHTML = '⚠️ До штрафа (-50 Эло) осталось <b>' + daysLeft + ' дн.</b>!';
+                  el.style.color = '#ef4444'; // Красный акцент
+                  el.style.fontWeight = '700';
+              } else {
+                  el.innerHTML = '🗓 Последняя игра: ' + lastMatchStr;
+                  el.style.color = 'var(--accent-sky)';
+                  el.style.fontWeight = 'normal';
+              }
+          }
+      }).catch(function(e) {});
+  } catch(e) {}
+
 function handleEditProfileClick() { 
   if (typeof vibrate === 'function') vibrate('light'); 
   if (isUserVerified()) { 
