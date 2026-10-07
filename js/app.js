@@ -2255,20 +2255,22 @@ window.showRefQrModal = function() {
   
   var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
   var qrContainer = document.getElementById("ref-qrcode");
-  if (qrContainer) {
+  
+  if (qrContainer && typeof QRCode !== 'undefined') {
       qrContainer.innerHTML = ""; 
       new QRCode(qrContainer, {
-        text: refLink,
-        width: 200,
-        height: 200,
-        colorDark : "#000000",
-        colorLight : "#ffffff",
+        text: refLink, width: 200, height: 200,
+        colorDark : "#000000", colorLight : "#ffffff",
         correctLevel : QRCode.CorrectLevel.H
       });
   }
 
-  // Вызываем наше новое супер-плавное окно!
-  openModalSmoothly('ref-qr-modal');
+  if (typeof openModalSmoothly === 'function') {
+      openModalSmoothly('ref-qr-modal');
+  } else {
+      var modal = document.getElementById('ref-qr-modal');
+      if (modal) modal.style.display = 'flex';
+  }
 };
 
 window.closeRefQrModal = function() { 
@@ -2277,36 +2279,19 @@ window.closeRefQrModal = function() {
 
 window.shareMyRefLink = function() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  if (!myUid) {
-    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
-    else alert("Сначала необходимо авторизоваться!");
-    return;
-  }
+  if (!myUid) return alert("Сначала необходимо авторизоваться!");
 
   var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
-  var inviteTitle = "Клуб настольного тенниса ЧМЗ";
   var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
 
   if (navigator.share) {
-    navigator.share({
-      title: inviteTitle,
-      text: inviteText,
-      url: refLink
-    }).then(function() {}).catch(function(error) {});
+    navigator.share({ title: "Клуб ЧМЗ", text: inviteText, url: refLink }).catch(function(){});
   } else if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
-      if (typeof customAlert === 'function') {
-        customAlert("Ссылка скопирована!\nОтправьте её будущему участнику.");
-      } else {
-        alert("Ссылка скопирована в буфер обмена!");
-      }
+      alert("Ссылка скопирована в буфер обмена!");
     });
-  } else {
-    prompt("Скопируйте ссылку для добавления участника:", refLink);
   }
 };
-};
-
 /* ==========================================
    ГЛОБАЛЬНАЯ ЗВУКОВАЯ СИСТЕМА (ИНТЕРЦЕПТОР)
    ========================================== */
