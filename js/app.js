@@ -838,7 +838,16 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
-
+// БЛОК УНИКАЛЬНЫХ ТРОФЕЕВ
+    if (u.customTag) {
+        document.getElementById('info-modal-content-area').innerHTML += 
+            '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 6px;">' +
+            '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;">🏆 Особые достижения:</div>' +
+            '<div style="display: flex; align-items: center; gap: 10px; background: rgba(16, 185, 129, 0.05); border: 1px solid rgba(16, 185, 129, 0.3); padding: 8px 12px; border-radius: 8px; box-shadow: inset 0 0 15px rgba(16,185,129,0.05);">' +
+            '<span style="font-size: 30px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🥷</span>' +
+            '<div style="display: flex; flex-direction: column;"><span style="color: #10b981; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">' + cleanHtml(u.customTag) + '</span><span style="font-size: 11px; color: var(--text-muted);">Абсолютный чемпион турнира</span></div>' +
+            '</div></div>';
+    }
     // СУПЕР-ОПТИМИЗАЦИЯ: Грузим ТОЛЬКО матчи этого игрока, а не всего клуба!
     db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(allSnaps) {
         var matches = [];
@@ -2360,6 +2369,7 @@ var BADGE_DESCRIPTIONS = {
   "Админ ⭐": { title: "Администратор", icon: "⭐", desc: "Основатель и организатор клуба ЧМЗ. Управляет турнирами, ивентами, ботом и следит за порядком у столов." },
 
   // Именные и кастомные плашки
+  "Супер Ниндзя 🥷": { title: "Супер Ниндзя", icon: "🥷", desc: "Абсолютный победитель первого исторического турнира клуба ЧМЗ «Супер Ниндзя». Доказал свое мастерство в бескомпромиссных битвах за столом!" }
   "Учитель 🎓": { title: "Учитель", icon: "🎓", desc: "Почетный статус наставника. Этот игрок всегда готов поделиться опытом, подсказать правильную стойку и помочь новичкам улучшить технику игры." },
   "Темщик 🕶️": { title: "Темщик", icon: "🕶️", desc: "Уникальный статус особого участника. Всегда на стиле, всегда в теме, знает все расклады в клубе." },
   "Хоккеист 🏒": { title: "Хоккеист", icon: "🏒", desc: "Суровый челябинский стиль! Двойная угроза: одинаково опасен как на льду с клюшкой, так и у стола с ракеткой." },
