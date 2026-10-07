@@ -3,30 +3,7 @@
 // ==========================================
 // ПОГОДНЫЙ ВИДЖЕТ (Идеальная версия: Fail-Fast 2.5 сек)
 // ==========================================
-// Анализатор погоды для анимации карточки парка
-function applyWeatherAnimation(weatherDescription) {
-  var card = document.getElementById('card-park');
-  if (!card || !weatherDescription) return;
-  
-  var w = weatherDescription.toLowerCase();
-  
-  // Очищаем старые погодные классы
-  card.classList.remove('weather-rain', 'weather-snow', 'weather-clear', 'weather-clouds');
-  
-  // Включаем нужный эффект по ключевым словам (отлично работает даже с HTML-строкой из кэша)
-  if (w.includes('дожд') || w.includes('ливень') || w.includes('гроз') || w.includes('морос')) {
-    card.classList.add('weather-rain');
-  } 
-  else if (w.includes('снег') || w.includes('метел') || w.includes('снегопад')) {
-    card.classList.add('weather-snow');
-  } 
-  else if (w.includes('ясн') || w.includes('солн')) {
-    card.classList.add('weather-clear');
-  } 
-  else if (w.includes('облач') || w.includes('пасмур')) {
-    card.classList.add('weather-clouds');
-  }
-}
+
 
 function loadParkWeather() {
   var container = document.getElementById('weather-park'); 
