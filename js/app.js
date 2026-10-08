@@ -248,6 +248,11 @@ function showAuthRequired(authScreen) {
 }
 
 function updateProfileDisplay() {
+  // В самом начале функции
+  var avatarBox = document.getElementById('main-profile-avatar-box');
+  if (avatarBox) {
+      avatarBox.innerHTML = currentUserProfile.avatarSvg ? currentUserProfile.avatarSvg : '👤';
+  }
   if (!currentUserProfile.uid) return;
   var isAdmin = isSuperAdmin();
   var adminTag = isAdmin ? '<button class="badge-admin-btn" onclick="openAdminMenu()">Админ ⚙️</button>' : '';
@@ -262,14 +267,6 @@ function updateProfileDisplay() {
       var parts = currentStatus.split(' ');
       var icon = parts.pop() || '🏆';
       var cleanStatusName = parts.join(' ');
-    var avatarBox = document.getElementById('main-profile-avatar-box');
-  if (avatarBox) {
-      if (currentUserProfile.avatarSvg) {
-          avatarBox.innerHTML = currentUserProfile.avatarSvg.replace('width="64" height="64"', 'width="76" height="76"');
-      } else {
-          avatarBox.innerHTML = '👤';
-      }
-  }  
       var savedElo = parseInt(localStorage.getItem('tt_last_known_elo_' + currentUserProfile.uid), 10) || 0;
       if (elo > savedElo) {
         setTimeout(function() {
