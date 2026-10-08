@@ -2791,3 +2791,46 @@ window.generateRandomAvatar = function() {
     var container = document.getElementById('avatar-preview-container');
     if (container) container.innerHTML = svg;
 };
+
+// ==========================================
+// АВТО-ПОДГОНКА РАЗМЕРА ЭКРАНА АРКАДЫ
+// ==========================================
+function autoFitCyberPong() {
+    var arcadeView = document.getElementById('view-arcade');
+    if (!arcadeView || arcadeView.style.display === 'none') return;
+    
+    // 1. Пытаемся найти твоё нижнее меню, чтобы узнать его точную высоту
+    // (Ищем по самым популярным тегам и классам, если не найдет — берет стандартные 70px)
+    var navElement = document.querySelector('nav, .nav-bar, .bottom-nav, #bottom-nav');
+    var bottomNavHeight = navElement ? navElement.offsetHeight : 70; 
+    
+    // 2. Узнаем, где начинается блок игры (под шапкой и всеми баннерами)
+    var topOffset = arcadeView.getBoundingClientRect().top;
+    
+    // 3. Высчитываем точное свободное место на экране
+    var windowHeight = window.innerHeight;
+    var perfectHeight = windowHeight - topOffset - bottomNavHeight;
+    
+    // 4. Применяем идеальную высоту
+    if (perfectHeight > 0) {
+        arcadeView.style.height = perfectHeight + 'px';
+    }
+}
+
+// Пересчитываем, если пользователь перевернул телефон
+window.addEventListener('resize', autoFitCyberPong);
+
+// Автоматически ловим момент, когда ты переключаешься на вкладку Аркады!
+document.addEventListener('DOMContentLoaded', function() {
+    var arcadeView = document.getElementById('view-arcade');
+    if (arcadeView) {
+        // MutationObserver следит за стилями элемента и срабатывает при их изменении
+        var observer = new MutationObserver(function() {
+            if (arcadeView.style.display !== 'none') {
+                // Задержка 50мс нужна, чтобы браузер успел отрисовать экран перед замером
+                setTimeout(autoFitCyberPong, 50); 
+            }
+        });
+        observer.observe(arcadeView, { attributes: true, attributeFilter: ['style'] });
+    }
+});
