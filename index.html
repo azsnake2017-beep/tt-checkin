@@ -379,58 +379,16 @@
   </div>
 
 <!-- ЭКРАН 7: АРКАДНЫЙ ПИНГ-ПОНГ -->
-<div id="view-arcade" class="main-view" style="position: relative; width: 100%; height: 100dvh; overflow: hidden; margin: 0 !important; padding: 0 !important;">
-    
-    <!-- 3D Canvas Container -->
-    <div id="canvas-container" style="position: absolute; inset: 0; width: 100%; height: 100%; z-index: 1; pointer-events: auto;"></div>
-
-   <!-- СТАРТОВЫЙ ЭКРАН (Идеально по центру, ничего не перекрывается) -->
-    <div id="arcade-start-screen" style="position: absolute; inset: 0; z-index: 100; background: var(--card-bg, #0b1120); display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 20px 20px 90px 20px; pointer-events: auto; box-sizing: border-box;">
-        <div style="font-size: 70px; margin-bottom: 8px;">🏓</div>
-        <h2 style="color: var(--text, #fff); font-family: 'Bangers', cursive; font-size: 32px; margin-bottom: 8px; letter-spacing: 2px; text-align: center;">АРКАДНЫЙ ТЕННИС</h2>
-        <p style="color: var(--text-muted, #94a3b8); font-size: 13px; margin-bottom: 24px; text-align: center; max-width: 280px; line-height: 1.4;">Обыграй Робо-Бро (до 11 очков) и получи разовый бонус <b style="color: #10b981;">+50 Эло</b> в свой профиль!</p>
-        <button id="btn-start-arcade" style="position: relative; z-index: 101; width: auto; padding: 14px 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); font-family: 'Russo One', sans-serif; font-size: 18px; border-radius: 16px; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4); border: none; color: white; cursor: pointer; pointer-events: auto;">PLAY GAME</button>
-    </div>
-
-    <!-- Облачко для Зрителей со скамейки -->
-    <div id="spectator-ui" class="hidden speech-bubble bubble-tail comic-box bg-white text-center border-4 border-black" style="position: absolute; z-index: 35; pointer-events: none; transform: translate(-50%, -100%); padding: 12px; font-size: 14px; font-family: 'Russo One', sans-serif; font-weight: bold; max-width: 200px;">
-        <span id="spectator-text">Я за робота болею!</span>
-    </div>
-
-    <!-- UI Layer -->
-    <div class="pointer-events-none" style="position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; justify-content: space-between; padding: 16px; padding-top: calc(max(env(safe-area-inset-top, 12px), 12px) + 85px); padding-bottom: calc(100px + env(safe-area-inset-bottom, 20px));">
-        <!-- Верхняя панель: Счет с контрастными цифрами -->
-        <div class="pointer-events-auto" style="display: flex; justify-content: space-between; align-items: flex-start; width: 100%; position: relative;">
-            <div class="comic-box" style="background: #34d399; border: 4px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 12px; padding: 6px 12px; display: flex; flex-direction: column; align-items: center; min-width: 70px; text-align: center;">
-                <span style="font-family: 'Russo One', sans-serif; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #000;">Ты</span>
-                <span id="player-score" style="font-family: 'Bangers', cursive; font-size: 32px; -webkit-text-stroke: 2px black; text-shadow: 2px 2px 0px #000; color: #fff; line-height: 1;">0</span>
-            </div>
-            <div class="comic-box" style="background: #fff; border: 4px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 12px; padding: 8px; margin: 0 10px; display: flex; align-items: center; justify-content: center; flex: 1;">
-                <span id="joke-banner" style="font-family: 'Russo One', sans-serif; font-size: 12px; font-weight: bold; color: #e11d48; line-height: 1.2; text-align: center;">Нажми на экран для подачи!</span>
-            </div>
-            <div class="comic-box" style="background: #f43f5e; border: 4px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 12px; padding: 6px 12px; display: flex; flex-direction: column; align-items: center; min-width: 70px; text-align: center; position: relative;">
-                <span id="ai-name" style="font-family: 'Russo One', sans-serif; font-size: 10px; font-weight: 900; text-transform: uppercase; color: #fff;">Бот</span>
-                <span id="ai-score" style="font-family: 'Bangers', cursive; font-size: 32px; -webkit-text-stroke: 2px black; text-shadow: 2px 2px 0px #000; color: #fff; line-height: 1;">0</span>
-                <div id="bot-bubble" class="speech-bubble" style="display: none; position: absolute; top: 115%; right: 0; background: #fff; border: 4px solid #000; border-radius: 12px; padding: 8px; box-shadow: 4px 4px 0 #000; z-index: 30; color: #000; font-family: 'Russo One', sans-serif; font-size: 11px; font-weight: bold; width: 120px; text-align: center;">Ха-ха!</div>
-            </div>
-        </div>
-        <!-- Нижние кнопки -->
-        <div class="pointer-events-auto" style="display: flex; justify-content: space-between; align-items: flex-end; width: 100%; z-index: 20;">
-            <button id="diff-btn" class="comic-btn comic-btn-yellow" style="background: #facc15; color: #000; border: 4px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 12px; font-family: 'Russo One', sans-serif; font-size: 11px; font-weight: bold; padding: 12px 16px;">СЛОЖНОСТЬ: НОРМА</button>
-            <button id="sound-btn" class="comic-btn" style="background: #06b6d4; color: #fff; border: 4px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 50%; width: 44px; height: 44px; font-size: 18px; line-height: 1; padding-bottom: 2px;">🔊</button>
-        </div>
-    </div>
-
-    <!-- Модальное окно победы/поражения -->
-    <div id="modal" style="display: none; position: absolute; inset: 0; z-index: 50; align-items: center; justify-content: center; background: rgba(0,0,0,0.6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); padding: 16px;">
-        <div class="comic-box" style="background: #fff; border: 4px solid #000; box-shadow: 6px 6px 0px #000; border-radius: 16px; padding: 24px; max-width: 300px; width: 100%; text-align: center;">
-            <h2 id="modal-title" style="font-family: 'Bangers', cursive; font-size: 36px; color: #10b981; -webkit-text-stroke: 1.5px black; margin-bottom: 8px;">ПОБЕДА!</h2>
-            <p id="modal-desc" style="font-family: 'Russo One', sans-serif; font-size: 12px; color: #000; line-height: 1.4; margin-bottom: 20px;">Робо-Бро уходит на переплавку.</p>
-            <button id="modal-btn" class="comic-btn" style="background: #06b6d4; color: #fff; border: 4px solid #000; box-shadow: 4px 4px 0px #000; border-radius: 12px; font-family: 'Russo One', sans-serif; font-size: 16px; width: 100%; padding: 12px;">ЕЩЕ РАЗОК!</button>
-        </div>
-    </div>
-    <div id="vfx-layer" style="position: absolute; inset: 0; pointer-events: none; z-index: 40; overflow: hidden;"></div>
-</div>
+<!-- Экран Аркады (Встраивание через iframe) -->
+  <div id="view-arcade" class="main-view" style="display: none; padding: 0; margin: 0; overflow: hidden; height: calc(100dvh - 60px);"> 
+    <!-- height высчитывается с учетом нижней панели навигации (примерно 60-70px), чтобы игра не залезала под кнопки -->
+    <iframe 
+        src="cyber_pong_wtt_edition.html" 
+        style="width: 100%; height: 100%; border: none; display: block;" 
+        allow="autoplay; fullscreen; vibrate"
+        title="Cyber Pong">
+    </iframe>
+  </div>
 </div> <!-- ЭТОТ ЗАКРЫВАЮЩИЙ ТЕГ КОНТЕЙНЕРА ДОЛЖЕН БЫТЬ ПОСЛЕ ВСЕХ ЭКРАНОВ! -->
 
 <!-- BOTTOM NAVIGATION -->
