@@ -2824,30 +2824,32 @@ window.generateRandomAvatar = function() {
 // ==========================================
 // АВТО-ПОДГОНКА РАЗМЕРА ЭКРАНА АРКАДЫ
 // ==========================================
+// ==========================================
+// АВТО-ПОДГОНКА РАЗМЕРА ЭКРАНА АРКАДЫ
+// ==========================================
 function autoFitCyberPong() {
     var arcadeView = document.getElementById('view-arcade');
     if (!arcadeView || arcadeView.style.display === 'none') return;
     
-    // 1. Пытаемся найти твоё нижнее меню, чтобы узнать его точную высоту
-    // (Ищем по самым популярным тегам и классам, если не найдет — берет стандартные 70px)
-    var navElement = document.querySelector('nav, .nav-bar, .bottom-nav, #bottom-nav');
-    var bottomNavHeight = navElement ? navElement.offsetHeight : 70; 
+    // Точно вычисляем высоту экрана за вычетом нижней панели навигации (обычно 60-65px)
+    var navElement = document.querySelector('.bottom-nav');
+    var bottomNavHeight = navElement ? navElement.offsetHeight : 65; 
     
-    // 2. Узнаем, где начинается блок игры (под шапкой и всеми баннерами)
-    var topOffset = arcadeView.getBoundingClientRect().top;
+    var perfectHeight = window.innerHeight - bottomNavHeight;
     
-    // 3. Высчитываем точное свободное место на экране
-    var windowHeight = window.innerHeight;
-    var perfectHeight = windowHeight - topOffset - bottomNavHeight;
-    
-    // 4. Применяем идеальную высоту
     if (perfectHeight > 0) {
+        arcadeView.style.top = '0px';
+        arcadeView.style.left = '0px';
+        arcadeView.style.width = '100vw';
         arcadeView.style.height = perfectHeight + 'px';
     }
 }
 
-// Пересчитываем, если пользователь перевернул телефон
+// Пересчитываем при изменении размера или повороте экрана
 window.addEventListener('resize', autoFitCyberPong);
+window.addEventListener('orientationchange', function() {
+    setTimeout(autoFitCyberPong, 150);
+});
 
 // Автоматически ловим момент, когда ты переключаешься на вкладку Аркады!
 document.addEventListener('DOMContentLoaded', function() {
