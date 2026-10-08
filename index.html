@@ -210,11 +210,18 @@
   <!-- ЭКРАН 1: ПРОФИЛЬ -->
   <div id="view-profile" class="main-view active">
     <div class="profile-card">
-      <div class="profile-top-row">
-        <div class="profile-user-main" id="user-name-container">
-          <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
+      <div class="profile-top-row" style="align-items: center; gap: 14px;">
+        <!-- Фотокарточка игрока -->
+        <div id="main-profile-avatar-box" style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; border: 2px solid var(--accent-sky); background: #000; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+          👤
         </div>
-        <div id="user-score-container"></div>
+        
+        <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
+          <div class="profile-user-main" id="user-name-container" style="margin-bottom: 4px;">
+            <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
+          </div>
+          <div id="user-score-container"></div>
+        </div>
       </div>
     
       <div class="profile-stats-row" id="user-stats-container">
