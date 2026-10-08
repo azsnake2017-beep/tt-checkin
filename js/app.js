@@ -425,6 +425,13 @@ function updateProfileDisplay() {
   } catch(e) {}
 
 function handleEditProfileClick() { 
+ window.currentPreviewAvatarSvg = currentUserProfile.avatarSvg || '';
+  if (!window.currentPreviewAvatarSvg) {
+      generateRandomAvatar();
+  } else {
+      var container = document.getElementById('avatar-preview-container');
+      if (container) container.innerHTML = window.currentPreviewAvatarSvg;
+  }
   if (typeof vibrate === 'function') vibrate('light'); 
   if (isUserVerified()) { 
     document.getElementById('name-input').value = currentUserProfile.name || ''; 
@@ -451,7 +458,10 @@ function saveCustomNameWithCheck() {
   if (val.length < 2) return; 
   if (rttfVal !== null && (rttfVal < 0 || rttfVal > 4000)) return customAlert("❌ Рейтинг РТТФ должен быть от 0 до 4000!");
   
-  var updateData = { name: val };
+  var updateData = { 
+      name: val,
+      avatarSvg: window.currentPreviewAvatarSvg || ''
+  };
   if (bladeVal) updateData.blade = bladeVal; else updateData.blade = firebase.firestore.FieldValue.delete();
   if (rubberLVal) updateData.rubberL = rubberLVal; else updateData.rubberL = firebase.firestore.FieldValue.delete();
   if (rubberRVal) updateData.rubberR = rubberRVal; else updateData.rubberR = firebase.firestore.FieldValue.delete();
@@ -2617,4 +2627,47 @@ window.customAlert = function(msg) {
     else if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
   }
   if (_originalCustomAlert) _originalCustomAlert(msg);
+};
+
+// Генератор рандомного SVG-аватара в стиле CryptoPunks
+window.currentPreviewAvatarSvg = "";
+
+window.generateRandomAvatar = function() {
+    if (typeof vibrate === 'function') vibrate('light');
+    
+    const bgColors = ['#3b82f6', '#8b5cf6', '#10b981', '#f59e0b', '#ef4444', '#06b6d4', '#ec4899', '#6366f1'];
+    const skinColors = ['#e0ac69', '#d4a373', '#8d5524', '#ffdbac', '#c68642', '#e2bb9d'];
+    const hairColors = ['#111111', '#7f1d1d', '#fbbf24', '#ffffff', '#9333ea', '#3b82f6', '#059669'];
+    const accessoryTypes = ['none', 'glasses', 'cap', 'beard', 'pipe'];
+
+    const bg = bgColors[Math.floor(Math.random() * bgColors.length)];
+    const skin = skinColors[Math.floor(Math.random() * skinColors.length)];
+    const hair = hairColors[Math.floor(Math.random() * hairColors.length)];
+    const acc = accessoryTypes[Math.floor(Math.random() * accessoryTypes.length)];
+
+    let accSvg = '';
+    if (acc === 'glasses') {
+        accSvg = `<rect x="8" y="10" width="4" height="2" fill="#000"/><rect x="12" y="11" width="1" height="1" fill="#000"/><rect x="13" y="10" width="4" height="2" fill="#000"/>`;
+    } else if (acc === 'cap') {
+        accSvg = `<rect x="7" y="5" width="10" height="3" fill="${hair}"/><rect x="11" y="4" width="7" height="1" fill="${hair}"/>`;
+    } else if (acc === 'beard') {
+        accSvg = `<rect x="8" y="14" width="8" height="3" fill="${hair}"/>`;
+    } else if (acc === 'pipe') {
+        accSvg = `<rect x="14" y="14" width="4" height="1" fill="#78350f"/><rect x="17" y="12" width="2" height="2" fill="#78350f"/>`;
+    } else {
+        accSvg = `<rect x="7" y="6" width="10" height="3" fill="${hair}"/>`;
+    }
+
+    window.currentPreviewAvatarSvg = `<svg width="76" height="76" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; background: ${bg}; width: 100%; height: 100%;">
+      <rect x="8" y="8" width="8" height="9" fill="${skin}"/>
+      <rect x="7" y="9" width="1" height="7" fill="${skin}"/>
+      <rect x="16" y="9" width="1" height="7" fill="${skin}"/>
+      ${accSvg}
+      <rect x="9" y="11" width="2" height="1" fill="#000"/>
+      <rect x="13" y="11" width="2" height="1" fill="#000"/>
+      <rect x="10" y="14" width="4" height="1" fill="#000"/>
+    </svg>`;
+
+    var container = document.getElementById('avatar-preview-container');
+    if (container) container.innerHTML = window.currentPreviewAvatarSvg;
 };
