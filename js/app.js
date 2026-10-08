@@ -763,7 +763,10 @@ function showUserInfoModal(uid) {
     var adminTag = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(uid) !== -1) ? '<span class="platform-badge badge-admin" style="margin-left:4px;">Админ ⭐</span>' : '';
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     var qBadge = (u.activeBadge && u.activeBadge.expires > Date.now()) ? '<span class="temporary-badge" style="color: ' + u.activeBadge.color + '; border-color: ' + u.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(u.activeBadge.text) + '\')">' + cleanHtml(u.activeBadge.text) + '</span>' : '';
-    
+   
+    // Рендер крупной фотокарточки в модалке игрока
+    var modalAvatarHtml = u.avatarSvg ? 
+        '<div style="display: flex; justify-content: center; margin-bottom: 8px;"><div style="width: 84px; height: 84px; border-radius: 16px; overflow: hidden; border: 2px solid var(--accent-sky); box-shadow: 0 4px 15px rgba(0,0,0,0.4); background: #000;">' + u.avatarSvg.replace('width="64" height="64"', 'width="84" height="84"') + '</div></div>' : '';
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + qBadge;
     
     var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
