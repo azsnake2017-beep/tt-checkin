@@ -465,9 +465,10 @@
         const scene = new THREE.Scene();
         scene.fog = new THREE.FogExp2(0x030303, 0.04);
 
-        const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 100);
-        camera.position.set(0, 4.5, 4.5);
-        camera.lookAt(0, 0, 0);
+        const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 100);
+// Устанавливаем камеру чуть выше и дальше, чтобы захватить зрителей по бокам
+camera.position.set(0, 4.2, 5.2);
+camera.lookAt(0, 0, 0);
 
         const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
         renderer.setSize(window.innerWidth, window.innerHeight);
@@ -1209,12 +1210,25 @@
         function animate() { requestAnimationFrame(animate); update(Math.min(clock.getDelta(), 0.05)); }
         
         function handleResize() {
-            camera.aspect = window.innerWidth / window.innerHeight;
-            if (camera.aspect < 1) camera.position.set(0, 5.0, 5.5); // Mobile: камера выше и ближе (вид сверху-вниз)
-            else camera.position.set(0, 3.5, 4.0); // Desktop: камера ближе
-            camera.updateProjectionMatrix(); 
-            renderer.setSize(window.innerWidth, window.innerHeight); 
-        }
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+    
+    camera.aspect = width / height;
+    
+    if (camera.aspect < 1) {
+        // Мобильная вертикальная ориентация:
+        // FOV 55 и позиции по Z и Y подобраны так, чтобы и стол, и боковые зрители были отлично видны
+        camera.fov = 55;
+        camera.position.set(0, 4.6, 5.4);
+    } else {
+        // Десктопная горизонтальная ориентация
+        camera.fov = 45;
+        camera.position.set(0, 3.2, 4.5);
+    }
+    
+    camera.updateProjectionMatrix(); 
+    renderer.setSize(width, height); 
+}
         
         window.addEventListener('resize', handleResize);
         handleResize(); 
