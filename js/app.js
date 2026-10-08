@@ -2127,7 +2127,7 @@ window.switchNavTab = function(tabId) {
   var views = document.querySelectorAll('.main-view'); 
   for(var i=0; i<views.length; i++) {
       views[i].classList.remove('active');
-      views[i].style.display = ''; // Сбрасываем стили после свайпа
+      views[i].style.display = ''; 
   }
   
   var items = document.querySelectorAll('.nav-item'); 
@@ -2144,38 +2144,14 @@ window.switchNavTab = function(tabId) {
   
   sessionStorage.setItem('tt_session_tab', tabId);
 
-  // --- ЛОГИКА СКРЫТИЯ ШАПКИ ДЛЯ АРКАДЫ ---
-  var header = document.querySelector('.club-header') || document.querySelector('header');
-  var boostBanner = document.getElementById('global-boost-banner');
-  var bountyBanner = document.getElementById('global-bounty-banner');
-
   // Управляем активностью 3D-игры
   if (tabId === 'arcade') {
       window.arcadeActive = true;
-      
-      // 1. Прячем всё верхнее меню и баннеры
-      if (header) header.style.display = 'none';
-      if (boostBanner) boostBanner.style.display = 'none';
-      if (bountyBanner) bountyBanner.style.display = 'none';
-      
-      // 2. Сразу вызываем нашу автоподгонку (с небольшой задержкой для перерисовки DOM)
       setTimeout(function() { 
           if(typeof autoFitCyberPong === 'function') autoFitCyberPong(); 
       }, 50);
-
   } else {
-      window.arcadeActive = false; // Тормозим рендеринг вне вкладки аркады
-      
-      // 1. Возвращаем шапку (сброс display до значения из CSS)
-      if (header) header.style.display = ''; 
-      
-      // 2. Возвращаем баннеры (ТОЛЬКО если они реально активны сейчас)
-      if (boostBanner && window.currentEloMultiplier > 1) {
-          boostBanner.style.display = 'block';
-      }
-      if (bountyBanner && window.currentBountyTargets && Object.keys(window.currentBountyTargets).length > 0) {
-          bountyBanner.style.display = 'block';
-      }
+      window.arcadeActive = false; 
   }
   
   if (tabId === 'radar' && typeof updateAdminControls === 'function') updateAdminControls();
