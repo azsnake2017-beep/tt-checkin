@@ -379,16 +379,15 @@
   </div>
 
 <!-- ЭКРАН 7: АРКАДНЫЙ ПИНГ-ПОНГ -->
-<!-- Экран Аркады (Встраивание через iframe) -->
-  <div id="view-arcade" class="main-view" style="display: none; padding: 0; margin: 0; overflow: hidden; height: calc(100dvh - 60px);"> 
-    <!-- height высчитывается с учетом нижней панели навигации (примерно 60-70px), чтобы игра не залезала под кнопки -->
-    <iframe 
-        src="cyber_pong_wtt_edition.html" 
-        style="width: 100%; height: 100%; border: none; display: block;" 
-        allow="autoplay; fullscreen; vibrate"
-        title="Cyber Pong">
-    </iframe>
-  </div>
+<!-- Экран Аркады (Автоматическая высота) -->
+<div id="view-arcade" class="main-view" style="display: none; padding: 0; margin: 0; overflow: hidden; width: 100%;"> 
+  <iframe 
+      src="cyber_pong_wtt_edition.html" 
+      style="width: 100%; height: 100%; border: none; display: block;" 
+      allow="autoplay; fullscreen; vibrate"
+      title="Cyber Pong">
+  </iframe>
+</div>
 </div> <!-- ЭТОТ ЗАКРЫВАЮЩИЙ ТЕГ КОНТЕЙНЕРА ДОЛЖЕН БЫТЬ ПОСЛЕ ВСЕХ ЭКРАНОВ! -->
 
 <!-- BOTTOM NAVIGATION -->
