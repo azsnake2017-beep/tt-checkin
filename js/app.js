@@ -846,7 +846,21 @@ function showUserInfoModal(uid) {
                     '<span style="color: var(--text-muted);">Добавил участников:</span><div><span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' + pendingStr + '<span style="margin-left: 4px;">🤝</span></div></div>';
     }
 
-    document.getElementById('info-modal-content-area').innerHTML = uidHtml +
+   // === ГЕНЕРАЦИЯ БЛОКА АВАТАРКИ В КАРТОЧКЕ ===
+    var avatarHtml = u.avatarSvg ? 
+        '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
+          '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">' + 
+            u.avatarSvg + 
+          '</div>' +
+        '</div>' : 
+        '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
+          '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--card-border); background: var(--list-bg); display: flex; align-items: center; justify-content: center; font-size: 40px;">' +
+            '👤' +
+          '</div>' +
+        '</div>';
+
+    // Вставляем avatarHtml в самое начало info-modal-content-area
+    document.getElementById('info-modal-content-area').innerHTML = avatarHtml + uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + pStatus + '</span></div>' +
