@@ -2807,16 +2807,13 @@ function autoFitCyberPong() {
     var arcadeView = document.getElementById('view-arcade');
     if (!arcadeView || arcadeView.style.display === 'none') return;
     
-    // Точно вычисляем высоту экрана за вычетом нижней панели навигации (обычно 60-65px)
     var navElement = document.querySelector('.bottom-nav');
     var bottomNavHeight = navElement ? navElement.offsetHeight : 65; 
     
-    var perfectHeight = window.innerHeight - bottomNavHeight;
+    var topOffset = arcadeView.getBoundingClientRect().top;
+    var perfectHeight = window.innerHeight - topOffset - bottomNavHeight;
     
     if (perfectHeight > 0) {
-        arcadeView.style.top = '0px';
-        arcadeView.style.left = '0px';
-        arcadeView.style.width = '100vw';
         arcadeView.style.height = perfectHeight + 'px';
     }
 }
