@@ -630,27 +630,30 @@
 
 <div class="modal-overlay" id="name-modal">
   <div class="modal-box">
-    <h3>Редактирование профиля</h3>
+    <h3 style="margin-bottom: 12px;">Ваш профиль</h3>
     
-    <!-- Блок генератора аватара в стиле CryptoPunks -->
-    <div style="display: flex; flex-direction: column; align-items: center; gap: 8px; margin-bottom: 12px; background: var(--list-bg); padding: 12px; border-radius: 12px;">
-      <div id="avatar-preview-container" style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; border: 2px solid var(--accent-sky); display: flex; align-items: center; justify-content: center; background: #000; box-shadow: 0 4px 10px rgba(0,0,0,0.3);">
-        👤
+    <!-- Блок генератора NFT-аватара -->
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px; background: var(--list-bg); padding: 16px; border-radius: 16px; border: 1px solid var(--card-border);">
+      <div id="avatar-preview-container" style="width: 96px; height: 96px; border-radius: 12px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 32px;">👤</span>
       </div>
-      <button class="btn btn-join" style="width: auto; padding: 6px 16px; font-size: 12px; background: var(--accent-purple);" onclick="generateRandomAvatar()">🎲 Сгенерировать аватар</button>
+      <button class="btn btn-join" style="width: 100%; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="generateRandomAvatar()">
+        <span>🎲</span> Сгенерировать новый стиль
+      </button>
     </div>
 
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Имя:</div>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Имя:</div>
     <input type="text" id="name-input" class="input-name" placeholder="Ваше имя" maxlength="26" />
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Основание:</div>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Основание:</div>
     <input type="text" id="blade-input" class="input-name" placeholder="Например: Yinhe Y-4" maxlength="35" style="font-size: 14px;" />
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка L:</div>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка L:</div>
     <input type="text" id="rubber-l-input" class="input-name" placeholder="Например: Stiga Mantra S" maxlength="35" style="font-size: 14px;" />
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка R:</div>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Накладка R:</div>
     <input type="text" id="rubber-r-input" class="input-name" placeholder="Например: Mercury II Soft" maxlength="35" style="font-size: 14px;" />
-    <div style="text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Рейтинг РТТФ:</div>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-top: 4px; margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Рейтинг РТТФ:</div>
     <input type="number" id="rttf-input" class="input-name" placeholder="Например: 150" min="0" max="4000" />
-    <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()" style="margin-top: 8px;">Сохранить</button>
+    
+    <button class="btn btn-join" id="btn-save-name" onclick="saveCustomNameWithCheck()" style="margin-top: 12px; font-size: 16px; padding: 12px;">Сохранить профиль</button>
     <button class="btn-cancel-modal" onclick="hideNameModal()">Отмена</button>
   </div>
 </div>
