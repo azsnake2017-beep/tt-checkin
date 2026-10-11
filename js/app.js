@@ -1369,16 +1369,42 @@ function submitTourMatchScore() {
   var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
   closeTourMatchModal();
   var recordedMatch = null;
+  var isEditMode = false;
 
   db.runTransaction(function(t) {
       var ref = db.collection('tournaments').doc(tourId);
       return t.get(ref).then(function(doc) {
           if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
           var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
-          if (mIdx === -1 || matches[mIdx].score1 !== null) return;
+          if (mIdx === -1) return;
           var match = matches[mIdx];
           if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
 
+          // === БЛОК РЕДАКТИРОВАНИЯ ===
+          if (match.score1 !== null) {
+              isEditMode = true;
+              var oldS1 = match.score1, oldS2 = match.score2;
+              var oldPWin = oldS1 > oldS2, isPWin = s1 > s2;
+              match.score1 = s1; match.score2 = s2;
+
+              if (match.stage === 'group') {
+                  var groups = data.groups; var grp = groups[match.group];
+                  var pl1 = null, pl2 = null;
+                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
+                  
+                  // Откатываем старые очки
+                  if (oldPWin) { pl1.w--; pl1.pts -= 2; pl2.l--; pl2.pts -= 1; } else { pl2.w--; pl2.pts -= 2; pl1.l--; pl1.pts -= 1; }
+                  // Начисляем новые очки
+                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+                  
+                  t.update(ref, { matches: matches, groups: groups });
+              } else {
+                  t.update(ref, { matches: matches });
+              }
+              return; // Выходим без начисления ЭЛО
+          }
+
+          // === БЛОК НОВОГО СОХРАНЕНИЯ (С ЭЛО) ===
           match.score1 = s1; match.score2 = s2;
           recordedMatch = match;
 
@@ -1399,21 +1425,13 @@ function submitTourMatchScore() {
               var p2S = isPWin ? 0 : ((parseInt(p2Data.winStreak, 10) || 0) + 1);
 
               t.update(p1Ref, { 
-                elo: newP1Elo, 
-                lastEloDelta: isPWin ? myDelta : -myDelta, 
-                winStreak: p1S, 
-                matches: (parseInt(p1Data.matches, 10) || 0) + 1, 
-                wins: (parseInt(p1Data.wins, 10) || 0) + (isPWin ? 1 : 0), 
-                losses: (parseInt(p1Data.losses, 10) || 0) + (isPWin ? 0 : 1) 
+                elo: newP1Elo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: p1S, 
+                matches: (parseInt(p1Data.matches, 10) || 0) + 1, wins: (parseInt(p1Data.wins, 10) || 0) + (isPWin ? 1 : 0), losses: (parseInt(p1Data.losses, 10) || 0) + (isPWin ? 0 : 1) 
               });
 
               t.update(p2Ref, { 
-                elo: newP2Elo, 
-                lastEloDelta: isPWin ? -myDelta : myDelta, 
-                winStreak: p2S, 
-                matches: (parseInt(p2Data.matches, 10) || 0) + 1, 
-                wins: (parseInt(p2Data.wins, 10) || 0) + (isPWin ? 0 : 1), 
-                losses: (parseInt(p2Data.losses, 10) || 0) + (isPWin ? 1 : 0) 
+                elo: newP2Elo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: p2S, 
+                matches: (parseInt(p2Data.matches, 10) || 0) + 1, wins: (parseInt(p2Data.wins, 10) || 0) + (isPWin ? 0 : 1), losses: (parseInt(p2Data.losses, 10) || 0) + (isPWin ? 1 : 0) 
               });
               
               if (match.stage === 'group') {
@@ -1428,19 +1446,12 @@ function submitTourMatchScore() {
           });
       });
   }).then(function() {
-      if (recordedMatch) {
+      if (isEditMode) {
+          if (typeof customAlert === 'function') customAlert('✏️ <b>Счет успешно изменен!</b><br><br><span style="font-size: 12px; color: var(--text-muted);">Таблица групп обновлена. Эло игроков не пересчитывалось, чтобы не было задвоений.</span>');
+      } else if (recordedMatch) {
         db.collection('matches_history').add({ 
-          type: 'singles',
-          p1Uid: recordedMatch.p1Uid, 
-          p1Name: recordedMatch.p1Name, 
-          p1Score: s1, 
-          p2Uid: recordedMatch.p2Uid, 
-          p2Name: recordedMatch.p2Name, 
-          p2Score: s2, 
-          participants: [recordedMatch.p1Uid, recordedMatch.p2Uid], 
-          timestamp: Date.now() 
-          });
-       // ВЗРЫВ КОНФЕТТИ В ЧЕСТЬ ПОБЕДИТЕЛЯ МАТЧА 🎉
+          type: 'singles', p1Uid: recordedMatch.p1Uid, p1Name: recordedMatch.p1Name, p1Score: s1, p2Uid: recordedMatch.p2Uid, p2Name: recordedMatch.p2Name, p2Score: s2, participants: [recordedMatch.p1Uid, recordedMatch.p2Uid], timestamp: Date.now() 
+        });
         if (typeof triggerConfetti === 'function') triggerConfetti();
       }
   }).catch(function(e){});
@@ -1463,8 +1474,10 @@ function renderMatchList(matches, tourId, titleFilter) {
   for(var i=0; i<matches.length; i++) {
     var m = matches[i]; var isDone = m.score1 !== null;
     
-    // Кнопка с передачей m.stage
-    var badge = isDone ? '<span class="tour-score-badge">' + m.score1 + ' : ' + m.score2 + '</span>' : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\', \''+escapeJS(m.stage)+'\')">Указать счет</button>';
+    // Делаем бейдж счета кликабельным для редактирования
+    var badge = isDone 
+        ? '<span class="tour-score-badge" style="cursor:pointer;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\', \''+escapeJS(m.stage)+'\')" title="Изменить счет">' + m.score1 + ' : ' + m.score2 + ' ✏️</span>' 
+        : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\', \''+escapeJS(m.stage)+'\')">Указать счет</button>';
     
     var n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
     var n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
