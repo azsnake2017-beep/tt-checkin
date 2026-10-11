@@ -2570,18 +2570,20 @@ document.addEventListener('DOMContentLoaded', function() {
 
 // 1. ИСПРАВЛЕНИЕ АЛЕРТОВ (ТЕПЕРЬ ТЕГИ <br> И <b> РАБОТАЮТ КОРРЕКТНО)
 window.customAlert = function(htmlMsg) {
-  var el = document.getElementById('custom-alert-modal');
+  if (window.TTAudio) {
+    if (typeof window.TTAudio.playNotification === 'function') window.TTAudio.playNotification();
+    else if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
+  }
   var txt = document.getElementById('custom-alert-text');
-  if (txt) txt.innerHTML = htmlMsg; // Заменили innerText на innerHTML
-  if (el) el.style.display = 'flex';
+  if (txt) txt.innerHTML = htmlMsg; 
+  openModalSmoothly('custom-alert-modal'); // <- ИСПОЛЬЗУЕМ ПРАВИЛЬНУЮ ФУНКЦИЮ ОТКРЫТИЯ
 };
 
 window.openConfirmModal = function(htmlText, onConfirm) {
   var el = document.getElementById('confirm-modal-text');
-  if (el) el.innerHTML = htmlText; // Заменили innerText на innerHTML
+  if (el) el.innerHTML = htmlText; 
   window.confirmCallback = onConfirm;
-  var modal = document.getElementById('confirm-modal');
-  if (modal) modal.style.display = 'flex';
+  openModalSmoothly('confirm-modal'); // <- ИСПОЛЬЗУЕМ ПРАВИЛЬНУЮ ФУНКЦИЮ ОТКРЫТИЯ
 };
 
 window.executeConfirm = function() {
@@ -2828,16 +2830,36 @@ window.showBadgeInfo = function(badgeKey) {
   }
 };
 
-// Глобальный перехватчик: делает кликабельной АБСОЛЮТНО ЛЮБУЮ плашку
+// УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН (ИСПРАВЛЕННЫЙ И УМНЫЙ)
 document.addEventListener('click', function(e) {
-  var badge = e.target.closest('.platform-badge');
-  if (badge) {
-      // Если у плашки забыли прописать событие onclick в HTML
-      if (!badge.hasAttribute('onclick')) {
-          var text = badge.innerText.trim();
-          if (text) window.showBadgeInfo(text);
-      }
-  }
+    // 1. Закрытие по темному фону вокруг окна
+    if (e.target.classList.contains('modal-overlay')) {
+        closeModalSmoothly(e.target.id);
+        return;
+    }
+    
+    // 2. Ищем, кликнули ли мы по кнопке (или внутри кнопки)
+    var clickedBtn = e.target.closest('button, .close-btn, .btn-cancel-modal, [data-close]');
+    if (clickedBtn) {
+        // Проверяем, является ли это кнопкой закрытия
+        var isCloseBtn = clickedBtn.hasAttribute('data-close') || 
+                         clickedBtn.classList.contains('close-btn') || 
+                         clickedBtn.classList.contains('btn-cancel-modal');
+        
+        // Резервная проверка: если на кнопке просто написано "Понятно" или "Закрыть"
+        var btnText = clickedBtn.innerText.trim().toLowerCase();
+        if (btnText === 'понятно' || btnText === 'закрыть' || btnText === 'ok' || btnText === 'ок') {
+            isCloseBtn = true;
+        }
+
+        // Если это нужная кнопка — ищем её окно и закрываем
+        if (isCloseBtn) {
+            var modalOverlay = clickedBtn.closest('.modal-overlay');
+            if (modalOverlay) {
+                closeModalSmoothly(modalOverlay.id);
+            }
+        }
+    }
 });
   /* ==========================================
    РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
