@@ -844,16 +844,34 @@ function showUserInfoModal(uid) {
           '</div>' +
         '</div>';
 
-    // === ВОТ ТОТ САМЫЙ БЛОК: ДИНАМИЧЕСКИЕ МЕДАЛИ ===
+   // === МЕДАЛИ ЗА ТУРНИРЫ С ПОДПИСЬЮ И ИКОНКАМИ ===
     var medalsHtml = '';
     var m = u.medals || { gold:0, silver:0, bronze:0 };
-    if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-        medalsHtml = '<div style="display: flex; gap: 6px; justify-content: center; margin-bottom: 16px;">' +
-                     '<div style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold;">🏆 ' + (u.tournamentsPlayed || 0) + '</div>' +
-                     (m.gold > 0 ? '<div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #fbbf24;">🥇 ' + m.gold + '</div>' : '') +
-                     (m.silver > 0 ? '<div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #94a3b8;">🥈 ' + m.silver + '</div>' : '') +
-                     (m.bronze > 0 ? '<div style="background: rgba(180, 83, 9, 0.1); border: 1px solid rgba(180, 83, 9, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #b45309;">🥉 ' + m.bronze + '</div>' : '') +
-                     '</div>';
+    var totalTournaments = u.tournamentsPlayed || 0;
+    
+    if (totalTournaments > 0 || m.gold > 0 || m.silver > 0 || m.bronze > 0) {
+        medalsHtml = '<div style="margin-bottom: 16px; background: rgba(255,255,255,0.03); border: 1px solid var(--card-border); border-radius: 12px; padding: 10px 12px;">' +
+                     '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; text-align: center;">🏆 Медали за турниры (Участий: ' + totalTournaments + ')</div>' +
+                     '<div style="display: flex; gap: 8px; justify-content: center;">' +
+                     // Золото
+                     '<div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; color: #fbbf24; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">' +
+                         '<span style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4);">🥇</span>' +
+                         '<span>' + (m.gold || 0) + '</span>' +
+                         '<div style="font-size: 9px; opacity: 0.8; font-weight: normal;">Золото</div>' +
+                     '</div>' +
+                     // Серебро
+                     '<div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; color: #94a3b8; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">' +
+                         '<span style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4);">🥈</span>' +
+                         '<span>' + (m.silver || 0) + '</span>' +
+                         '<div style="font-size: 9px; opacity: 0.8; font-weight: normal;">Серебро</div>' +
+                     '</div>' +
+                     // Бронза
+                     '<div style="background: rgba(180, 83, 9, 0.1); border: 1px solid rgba(180, 83, 9, 0.3); padding: 6px 10px; border-radius: 8px; font-size: 14px; font-weight: bold; color: #b45309; text-align: center; flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;">' +
+                         '<span style="font-size: 20px; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.4);">🥉</span>' +
+                         '<span>' + (m.bronze || 0) + '</span>' +
+                         '<div style="font-size: 9px; opacity: 0.8; font-weight: normal;">Бронза</div>' +
+                     '</div>' +
+                     '</div></div>';
     }
 
     // Вставляем аватарку и динамические медали
