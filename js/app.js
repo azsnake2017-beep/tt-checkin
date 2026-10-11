@@ -2990,11 +2990,13 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// --- ФУНКЦИИ ЗАКРЫТИЯ ДОПОЛНИТЕЛЬНЫХ ОКОН ---
-window.closeBadgeInfoModal = function() { 
-    if (typeof closeModalSmoothly === 'function') closeModalSmoothly('badge-info-modal'); 
-};
-
-window.closeCustomAlertModal = function() { 
-    if (typeof closeModalSmoothly === 'function') closeModalSmoothly('custom-alert-modal'); 
-};
+// УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН
+document.addEventListener('click', function(e) {
+    // Если мы кликнули по кнопке отмены или кнопке "Понятно" (у которой есть атрибут data-close)
+    if (e.target.classList.contains('btn-cancel-modal') || e.target.hasAttribute('data-close')) {
+        var modalOverlay = e.target.closest('.modal-overlay');
+        if (modalOverlay && typeof closeModalSmoothly === 'function') {
+            closeModalSmoothly(modalOverlay.id);
+        }
+    }
+});
