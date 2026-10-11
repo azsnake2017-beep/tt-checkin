@@ -1426,7 +1426,8 @@ function submitTourMatchScore() {
           p2Score: s2, 
           participants: [recordedMatch.p1Uid, recordedMatch.p2Uid], 
           timestamp: Date.now() 
-        });
+       // ВЗРЫВ КОНФЕТТИ В ЧЕСТЬ ПОБЕДИТЕЛЯ МАТЧА 🎉
+        if (typeof triggerConfetti === 'function') triggerConfetti();
       }
   }).catch(function(e){});
 }
