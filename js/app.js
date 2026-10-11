@@ -2989,3 +2989,12 @@ document.addEventListener('DOMContentLoaded', function() {
         observer.observe(arcadeView, { attributes: true, attributeFilter: ['style'] });
     }
 });
+
+// --- ФУНКЦИИ ЗАКРЫТИЯ ДОПОЛНИТЕЛЬНЫХ ОКОН ---
+window.closeBadgeInfoModal = function() { 
+    if (typeof closeModalSmoothly === 'function') closeModalSmoothly('badge-info-modal'); 
+};
+
+window.closeCustomAlertModal = function() { 
+    if (typeof closeModalSmoothly === 'function') closeModalSmoothly('custom-alert-modal'); 
+};
