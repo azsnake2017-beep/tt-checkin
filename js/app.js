@@ -1537,8 +1537,9 @@ function listenTournaments() {
             var tPartsCount = d.participants ? d.participants.length : 0;
             var tMatchesCount = d.matches ? d.matches.filter(function(m){ return m.score1 !== null; }).length : 0;
             
-            var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15);">' +
-                '<div style="font-size: 18px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">🏆 ИТОГИ ТУРНИРА</div>' +
+           var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15); position: relative;">' +
+                '<button onclick="downloadTournamentPoster(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="position: absolute; top: 10px; right: 10px; font-size: 11px; padding: 6px 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px;">📸 Скачать</button>' +
+                '<div style="font-size: 18px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-top: 8px;">🏆 ИТОГИ ТУРНИРА</div>' +
                 '<div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px;">' + cleanHtml(d.title) + '</div>' +
                 '<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 24px;">' + (d.dateStr || 'Завершен') + '</div>' +
                 
