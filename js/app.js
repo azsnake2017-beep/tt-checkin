@@ -1520,7 +1520,7 @@ function listenTournaments() {
           var isPart = false; for(var i=0; i<parts.length; i++) { if (parts[i].uid === myUid) isPart = true; }
           var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal(\''+escapeJS(id)+'\')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px; color: #ef4444; border-color: #ef4444;" onclick="deleteTournament(\''+escapeJS(id)+'\')">🗑 Удалить</button></div>' : '';
 
-         if (d.status === 'completed') {
+        if (d.status === 'completed') {
             var res = d.results || {};
             var goldName = (res.gold && res.gold.name) ? res.gold.name : '';
             var silverName = (res.silver && res.silver.name) ? res.silver.name : '';
@@ -1529,26 +1529,109 @@ function listenTournaments() {
             var silverUid = (res.silver && res.silver.uid) ? res.silver.uid : '';
             var bronzeUid = (res.bronze && res.bronze.uid) ? res.bronze.uid : '';
             
-            // Собираем детали для архива (группы и матчи)
             var groupA = d.groups && d.groups.A ? d.groups.A : []; 
             var groupB = d.groups && d.groups.B ? d.groups.B : [];
             var detailsHtml = '';
             
+            // === 1. ИНФОГРАФИКА ТУРНИРА ===
+            var tPartsCount = d.participants ? d.participants.length : 0;
+            var tMatchesCount = d.matches ? d.matches.filter(function(m){ return m.score1 !== null; }).length : 0;
+            
+            var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15);">' +
+                '<div style="font-size: 18px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px;">🏆 ИТОГИ ТУРНИРА</div>' +
+                '<div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px;">' + cleanHtml(d.title) + '</div>' +
+                '<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 24px;">' + (d.dateStr || 'Завершен') + '</div>' +
+                
+                '<div style="display: flex; justify-content: center; align-items: flex-end; gap: 6px; margin-bottom: 24px; height: 110px;">' +
+                    '<div style="display: flex; flex-direction: column; align-items: center; width: 30%;">' +
+                        '<div style="font-size: 11px; font-weight: 700; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">' + cleanHtml(silverName || '-') + '</div>' +
+                        '<div style="font-size: 26px; margin: 4px 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🥈</div>' +
+                        '<div style="width: 100%; height: 50px; background: linear-gradient(to top, #475569, #94a3b8); border-radius: 8px 8px 0 0; display: flex; justify-content: center; align-items: center; font-weight: 900; color: #fff; font-size: 18px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.3);">2</div>' +
+                    '</div>' +
+                    '<div style="display: flex; flex-direction: column; align-items: center; width: 38%; z-index: 2;">' +
+                        '<div style="font-size: 13px; font-weight: 900; color: #fbbf24; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">' + cleanHtml(goldName || '-') + '</div>' +
+                        '<div style="font-size: 34px; margin: 4px 0; filter: drop-shadow(0 4px 6px rgba(0,0,0,0.6));">🥇</div>' +
+                        '<div style="width: 100%; height: 75px; background: linear-gradient(to top, #b45309, #fbbf24); border-radius: 8px 8px 0 0; display: flex; justify-content: center; align-items: center; font-weight: 900; color: #fff; font-size: 24px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.4);">1</div>' +
+                    '</div>' +
+                    '<div style="display: flex; flex-direction: column; align-items: center; width: 30%;">' +
+                        '<div style="font-size: 11px; font-weight: 700; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">' + cleanHtml(bronzeName || '-') + '</div>' +
+                        '<div style="font-size: 26px; margin: 4px 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🥉</div>' +
+                        '<div style="width: 100%; height: 40px; background: linear-gradient(to top, #78350f, #b45309); border-radius: 8px 8px 0 0; display: flex; justify-content: center; align-items: center; font-weight: 900; color: #fff; font-size: 18px; box-shadow: inset 0 2px 5px rgba(255,255,255,0.2);">3</div>' +
+                    '</div>' +
+                '</div>' +
+                
+                '<div style="display: flex; justify-content: space-around; background: rgba(0,0,0,0.4); padding: 12px; border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);">' +
+                    '<div style="text-align: center;">' +
+                        '<div style="font-size: 20px; font-weight: 900; color: #10b981;">' + tPartsCount + '</div>' +
+                        '<div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Игроков</div>' +
+                    '</div>' +
+                    '<div style="text-align: center;">' +
+                        '<div style="font-size: 20px; font-weight: 900; color: #0ea5e9;">' + tMatchesCount + '</div>' +
+                        '<div style="font-size: 10px; color: var(--text-muted); text-transform: uppercase; font-weight: 600; margin-top: 2px;">Сыграно матчей</div>' +
+                    '</div>' +
+                '</div>' +
+            '</div>';
+            
+            detailsHtml += infoHtml;
+            // ====================================
+            
+            // === 2. ТАБЛИЦЫ И СЕТКА ===
             if (groupA.length > 0 || groupB.length > 0) {
-                detailsHtml += '<div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 10px;">';
-                detailsHtml += '<div style="font-size: 12px; font-weight: 700; color: var(--accent-amber); margin-bottom: 8px;">📊 Итоги групп и сетка матчей:</div>';
+                detailsHtml += '<div style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 16px;">';
+                
+                detailsHtml += '<div style="font-size: 14px; font-weight: 800; color: var(--accent-amber); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">📊 Итоговые таблицы:</div>';
                 detailsHtml += renderGroupTable(groupA, 'A') + renderGroupTable(groupB, 'B');
                 
                 var allMatches = d.matches || [];
                 if (allMatches.length > 0) {
-                    detailsHtml += '<div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Все матчи турнира:</div>';
-                    // Выводим все матчи без кнопок изменения счета (только результат)
-                    for(var mi=0; mi<allMatches.length; mi++) {
-                        var m = allMatches[mi];
-                        var stLabel = m.stage === 'semi' ? 'Полуфинал' : (m.stage === 'final' ? (m.title || 'Финал') : 'Группа');
-                        detailsHtml += '<div style="display: flex; justify-content: space-between; font-size: 12px; background: var(--list-bg); padding: 4px 8px; border-radius: 6px; margin-bottom: 4px;">' +
-                                       '<span>' + cleanHtml(m.p1Name) + ' vs ' + cleanHtml(m.p2Name) + '</span>' +
-                                       '<b>' + (m.score1 !== null ? m.score1 + ' : ' + m.score2 : '-') + '</b></div>';
+                    
+                    var playoffsMatches = allMatches.filter(function(m){ return m.stage === 'semi' || m.stage === 'final'; });
+                    if (playoffsMatches.length > 0) {
+                        playoffsMatches.sort(function(a, b) {
+                            var rankA = a.stage === 'semi' ? 1 : (a.id === 'first' ? 3 : 2);
+                            var rankB = b.stage === 'semi' ? 1 : (b.id === 'first' ? 3 : 2);
+                            return rankA - rankB;
+                        });
+
+                        detailsHtml += '<div style="font-size: 14px; font-weight: 800; color: var(--accent-sky); margin: 24px 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">⚔️ Сетка Плей-Офф:</div>';
+                        
+                        for(var pmi=0; pmi<playoffsMatches.length; pmi++) {
+                            var pm = playoffsMatches[pmi];
+                            var stLabel = pm.stage === 'semi' ? 'ПОЛУФИНАЛ' : (pm.title ? pm.title.toUpperCase() : 'ФИНАЛ');
+                            var isP1Win = pm.score1 !== null && pm.score1 > pm.score2;
+                            var isP2Win = pm.score1 !== null && pm.score2 > pm.score1;
+                            
+                            var p1Color = isP1Win ? '#10b981' : '#fff';
+                            var p2Color = isP2Win ? '#10b981' : '#fff';
+                            var p1Weight = isP1Win ? '800' : '500';
+                            var p2Weight = isP2Win ? '800' : '500';
+                            
+                            var borderColor = pm.id === 'first' ? 'var(--accent-gold)' : (pm.id === 'third' ? '#b45309' : 'rgba(255,255,255,0.1)');
+
+                            detailsHtml += '<div style="background: rgba(0,0,0,0.4); border: 1px solid ' + borderColor + '; border-radius: 10px; padding: 10px; margin-bottom: 8px; box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);">' +
+                                '<div style="font-size: 10px; color: var(--text-muted); margin-bottom: 6px; text-align: center; font-weight: 700; letter-spacing: 1px;">' + stLabel + '</div>' +
+                                '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 14px;">' +
+                                    '<span style="flex: 1; text-align: right; font-weight: ' + p1Weight + '; color: ' + p1Color + '; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + cleanHtml(pm.p1Name) + '</span>' +
+                                    '<span style="font-weight: 900; background: var(--row-bg); padding: 4px 10px; border-radius: 8px; margin: 0 12px; border: 1px solid rgba(255,255,255,0.05);">' + (pm.score1 !== null ? pm.score1 + ' : ' + pm.score2 : '-') + '</span>' +
+                                    '<span style="flex: 1; text-align: left; font-weight: ' + p2Weight + '; color: ' + p2Color + '; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + cleanHtml(pm.p2Name) + '</span>' +
+                                '</div>' +
+                            '</div>';
+                        }
+                    }
+                    
+                    var groupMatches = allMatches.filter(function(m){ return m.stage === 'group'; });
+                    if (groupMatches.length > 0) {
+                        detailsHtml += '<div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin: 24px 0 10px 0; text-transform: uppercase; text-align: center;">📋 Матчи группового этапа:</div>';
+                        for(var mi=0; mi<groupMatches.length; mi++) {
+                            var m = groupMatches[mi];
+                            var mgIsP1Win = m.score1 !== null && m.score1 > m.score2;
+                            var mgIsP2Win = m.score1 !== null && m.score2 > m.score1;
+
+                            detailsHtml += '<div style="display: flex; justify-content: space-between; align-items: center; font-size: 12px; background: var(--list-bg); padding: 8px 12px; border-radius: 8px; margin-bottom: 4px; border: 1px solid rgba(255,255,255,0.02);">' +
+                                           '<span style="flex: 1; text-align: right; font-weight: ' + (mgIsP1Win ? '700' : 'normal') + '; color: ' + (mgIsP1Win ? '#10b981' : 'var(--text-muted)') + '; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + cleanHtml(m.p1Name) + '</span>' +
+                                           '<b style="margin: 0 12px; color: #fff; font-size: 13px; background: rgba(0,0,0,0.3); padding: 2px 8px; border-radius: 4px;">' + (m.score1 !== null ? m.score1 + ':' + m.score2 : 'vs') + '</b>' +
+                                           '<span style="flex: 1; text-align: left; font-weight: ' + (mgIsP2Win ? '700' : 'normal') + '; color: ' + (mgIsP2Win ? '#10b981' : 'var(--text-muted)') + '; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + cleanHtml(m.p2Name) + '</span></div>';
+                        }
                     }
                 }
                 detailsHtml += '</div>';
@@ -1557,9 +1640,9 @@ function listenTournaments() {
             archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.9;">' +
                            '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
                                 '<div><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div></div>' +
-                                '<button class="btn-info" style="font-size: 11px; width: auto; padding: 4px 8px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">📜 История</button>' +
+                                '<button class="btn-info" style="font-size: 11px; width: auto; padding: 6px 12px; border-radius: 6px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">📜 История</button>' +
                            '</div>' +
-                           '<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">' +
+                           '<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; margin-top: 8px;">' +
                                 '<div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div>' +
                                 '<div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(silverUid)+'\')">' + cleanHtml(silverName) + '</span></div>' +
                                 '<div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(bronzeUid)+'\')">' + cleanHtml(bronzeName) + '</span></div>' +
