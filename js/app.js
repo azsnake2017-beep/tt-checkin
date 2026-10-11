@@ -1296,6 +1296,8 @@ function completeTournament(id) {
     Promise.all(promises).then(function() {
         batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
         batch.commit().then(function() {
+          if (typeof triggerConfetti === 'function') triggerConfetti();
+            
             if(typeof sendTelegramAlert === 'function') sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
         });
     });
