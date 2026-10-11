@@ -3170,7 +3170,7 @@ window.downloadTournamentPoster = function(tourId, tourTitle) {
 };
 
 // ==========================================
-// СОХРАНЕНИЕ ИНФОГРАФИКИ КАК PDF
+// СОХРАНЕНИЕ ИНФОГРАФИКИ КАК PDF (С УЧЕТОМ ДЛИНЫ)
 // ==========================================
 window.downloadTournamentPDF = function(tourId, tourTitle) {
     if (typeof vibrate === 'function') vibrate('medium');
@@ -3213,18 +3213,23 @@ window.downloadTournamentPDF = function(tourId, tourTitle) {
             window.setAppProgress(100, 'Готово!');
         }
 
-        // Превращаем canvas в картинку для PDF
         var imgData = canvas.toDataURL('image/png');
         
-        // Создаем PDF-документ (подключаем jsPDF)
         var jsPDF = window.jspdf.jsPDF;
-        var pdf = new jsPDF('p', 'mm', 'a4'); // Портретная ориентация, миллиметры, формат А4
         
-        // Подгоняем размер картинки под ширину страницы А4
-        var pdfWidth = pdf.internal.pageSize.getWidth();
-        var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        // РАСЧЕТ ДИНАМИЧЕСКОГО РАЗМЕРА: 
+        // Определяем ширину и высоту в миллиметрах на основе реальных пропорций картинки
+        var imgWidthMm = 210; // Ширина страницы А4 в миллиметрах
+        var imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+
+        // Создаем PDF-документ с точной высотой картинки, чтобы ничего не обрезалось
+        var pdf = new jsPDF({
+            orientation: imgHeightMm > imgWidthMm ? 'p' : 'l',
+            unit: 'mm',
+            format: [imgWidthMm, imgHeightMm]
+        });
         
-        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
         
         // Скачиваем PDF
         var safeTitle = (tourTitle || 'Турнир').replace(/[^a-zа-яё0-9]/gi, '_');
