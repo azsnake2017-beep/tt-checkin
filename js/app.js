@@ -1435,6 +1435,16 @@ function submitTourMatchScore() {
   }).catch(function(e){});
 }
 
+function renderGroupTable(groupPlayers, groupName) {
+  if (!groupPlayers || groupPlayers.length === 0 || !Array.isArray(groupPlayers)) return '';
+  var sorted = groupPlayers.slice().sort(function(a,b) { return (b.w||0) - (a.w||0) || (b.pts||0) - (a.pts||0); });
+  var rows = '';
+  for(var i=0; i<sorted.length; i++) { 
+      var p = sorted[i]; 
+      rows += '<tr><td>'+(i+1)+'. <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(p.uid)+'\')">' + cleanHtml(p.name) + '</span></td><td>' + (p.w||0) + '</td><td>' + (p.l||0) + '</td><td>' + (p.pts||0) + '</td></tr>'; 
+  }
+  return '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ' + groupName + '</div><table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>' + rows + '</table>';
+}
 
 function renderMatchList(matches, tourId, titleFilter) {
   if (!matches || matches.length === 0) return '';
