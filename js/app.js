@@ -1302,12 +1302,41 @@ function completeTournament(id) {
   }).catch(function(e) {});
 }
 
-function openTourMatchModal(tourId, matchId, p1Name, p2Name) {
+function openTourMatchModal(tourId, matchId, p1Name, p2Name, stage) {
   document.getElementById('tour-match-id-val').value = matchId; 
   document.getElementById('tour-id-val').value = tourId; 
   document.getElementById('tour-match-players-label').innerText = cleanHtml(p1Name) + ' ПРОТИВ ' + cleanHtml(p2Name);
-  selectTourScore(3, 0); 
-  openModalSmoothly('tour-match-modal'); 
+  
+  var picker = document.getElementById('tour-match-score-picker');
+  if (picker) {
+      if (stage === 'group') {
+          // Отборочные (Группы): до 2 побед
+          picker.style.gridTemplateColumns = 'repeat(2, 1fr)';
+          picker.innerHTML = 
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 0)">2 : 0</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 1)">2 : 1</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(1, 2)">1 : 2</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(0, 2)">0 : 2</button>';
+          selectTourScore(2, 0); // По умолчанию
+      } else {
+          // Плей-офф и Финалы: до 3 побед
+          picker.style.gridTemplateColumns = 'repeat(3, 1fr)';
+          picker.innerHTML = 
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(3, 0)">3 : 0</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(3, 1)">3 : 1</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>';
+          selectTourScore(3, 0); // По умолчанию
+      }
+  }
+  
+  if (typeof openModalSmoothly === 'function') {
+      openModalSmoothly('tour-match-modal'); 
+  } else {
+      document.getElementById('tour-match-modal').style.display = 'flex';
+  }
 }
 
 function closeTourMatchModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('tour-match-modal'); }
@@ -1416,12 +1445,21 @@ function renderMatchList(matches, tourId, titleFilter) {
   return str;
 }
 
-function renderGroupTable(groupPlayers, groupName) {
-  if (!groupPlayers || groupPlayers.length === 0 || !Array.isArray(groupPlayers)) return '';
-  var sorted = groupPlayers.slice().sort(function(a,b) { return (b.w||0) - (a.w||0) || (b.pts||0) - (a.pts||0); });
-  var rows = '';
-  for(var i=0; i<sorted.length; i++) { var p = sorted[i]; rows += '<tr><td>'+(i+1)+'. <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(p.uid)+'\')">' + cleanHtml(p.name) + '</span></td><td>' + (p.w||0) + '</td><td>' + (p.l||0) + '</td><td>' + (p.pts||0) + '</td></tr>'; }
-  return '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; margin-top: 12px;">Группа ' + groupName + '</div><table class="tour-group-table"><tr><th>Игрок</th><th width="30">В</th><th width="30">П</th><th width="30">О</th></tr>' + rows + '</table>';
+function renderMatchList(matches, tourId, titleFilter) {
+  if (!matches || matches.length === 0) return '';
+  var str = '';
+  for(var i=0; i<matches.length; i++) {
+    var m = matches[i]; var isDone = m.score1 !== null;
+    
+    // В onclick добавлен 5-й параметр: \''+escapeJS(m.stage)+'\'
+    var badge = isDone ? '<span class="tour-score-badge">' + m.score1 + ' : ' + m.score2 + '</span>' : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\', \''+escapeJS(m.stage)+'\')">Указать счет</button>';
+    
+    var n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
+    var n2C = (isDone && m.score2 > m.score1) ? 'tour-badge-winner' : '';
+    var titleHtml = titleFilter ? '<div style="font-size: 10px; color: var(--accent-purple); font-weight: 700; margin-bottom: 2px;">'+m.title+'</div>' : '';
+    str += '<div class="tour-match-row"><div class="tour-match-names">' + titleHtml + '<span class="'+n1C+' clickable-name" onclick="showUserInfoModal(\''+escapeJS(m.p1Uid)+'\')">' + cleanHtml(m.p1Name) + '</span><span class="'+n2C+' clickable-name" onclick="showUserInfoModal(\''+escapeJS(m.p2Uid)+'\')">' + cleanHtml(m.p2Name) + '</span></div>' + badge + '</div>';
+  }
+  return str;
 }
 
 function listenTournaments() {
