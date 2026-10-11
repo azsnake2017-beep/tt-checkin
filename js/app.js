@@ -1520,7 +1520,7 @@ function listenTournaments() {
           var isPart = false; for(var i=0; i<parts.length; i++) { if (parts[i].uid === myUid) isPart = true; }
           var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal(\''+escapeJS(id)+'\')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px; color: #ef4444; border-color: #ef4444;" onclick="deleteTournament(\''+escapeJS(id)+'\')">🗑 Удалить</button></div>' : '';
 
-          if (d.status === 'completed') {
+         if (d.status === 'completed') {
             var res = d.results || {};
             var goldName = (res.gold && res.gold.name) ? res.gold.name : '';
             var silverName = (res.silver && res.silver.name) ? res.silver.name : '';
@@ -1529,7 +1529,43 @@ function listenTournaments() {
             var silverUid = (res.silver && res.silver.uid) ? res.silver.uid : '';
             var bronzeUid = (res.bronze && res.bronze.uid) ? res.bronze.uid : '';
             
-            archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.85;"><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div><div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;"><div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div><div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(silverUid)+'\')">' + cleanHtml(silverName) + '</span></div><div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(bronzeUid)+'\')">' + cleanHtml(bronzeName) + '</span></div></div>' + adminActionHtml + '</div>';
+            // Собираем детали для архива (группы и матчи)
+            var groupA = d.groups && d.groups.A ? d.groups.A : []; 
+            var groupB = d.groups && d.groups.B ? d.groups.B : [];
+            var detailsHtml = '';
+            
+            if (groupA.length > 0 || groupB.length > 0) {
+                detailsHtml += '<div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 10px;">';
+                detailsHtml += '<div style="font-size: 12px; font-weight: 700; color: var(--accent-amber); margin-bottom: 8px;">📊 Итоги групп и сетка матчей:</div>';
+                detailsHtml += renderGroupTable(groupA, 'A') + renderGroupTable(groupB, 'B');
+                
+                var allMatches = d.matches || [];
+                if (allMatches.length > 0) {
+                    detailsHtml += '<div style="font-size: 12px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Все матчи турнира:</div>';
+                    // Выводим все матчи без кнопок изменения счета (только результат)
+                    for(var mi=0; mi<allMatches.length; mi++) {
+                        var m = allMatches[mi];
+                        var stLabel = m.stage === 'semi' ? 'Полуфинал' : (m.stage === 'final' ? (m.title || 'Финал') : 'Группа');
+                        detailsHtml += '<div style="display: flex; justify-content: space-between; font-size: 12px; background: var(--list-bg); padding: 4px 8px; border-radius: 6px; margin-bottom: 4px;">' +
+                                       '<span>' + cleanHtml(m.p1Name) + ' vs ' + cleanHtml(m.p2Name) + '</span>' +
+                                       '<b>' + (m.score1 !== null ? m.score1 + ' : ' + m.score2 : '-') + '</b></div>';
+                    }
+                }
+                detailsHtml += '</div>';
+            }
+
+            archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.9;">' +
+                           '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
+                                '<div><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div></div>' +
+                                '<button class="btn-info" style="font-size: 11px; width: auto; padding: 4px 8px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">📜 История</button>' +
+                           '</div>' +
+                           '<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">' +
+                                '<div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div>' +
+                                '<div style="color: var(--text-muted);">🥈 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(silverUid)+'\')">' + cleanHtml(silverName) + '</span></div>' +
+                                '<div style="color: #b45309;">🥉 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(bronzeUid)+'\')">' + cleanHtml(bronzeName) + '</span></div>' +
+                           '</div>' +
+                           '<div id="archive-details-' + id + '" style="display: none;">' + detailsHtml + '</div>' +
+                           adminActionHtml + '</div>';
             return;
           }
 
@@ -1587,6 +1623,13 @@ function listenTournaments() {
     } catch(e) {}
   });
 }
+window.toggleArchiveTour = function(id) {
+    var el = document.getElementById('archive-details-' + id);
+    if (!el) return;
+    var isHidden = el.style.display === 'none' || el.style.display === '';
+    el.style.display = isHidden ? 'block' : 'none';
+    if (typeof vibrate === 'function') vibrate('light');
+};
 
 function listenRatings() {
   db.collection('users').onSnapshot({ includeMetadataChanges: true }, function(snap) {
