@@ -3087,6 +3087,85 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
+// ==========================================
+// СОХРАНЕНИЕ ИНФОГРАФИКИ КАК КАРТИНКИ
+// ==========================================
+window.downloadTournamentPoster = function(tourId, tourTitle) {
+    if (typeof vibrate === 'function') vibrate('medium');
+    
+    // Находим блок архива (в нем содержится инфографика и сетка)
+    var targetBlock = document.getElementById('archive-details-' + id);
+    if (!targetBlock) {
+       targetBlock = document.getElementById('archive-details-' + tourId);
+    }
+    
+    if (!targetBlock || targetBlock.style.display === 'none') {
+        if (typeof customAlert === 'function') customAlert("Сначала разверните историю турнира!");
+        return;
+    }
+
+    if (typeof window.setAppProgress === 'function') {
+        window.setAppProgress(10, 'Создаем картинку...');
+    }
+
+    // Временно делаем фон блока непрозрачным, чтобы картинка получилась красивой
+    var originalBg = targetBlock.style.background;
+    var originalBorder = targetBlock.style.border;
+    var originalPadding = targetBlock.style.padding;
+    var originalRadius = targetBlock.style.borderRadius;
+
+    targetBlock.style.background = '#0b1120'; // Цвет фона приложения
+    targetBlock.style.border = '2px solid var(--accent-amber)';
+    targetBlock.style.padding = '20px';
+    targetBlock.style.borderRadius = '16px';
+
+    // Запускаем html2canvas
+    html2canvas(targetBlock, {
+        backgroundColor: '#0b1120',
+        scale: 2, // Двойное качество для четкости
+        useCORS: true, // Позволяет грузить внешние ресурсы
+        logging: false
+    }).then(function(canvas) {
+        // Возвращаем стили обратно
+        targetBlock.style.background = originalBg;
+        targetBlock.style.border = originalBorder;
+        targetBlock.style.padding = originalPadding;
+        targetBlock.style.borderRadius = originalRadius;
+
+        if (typeof window.setAppProgress === 'function') {
+            window.setAppProgress(100, 'Готово!');
+        }
+
+        // Превращаем canvas в картинку и скачиваем
+        var image = canvas.toDataURL("image/png");
+        var link = document.createElement('a');
+        
+        // Формируем красивое имя файла
+        var safeTitle = (tourTitle || 'Турнир').replace(/[^a-zа-яё0-9]/gi, '_');
+        link.download = "Клуб_ЧМЗ_" + safeTitle + ".png";
+        
+        link.href = image;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        
+        if (window.TTAudio && typeof window.TTAudio.playSuccess === 'function') {
+             window.TTAudio.playSuccess();
+        }
+        
+    }).catch(function(err) {
+        // Возвращаем стили обратно в случае ошибки
+        targetBlock.style.background = originalBg;
+        targetBlock.style.border = originalBorder;
+        targetBlock.style.padding = originalPadding;
+        targetBlock.style.borderRadius = originalRadius;
+        
+        if (typeof customAlert === 'function') {
+             customAlert("Ошибка сохранения: " + err.message);
+        }
+    });
+};
+
 /* ==========================================
    УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН (АБСОЛЮТНЫЙ ПЕРЕХВАТ)
    ========================================== */
