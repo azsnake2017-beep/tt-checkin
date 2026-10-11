@@ -2224,6 +2224,11 @@ document.addEventListener('touchend', function(evt) {
 });
 
 window.closeModalSmoothly = function(modalId) {
+  // Добавляем звук прямо сюда, без всяких "петлей"
+  if (window.TTAudio && typeof window.TTAudio.playSwoosh === 'function') {
+    window.TTAudio.playSwoosh();
+  }
+
   var overlay = document.getElementById(modalId);
   if (!overlay) return;
   var box = overlay.querySelector('.modal-box');
@@ -2912,34 +2917,23 @@ document.addEventListener('click', function(e) {
   }
 });
 
-// 2. Озвучиваем открытие всех модальных окон (звук всплытия - Pop)
-var _originalOpenModal = window.openModalSmoothly;
-window.openModalSmoothly = function(modalId) {
-  if (window.TTAudio) {
-    if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
-    else if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
-  }
-  if (_originalOpenModal) _originalOpenModal(modalId);
-};
-
-// 3. Озвучиваем закрытие всех модальных окон (звук смахивания - Swoosh)
-var _originalCloseModal = window.closeModalSmoothly;
-window.closeModalSmoothly = function(modalId) {
-  if (window.TTAudio && typeof window.TTAudio.playSwoosh === 'function') {
-    window.TTAudio.playSwoosh();
-  }
-  if (_originalCloseModal) _originalCloseModal(modalId);
-};
-
-// 4. Озвучиваем системные уведомления и алерты (Notification)
-var _originalCustomAlert = window.customAlert;
-window.customAlert = function(msg) {
-  if (window.TTAudio) {
-    if (typeof window.TTAudio.playNotification === 'function') window.TTAudio.playNotification();
-    else if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
-  }
-  if (_originalCustomAlert) _originalCustomAlert(msg);
-};
+// УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН (ИСПРАВЛЕННЫЙ)
+document.addEventListener('click', function(e) {
+    // 1. Закрываем окно, если кликнули мимо него (на темный фон)
+    if (e.target.classList.contains('modal-overlay')) {
+        closeModalSmoothly(e.target.id);
+        return;
+    }
+    
+    // 2. Закрываем окно по крестику или кнопкам отмены
+    var closeBtn = e.target.closest('.close-btn, .btn-cancel-modal, [data-close]');
+    if (closeBtn) {
+        var modalOverlay = closeBtn.closest('.modal-overlay');
+        if (modalOverlay && typeof closeModalSmoothly === 'function') {
+            closeModalSmoothly(modalOverlay.id);
+        }
+    }
+});
 
 // ==========================================
 // ГЕНЕРАТОР ПИКСЕЛЬНЫХ NFT-АВАТАРОВ (CryptoPunks Style)
