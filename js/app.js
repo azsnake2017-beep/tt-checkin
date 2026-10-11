@@ -1438,7 +1438,7 @@ function renderMatchList(matches, tourId, titleFilter) {
   for(var i=0; i<matches.length; i++) {
     var m = matches[i]; var isDone = m.score1 !== null;
     
-    // В onclick добавлен 5-й параметр: \''+escapeJS(m.stage)+'\'
+    // Кнопка с передачей m.stage
     var badge = isDone ? '<span class="tour-score-badge">' + m.score1 + ' : ' + m.score2 + '</span>' : '<button class="btn-info" style="font-size: 10px; width: auto; padding: 4px 8px; border-radius: 4px; height: auto;" onclick="openTourMatchModal(\''+escapeJS(tourId)+'\', \''+escapeJS(m.id)+'\', \''+escapeJS(cleanHtml(m.p1Name))+'\', \''+escapeJS(cleanHtml(m.p2Name))+'\', \''+escapeJS(m.stage)+'\')">Указать счет</button>';
     
     var n1C = (isDone && m.score1 > m.score2) ? 'tour-badge-winner' : '';
@@ -1490,22 +1490,31 @@ function listenTournaments() {
             var groupA = d.groups && d.groups.A ? d.groups.A : []; var groupB = d.groups && d.groups.B ? d.groups.B : [];
             content += renderGroupTable(groupA, 'A') + renderGroupTable(groupB, 'B');
             content += '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы А</div>';
-            var matchesA = d.matches ? d.matches.filter(function(m) { return m.group === 'A'; }) : []; content += (matchesA, id, false);
+            
+            // ЗДЕСЬ БЫЛА ОШИБКА: Добавлено слово renderMatchList
+            var matchesA = d.matches ? d.matches.filter(function(m) { return m.group === 'A'; }) : []; content += renderMatchList(matchesA, id, false);
             content += '<div style="font-size: 13px; font-weight: 700; color: var(--text-muted); margin: 12px 0 6px 0;">Матчи Группы В</div>';
-            var matchesB = d.matches ? d.matches.filter(function(m) { return m.group === 'B'; }) : []; content += (matchesB, id, false);
+            var matchesB = d.matches ? d.matches.filter(function(m) { return m.group === 'B'; }) : []; content += renderMatchList(matchesB, id, false);
+            
             var groupMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'group'; }) : [];
             var isUnfinishedGroups = false; for(var k=0; k<groupMatches.length; k++) { if (groupMatches[k].score1 === null) isUnfinishedGroups = true; }
             if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs(\''+escapeJS(id)+'\')">Сформировать Плей-офф</button>' + adminActionHtml; }
           }
           else if (d.status === 'playoffs') {
             content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>';
-            var semiMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'semi'; }) : []; content += (semiMatches, id, true);
+            
+            // ЗДЕСЬ БЫЛА ОШИБКА: Добавлено слово renderMatchList
+            var semiMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'semi'; }) : []; content += renderMatchList(semiMatches, id, true);
+            
             var isUnfinishedSemis = false; for(var l=0; l<semiMatches.length; l++) { if (semiMatches[l].score1 === null) isUnfinishedSemis = true; }
             if (isAdmin && semiMatches.length > 0 && !isUnfinishedSemis) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals(\''+escapeJS(id)+'\')">Создать Финалы</button>' + adminActionHtml; }
           }
           else if (d.status === 'finals') {
             content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>';
-            var finalMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'final'; }) : []; content += (finalMatches, id, true);
+            
+            // ЗДЕСЬ БЫЛА ОШИБКА: Добавлено слово renderMatchList
+            var finalMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'final'; }) : []; content += renderMatchList(finalMatches, id, true);
+            
             var isUnfinishedFinals = false; for(var x=0; x<finalMatches.length; x++) { if (finalMatches[x].score1 === null) isUnfinishedFinals = true; }
             if (isAdmin && finalMatches.length > 0 && !isUnfinishedFinals) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament(\''+escapeJS(id)+'\')">Завершить турнир</button>' + adminActionHtml; }
           }
