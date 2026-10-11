@@ -1537,8 +1537,13 @@ function listenTournaments() {
             var tPartsCount = d.participants ? d.participants.length : 0;
             var tMatchesCount = d.matches ? d.matches.filter(function(m){ return m.score1 !== null; }).length : 0;
             
-           var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15); position: relative;">' +
-                '<button onclick="downloadTournamentPoster(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="position: absolute; top: 10px; right: 10px; font-size: 11px; padding: 6px 12px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px;">📸 Скачать</button>' +
+          var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15); position: relative;">' +
+                // Блок с двумя кнопками (PNG и PDF)
+                '<div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 4px;">' +
+                    '<button onclick="downloadTournamentPoster(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px;">📸 PNG</button>' +
+                    '<button onclick="downloadTournamentPDF(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px;">📄 PDF</button>' +
+                '</div>' +
+                
                 '<div style="font-size: 18px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-top: 8px;">🏆 ИТОГИ ТУРНИРА</div>' +
                 '<div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px;">' + cleanHtml(d.title) + '</div>' +
                 '<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 24px;">' + (d.dateStr || 'Завершен') + '</div>' +
@@ -3161,6 +3166,80 @@ window.downloadTournamentPoster = function(tourId, tourTitle) {
         if (typeof customAlert === 'function') {
              customAlert("Ошибка сохранения: " + err.message);
         }
+    });
+};
+
+// ==========================================
+// СОХРАНЕНИЕ ИНФОГРАФИКИ КАК PDF
+// ==========================================
+window.downloadTournamentPDF = function(tourId, tourTitle) {
+    if (typeof vibrate === 'function') vibrate('medium');
+    
+    var targetBlock = document.getElementById('archive-details-' + tourId);
+    
+    if (!targetBlock || targetBlock.style.display === 'none') {
+        if (typeof customAlert === 'function') customAlert("Сначала разверните историю турнира!");
+        return;
+    }
+
+    if (typeof window.setAppProgress === 'function') {
+        window.setAppProgress(10, 'Формируем PDF...');
+    }
+
+    // Временно делаем красивый фон для рендера
+    var originalBg = targetBlock.style.background;
+    var originalBorder = targetBlock.style.border;
+    var originalPadding = targetBlock.style.padding;
+    var originalRadius = targetBlock.style.borderRadius;
+
+    targetBlock.style.background = '#0b1120';
+    targetBlock.style.border = '2px solid var(--accent-amber)';
+    targetBlock.style.padding = '20px';
+    targetBlock.style.borderRadius = '16px';
+
+    html2canvas(targetBlock, {
+        backgroundColor: '#0b1120',
+        scale: 2, 
+        useCORS: true,
+        logging: false
+    }).then(function(canvas) {
+        // Возвращаем стили на место
+        targetBlock.style.background = originalBg;
+        targetBlock.style.border = originalBorder;
+        targetBlock.style.padding = originalPadding;
+        targetBlock.style.borderRadius = originalRadius;
+
+        if (typeof window.setAppProgress === 'function') {
+            window.setAppProgress(100, 'Готово!');
+        }
+
+        // Превращаем canvas в картинку для PDF
+        var imgData = canvas.toDataURL('image/png');
+        
+        // Создаем PDF-документ (подключаем jsPDF)
+        var jsPDF = window.jspdf.jsPDF;
+        var pdf = new jsPDF('p', 'mm', 'a4'); // Портретная ориентация, миллиметры, формат А4
+        
+        // Подгоняем размер картинки под ширину страницы А4
+        var pdfWidth = pdf.internal.pageSize.getWidth();
+        var pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+        
+        pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+        
+        // Скачиваем PDF
+        var safeTitle = (tourTitle || 'Турнир').replace(/[^a-zа-яё0-9]/gi, '_');
+        pdf.save("Клуб_ЧМЗ_" + safeTitle + ".pdf");
+        
+        if (window.TTAudio && typeof window.TTAudio.playSuccess === 'function') {
+             window.TTAudio.playSuccess();
+        }
+        
+    }).catch(function(err) {
+        targetBlock.style.background = originalBg;
+        targetBlock.style.border = originalBorder;
+        targetBlock.style.padding = originalPadding;
+        targetBlock.style.borderRadius = originalRadius;
+        if (typeof customAlert === 'function') customAlert("Ошибка PDF: " + err.message);
     });
 };
 
