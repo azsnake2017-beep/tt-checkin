@@ -1113,7 +1113,87 @@ function leaveTournament(id) {
   var ref = db.collection('tournaments').doc(id);
   db.runTransaction(function(t) { return t.get(ref).then(function(doc) { if (!doc.exists || doc.data().status !== 'registration') return; var parts = doc.data().participants || []; parts = parts.filter(function(p) { return p.uid !== uid; }); t.update(ref, { participants: parts }); }); }).catch(function(e) {});
 }
+// ==========================================
+// УПРАВЛЕНИЕ УЧАСТНИКАМИ ТУРНИРА (АДМИНКА)
+// ==========================================
+window.openTourPlayersModal = function(tourId) {
+    if (typeof vibrate === 'function') vibrate('light');
+    document.getElementById('manage-tour-id').value = tourId;
+    openModalSmoothly('tour-players-modal');
+    
+    // Слушаем список участников в реальном времени
+    db.collection('tournaments').doc(tourId).onSnapshot(function(doc) {
+        if (!doc.exists) return;
+        var parts = doc.data().participants || [];
+        var listEl = document.getElementById('tour-players-list');
+        if (!listEl) return;
+        
+        var html = '';
+        parts.forEach(function(p) {
+            html += '<div style="display: flex; justify-content: space-between; align-items: center; background: var(--list-bg); padding: 8px 12px; border-radius: 8px; border: 1px solid var(--card-border);">' +
+                    '<span style="font-size: 14px; font-weight: bold; color: #fff;">' + cleanHtml(p.name) + '</span>' +
+                    '<button class="btn-info" style="background: var(--accent-red); color: #fff; width: auto; height: auto; padding: 4px 10px; border-radius: 4px; border: none; font-weight: bold;" onclick="removePlayerFromTour(\''+escapeJS(tourId)+'\', \''+escapeJS(p.uid)+'\')">Удалить</button>' +
+                    '</div>';
+        });
+        listEl.innerHTML = html || '<span class="empty-note">Пока никто не записался</span>';
+    });
+};
 
+window.closeTourPlayersModal = function() {
+    if(typeof closeModalSmoothly === 'function') closeModalSmoothly('tour-players-modal');
+};
+
+// Удаление игрока админом
+window.removePlayerFromTour = function(tourId, playerUid) {
+    if (!isSuperAdmin()) return;
+    if (typeof vibrate === 'function') vibrate('light');
+    var ref = db.collection('tournaments').doc(tourId);
+    
+    db.runTransaction(function(t) {
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists) return;
+            var parts = doc.data().participants || [];
+            parts = parts.filter(function(p) { return p.uid !== playerUid; });
+            t.update(ref, { participants: parts });
+        });
+    }).catch(function(e) { console.error("Ошибка удаления", e); });
+};
+
+// Добавление гостя (без приложения) админом
+window.addPlayerToTour = function() {
+    if (!isSuperAdmin()) return;
+    var tourId = document.getElementById('manage-tour-id').value;
+    var input = document.getElementById('new-tour-player-name');
+    var name = input.value.trim();
+    if (!name || !tourId) return;
+    
+    if (typeof vibrate === 'function') vibrate('light');
+    
+    var fakeUid = 'guest_' + generateId(); // Генерируем ID для гостя
+    
+    // 1. Создаем теневой профиль в БД, чтобы при внесении счета Эло не выдавало ошибку
+    db.collection('users').doc(fakeUid).set({
+        uid: fakeUid,
+        name: name + " (Гость)",
+        elo: 1000,
+        isVerified: false,
+        matches: 0, wins: 0, losses: 0,
+        createdAt: Date.now()
+    }, { merge: true });
+
+    // 2. Вносим гостя в турнир
+    var ref = db.collection('tournaments').doc(tourId);
+    db.runTransaction(function(t) {
+        return t.get(ref).then(function(doc) {
+            if (!doc.exists) return;
+            var parts = doc.data().participants || [];
+            parts.push({ uid: fakeUid, name: name, elo: 1000 });
+            t.update(ref, { participants: parts });
+        });
+    }).then(function() {
+        input.value = ''; // Очищаем поле ввода
+    }).catch(function(e) { console.error("Ошибка добавления", e); });
+};
 function generateId() { return Math.random().toString(36).substr(2, 9); }
 function startTournament(id, type) {
   if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
@@ -1379,7 +1459,7 @@ function listenTournaments() {
             var pList = pListItems.length > 0 ? pListItems.join(', ') : 'Пока никто не записался';
             content = '<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (' + parts.length + '):</b> ' + pList + '</div>';
             if (myUid) { buttonsHtml += isPart ? '<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament(\''+escapeJS(id)+'\')">Отказаться</button>' : '<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament(\''+escapeJS(id)+'\', \''+escapeJS(cleanHtml(d.title))+'\')">🏆 Участвовать</button>'; }
-            if (isAdmin) { buttonsHtml += '</div><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button>'; }
+            if (isAdmin) { buttonsHtml += '</div><button class="btn-plan" style="width: 100%; margin-top: 8px; border-color: #ec4899; color: #ec4899; padding: 8px;" onclick="openTourPlayersModal(\''+escapeJS(id)+'\')">👥 Управление составом</button><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная сетка</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button>'; }
           } 
           else if (d.status === 'active') {
             var groupA = d.groups && d.groups.A ? d.groups.A : []; var groupB = d.groups && d.groups.B ? d.groups.B : [];
