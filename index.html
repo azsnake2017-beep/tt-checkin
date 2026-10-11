@@ -646,29 +646,16 @@
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 16px; color: var(--accent-amber);">Внести счет матча</h3>
     <div style="font-size: 13px; margin-bottom: 8px;" id="tour-match-players-label"></div>
-    <div class="score-picker">
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 0)">3 : 0</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 1)">3 : 1</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(3, 2)">3 : 2</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(2, 3)">2 : 3</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>
-      <button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>
-    </div>
+    
+    <!-- Сюда JS будет сам подставлять нужные кнопки (до 2 или до 3 побед) -->
+    <div class="score-picker" id="tour-match-score-picker"></div>
+    
     <input type="hidden" id="tour-match-id-val" />
     <input type="hidden" id="tour-id-val" />
     <input type="hidden" id="tour-match-s1" />
     <input type="hidden" id="tour-match-s2" />
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; margin-top: 8px;" onclick="submitTourMatchScore()">Сохранить результат</button>
     <button class="btn-cancel-modal" onclick="closeTourMatchModal()">Отмена</button>
-  </div>
-</div>
-
-  <div class="modal-overlay" id="confirm-modal">
-  <div class="modal-box" style="border-color: var(--accent-red);">
-    <h3 style="font-size: 18px; color: var(--accent-red);">Внимание</h3>
-    <p id="confirm-modal-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;"></p>
-    <button class="btn btn-join" style="background: var(--accent-red);" onclick="executeConfirm()">Подтвердить</button>
-    <button class="btn-cancel-modal" style="position: relative; margin-top: 8px; width: 100%;" onclick="closeConfirmModal()">Отмена</button>
   </div>
 </div>
  
