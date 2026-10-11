@@ -3094,11 +3094,8 @@ document.addEventListener('DOMContentLoaded', function() {
 window.downloadTournamentPoster = function(tourId, tourTitle) {
     if (typeof vibrate === 'function') vibrate('medium');
     
-    // Находим блок архива (в нем содержится инфографика и сетка)
-    var targetBlock = document.getElementById('archive-details-' + id);
-    if (!targetBlock) {
-       targetBlock = document.getElementById('archive-details-' + tourId);
-    }
+    // ИСПРАВЛЕНО: используем правильную переменную tourId
+    var targetBlock = document.getElementById('archive-details-' + tourId);
     
     if (!targetBlock || targetBlock.style.display === 'none') {
         if (typeof customAlert === 'function') customAlert("Сначала разверните историю турнира!");
