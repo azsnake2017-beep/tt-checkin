@@ -1348,8 +1348,19 @@ function selectTourScore(s1, s2) {
     document.getElementById('tour-match-s2').value = s2; 
     var btns = document.querySelectorAll('.tour-score-btn');
     for(var i=0; i<btns.length; i++) {
-        if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) btns[i].classList.add('active');
-        else btns[i].classList.remove('active');
+        if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) {
+            btns[i].classList.add('active');
+            // Принудительно делаем кнопку яркой золотой при выборе
+            btns[i].style.background = 'var(--accent-amber)';
+            btns[i].style.color = '#0b1120';
+            btns[i].style.borderColor = 'var(--accent-amber)';
+        } else {
+            btns[i].classList.remove('active');
+            // Сбрасываем цвет у остальных кнопок
+            btns[i].style.background = '';
+            btns[i].style.color = '';
+            btns[i].style.borderColor = '';
+        }
     }
 }
 
