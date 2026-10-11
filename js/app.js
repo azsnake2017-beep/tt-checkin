@@ -2737,11 +2737,15 @@ var BADGE_DESCRIPTIONS = {
 // Умная функция открытия (Дает браузеру 1 кадр на отрисовку DOM перед анимацией)
 window.openModalSmoothly = function(modalId) {
   if (typeof vibrate === 'function') vibrate('light');
+  if (window.TTAudio) {
+    if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
+    else if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
+  }
+
   var overlay = document.getElementById(modalId);
   if (!overlay) return;
   var box = overlay.querySelector('.modal-box');
 
-  // 1. Делаем окно "физически" видимым, но полностью прозрачным и опущенным вниз
   overlay.style.transition = 'none';
   overlay.style.opacity = '0';
   overlay.style.display = 'flex';
@@ -2751,10 +2755,8 @@ window.openModalSmoothly = function(modalId) {
     box.style.transform = 'translateY(100%)';
   }
 
-  // 2. Ждем ровно 1 кадр (около 16мс), чтобы телефон "переварил" display: flex
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
-      // 3. Плавно включаем свет и выкатываем окно с красивой Apple-физикой
       overlay.style.transition = 'opacity 0.35s ease-out';
       overlay.style.opacity = '1';
       
@@ -2766,9 +2768,43 @@ window.openModalSmoothly = function(modalId) {
   });
 };
 
-// --- ПЕРЕОПРЕДЕЛЯЕМ ВСЕ СТАРЫЕ АЛЕРТЫ НА НОВЫЙ ДВИЖОК ---
+window.closeModalSmoothly = function(modalId) {
+  if (!modalId || typeof modalId !== 'string') return;
+  if (window.TTAudio && typeof window.TTAudio.playSwoosh === 'function') {
+    window.TTAudio.playSwoosh();
+  }
 
+  var overlay = document.getElementById(modalId);
+  if (!overlay) return;
+  var box = overlay.querySelector('.modal-box');
+
+  if (box) {
+    box.style.animation = 'none';
+    box.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
+    box.style.transform = 'translateY(100%)';
+  }
+  
+  overlay.style.transition = 'opacity 0.3s ease';
+  overlay.style.opacity = '0';
+
+  setTimeout(function() {
+    overlay.style.display = 'none';
+    overlay.style.opacity = '';
+    overlay.style.transition = '';
+    if (box) {
+      box.style.transform = '';
+      box.style.transition = '';
+      box.style.animation = '';
+    }
+  }, 300);
+};
+
+// 1. ИСПРАВЛЕНИЕ АЛЕРТОВ (ТЕПЕРЬ ТЕГИ <br> И <b> РАБОТАЮТ КОРРЕКТНО)
 window.customAlert = function(htmlMsg) {
+  if (window.TTAudio) {
+    if (typeof window.TTAudio.playNotification === 'function') window.TTAudio.playNotification();
+    else if (typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
+  }
   var txt = document.getElementById('custom-alert-text');
   if (txt) txt.innerHTML = htmlMsg; 
   openModalSmoothly('custom-alert-modal');
@@ -2781,21 +2817,28 @@ window.openConfirmModal = function(htmlText, onConfirm) {
   openModalSmoothly('confirm-modal');
 };
 
+window.executeConfirm = function() {
+  if (typeof window.confirmCallback === 'function') window.confirmCallback();
+  closeModalSmoothly('confirm-modal');
+};
+
+window.closeConfirmModal = function() {
+  closeModalSmoothly('confirm-modal');
+  window.confirmCallback = null;
+};
+
 /* ==========================================
    УМНАЯ СИСТЕМА ПЛАШЕК (АВТО-КЛИК И ПОИСК)
    ========================================== */
 window.showBadgeInfo = function(badgeKey) {
   if (typeof vibrate === 'function') vibrate('light');
-  
   var cleanKey = badgeKey.replace(/<[^>]*>?/gm, '').trim();
   var info = null;
 
   if (typeof BADGE_DESCRIPTIONS !== 'undefined') {
-      // 1. Ищем точное совпадение (например, "Учитель 🎓")
       if (BADGE_DESCRIPTIONS[cleanKey]) {
           info = BADGE_DESCRIPTIONS[cleanKey];
       } else {
-          // 2. Ищем частичное совпадение (если передали просто "Учитель" или "Хоккеист")
           for (var key in BADGE_DESCRIPTIONS) {
               if (cleanKey.indexOf(BADGE_DESCRIPTIONS[key].title) !== -1 || key.indexOf(cleanKey) !== -1) {
                   info = BADGE_DESCRIPTIONS[key];
@@ -2805,13 +2848,8 @@ window.showBadgeInfo = function(badgeKey) {
       }
   }
   
-  // Если описание так и не найдено, показываем заглушку, но берем реальное имя плашки
   if (!info) {
-    info = {
-      title: cleanKey,
-      icon: "🏅",
-      desc: "Это награда или особый статус участника клуба."
-    };
+    info = { title: cleanKey, icon: "🏅", desc: "Это награда или особый статус участника клуба." };
   }
 
   var titleEl = document.getElementById('badge-modal-title');
@@ -2822,46 +2860,21 @@ window.showBadgeInfo = function(badgeKey) {
   if (descEl) descEl.innerText = info.desc;
   if (iconEl) iconEl.innerText = info.icon;
   
-  if (typeof openModalSmoothly === 'function') {
-      openModalSmoothly('badge-info-modal');
-  } else {
-      var modal = document.getElementById('badge-info-modal');
-      if (modal) modal.style.display = 'flex';
-  }
+  openModalSmoothly('badge-info-modal');
 };
 
-// УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН (ИСПРАВЛЕННЫЙ И УМНЫЙ)
+// Глобальный перехватчик: делает кликабельной АБСОЛЮТНО ЛЮБУЮ плашку
 document.addEventListener('click', function(e) {
-    // 1. Закрытие по темному фону вокруг окна
-    if (e.target.classList.contains('modal-overlay')) {
-        closeModalSmoothly(e.target.id);
-        return;
-    }
-    
-    // 2. Ищем, кликнули ли мы по кнопке (или внутри кнопки)
-    var clickedBtn = e.target.closest('button, .close-btn, .btn-cancel-modal, [data-close]');
-    if (clickedBtn) {
-        // Проверяем, является ли это кнопкой закрытия
-        var isCloseBtn = clickedBtn.hasAttribute('data-close') || 
-                         clickedBtn.classList.contains('close-btn') || 
-                         clickedBtn.classList.contains('btn-cancel-modal');
-        
-        // Резервная проверка: если на кнопке просто написано "Понятно" или "Закрыть"
-        var btnText = clickedBtn.innerText.trim().toLowerCase();
-        if (btnText === 'понятно' || btnText === 'закрыть' || btnText === 'ok' || btnText === 'ок') {
-            isCloseBtn = true;
-        }
-
-        // Если это нужная кнопка — ищем её окно и закрываем
-        if (isCloseBtn) {
-            var modalOverlay = clickedBtn.closest('.modal-overlay');
-            if (modalOverlay) {
-                closeModalSmoothly(modalOverlay.id);
-            }
-        }
-    }
+  var badge = e.target.closest('.platform-badge');
+  if (badge) {
+      if (!badge.hasAttribute('onclick')) {
+          var text = badge.innerText.trim();
+          if (text) window.showBadgeInfo(text);
+      }
+  }
 });
-  /* ==========================================
+
+/* ==========================================
    РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
    ========================================== */
 var BOT_USERNAME = "tennis_club_chmz_bot"; 
@@ -2869,8 +2882,7 @@ var BOT_USERNAME = "tennis_club_chmz_bot";
 window.showRefQrModal = function() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
   if (!myUid) {
-    if (typeof customAlert === 'function') customAlert("Сначала необходимо авторизоваться!");
-    else alert("Сначала необходимо авторизоваться!");
+    customAlert("Сначала необходимо авторизоваться!");
     return;
   }
   
@@ -2885,22 +2897,14 @@ window.showRefQrModal = function() {
         correctLevel : QRCode.CorrectLevel.H
       });
   }
-
-  if (typeof openModalSmoothly === 'function') {
-      openModalSmoothly('ref-qr-modal');
-  } else {
-      var modal = document.getElementById('ref-qr-modal');
-      if (modal) modal.style.display = 'flex';
-  }
+  openModalSmoothly('ref-qr-modal');
 };
 
-window.closeRefQrModal = function() { 
-  if(typeof closeModalSmoothly === 'function') closeModalSmoothly('ref-qr-modal'); 
-};
+window.closeRefQrModal = function() { closeModalSmoothly('ref-qr-modal'); };
 
 window.shareMyRefLink = function() {
   var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-  if (!myUid) return alert("Сначала необходимо авторизоваться!");
+  if (!myUid) return customAlert("Сначала необходимо авторизоваться!");
 
   var refLink = "https://t.me/" + BOT_USERNAME + "?startapp=" + encodeURIComponent(myUid);
   var inviteText = "🏓 Вступай в клуб настольного тенниса! Сыграй 3 рейтинговых матча, чтобы закрепиться в нашей лиге.";
@@ -2909,64 +2913,40 @@ window.shareMyRefLink = function() {
     navigator.share({ title: "Клуб ЧМЗ", text: inviteText, url: refLink }).catch(function(){});
   } else if (navigator.clipboard && navigator.clipboard.writeText) {
     navigator.clipboard.writeText(inviteText + "\n" + refLink).then(function() {
-      alert("Ссылка скопирована в буфер обмена!");
+      customAlert("Ссылка скопирована в буфер обмена!");
     });
   }
 };
+
 /* ==========================================
    ГЛОБАЛЬНАЯ ЗВУКОВАЯ СИСТЕМА (ИНТЕРЦЕПТОР)
    ========================================== */
-
-// 1. Озвучиваем абсолютно все клики по интерфейсу
 document.addEventListener('click', function(e) {
-  // Ищем, кликнули ли мы по интерактивному элементу
   var btn = e.target.closest('.btn, .btn-info, .btn-opt, .score-btn, .tab-btn, .nav-item, .clickable-name, .platform-badge, .quest-choice-card, .medal-item, .club-header-top');
   
   if (btn && window.TTAudio) {
-    // Звук отмены / закрытия
     if (btn.classList.contains('btn-cancel-modal') || btn.closest('.close-btn')) {
        if (typeof window.TTAudio.playSwoosh === 'function') window.TTAudio.playSwoosh();
     } 
-    // Звук успеха / подтверждения
     else if (btn.classList.contains('btn-join') || btn.innerText.includes('Сохранить')) {
        if (typeof window.TTAudio.playSuccess === 'function') window.TTAudio.playSuccess();
        else if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
     }
-    // Обычный сочный клик для всего остального (табы, имена, плашки)
     else {
        if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
     }
   }
 });
 
-// УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН (ИСПРАВЛЕННЫЙ)
-document.addEventListener('click', function(e) {
-    // 1. Закрываем окно, если кликнули мимо него (на темный фон)
-    if (e.target.classList.contains('modal-overlay')) {
-        closeModalSmoothly(e.target.id);
-        return;
-    }
-    
-    // 2. Закрываем окно по крестику или кнопкам отмены
-    var closeBtn = e.target.closest('.close-btn, .btn-cancel-modal, [data-close]');
-    if (closeBtn) {
-        var modalOverlay = closeBtn.closest('.modal-overlay');
-        if (modalOverlay && typeof closeModalSmoothly === 'function') {
-            closeModalSmoothly(modalOverlay.id);
-        }
-    }
-});
-
-// ==========================================
-// ГЕНЕРАТОР ПИКСЕЛЬНЫХ NFT-АВАТАРОВ (CryptoPunks Style)
-// ==========================================
+/* ==========================================
+   ГЕНЕРАТОР ПИКСЕЛЬНЫХ NFT-АВАТАРОВ (CryptoPunks Style)
+   ========================================== */
 window.currentPreviewAvatarSvg = "";
 
 window.generateRandomAvatar = function() {
     if (typeof vibrate === 'function') vibrate('light');
     if (window.TTAudio && typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
     
-    // Богатые палитры
     const bgColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#1e293b', '#94a3b8', '#14b8a6'];
     const skinColors = ['#fcd34d', '#fde047', '#ffedd5', '#fed7aa', '#fdba74', '#fca5a5', '#d97706', '#b45309', '#78350f', '#451a03', '#86efac', '#cbd5e1'];
     const hairColors = ['#0f172a', '#334155', '#713f12', '#a16207', '#ca8a04', '#fef08a', '#dc2626', '#db2777', '#9333ea', '#2563eb', '#ffffff', '#10b981'];
@@ -2982,99 +2962,70 @@ window.generateRandomAvatar = function() {
 
     let svg = `<svg width="100%" height="100%" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; background: ${bg};">`;
 
-    // 1. ШЕЯ И ТЕЛО
     svg += `<rect x="10" y="17" width="4" height="2" fill="${skin}"/>`;
     
     const clothes = [
-        // Обычная футболка
         `<rect x="5" y="19" width="14" height="5" fill="${cloth1}"/><rect x="6" y="18" width="12" height="1" fill="${cloth1}"/>`,
-        // Худи
         `<rect x="4" y="18" width="16" height="6" fill="${cloth1}"/><rect x="11" y="19" width="2" height="5" fill="${cloth2}"/><rect x="5" y="18" width="1" height="6" fill="${cloth2}"/><rect x="18" y="18" width="1" height="6" fill="${cloth2}"/>`,
-        // Майка
         `<rect x="6" y="19" width="3" height="5" fill="${cloth1}"/><rect x="15" y="19" width="3" height="5" fill="${cloth1}"/><rect x="6" y="22" width="12" height="2" fill="${cloth1}"/>`,
-        // Деловой костюм с галстуком
         `<rect x="4" y="19" width="16" height="5" fill="#0f172a"/><rect x="6" y="18" width="12" height="1" fill="#0f172a"/><rect x="10" y="19" width="4" height="5" fill="#fff"/><rect x="11" y="20" width="2" height="4" fill="#dc2626"/>`,
-        // Спортивка с полосой
         `<rect x="5" y="19" width="14" height="5" fill="${cloth1}"/><rect x="6" y="18" width="12" height="1" fill="${cloth1}"/><rect x="5" y="21" width="14" height="1" fill="${cloth2}"/>`
     ];
     svg += clothes[Math.floor(Math.random() * clothes.length)];
 
-    // Золотая цепь (редко)
     if (Math.random() > 0.8) {
         svg += `<rect x="9" y="19" width="1" height="1" fill="#fbbf24"/><rect x="14" y="19" width="1" height="1" fill="#fbbf24"/><rect x="10" y="20" width="1" height="1" fill="#fbbf24"/><rect x="13" y="20" width="1" height="1" fill="#fbbf24"/><rect x="11" y="21" width="2" height="1" fill="#fbbf24"/>`;
     }
 
-    // 2. БАЗА ЛИЦА
-    svg += `<rect x="8" y="9" width="8" height="8" fill="${skin}"/>`; // Голова
-    svg += `<rect x="9" y="17" width="6" height="1" fill="${skin}"/>`; // Подбородок
-    svg += `<rect x="7" y="11" width="1" height="4" fill="${skin}"/>`; // Левое ухо
-    svg += `<rect x="16" y="11" width="1" height="4" fill="${skin}"/>`; // Правое ухо
+    svg += `<rect x="8" y="9" width="8" height="8" fill="${skin}"/>`; 
+    svg += `<rect x="9" y="17" width="6" height="1" fill="${skin}"/>`; 
+    svg += `<rect x="7" y="11" width="1" height="4" fill="${skin}"/>`; 
+    svg += `<rect x="16" y="11" width="1" height="4" fill="${skin}"/>`; 
 
-    // 3. ГЛАЗА И РОТ
     if (isFemale) {
         const lipColor = ['#ef4444', '#db2777', '#9333ea', '#78350f'][Math.floor(Math.random() * 4)];
         const eyeColor = ['#000', '#1e3a8a', '#064e3b'][Math.floor(Math.random() * 3)];
-        svg += `<rect x="9" y="12" width="2" height="1" fill="${eyeColor}"/><rect x="13" y="12" width="2" height="1" fill="${eyeColor}"/>`; // Глаза
-        svg += `<rect x="8" y="11" width="1" height="1" fill="${eyeColor}"/><rect x="15" y="11" width="1" height="1" fill="${eyeColor}"/>`; // Ресницы/Стрелки
-        svg += `<rect x="11" y="16" width="3" height="1" fill="${lipColor}"/>`; // Губы
+        svg += `<rect x="9" y="12" width="2" height="1" fill="${eyeColor}"/><rect x="13" y="12" width="2" height="1" fill="${eyeColor}"/>`; 
+        svg += `<rect x="8" y="11" width="1" height="1" fill="${eyeColor}"/><rect x="15" y="11" width="1" height="1" fill="${eyeColor}"/>`; 
+        svg += `<rect x="11" y="16" width="3" height="1" fill="${lipColor}"/>`; 
     } else {
-        svg += `<rect x="9" y="12" width="2" height="1" fill="#000"/><rect x="13" y="12" width="2" height="1" fill="#000"/>`; // Глаза
-        svg += `<rect x="11" y="16" width="3" height="1" fill="#444"/>`; // Рот
+        svg += `<rect x="9" y="12" width="2" height="1" fill="#000"/><rect x="13" y="12" width="2" height="1" fill="#000"/>`; 
+        svg += `<rect x="11" y="16" width="3" height="1" fill="#444"/>`; 
     }
 
-    // 4. БОРОДА (Только для парней)
     if (!isFemale && Math.random() > 0.4) {
         const beards = [
-            // Эспаньолка
             `<rect x="11" y="17" width="3" height="1" fill="${hairC}"/><rect x="12" y="18" width="1" height="1" fill="${hairC}"/>`,
-            // Усы
             `<rect x="10" y="15" width="5" height="1" fill="${hairC}"/>`,
-            // Полная борода
             `<rect x="8" y="14" width="1" height="4" fill="${hairC}"/><rect x="15" y="14" width="1" height="4" fill="${hairC}"/><rect x="9" y="16" width="6" height="3" fill="${hairC}"/>`,
-            // Легкая небритость
             `<rect x="8" y="15" width="1" height="3" fill="#000" opacity="0.2"/><rect x="15" y="15" width="1" height="3" fill="#000" opacity="0.2"/><rect x="9" y="16" width="6" height="2" fill="#000" opacity="0.2"/>`
         ];
         svg += beards[Math.floor(Math.random() * beards.length)];
     }
 
-    // 5. ПРИЧЕСКИ
     const hairstyles = [];
     if (isFemale) {
         hairstyles.push(
-            // Длинные
             `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="6" y="8" width="1" height="9" fill="${hairC}"/><rect x="17" y="8" width="1" height="9" fill="${hairC}"/><rect x="5" y="10" width="1" height="8" fill="${hairC}"/><rect x="18" y="10" width="1" height="8" fill="${hairC}"/>`,
-            // Каре
             `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="6" y="8" width="2" height="6" fill="${hairC}"/><rect x="16" y="8" width="2" height="6" fill="${hairC}"/>`,
-            // Два хвостика
             `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="4" y="9" width="3" height="3" fill="${hairC}"/><rect x="17" y="9" width="3" height="3" fill="${hairC}"/>`,
-            // Гулька
             `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="9" y="4" width="6" height="3" fill="${hairC}"/><rect x="10" y="3" width="4" height="1" fill="${hairC}"/>`
         );
     } else {
         hairstyles.push(
-            // Лысый
             ``,
-            // Короткие
             `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="8" y="6" width="8" height="1" fill="${hairC}"/>`,
-            // Ежик
             `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="7" y="6" width="1" height="1" fill="${hairC}"/><rect x="9" y="5" width="2" height="2" fill="${hairC}"/><rect x="12" y="4" width="2" height="3" fill="${hairC}"/><rect x="15" y="6" width="1" height="1" fill="${hairC}"/>`,
-            // Ирокез
             `<rect x="11" y="4" width="2" height="5" fill="${hairC}"/><rect x="10" y="5" width="1" height="4" fill="${hairC}"/>`
         );
     }
     
-    // 6. ГОЛОВНЫЕ УБОРЫ (Иногда перекрывают прическу)
     if (Math.random() > 0.65) {
         const hats = [
-            // Кепка вперед
             `<rect x="7" y="7" width="10" height="2" fill="${cloth2}"/><rect x="8" y="6" width="8" height="1" fill="${cloth2}"/><rect x="7" y="9" width="14" height="1" fill="${cloth2}"/>`,
-            // Кепка назад
             `<rect x="7" y="7" width="10" height="2" fill="${cloth2}"/><rect x="8" y="6" width="8" height="1" fill="${cloth2}"/><rect x="3" y="8" width="4" height="1" fill="${cloth2}"/>`,
-            // Шапочка
             `<rect x="7" y="6" width="10" height="3" fill="${cloth2}"/><rect x="8" y="5" width="8" height="1" fill="${cloth2}"/><rect x="7" y="8" width="10" height="1" fill="${cloth1}"/>`,
-            // Бандана/Теннисная повязка
             `<rect x="7" y="8" width="10" height="1" fill="${cloth2}"/><rect x="6" y="8" width="1" height="2" fill="${cloth2}"/><rect x="17" y="8" width="1" height="2" fill="${cloth2}"/>`,
-            // Ковбойская шляпа
             `<rect x="4" y="8" width="16" height="1" fill="#92400e"/><rect x="7" y="5" width="10" height="3" fill="#92400e"/><rect x="7" y="7" width="10" height="1" fill="#451a03"/>`
         ];
         svg += hats[Math.floor(Math.random() * hats.length)];
@@ -3082,20 +3033,13 @@ window.generateRandomAvatar = function() {
         svg += hairstyles[Math.floor(Math.random() * hairstyles.length)];
     }
 
-    // 7. АКСЕССУАРЫ
     if (Math.random() > 0.5) {
         const accs = [
-            // 3D очки
             `<rect x="8" y="11" width="3" height="2" fill="#ef4444"/><rect x="13" y="11" width="3" height="2" fill="#3b82f6"/><rect x="11" y="11" width="2" height="1" fill="#fff"/><rect x="7" y="11" width="1" height="1" fill="#fff"/><rect x="16" y="11" width="1" height="1" fill="#fff"/>`,
-            // Черные очки
             `<rect x="8" y="11" width="8" height="2" fill="#0f172a"/><rect x="7" y="11" width="1" height="1" fill="#0f172a"/><rect x="16" y="11" width="1" height="1" fill="#0f172a"/><rect x="9" y="11" width="2" height="1" fill="#475569"/><rect x="14" y="11" width="2" height="1" fill="#475569"/>`,
-            // Повязка на глаз (Пират)
             `<rect x="12" y="11" width="4" height="3" fill="#0f172a"/><rect x="7" y="10" width="9" height="1" fill="#0f172a"/>`,
-            // Сигарета
             `<rect x="13" y="16" width="3" height="1" fill="#fff"/><rect x="16" y="16" width="1" height="1" fill="#ef4444"/><rect x="17" y="15" width="1" height="1" fill="#94a3b8" opacity="0.6"/>`,
-            // Жвачка
             `<circle cx="12" cy="16" r="2.5" fill="#f472b6" opacity="0.9"/>`,
-            // Золотая серьга
             `<rect x="6" y="13" width="1" height="1" fill="#fbbf24"/>`
         ];
         svg += accs[Math.floor(Math.random() * accs.length)];
@@ -3108,12 +3052,9 @@ window.generateRandomAvatar = function() {
     if (container) container.innerHTML = svg;
 };
 
-// ==========================================
-// АВТО-ПОДГОНКА РАЗМЕРА ЭКРАНА АРКАДЫ
-// ==========================================
-// ==========================================
-// АВТО-ПОДГОНКА РАЗМЕРА ЭКРАНА АРКАДЫ
-// ==========================================
+/* ==========================================
+   АВТО-ПОДГОНКА РАЗМЕРА ЭКРАНА АРКАДЫ
+   ========================================== */
 function autoFitCyberPong() {
     var arcadeView = document.getElementById('view-arcade');
     if (!arcadeView || arcadeView.style.display === 'none') return;
@@ -3129,20 +3070,16 @@ function autoFitCyberPong() {
     }
 }
 
-// Пересчитываем при изменении размера или повороте экрана
 window.addEventListener('resize', autoFitCyberPong);
 window.addEventListener('orientationchange', function() {
     setTimeout(autoFitCyberPong, 150);
 });
 
-// Автоматически ловим момент, когда ты переключаешься на вкладку Аркады!
 document.addEventListener('DOMContentLoaded', function() {
     var arcadeView = document.getElementById('view-arcade');
     if (arcadeView) {
-        // MutationObserver следит за стилями элемента и срабатывает при их изменении
         var observer = new MutationObserver(function() {
             if (arcadeView.style.display !== 'none') {
-                // Задержка 50мс нужна, чтобы браузер успел отрисовать экран перед замером
                 setTimeout(autoFitCyberPong, 50); 
             }
         });
@@ -3150,13 +3087,31 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН
+/* ==========================================
+   УНИВЕРСАЛЬНЫЙ ЗАКРЫВАТЕЛЬ ОКОН (АБСОЛЮТНЫЙ ПЕРЕХВАТ)
+   ========================================== */
 document.addEventListener('click', function(e) {
-    // Если мы кликнули по кнопке отмены или кнопке "Понятно" (у которой есть атрибут data-close)
-    if (e.target.classList.contains('btn-cancel-modal') || e.target.hasAttribute('data-close')) {
-        var modalOverlay = e.target.closest('.modal-overlay');
-        if (modalOverlay && typeof closeModalSmoothly === 'function') {
-            closeModalSmoothly(modalOverlay.id);
+    if (e.target.classList.contains('modal-overlay')) {
+        closeModalSmoothly(e.target.id);
+        return;
+    }
+    
+    var clickedBtn = e.target.closest('button, .close-btn, .btn-cancel-modal, [data-close], .btn-info, .btn-plan');
+    if (clickedBtn) {
+        var isCloseBtn = clickedBtn.hasAttribute('data-close') || 
+                         clickedBtn.classList.contains('close-btn') || 
+                         clickedBtn.classList.contains('btn-cancel-modal');
+        
+        var btnText = clickedBtn.innerText.trim().toLowerCase();
+        if (btnText === 'понятно' || btnText === 'закрыть' || btnText === 'ok' || btnText === 'ок') {
+            isCloseBtn = true;
+        }
+
+        if (isCloseBtn) {
+            var modalOverlay = clickedBtn.closest('.modal-overlay');
+            if (modalOverlay) {
+                closeModalSmoothly(modalOverlay.id);
+            }
         }
     }
 });
