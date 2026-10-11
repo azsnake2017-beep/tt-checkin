@@ -624,7 +624,24 @@
     <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
   </div>
 </div>
-
+<!-- ОКНО УПРАВЛЕНИЯ УЧАСТНИКАМИ ТУРНИРА -->
+<div class="modal-overlay" id="tour-players-modal">
+  <div class="modal-box" style="border-color: #ec4899;">
+    <h3 style="font-size: 18px; color: #ec4899;">👥 Состав турнира</h3>
+    
+    <div style="display: flex; gap: 8px; margin-bottom: 12px;">
+      <input type="text" id="new-tour-player-name" class="input-name" placeholder="Имя игрока (гостя)..." style="margin: 0; flex: 1;" />
+      <button class="btn btn-join" style="background: #06b6d4; width: auto; margin: 0; padding: 0 15px; color: #000; font-weight: bold;" onclick="addPlayerToTour()">+ Добавить</button>
+    </div>
+    
+    <div id="tour-players-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
+      <span class="empty-note">Загрузка...</span>
+    </div>
+    
+    <input type="hidden" id="manage-tour-id" />
+    <button class="btn-cancel-modal" onclick="closeTourPlayersModal()">Закрыть</button>
+  </div>
+</div>
 <div class="modal-overlay" id="tour-match-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 16px; color: var(--accent-amber);">Внести счет матча</h3>
