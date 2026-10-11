@@ -658,7 +658,15 @@
     <button class="btn-cancel-modal" onclick="closeTourMatchModal()">Отмена</button>
   </div>
 </div>
- 
+ <!-- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (ДЛЯ УДАЛЕНИЯ И ШТРАФОВ) -->
+<div class="modal-overlay" id="confirm-modal">
+  <div class="modal-box" style="border-color: var(--accent-red);">
+    <h3 style="font-size: 18px; color: var(--accent-red);">Внимание</h3>
+    <p id="confirm-modal-text" style="font-size: 14px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.4;"></p>
+    <button class="btn btn-join" style="background: var(--accent-red);" onclick="executeConfirm()">Подтвердить</button>
+    <button class="btn-cancel-modal" style="position: relative; margin-top: 8px; width: 100%;" onclick="closeConfirmModal()">Отмена</button>
+  </div>
+</div>
 <!-- МОДАЛЬНОЕ ОКНО: НОВЫЙ РАНГ / АЧИВКА -->
 <div class="modal-overlay" id="achievement-modal">
   <div class="modal-box" style="text-align: center; overflow: hidden; position: relative;">
