@@ -3170,7 +3170,7 @@ window.downloadTournamentPoster = function(tourId, tourTitle) {
 };
 
 // ==========================================
-// СОХРАНЕНИЕ ИНФОГРАФИКИ КАК PDF (С УЧЕТОМ ДЛИНЫ)
+// СОХРАНЕНИЕ ИНФОГРАФИКИ КАК МНОГОСТРАНИЧНЫЙ PDF
 // ==========================================
 window.downloadTournamentPDF = function(tourId, tourTitle) {
     if (typeof vibrate === 'function') vibrate('medium');
@@ -3186,7 +3186,6 @@ window.downloadTournamentPDF = function(tourId, tourTitle) {
         window.setAppProgress(10, 'Формируем PDF...');
     }
 
-    // Временно делаем красивый фон для рендера
     var originalBg = targetBlock.style.background;
     var originalBorder = targetBlock.style.border;
     var originalPadding = targetBlock.style.padding;
@@ -3203,7 +3202,6 @@ window.downloadTournamentPDF = function(tourId, tourTitle) {
         useCORS: true,
         logging: false
     }).then(function(canvas) {
-        // Возвращаем стили на место
         targetBlock.style.background = originalBg;
         targetBlock.style.border = originalBorder;
         targetBlock.style.padding = originalPadding;
@@ -3214,24 +3212,27 @@ window.downloadTournamentPDF = function(tourId, tourTitle) {
         }
 
         var imgData = canvas.toDataURL('image/png');
-        
         var jsPDF = window.jspdf.jsPDF;
         
-        // РАСЧЕТ ДИНАМИЧЕСКОГО РАЗМЕРА: 
-        // Определяем ширину и высоту в миллиметрах на основе реальных пропорций картинки
-        var imgWidthMm = 210; // Ширина страницы А4 в миллиметрах
-        var imgHeightMm = (canvas.height * imgWidthMm) / canvas.width;
+        var pdf = new jsPDF('p', 'mm', 'a4');
+        var pdfWidth = pdf.internal.pageSize.getWidth();     // Ширина А4 (210 мм)
+        var pdfHeight = pdf.internal.pageSize.getHeight();   // Высота А4 (297 мм)
+        
+        var imgHeight = (canvas.height * pdfWidth) / canvas.width;
+        var heightLeft = imgHeight;
+        var position = 0;
 
-        // Создаем PDF-документ с точной высотой картинки, чтобы ничего не обрезалось
-        var pdf = new jsPDF({
-            orientation: imgHeightMm > imgWidthMm ? 'p' : 'l',
-            unit: 'mm',
-            format: [imgWidthMm, imgHeightMm]
-        });
-        
-        pdf.addImage(imgData, 'PNG', 0, 0, imgWidthMm, imgHeightMm);
-        
-        // Скачиваем PDF
+        // Документ автоматически разбивается на страницы А4, обеспечивая нормальную прокрутку на телефонах
+        pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+        heightLeft -= pdfHeight;
+
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight;
+            pdf.addPage();
+            pdf.addImage(imgData, 'PNG', 0, position, pdfWidth, imgHeight);
+            heightLeft -= pdfHeight;
+        }
+
         var safeTitle = (tourTitle || 'Турнир').replace(/[^a-zа-яё0-9]/gi, '_');
         pdf.save("Клуб_ЧМЗ_" + safeTitle + ".pdf");
         
