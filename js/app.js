@@ -779,11 +779,6 @@ function showUserInfoModal(uid) {
     var customBadge = (typeof getCustomBadge === 'function') ? getCustomBadge(uid) : '';
     var qBadge = (u.activeBadge && u.activeBadge.expires > Date.now()) ? '<span class="temporary-badge" style="color: ' + u.activeBadge.color + '; border-color: ' + u.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(u.activeBadge.text) + '\')">' + cleanHtml(u.activeBadge.text) + '</span>' : '';
    
-    // Рендер крупной фотокарточки в модалке игрока
-    var modalAvatarHtml = u.avatarSvg ? 
-        '<div style="display: flex; justify-content: center; margin-bottom: 8px;"><div style="width: 84px; height: 84px; border-radius: 16px; overflow: hidden; border: 2px solid var(--accent-sky); box-shadow: 0 4px 15px rgba(0,0,0,0.4); background: #000;">' + u.avatarSvg.replace('width="64" height="64"', 'width="84" height="84"') + '</div></div>' : '';
-    document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + qBadge;
-    
     var uidHtml = (typeof isSuperAdmin === 'function' && isSuperAdmin()) ? '<div style="display: flex; justify-content: space-between; font-size: 13px; margin-bottom: 4px; padding-bottom: 8px; border-bottom: 1px solid var(--card-border);"><span style="color: var(--text-muted);">UID:</span><span style="font-weight: 600; color: #f87171; font-family: monospace; font-size: 11px;">' + cleanHtml(uid) + '</span></div>' : '';
     
     var mins = (ld.exists && ld.data()) ? (ld.data().totalMinutes || 0) : 0;
@@ -794,14 +789,6 @@ function showUserInfoModal(uid) {
     var lastDelta = parseInt(u.lastEloDelta, 10) || 0;
     var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
     var streakText = (u.winStreak && u.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + u.winStreak + ' побед</span>' : '';
-
-    if (mMedals) {
-      var m = u.medals || { gold:0, silver:0, bronze:0 };
-      if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
-        mMedals.innerHTML = '<div class="medal-item">🏆 ' + (u.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>'; 
-        mMedals.style.display = 'flex';
-      } else { mMedals.style.display = 'none'; }
-    }
 
     var eloDisplay = u.elo !== undefined ? u.elo : 1000;
     var pStatus = typeof getPlayerStatus === 'function' ? getPlayerStatus(eloDisplay) : 'Игрок';
@@ -836,7 +823,6 @@ function showUserInfoModal(uid) {
 
     var customTagBadge = u.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(u.customTag) + '\')">' + cleanHtml(u.customTag) + '</span>' : '';
 
-    // Заодно мы починили баг: вернули переменную qBadge, чтобы временные бейджи за квесты тоже отображались!
     document.getElementById('info-modal-title').innerHTML = "👤 " + cleanHtml(u.name || "Игрок") + " " + adminTag + " " + customBadge + " " + qBadge + " " + ambassadorBadge + " " + customTagBadge;
 
     var invitesHtml = '';
@@ -846,7 +832,6 @@ function showUserInfoModal(uid) {
                     '<span style="color: var(--text-muted);">Добавил участников:</span><div><span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' + pendingStr + '<span style="margin-left: 4px;">🤝</span></div></div>';
     }
 
-   // === ГЕНЕРАЦИЯ БЛОКА АВАТАРКИ В КАРТОЧКЕ ===
     var avatarHtml = u.avatarSvg ? 
         '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
           '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">' + 
@@ -859,8 +844,20 @@ function showUserInfoModal(uid) {
           '</div>' +
         '</div>';
 
-    // Вставляем avatarHtml в самое начало info-modal-content-area
-    document.getElementById('info-modal-content-area').innerHTML = avatarHtml + uidHtml +
+    // === ВОТ ТОТ САМЫЙ БЛОК: ДИНАМИЧЕСКИЕ МЕДАЛИ ===
+    var medalsHtml = '';
+    var m = u.medals || { gold:0, silver:0, bronze:0 };
+    if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || u.tournamentsPlayed > 0) {
+        medalsHtml = '<div style="display: flex; gap: 6px; justify-content: center; margin-bottom: 16px;">' +
+                     '<div style="background: rgba(255,255,255,0.05); border: 1px solid var(--card-border); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold;">🏆 ' + (u.tournamentsPlayed || 0) + '</div>' +
+                     (m.gold > 0 ? '<div style="background: rgba(251, 191, 36, 0.1); border: 1px solid rgba(251, 191, 36, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #fbbf24;">🥇 ' + m.gold + '</div>' : '') +
+                     (m.silver > 0 ? '<div style="background: rgba(148, 163, 184, 0.1); border: 1px solid rgba(148, 163, 184, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #94a3b8;">🥈 ' + m.silver + '</div>' : '') +
+                     (m.bronze > 0 ? '<div style="background: rgba(180, 83, 9, 0.1); border: 1px solid rgba(180, 83, 9, 0.3); padding: 4px 10px; border-radius: 8px; font-size: 13px; font-weight: bold; color: #b45309;">🥉 ' + m.bronze + '</div>' : '') +
+                     '</div>';
+    }
+
+    // Вставляем аватарку и динамические медали
+    document.getElementById('info-modal-content-area').innerHTML = avatarHtml + medalsHtml + uidHtml +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Клубный рейтинг:</span><div><span style="font-weight: 700; color: #9333ea;">' + eloDisplay + '</span>' + deltaHtml + '</div></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Рейтинг РТТФ:</span><span style="font-weight: 600; color: var(--text-muted);">' + (u.rttf || "Не указан") + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Статус:</span><span style="font-weight: 600;">' + pStatus + '</span></div>' +
@@ -870,7 +867,8 @@ function showUserInfoModal(uid) {
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
-// БЛОК УНИКАЛЬНЫХ ТРОФЕЕВ
+
+    // БЛОК УНИКАЛЬНЫХ ТРОФЕЕВ
     if (u.customTag) {
         document.getElementById('info-modal-content-area').innerHTML += 
             '<div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed rgba(255, 255, 255, 0.08); display: flex; flex-direction: column; gap: 6px;">' +
@@ -880,7 +878,8 @@ function showUserInfoModal(uid) {
             '<div style="display: flex; flex-direction: column;"><span style="color: #10b981; font-weight: 800; font-size: 14px; text-transform: uppercase; letter-spacing: 0.5px;">' + cleanHtml(u.customTag) + '</span><span style="font-size: 11px; color: var(--text-muted);">Абсолютный чемпион турнира</span></div>' +
             '</div></div>';
     }
-    // СУПЕР-ОПТИМИЗАЦИЯ: Грузим ТОЛЬКО матчи этого игрока, а не всего клуба!
+    
+    // Грузим историю матчей
     db.collection('matches_history').where('participants', 'array-contains', uid).get().then(function(allSnaps) {
         var matches = [];
         allSnaps.forEach(function(docX) {
