@@ -3024,84 +3024,45 @@ document.addEventListener('click', function(e) {
 });
 
 /* ==========================================
-   CYBERPUNK АВАТАРЫ: ФОТО + КАСТОМНЫЙ ГЕНЕРАТОР
+   ГЕНЕРАТОР ПИКСЕЛЬНЫХ NFT-АВАТАРОВ (CYBERPUNK MAX)
    ========================================== */
 window.currentPreviewAvatarSvg = "";
 
-// 1. ЗАГРУЗКА ФОТО С КАМЕРЫ (СЕЛФИ)
-window.triggerCameraUpload = function() {
-    if (typeof vibrate === 'function') vibrate('light');
-    var input = document.createElement('input');
-    input.type = 'file';
-    input.accept = 'image/*';
-    input.capture = 'user'; // Открывает фронтальную камеру на смартфонах
-    
-    input.onchange = function(e) {
-        var file = e.target.files[0];
-        if (!file) return;
-        
-        if (typeof window.setAppProgress === 'function') window.setAppProgress(30, 'Оцифровка лица...');
-        
-        var reader = new FileReader();
-        reader.onload = function(event) {
-            var img = new Image();
-            img.onload = function() {
-                var canvas = document.createElement('canvas');
-                var ctx = canvas.getContext('2d');
-                var size = 200; // Квадратный аватар высокого качества
-                canvas.width = size; canvas.height = size;
-                
-                // Умная обрезка по центру (Cover)
-                var scale = Math.max(size / img.width, size / img.height);
-                var x = (size / scale - img.width) / 2;
-                var y = (size / scale - img.height) / 2;
-                
-                ctx.drawImage(img, x, y, img.width, img.height, 0, 0, size, size);
-                
-                var base64 = canvas.toDataURL('image/jpeg', 0.8);
-                // Сохраняем фото в базу в виде тега <img>
-                var finalHtml = '<img src="' + base64 + '" style="width:100%; height:100%; object-fit:cover;" />';
-                
-                window.currentPreviewAvatarSvg = finalHtml;
-                var container = document.getElementById('avatar-preview-container');
-                if (container) container.innerHTML = finalHtml;
-                
-                if (typeof window.setAppProgress === 'function') window.setAppProgress(100, 'Готово!');
-                if (window.TTAudio && typeof window.TTAudio.playSuccess === 'function') window.TTAudio.playSuccess();
-            };
-            img.src = event.target.result;
-        };
-        reader.readAsDataURL(file);
-    };
-    input.click();
-};
-
-// 2. УЛУЧШЕННЫЙ ГЕНЕРАТОР КИБЕРПАНК-ВЕКТОРОВ
 window.generateRandomAvatar = function() {
     if (typeof vibrate === 'function') vibrate('light');
     if (window.TTAudio && typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
     
     // Неоновые Киберпанк-палитры
-    const bgColors = ['#0f172a', '#1e1b4b', '#171717', '#312e81', '#064e3b', '#4a044e'];
-    const skinColors = ['#fcd34d', '#ffedd5', '#fed7aa', '#fca5a5', '#d97706', '#86efac', '#e0e7ff', '#f0abfc']; // Добавлены синтетические цвета кожи (зеленый/фиолетовый)
-    const neonColors = ['#06b6d4', '#f43f5e', '#a855f7', '#10b981', '#fbbf24', '#3b82f6'];
+    const bgColors = ['#0f172a', '#1e1b4b', '#171717', '#312e81', '#064e3b', '#4a044e', '#3f3f46'];
+    const skinColors = ['#fcd34d', '#ffedd5', '#fed7aa', '#fca5a5', '#d97706', '#86efac', '#e0e7ff', '#f0abfc', '#93c5fd']; 
+    const neonColors = ['#06b6d4', '#f43f5e', '#a855f7', '#10b981', '#fbbf24', '#3b82f6', '#facc15'];
 
     const bg = bgColors[Math.floor(Math.random() * bgColors.length)];
     const skin = skinColors[Math.floor(Math.random() * skinColors.length)];
     const neon1 = neonColors[Math.floor(Math.random() * neonColors.length)];
     const neon2 = neonColors[Math.floor(Math.random() * neonColors.length)];
 
+    // Фон с кибер-сеткой или свечением
     let svg = `<svg width="100%" height="100%" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; background: ${bg}; box-shadow: inset 0 0 20px ${neon1};">`;
+    
+    if (Math.random() > 0.5) {
+        svg += `<rect x="0" y="0" width="24" height="24" fill="${neon2}" opacity="0.1" />`;
+        svg += `<line x1="0" y1="12" x2="24" y2="12" stroke="${neon1}" stroke-width="0.5" opacity="0.3"/>`;
+        svg += `<line x1="12" y1="0" x2="12" y2="24" stroke="${neon1}" stroke-width="0.5" opacity="0.3"/>`;
+    }
 
     // Шея и импланты на шее
     svg += `<rect x="10" y="17" width="4" height="2" fill="${skin}"/>`;
-    if (Math.random() > 0.5) svg += `<rect x="11" y="18" width="2" height="1" fill="${neon2}" opacity="0.8"/>`;
+    if (Math.random() > 0.3) svg += `<rect x="11" y="18" width="2" height="1" fill="${neon2}" opacity="0.9"/>`;
+    if (Math.random() > 0.6) svg += `<rect x="9" y="18" width="1" height="1" fill="${neon1}"/><rect x="14" y="18" width="1" height="1" fill="${neon1}"/>`;
 
-    // Одежда (Броня/Куртки)
+    // Одежда (Броня/Куртки/Синтетика)
     const clothes = [
         `<rect x="4" y="19" width="16" height="5" fill="#171717"/><rect x="6" y="18" width="12" height="1" fill="#171717"/><rect x="10" y="20" width="4" height="1" fill="${neon1}"/>`,
-        `<rect x="5" y="19" width="14" height="5" fill="#334155"/><rect x="11" y="19" width="2" height="5" fill="${neon1}" opacity="0.6"/>`,
-        `<rect x="4" y="19" width="16" height="5" fill="#000"/><rect x="8" y="21" width="8" height="2" fill="${neon2}"/>`
+        `<rect x="5" y="19" width="14" height="5" fill="#334155"/><rect x="11" y="19" width="2" height="5" fill="${neon1}" opacity="0.8"/>`,
+        `<rect x="4" y="19" width="16" height="5" fill="#000"/><rect x="8" y="21" width="8" height="2" fill="${neon2}"/>`,
+        `<rect x="3" y="19" width="18" height="5" fill="#1e293b"/><rect x="5" y="18" width="14" height="1" fill="#1e293b"/><rect x="11" y="20" width="2" height="2" fill="${neon1}"/><circle cx="12" cy="21" r="1" fill="#fff"/>`,
+        `<rect x="6" y="19" width="12" height="5" fill="#4c1d95"/><rect x="7" y="18" width="10" height="1" fill="#4c1d95"/><rect x="6" y="20" width="12" height="1" fill="${neon2}"/>`
     ];
     svg += clothes[Math.floor(Math.random() * clothes.length)];
 
@@ -3115,8 +3076,10 @@ window.generateRandomAvatar = function() {
     const eyes = [
         // Обычные с неоновыми зрачками
         `<rect x="9" y="12" width="2" height="1" fill="#000"/><rect x="13" y="12" width="2" height="1" fill="#000"/><rect x="9" y="12" width="1" height="1" fill="${neon1}"/><rect x="13" y="12" width="1" height="1" fill="${neon1}"/>`,
-        // Кибер-визор
-        `<rect x="8" y="11" width="8" height="2" fill="#000"/><rect x="8" y="11" width="8" height="1" fill="${neon2}" opacity="0.7"/>`,
+        // Кибер-визор сплошной
+        `<rect x="8" y="11" width="8" height="2" fill="#000"/><rect x="8" y="11" width="8" height="1" fill="${neon2}" opacity="0.9"/>`,
+        // Узкий робо-визор
+        `<rect x="7" y="12" width="10" height="1" fill="#000"/><rect x="8" y="12" width="8" height="1" fill="${neon1}"/>`,
         // Лазерный глаз
         `<rect x="9" y="12" width="2" height="1" fill="#000"/><rect x="13" y="11" width="3" height="3" fill="#000"/><rect x="14" y="12" width="1" height="1" fill="${neon1}"/>`,
         // Очки VR
@@ -3129,19 +3092,27 @@ window.generateRandomAvatar = function() {
         `<rect x="11" y="16" width="2" height="1" fill="#444"/>`,
         // Неоновая маска на пол лица
         `<rect x="8" y="15" width="8" height="3" fill="#0f172a"/><rect x="10" y="16" width="4" height="1" fill="${neon1}"/>`,
+        // Респиратор
+        `<rect x="9" y="15" width="6" height="3" fill="#334155"/><rect x="10" y="15" width="4" height="4" fill="#000"/><rect x="11" y="16" width="2" height="2" fill="${neon2}"/>`,
         // Кибер-челюсть
         `<rect x="9" y="16" width="6" height="2" fill="#64748b"/><rect x="10" y="16" width="1" height="2" fill="#000"/><rect x="13" y="16" width="1" height="2" fill="#000"/>`
     ];
     svg += mouths[Math.floor(Math.random() * mouths.length)];
 
-    // Прически / Шлемы
+    // Прически / Шлемы / Импланты головы
     const hairStyle = [
         // Ирокез
         `<rect x="11" y="4" width="2" height="5" fill="${neon1}"/><rect x="10" y="5" width="1" height="4" fill="${neon1}"/>`,
-        // Подключенный кабель
+        // Подключенный кабель в затылок
         `<rect x="7" y="7" width="10" height="2" fill="#000"/><rect x="16" y="5" width="1" height="4" fill="${neon2}"/><rect x="17" y="4" width="1" height="2" fill="${neon2}"/>`,
         // Неоновые дреды
-        `<rect x="7" y="7" width="10" height="2" fill="#000"/><rect x="6" y="8" width="2" height="8" fill="${neon1}"/><rect x="16" y="8" width="2" height="8" fill="${neon2}"/>`
+        `<rect x="7" y="7" width="10" height="2" fill="#000"/><rect x="6" y="8" width="2" height="8" fill="${neon1}"/><rect x="16" y="8" width="2" height="8" fill="${neon2}"/>`,
+        // Боевой шлем
+        `<rect x="6" y="5" width="12" height="4" fill="#0f172a"/><rect x="7" y="4" width="10" height="1" fill="#0f172a"/><rect x="11" y="4" width="2" height="5" fill="${neon1}"/>`,
+        // Лысый с микрочипом
+        `<rect x="14" y="7" width="2" height="2" fill="#000"/><rect x="14" y="8" width="1" height="1" fill="${neon2}"/>`,
+        // Длинные волосы кибер-цвета
+        `<rect x="7" y="7" width="10" height="2" fill="${neon1}" opacity="0.8"/><rect x="6" y="8" width="1" height="10" fill="${neon1}" opacity="0.8"/><rect x="17" y="8" width="1" height="10" fill="${neon1}" opacity="0.8"/><rect x="5" y="10" width="1" height="8" fill="${neon1}" opacity="0.8"/><rect x="18" y="10" width="1" height="8" fill="${neon1}" opacity="0.8"/>`
     ];
     svg += hairStyle[Math.floor(Math.random() * hairStyle.length)];
 
