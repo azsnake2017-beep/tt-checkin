@@ -99,15 +99,29 @@ function handleMatchClick() {
 
 function closeMatchModal() { closeModalSmoothly('match-modal'); }
 
-function selectScore(my, opp) { 
-  document.getElementById('match-my-score').value = my; 
-  document.getElementById('match-opp-score').value = opp; 
-  var btns = document.querySelectorAll('.reg-score-btn');
-  for(var i=0; i<btns.length; i++) {
-    if (btns[i].innerText.replace(/\s+/g,'') === (my + ":" + opp)) btns[i].classList.add('active');
-    else btns[i].classList.remove('active');
-  }
-}
+window.selectScore = function(s1, s2) { 
+    document.getElementById('match-my-score').value = s1; 
+    document.getElementById('match-opp-score').value = s2; 
+    
+    // Ищем все кнопки счета именно в модалке обычных матчей
+    var btns = document.querySelectorAll('.reg-score-btn');
+    for(var i=0; i<btns.length; i++) {
+        // Убираем пробелы, чтобы корректно сравнить "3 : 0" и "3:0"
+        if (btns[i].innerText.replace(/\s+/g,'') === (s1 + ":" + s2)) {
+            btns[i].classList.add('active');
+            // Применяем красивую фиолетовую подсветку (в стиле окна матчей)
+            btns[i].style.background = 'linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)';
+            btns[i].style.color = '#ffffff';
+            btns[i].style.borderColor = '#7c3aed';
+        } else {
+            btns[i].classList.remove('active');
+            // Сбрасываем стили у невыделенных кнопок
+            btns[i].style.background = '';
+            btns[i].style.color = '';
+            btns[i].style.borderColor = '';
+        }
+    }
+};
 
 function submitMatchProposal() {
   var uid = getVerifiedUserId();
