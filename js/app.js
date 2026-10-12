@@ -2923,16 +2923,7 @@ window.showBadgeInfo = function(badgeKey) {
   openModalSmoothly('badge-info-modal');
 };
 
-// Глобальный перехватчик: делает кликабельной АБСОЛЮТНО ЛЮБУЮ плашку
-document.addEventListener('click', function(e) {
-  var badge = e.target.closest('.platform-badge');
-  if (badge) {
-      if (!badge.hasAttribute('onclick')) {
-          var text = badge.innerText.trim();
-          if (text) window.showBadgeInfo(text);
-      }
-  }
-});
+
 
 /* ==========================================
    РЕФЕРАЛЬНАЯ СИСТЕМА И QR-КОД
@@ -2978,25 +2969,7 @@ window.shareMyRefLink = function() {
   }
 };
 
-/* ==========================================
-   ГЛОБАЛЬНАЯ ЗВУКОВАЯ СИСТЕМА (ИНТЕРЦЕПТОР)
-   ========================================== */
-document.addEventListener('click', function(e) {
-  var btn = e.target.closest('.btn, .btn-info, .btn-opt, .score-btn, .tab-btn, .nav-item, .clickable-name, .platform-badge, .quest-choice-card, .medal-item, .club-header-top');
-  
-  if (btn && window.TTAudio) {
-    if (btn.classList.contains('btn-cancel-modal') || btn.closest('.close-btn')) {
-       if (typeof window.TTAudio.playSwoosh === 'function') window.TTAudio.playSwoosh();
-    } 
-    else if (btn.classList.contains('btn-join') || btn.innerText.includes('Сохранить')) {
-       if (typeof window.TTAudio.playSuccess === 'function') window.TTAudio.playSuccess();
-       else if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
-    }
-    else {
-       if (typeof window.TTAudio.playClick === 'function') window.TTAudio.playClick();
-    }
-  }
-});
+
 
 /* ==========================================
    ГЕНЕРАТОР ПИКСЕЛЬНЫХ NFT-АВАТАРОВ (CryptoPunks Style)
