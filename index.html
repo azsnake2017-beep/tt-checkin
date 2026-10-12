@@ -23,69 +23,144 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-/* ==========================================
-     CYBERPUNK UI & MINI-AVATARS
-     ========================================== */
-  h1, h2, h3, .card-title, .platform-badge, .player-status-tag {
-    font-family: 'Russo One', sans-serif !important;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
+  <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Russo+One&display=swap" rel="stylesheet">
 
-  /* Неоновые бейджи */
-  .platform-badge, .player-status-tag {
-    border-radius: 4px !important;
-    box-shadow: 0 0 10px currentColor inset, 0 0 5px currentColor !important;
-    text-shadow: 0 0 5px currentColor;
-    background: rgba(0,0,0,0.6) !important;
-    border: 1px solid currentColor !important;
-  }
-
-  /* Класс для мини-аватаров в списках */
-  .mini-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 8px;
-    border: 1px solid var(--accent-sky);
-    box-shadow: 0 0 8px var(--accent-sky);
-    overflow: hidden;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #000;
-    flex-shrink: 0;
-    font-size: 20px;
-  }
-  .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
-  .mini-avatar svg { width: 100%; height: 100%; }
-
-  /* 3D-контейнер для ракетки */
-  #racket-3d-container {
-    width: 100%;
-    height: 200px;
-    margin-top: 15px;
-    border-radius: 16px;
-    background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, rgba(0,0,0,0.8) 100%);
-    border: 1px solid rgba(14,165,233,0.3);
-    box-shadow: inset 0 0 20px rgba(14,165,233,0.2);
-    overflow: hidden;
-  }
   <style>
-  /* Жестко глушим прелоадер, если страница просто обновляется */
-  html.fast-reload #app-preloader { 
-    display: none !important; 
-  }
-</style>
+    /* ==========================================
+       CYBERPUNK UI, MINI-AVATARS & THEME
+       ========================================== */
+    h1, h2, h3, .card-title, .card-block-title span, .club-header-text h1, .platform-badge, .player-status-tag {
+      font-family: 'Russo One', sans-serif !important;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
 
-<script>
-  // Этот скрипт срабатывает МГНОВЕННО, еще до того, как страница отрисуется.
-  // Если человек обновляет страницу, мы вешаем класс fast-reload, и экран загрузки даже не появляется.
-  if (sessionStorage.getItem('tt_app_loaded')) {
-    document.documentElement.classList.add('fast-reload');
-  }
-</script>
+    /* Огромные аркадные цифры для рейтинга и счета */
+    .rating-score, .tour-score-badge, #match-my-score, #match-opp-score {
+      font-family: 'Bangers', cursive !important;
+      letter-spacing: 2px;
+      text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+    }
+
+    /* Неоновые бейджи (Срезанные углы) */
+    .platform-badge, .player-status-tag, .badge-mode {
+      border-radius: 4px !important;
+      font-size: 10px !important;
+      padding: 4px 8px !important;
+      box-shadow: 0 0 10px currentColor inset, 0 0 5px currentColor !important;
+      text-shadow: 0 0 5px currentColor;
+      background: rgba(0,0,0,0.6) !important;
+      border: 1px solid currentColor !important;
+      clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+    }
+
+    /* Класс для мини-аватаров в списках */
+    .mini-avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 8px;
+      border: 2px solid var(--accent-sky, #0ea5e9);
+      box-shadow: 0 0 10px rgba(14, 165, 233, 0.5), inset 0 0 5px rgba(14, 165, 233, 0.5);
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #000;
+      flex-shrink: 0;
+      font-size: 20px;
+      margin: 0 10px;
+    }
+    .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+    .mini-avatar svg { width: 100%; height: 100%; }
+
+    /* НЕОНОВЫЕ КАРТОЧКИ (Стиль игровых панелей) */
+    .card, .modal-box {
+      background: linear-gradient(145deg, #0f172a 0%, #020617 100%) !important;
+      border: 1px solid rgba(14, 165, 233, 0.3) !important;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(14, 165, 233, 0.05) !important;
+      border-radius: 16px !important;
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.05), transparent);
+      transform: skewX(-20deg);
+      animation: cyberSwipe 6s infinite;
+    }
+    @keyframes cyberSwipe { 0%, 80% { left: -100%; } 100% { left: 200%; } }
+
+    /* АРКАДНЫЕ КНОПКИ (Светящиеся при нажатии) */
+    .btn-join, .btn-opt {
+      font-family: 'Russo One', sans-serif !important;
+      text-transform: uppercase;
+      border-radius: 8px !important;
+      border: 1px solid rgba(255,255,255,0.2) !important;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+      transition: all 0.2s ease !important;
+      letter-spacing: 0.5px;
+    }
+    .btn-join:active, .btn-opt:active {
+      transform: scale(0.95) translateY(2px) !important;
+      box-shadow: 0 0 20px currentColor, inset 0 0 10px rgba(0,0,0,0.5) !important;
+      border-color: currentColor !important;
+    }
+
+    /* НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ */
+    .bottom-nav {
+      background: rgba(11, 17, 32, 0.95) !important;
+      backdrop-filter: blur(10px);
+      border-top: 1px solid rgba(14, 165, 233, 0.3) !important;
+      box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+    }
+    .nav-item.active {
+      color: #0ea5e9 !important;
+      text-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+      transform: translateY(-2px);
+    }
+    .nav-item.active .nav-icon {
+      filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.8));
+    }
+
+    /* ИНПУТЫ И СЕЛЕКТЫ (Cyber-Focus) */
+    .input-name, .textarea-announcement, .input-select, .input-time {
+      background: rgba(0, 0, 0, 0.5) !important;
+      border: 1px solid rgba(255, 255, 255, 0.1) !important;
+      color: #0ea5e9 !important;
+      font-family: 'Russo One', sans-serif !important;
+      border-radius: 6px !important;
+      transition: all 0.3s ease;
+    }
+    .input-name:focus, .textarea-announcement:focus, .input-select:focus {
+      outline: none;
+      border-color: #0ea5e9 !important;
+      box-shadow: 0 0 15px rgba(14, 165, 233, 0.4) inset, 0 0 10px rgba(14, 165, 233, 0.2) !important;
+    }
+
+    /* АНИМАЦИЯ ПОДГРУЗКИ */
+    .empty-note {
+      font-family: 'Russo One', sans-serif;
+      color: var(--accent-sky, #0ea5e9) !important;
+      opacity: 0.7;
+      text-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+      animation: pulseCyber 2s infinite alternate;
+    }
+    @keyframes pulseCyber { 0% { opacity: 0.4; } 100% { opacity: 0.9; } }
+
+    /* Жестко глушим прелоадер, если страница просто обновляется */
+    html.fast-reload #app-preloader { 
+      display: none !important; 
+    }
+  </style>
+
+  <script>
+    // Этот скрипт срабатывает МГНОВЕННО, еще до того, как страница отрисуется.
+    if (sessionStorage.getItem('tt_app_loaded')) {
+      document.documentElement.classList.add('fast-reload');
+    }
+  </script>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Russo+One&display=swap" rel="stylesheet">
 </head>
 <body data-theme="dark">
 <!-- ЭКРАН ЗАГРУЗКИ -->
@@ -93,7 +168,6 @@
   .app-preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color, #0b1120); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease, visibility 0.4s; }
   .app-preloader.hidden { opacity: 0; visibility: hidden; }
   
-  /* Увеличенный логотип с переливающейся подсветкой */
   .preloader-logo { 
     width: 140px; 
     height: 140px; 
@@ -109,7 +183,6 @@
     100% { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.7)); transform: scale(1.04); }
   }
   
-  /* Тонкая футуристичная полоска с неоновым свечением */
   .preloader-bar-bg { 
     width: 240px; 
     height: 4px; 
@@ -125,7 +198,7 @@
     background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); 
     position: relative; 
     overflow: hidden;
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.8), 0 0 4px rgba(59, 130, 246, 0.8); /* Неоновый эффект */
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.8), 0 0 4px rgba(59, 130, 246, 0.8); 
   }
   
   .preloader-bar-fill::after {
@@ -138,7 +211,6 @@
   .preloader-text { margin-top: 14px; font-size: 13px; color: var(--text-muted, #94a3b8); font-weight: 500; letter-spacing: 0.5px; animation: textPulse 2s infinite ease-in-out; }
   @keyframes textPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } }
   
-  /* Мягкий встроенный текст стиха */
   .preloader-joke { 
     margin-top: 28px; 
     font-size: 13.5px; 
@@ -151,14 +223,13 @@
     padding: 0 16px;
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); 
     letter-spacing: 0.2px;
-    min-height: 100px; /* Фиксируем высоту, чтобы элементы ниже не дергались */
+    min-height: 100px; 
     display: flex;
     flex-direction: column;
     justify-content: center;
     gap: 4px;
   }
 
-  /* Каскадное появление каждой строчки стиха */
   .joke-line {
     opacity: 0;
     transform: translateY(6px);
@@ -166,10 +237,7 @@
   }
 
   @keyframes fadeInSlide {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+    to { opacity: 1; transform: translateY(0); }
   }
 </style>
 
@@ -177,19 +245,21 @@
   <img src="logo.webp" alt="ЧМЗ" class="preloader-logo" onerror="this.style.display='none'">
   <div class="preloader-bar-bg"><div id="preloader-bar" class="preloader-bar-fill"></div></div>
   <div id="preloader-text" class="preloader-text">Инициализация...</div>
-  <!-- Контейнер для шутки -->
   <div id="preloader-joke" class="preloader-joke"></div>
 </div>
+
 <div id="main-top-header" class="header-container">
   <div class="outdated-browser-banner" id="outdated-browser-banner">
     ⚠️ <b>Ваш браузер устарел!</b><br>
     Некоторые функции клуба могут работать некорректно. Рекомендуем открыть через <a href="https://browser.yandex.ru" target="_blank">Яндекс.Браузер</a> или обновить Android System WebView.
   </div>
-<!-- DYNAMIC ISLAND (ПЛАВАЮЩИЙ СТАТУС) -->
-<div id="dynamic-island" class="dynamic-island hidden">
-  <div class="di-dot"></div>
-  <div class="di-text" id="di-timer">За столом: 0 мин</div>
-</div>
+
+  <!-- DYNAMIC ISLAND (ПЛАВАЮЩИЙ СТАТУС) -->
+  <div id="dynamic-island" class="dynamic-island hidden">
+    <div class="di-dot"></div>
+    <div class="di-text" id="di-timer">За столом: 0 мин</div>
+  </div>
+
   <div class="club-header">
     <div class="club-header-top">
       <div class="club-header-left">
@@ -201,10 +271,7 @@
       </div>
       <div class="header-actions">
         <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему">☀️</button>
-        <!-- Кнопка переключения звука на главной -->
-<button id="main-sound-toggle" onclick="toggleAppSound()" style="background: none; border: none; font-size: 22px; cursor: pointer; padding: 8px;">
-  🔊
-</button>
+        <button id="main-sound-toggle" onclick="toggleAppSound()" style="background: none; border: none; font-size: 22px; cursor: pointer; padding: 8px;">🔊</button>
         <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
           <img src="App.webp" alt="App QR" class="icon-img-large" width="22" height="22" onerror="this.style.display='none';" />
           <span style="display: none; font-size: 18px;">📱</span>
@@ -223,7 +290,8 @@
       </div>
     </div>
   </div>
-<!-- БАННЕР АКТИВНОГО БУСТА (Скрыт по умолчанию) -->
+
+  <!-- БАННЕР АКТИВНОГО БУСТА -->
   <div id="global-boost-banner" style="display: none; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; text-align: center; padding: 8px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); margin-bottom: 10px;">
     🔥 Включен буст рейтинга: <span id="global-boost-value" style="font-size: 14px; font-weight: 900;">x2</span>! Очки за победу умножены!
   </div>
@@ -241,27 +309,22 @@
       </div>
     </div>
   </div>
-<!-- БАННЕР МУЛЬТИ-ОХОТЫ НА ЧЕМПИОНОВ (С МИШЕНЬЮ) -->
-  <div id="global-bounty-banner" style="display: none; background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border-bottom: 2px solid #ef4444; color: #fff; text-align: center; padding: 12px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); margin-bottom: 10px; position: relative; overflow: hidden; z-index: 50;">
-    <!-- Фоновая мишень -->
-    <div style="position: absolute; right: -5px; top: -15px; font-size: 60px; opacity: 0.15; transform: rotate(15deg); pointer-events: none;">🎯</div>
-    
-    <div style="font-size: 11px; font-weight: 800; color: #fca5a5; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">🩸 Открыта охота на чемпионов</div>
-    
-    <!-- Контейнер для кликабельных плашек целей -->
-    <div id="bounty-targets-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 10px;"></div>
 
+  <!-- БАННЕР МУЛЬТИ-ОХОТЫ НА ЧЕМПИОНОВ -->
+  <div id="global-bounty-banner" style="display: none; background: linear-gradient(135deg, #7f1d1d 0%, #450a0a 100%); border-bottom: 2px solid #ef4444; color: #fff; text-align: center; padding: 12px; box-shadow: 0 4px 15px rgba(220, 38, 38, 0.4); margin-bottom: 10px; position: relative; overflow: hidden; z-index: 50;">
+    <div style="position: absolute; right: -5px; top: -15px; font-size: 60px; opacity: 0.15; transform: rotate(15deg); pointer-events: none;">🎯</div>
+    <div style="font-size: 11px; font-weight: 800; color: #fca5a5; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 8px;">🩸 Открыта охота на чемпионов</div>
+    <div id="bounty-targets-container" style="display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin-bottom: 10px;"></div>
     <div style="font-size: 12px; font-weight: 600;">Награда за каждую победу (1х1): <span style="background: #ef4444; color: #fff; padding: 2px 6px; border-radius: 4px; margin-left: 4px; box-shadow: 0 0 8px rgba(239,68,68,0.8);">+100 ЭЛО</span></div>
   </div>
+
   <!-- ЭКРАН 1: ПРОФИЛЬ -->
   <div id="view-profile" class="main-view active">
     <div class="profile-card">
       <div class="profile-top-row" style="align-items: center; gap: 14px;">
-        <!-- Фотокарточка игрока -->
         <div id="main-profile-avatar-box" style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; border: 2px solid var(--accent-sky); background: #000; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
           👤
         </div>
-        
         <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
           <div class="profile-user-main" id="user-name-container" style="margin-bottom: 4px;">
             <span class="user-name-text">Вы: <b style="color: var(--text-muted);">Загрузка...</b></span>
@@ -283,9 +346,9 @@
         <button class="btn-logout" id="btn-logout" onclick="logoutProfile()" style="display:none;">Выйти</button>
       </div>
     </div>
-<button id="btn-invite-glow" class="btn btn-join" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
-  <span>➕</span> Добавить участника в клуб
-</button>    
+    <button id="btn-invite-glow" class="btn btn-join" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
+      <span>➕</span> Добавить участника в клуб
+    </button>    
     <div class="profile-logo-container">
       <img src="logo.webp" alt="Логотип ЧМЗ" class="profile-large-logo" onerror="this.style.display='none'">
     </div>
@@ -302,7 +365,6 @@
         <span class="counter" id="badge-park">0 игроков</span>
       </div>
       
-      <!-- ПОГОДА ВЫНЕСЕНА НАРУЖУ (ВИДНА ВСЕГДА) -->
       <div class="weather-container" id="weather-park" style="margin-top: 0;"><div class="weather-badge"><span>Загрузка погоды...</span></div></div>
 
       <div class="card-collapse-wrapper">
@@ -330,7 +392,6 @@
         <span class="counter" id="badge-vostok">0 игроков</span>
       </div>
       
-      <!-- АНОНС ВЫНЕСЕН НАРУЖУ (ВИДЕН ВСЕГДА) -->
       <div class="event-badge" id="announcement-box-vostok" style="display: none; margin-top: 0;"><span id="announcement-text-vostok"></span></div>
 
       <div class="card-collapse-wrapper">
@@ -355,20 +416,19 @@
   <div id="view-ratings" class="main-view">
    <button id="btn-match-glow" class="btn-match-quick" onclick="handleMatchClick()" style="position: relative;">
       <span>⚔️</span><span>Записать результат матча</span>
-      <!-- БЕЙДЖ БУСТА НА КНОПКЕ -->
       <div id="match-btn-boost-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 8px; border: 2px solid var(--bg-color, #0f172a); box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);">🔥 x2</div>
     </button>
     <div id="pending-matches-container"></div>
     <div class="card" id="card-recent-matches">
-  <div class="card-top" onclick="this.parentElement.classList.toggle('expanded')">
-    <div class="card-title" style="width: 100%; justify-content: center;">🕒 Последние матчи</div>
-  </div>
-  <div class="card-collapse-wrapper">
-    <div class="card-body-collapse">
-      <div class="card-body-inner" id="recent-matches-container" style="padding-top: 8px;"></div>
+      <div class="card-top" onclick="this.parentElement.classList.toggle('expanded')">
+        <div class="card-title" style="width: 100%; justify-content: center;">🕒 Последние матчи</div>
+      </div>
+      <div class="card-collapse-wrapper">
+        <div class="card-body-collapse">
+          <div class="card-body-inner" id="recent-matches-container" style="padding-top: 8px;"></div>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
     <div class="tabs-container">
       <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
@@ -390,7 +450,7 @@
   <div id="view-tournaments" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
       <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 4px;">
-  <h2 style="font-size: 18px; color: var(--accent-amber); margin: 0;">🏆 Активные турниры</h2>
+        <h2 style="font-size: 18px; color: var(--accent-amber); margin: 0;">🏆 Активные турниры</h2>
         <button id="btn-add-tournament" class="badge-admin-btn" style="display:none; padding: 6px 12px; font-size: 12px; margin: 0;" onclick="openTournamentModal()">+ Добавить</button>
       </div>
       <div id="tournaments-list-active" style="display: flex; flex-direction: column; gap: 12px;"></div>
@@ -400,22 +460,23 @@
     </div>
   </div>
 
-  <!-- ЭКРАН 5: НОВОСТИ (ОБЯЗАТЕЛЬНО ДОЛЖЕН БЫТЬ ЗДЕСЬ) -->
+  <!-- ЭКРАН 5: НОВОСТИ -->
   <div id="view-news" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
-  <h2 style="font-size: 18px; color: #3b82f6; margin: 0;">📰 Мир настольного тенниса</h2>
+      <h2 style="font-size: 18px; color: #3b82f6; margin: 0;">📰 Мир настольного тенниса</h2>
       </div>
       <div id="news-container" style="display: flex; flex-direction: column; gap: 10px;">
         <span class="empty-note">Сбор свежих новостей...</span>
       </div>
     </div>
   </div>
-<!-- ЭКРАН 6: ЗАДАНИЯ -->
+  
+  <!-- ЭКРАН 6: ЗАДАНИЯ -->
   <div id="view-quests" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
      <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 12px;">
-  <h2 style="font-size: 18px; color: var(--accent-red); margin: 0;">🎯 Еженедельные задания</h2>
+      <h2 style="font-size: 18px; color: var(--accent-red); margin: 0;">🎯 Еженедельные задания</h2>
         <button class="btn-info" onclick="customAlert('Испытания на неделю, выполняйте их в матчах и получайте бонусное Эло и уникальные статусы в профиль!')">?</button>
       </div>
       <div id="quest-board-content">
@@ -424,16 +485,16 @@
     </div>
   </div>
 
-<!-- ЭКРАН 7: АРКАДНЫЙ ПИНГ-ПОНГ -->
-<div id="view-arcade" class="main-view" style="display: none; padding: 0; margin: 0; overflow: hidden; width: 100%;"> 
-  <iframe 
-      src="cyber_pong_wtt_edition.html" 
-      style="width: 100%; height: 100%; border: none; display: block;" 
-      allow="autoplay; fullscreen; vibrate"
-      title="Cyber Pong">
-  </iframe>
-</div>
-</div> <!-- ЭТОТ ЗАКРЫВАЮЩИЙ ТЕГ КОНТЕЙНЕРА ДОЛЖЕН БЫТЬ ПОСЛЕ ВСЕХ ЭКРАНОВ! -->
+  <!-- ЭКРАН 7: АРКАДНЫЙ ПИНГ-ПОНГ -->
+  <div id="view-arcade" class="main-view" style="display: none; padding: 0; margin: 0; overflow: hidden; width: 100%;"> 
+    <iframe 
+        src="cyber_pong_wtt_edition.html" 
+        style="width: 100%; height: 100%; border: none; display: block;" 
+        allow="autoplay; fullscreen; vibrate"
+        title="Cyber Pong">
+    </iframe>
+  </div>
+</div> <!-- ЗАКРЫВАЮЩИЙ ТЕГ MAIN КОНТЕЙНЕРА -->
 
 <!-- BOTTOM NAVIGATION -->
 <div class="bottom-nav">
@@ -447,7 +508,6 @@
 </div>
 
 <!-- МОДАЛЬНЫЕ ОКНА -->
-<!-- Системные уведомления -->
 <div class="modal-overlay" id="custom-alert-modal" style="z-index: 1200;">
   <div class="modal-box" style="border-color: var(--accent-sky); padding: 24px;">
     <h3 style="font-size: 16px; margin-bottom: 8px;">Клуб ЧМЗ</h3>
@@ -464,17 +524,13 @@
     </div>
     
     <textarea id="admin-broadcast-text" class="textarea-announcement" placeholder="Текст сообщения в Telegram чат..."></textarea>
-    
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700; margin-top: 4px;" onclick="sendAdminBroadcast()">Отправить в чат</button>
-    
     <button class="btn btn-join" style="background: var(--accent-purple); color: #ffffff; font-weight: 700; margin-top: 6px;" onclick="sendClubStatsBroadcast()">📊 Отправить ТОП-10 и статистику в чат</button>
     
-    <!-- КНОПКА: СГОРАНИЕ ЭЛО (Ручной режим) -->
-    <button class="btn btn-join" style="background: rgba(225,29,72,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; margin-top: 6px;" onclick="applyEloDecay()">📉 Списать -50 Эло за неактивность (7 дней)</button>
+    <button class="btn btn-join" style="background: rgba(225,29,72,0.1); border: 1px solid var(--accent-red); color: var(--accent-red); font-weight: 700; margin-top: 6px;" onclick="applyEloDecay()">📉 Списать -50 Эло (7 дней)</button>
 
-    <!-- КНОПКА: БУСТ РЕЙТИНГА -->
     <div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
-      <h4 style="font-size: 14px; color: var(--accent-gold); margin-bottom: 8px;">🚀 Ивент: Буст рейтинга (Умножение побед)</h4>
+      <h4 style="font-size: 14px; color: var(--accent-gold); margin-bottom: 8px;">🚀 Ивент: Буст рейтинга</h4>
       <div style="display: flex; gap: 8px; align-items: center;">
         <select id="admin-elo-boost" class="input-select" style="flex: 1; margin: 0; background: var(--list-bg);">
           <option value="1">x1 (Обычный режим)</option>
@@ -485,12 +541,9 @@
         </select>
         <button class="btn btn-join" style="width: auto; padding: 10px 14px; margin: 0; background: var(--accent-gold); color: #000;" onclick="saveEloBoost()">Включить</button>
       </div>
-      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.3;">
-        Умножаются только очки за победу. При поражении рейтинг списывается стандартно (-1x).
-      </div>
+      <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; line-height: 1.3;">Умножаются только очки за победу.</div>
     </div>
     
-   <!-- КНОПКА: ОХОТА НА ЧЕМПИОНА -->
     <div style="margin-top: 12px; border-top: 1px dashed var(--card-border); padding-top: 12px;">
       <h4 style="font-size: 14px; color: var(--accent-red); margin-bottom: 8px;">🎯 Ивент: Охота на чемпиона</h4>
       <div style="display: flex; gap: 8px; align-items: center;">
@@ -502,20 +555,17 @@
       <button class="btn btn-leave" style="margin-top: 8px; width: 100%; padding: 6px;" onclick="clearBounty()">❌ Отменить охоту</button>
     </div>
 
-    <!-- ВОТ ЭТИ СТРОКИ БЫЛИ ПОТЕРЯНЫ (Закрываем админку): -->
     <button class="btn btn-leave" style="margin-top: 12px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
 </div>
 
 <div class="modal-overlay" id="user-info-modal">
   <div class="modal-box" style="border-color: var(--accent-sky); padding: 0; overflow: hidden; display: flex; flex-direction: column;">
-    <!-- СТИКИ ШАПКА -->
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding: 16px 20px; background: var(--card-bg); z-index: 10;">
       <h3 style="font-size: 16px; color: var(--accent-sky); margin: 0;" id="info-modal-title">👤 Профиль</h3>
       <button class="btn-cancel-modal" style="margin: 0;" onclick="closeUserInfoModal()">✕</button>
     </div>
     
-    <!-- СКРОЛЛИРУЕМАЯ ЧАСТЬ БЕЗ АНАЛИТИКИ -->
     <div style="overflow-y: auto; overscroll-behavior: contain; padding: 20px; display: flex; flex-direction: column; gap: 14px;">
         <div id="info-modal-medals" class="medals-box" style="display:none; margin-top:0;"></div>
         <div id="info-modal-inventory" style="display: none;"></div>
@@ -530,29 +580,21 @@
   </div>
 </div>
 
-  <!-- МОДАЛЬНОЕ ОКНО QR-КОДА -->
 <div class="modal-overlay" id="qr-modal">
   <div class="modal-box" style="border-color: var(--accent-sky);">
-    
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 12px;">
       <h3 style="font-size: 16px; color: var(--accent-sky);" id="qr-modal-title">📷 QR-код</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeQrModal()">✕</button>
     </div>
-    
     <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 12px; text-align: center;" id="qr-modal-desc">Покажите этот QR-код друзьям для быстрого доступа:</p>
-    
     <div style="background: #fff; padding: 12px; border-radius: 12px; display: inline-flex; justify-content: center; align-items: center; margin: 0 auto; width: 204px; min-height: 204px;" id="qr-canvas-container"></div>
-    
     <div style="font-size: 11px; color: var(--text-muted); word-break: break-all; margin-top: 12px; text-align: center;" id="qr-url-text"></div>
-    
     <div style="display: flex; gap: 8px; margin-top: 16px;">
       <button class="btn btn-join" style="background: var(--card-border); color: var(--text); flex: 1;" onclick="shareModalUrl()">📤 Поделиться</button>
       <button class="btn btn-join" style="background: var(--primary); flex: 1;" onclick="closeQrModal()">Готово</button>
     </div>
-
   </div>
 </div>
-<!-- КОНЕЦ ОКНА QR-КОДА -->
   
 <div class="modal-overlay" id="announcement-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
@@ -634,14 +676,19 @@
   <div class="modal-box">
     <h3 style="margin-bottom: 12px;">Ваш профиль</h3>
     
-    <!-- Блок генератора NFT-аватара -->
-   <div style="display: flex; gap: 8px; width: 100%;">
-      <button class="btn btn-join" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);" onclick="triggerCameraUpload()">
-        <span>📷</span> Сделать селфи
-      </button>
-      <button class="btn btn-join" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);" onclick="generateRandomAvatar()">
-        <span>🤖</span> Кибер-Аватар
-      </button>
+    <!-- Блок генератора NFT-аватара и селфи -->
+    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px; background: var(--list-bg); padding: 16px; border-radius: 16px; border: 1px solid var(--card-border);">
+      <div id="avatar-preview-container" style="width: 96px; height: 96px; border-radius: 12px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">
+        <span style="font-size: 32px;">👤</span>
+      </div>
+      <div style="display: flex; gap: 8px; width: 100%;">
+        <button class="btn btn-join" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);" onclick="triggerCameraUpload()">
+          <span>📷</span> Фото
+        </button>
+        <button class="btn btn-join" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);" onclick="generateRandomAvatar()">
+          <span>🤖</span> Аватар
+        </button>
+      </div>
     </div>
 
     <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Имя:</div>
@@ -670,32 +717,27 @@
     <button class="btn-cancel-modal" onclick="closeTournamentModal()">Отмена</button>
   </div>
 </div>
-<!-- ОКНО УПРАВЛЕНИЯ УЧАСТНИКАМИ ТУРНИРА -->
+
 <div class="modal-overlay" id="tour-players-modal">
   <div class="modal-box" style="border-color: #ec4899;">
     <h3 style="font-size: 18px; color: #ec4899;">👥 Состав турнира</h3>
-    
     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
       <input type="text" id="new-tour-player-name" class="input-name" placeholder="Имя игрока (гостя)..." style="margin: 0; flex: 1;" />
       <button class="btn btn-join" style="background: #06b6d4; width: auto; margin: 0; padding: 0 15px; color: #000; font-weight: bold;" onclick="addPlayerToTour()">+ Добавить</button>
     </div>
-    
     <div id="tour-players-list" style="display: flex; flex-direction: column; gap: 8px; max-height: 300px; overflow-y: auto; margin-bottom: 12px;">
       <span class="empty-note">Загрузка...</span>
     </div>
-    
     <input type="hidden" id="manage-tour-id" />
     <button class="btn-cancel-modal" onclick="closeTourPlayersModal()">Закрыть</button>
   </div>
 </div>
+
 <div class="modal-overlay" id="tour-match-modal">
   <div class="modal-box" style="border-color: var(--accent-amber);">
     <h3 style="font-size: 16px; color: var(--accent-amber);">Внести счет матча</h3>
     <div style="font-size: 13px; margin-bottom: 8px;" id="tour-match-players-label"></div>
-    
-    <!-- Контейнер для динамических кнопок -->
     <div class="score-picker" id="tour-match-score-picker"></div>
-    
     <input type="hidden" id="tour-match-id-val" />
     <input type="hidden" id="tour-id-val" />
     <input type="hidden" id="tour-match-s1" />
@@ -704,7 +746,7 @@
     <button class="btn-cancel-modal" onclick="closeTourMatchModal()">Отмена</button>
   </div>
 </div>
- <!-- МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (ДЛЯ УДАЛЕНИЯ И ШТРАФОВ) -->
+
 <div class="modal-overlay" id="confirm-modal">
   <div class="modal-box" style="border-color: var(--accent-red);">
     <h3 style="font-size: 18px; color: var(--accent-red);">Внимание</h3>
@@ -713,66 +755,32 @@
     <button class="btn-cancel-modal" style="position: relative; margin-top: 8px; width: 100%;" onclick="closeConfirmModal()">Отмена</button>
   </div>
 </div>
-<!-- МОДАЛЬНОЕ ОКНО: НОВЫЙ РАНГ / АЧИВКА -->
+
 <div class="modal-overlay" id="achievement-modal">
   <div class="modal-box" style="text-align: center; overflow: hidden; position: relative;">
-    <!-- Эффект свечения на фоне -->
     <div style="position: absolute; top: -50%; left: -50%; width: 200%; height: 200%; background: radial-gradient(circle, rgba(245,158,11,0.15) 0%, rgba(0,0,0,0) 60%); pointer-events: none; animation: rotateGlow 10s linear infinite;"></div>
-    
     <h3 style="font-size: 22px; color: #f59e0b; margin-bottom: 8px; text-shadow: 0 2px 10px rgba(245, 158, 11, 0.5); position: relative; z-index: 2;" id="ach-title">🏆 Новый ранг!</h3>
     <div style="font-size: 60px; margin: 15px 0; filter: drop-shadow(0 4px 10px rgba(0,0,0,0.5)); position: relative; z-index: 2; animation: popIcon 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;" id="ach-icon">🏅</div>
-    
     <p style="font-size: 18px; color: #fff; font-weight: 800; margin-bottom: 5px; position: relative; z-index: 2;" id="ach-name">Игрок основы</p>
     <p style="font-size: 13px; color: #94a3b8; margin-bottom: 24px; position: relative; z-index: 2;" id="ach-desc">Вы достигли нового Эло. Так держать!</p>
-    
     <button class="btn btn-join" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #000; font-weight: 800; position: relative; z-index: 2; font-size: 16px; padding: 12px;" onclick="closeAchievementModal()">Забрать награду</button>
   </div>
 </div>
 
-<style>
-  @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  @keyframes popIcon { 0% { transform: scale(0); } 100% { transform: scale(1); } }
-</style>
-   <!-- ... здесь заканчиваются все ваши модальные окна (qr-modal, match-modal и т.д.) ... -->
-  <!-- 1. Сторонние библиотеки (Telegram загружаем асинхронно!) -->
-  <script async src="https://telegram.org/js/telegram-web-app.js"></script>
-  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
-
-  <!-- 2. Firebase (Официальный Google CDN - работает без VPN) -->
-  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
-  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-
-  <!-- 3. Ваши локальные модули -->
-  <script defer src="js/sounds.js?v=10"></script>
-  <script defer src="js/config.js?v=7"></script>
-  <script defer src="js/matches.js?v=3"></script>
-  <script defer src="js/radar.js?v=6"></script>
-  <script defer src="js/quests.js?v=6"></script>
-  <script defer src="js/news.js?v=16"></script>
-  <script defer src="js/app.js?v=99"></script>
-   <!-- Генератор конфетти -->
-  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-  
-<!-- Модальное окно для реферального QR-кода -->
 <div class="modal-overlay" id="ref-qr-modal">
   <div class="modal-box" style="border-color: var(--accent-green); align-items: center; max-width: 320px;">
     <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 12px; width: 100%;">
       <h3 style="font-size: 16px; color: var(--accent-green);">Ваш инвайт</h3>
       <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeRefQrModal()">✕</button>
     </div>
-    
     <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px; line-height: 1.3;">Дайте отсканировать этот QR-код будущему участнику клуба</p>
-    
     <div id="ref-qrcode" style="display: flex; justify-content: center; background: #fff; padding: 15px; border-radius: 10px; margin-bottom: 16px; width: 200px; height: 200px;"></div>
-    
     <button class="btn btn-join" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="shareMyRefLink()">
       <span>✉️</span> Или отправить ссылкой
     </button>
   </div>
 </div>
 
-<!-- МОДАЛЬНОЕ ОКНО: ОПИСАНИЕ ПЛАШКИ / ТИТУЛА -->
 <div class="modal-overlay" id="badge-info-modal">
   <div class="modal-box" style="border-color: var(--accent-amber); text-align: center; max-width: 320px;">
     <div style="font-size: 48px; margin-bottom: 4px;" id="badge-modal-icon">🏆</div>
@@ -781,6 +789,31 @@
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="closeBadgeInfoModal()">Понятно</button>
   </div>
 </div>
+
+<style>
+  @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  @keyframes popIcon { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+</style>
+
+  <!-- 1. Сторонние библиотеки -->
+  <script async src="https://telegram.org/js/telegram-web-app.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+  <!-- 2. Firebase -->
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <!-- 3. Локальные модули -->
+  <script defer src="js/sounds.js?v=10"></script>
+  <script defer src="js/config.js?v=7"></script>
+  <script defer src="js/matches.js?v=3"></script>
+  <script defer src="js/radar.js?v=6"></script>
+  <script defer src="js/quests.js?v=6"></script>
+  <script defer src="js/news.js?v=16"></script>
+  <script defer src="js/app.js?v=100"></script>
+  
+  <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </body>
