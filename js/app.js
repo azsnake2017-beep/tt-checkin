@@ -832,13 +832,13 @@ function showUserInfoModal(uid) {
                     '<span style="color: var(--text-muted);">Добавил участников:</span><div><span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' + pendingStr + '<span style="margin-left: 4px;">🤝</span></div></div>';
     }
 
-    var avatarHtml = d.avatarSvg
-      ? '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
-          '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">' +
-            d.avatarSvg +
+    var avatarHtml = u.avatarSvg ? 
+        '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
+          '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">' + 
+            u.avatarSvg + 
           '</div>' +
-        '</div>'
-      : '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
+        '</div>' : 
+        '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
           '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--card-border); background: var(--list-bg); display: flex; align-items: center; justify-content: center; font-size: 40px;">' +
             '👤' +
           '</div>' +
@@ -1793,15 +1793,23 @@ function listenRatings() {
         var deltaHtml = deltaNum ? (deltaNum > 0 ? '<span class="elo-delta elo-up">(+' + deltaNum + ') 📈</span>' : '<span class="elo-delta elo-down">(' + deltaNum + ') 📉</span>') : '';
 
         // ДОБАВЛЕН МИНИ-АВАТАР
-       html += '<div class="leader-row">' +
-          '<div class="leader-left">' +
-            '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
-            '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
-            '<div>' +
-              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b>...</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
+        html += '<div class="leader-row">' +
+                  '<div class="leader-left">' +
+                    '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+                    '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
+                    '<div>' +
+                      '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
+                      '<div class="player-status-tag">' + (typeof getPlayerStatus==='function'?getPlayerStatus(parseInt(d.elo, 10) || 1000):'Игрок') + rttfText + streakHtml + '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">' +
+                      '<div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div>' +
+                      '<span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' +
+                    '</div>' +
+                    '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button>' +
+                  '</div>' +
+                '</div>';
 
         rank++;
       } catch(e) {}
@@ -1873,15 +1881,23 @@ function listenLeaderboard() {
             var customTagBadge = item.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(item.customTag) + '\')">' + cleanHtml(item.customTag) + '</span>' : '';
 
             // ДОБАВЛЕН МИНИ-АВАТАР
-           html += '<div class="leader-row">' +
-          '<div class="leader-left">' +
-            '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
-            '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
-            '<div>' +
-              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b>...</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
+            html += '<div class="leader-row">' +
+                      '<div class="leader-left">' +
+                        '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+                        '<div class="mini-avatar">' + (item.avatarSvg || '👤') + '</div>' +
+                        '<div>' +
+                          '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(item.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
+                          '<div class="player-status-tag" style="color: var(--accent-sky);">⏱ Время за столом: ' + hoursFormatted + ' ч (' + totalMins + ' мин)</div>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div style="display: flex; align-items: center; gap: 8px;">' +
+                        '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">' +
+                          '<div><span class="rating-score" style="color: var(--accent-gold);">' + hoursFormatted + ' ч</span></div>' +
+                          '<span style="font-size: 10px; color: var(--text-muted);">Активность</span>' +
+                        '</div>' +
+                        '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button>' +
+                      '</div>' +
+                    '</div>';
             rank++;
           } catch (e) {
               console.error("Ошибка рендера игрока в топ-часов:", e);
