@@ -688,22 +688,30 @@ html, body {
   padding-bottom: max(env(safe-area-inset-bottom, 24px), 30px) !important; 
 }
 
+/* Добавляем стили для компактного мини-аватара */
 .mini-avatar {
   width: 36px !important;
   height: 36px !important;
   min-width: 36px !important;
   min-height: 36px !important;
   border-radius: 8px !important;
-  border: 1px solid var(--accent-sky, #38bdf8);
+  border: 1px solid var(--accent-sky);
   box-shadow: 0 0 8px rgba(56, 189, 248, 0.4);
   overflow: hidden !important;
-  display: inline-flex !important;
+  display: flex !important;
   align-items: center !important;
   justify-content: center !important;
   background: #000 !important;
   flex-shrink: 0 !important;
   font-size: 18px !important;
-  vertical-align: middle;
 }
-.mini-avatar img { width: 100% !important; height: 100% !important; object-fit: cover !important; }
-.mini-avatar svg { width: 100% !important; height: 100% !important; }
+.mini-avatar img, .mini-avatar svg {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+}
+
+/* Ограничиваем имя, чтобы оно не выталкивало блок со счетом за границы */
+.leader-name-text {
+  max-width: 100px !important;
+}
