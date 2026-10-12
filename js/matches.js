@@ -258,8 +258,9 @@ function listenPendingMatches() {
                     '<div style="font-size: 13px;">' + scoreText + '</div>' +
                     '<div style="font-size: 11px; color: var(--text-muted);">' + (isDoubles ? 'Достаточно подтверждения любого из соперников' : '') + '</div>' +
                     '<div style="display: flex; gap: 8px; margin-top: 2px;">' +
-                      '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="confirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
-                      '<button class="btn btn-leave" style="padding: 8px;" onclick="rejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
+                      // ИСПРАВЛЕНИЕ: Вызываем promptConfirmMatch и promptRejectMatch с защитными окнами!
+                      '<button class="btn btn-join" style="background: #059669; padding: 8px;" onclick="promptConfirmMatch(\'' + escapeJS(doc.id) + '\')">Подтвердить</button>' +
+                      '<button class="btn btn-leave" style="padding: 8px;" onclick="promptRejectMatch(\'' + escapeJS(doc.id) + '\')">Отклонить</button>' +
                     '</div>' +
                   '</div>'; 
       });
@@ -267,7 +268,6 @@ function listenPendingMatches() {
     } catch(e) {}
   });
 }
-
 // --- ПОДТВЕРЖДЕНИЕ МАТЧА (С УЧЕТОМ БУСТОВ, DOTA-СТРИКОВ И ОХОТЫ НА ЧЕМПИОНА) ---
 function confirmMatch(matchId) {
   if (window.isProcessingMatch) return;
