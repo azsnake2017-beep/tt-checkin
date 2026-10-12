@@ -832,7 +832,7 @@ function showUserInfoModal(uid) {
                     '<span style="color: var(--text-muted);">Добавил участников:</span><div><span style="font-weight: 700; color: #10b981; font-size: 13px;">' + confirmedInvites + '</span>' + pendingStr + '<span style="margin-left: 4px;">🤝</span></div></div>';
     }
 
-    var avatarHtml = u.avatarSvg ? 
+    var avatarHtml = d.avatarSvg ? '<div class="mini-avatar">' + d.avatarSvg + '</div>' : '<div class="mini-avatar">👤</div>';
         '<div style="display: flex; justify-content: center; margin-bottom: 16px;">' +
           '<div style="width: 96px; height: 96px; border-radius: 16px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">' + 
             u.avatarSvg + 
