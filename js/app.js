@@ -1382,96 +1382,103 @@ function selectTourScore(s1, s2) {
 }
 
 function submitTourMatchScore() {
-  var s1 = parseInt(document.getElementById('tour-match-s1').value, 10), s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
-  var tourId = document.getElementById('tour-id-val').value, matchId = document.getElementById('tour-match-id-val').value, uid = getVerifiedUserId();
-  closeTourMatchModal();
-  var recordedMatch = null;
-  var isEditMode = false;
+  var s1 = parseInt(document.getElementById('tour-match-s1').value, 10);
+  var s2 = parseInt(document.getElementById('tour-match-s2').value, 10);
+  
+  // ДОБАВЛЕНО ПОДТВЕРЖДЕНИЕ ПЕРЕД СОХРАНЕНИЕМ ТУРНИРНОГО СЧЕТА
+  openConfirmModal('Вы точно согласны с результатами матча (<b>' + s1 + ' : ' + s2 + '</b>)?<br><br><span style="font-size: 12px; color: var(--text-muted);">После подтверждения Эло будет пересчитано, а таблица групп обновлена.</span>', function() {
+      
+      var tourId = document.getElementById('tour-id-val').value;
+      var matchId = document.getElementById('tour-match-id-val').value;
+      var uid = getVerifiedUserId();
+      
+      closeTourMatchModal();
+      var recordedMatch = null;
+      var isEditMode = false;
 
-  db.runTransaction(function(t) {
-      var ref = db.collection('tournaments').doc(tourId);
-      return t.get(ref).then(function(doc) {
-          if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
-          var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
-          if (mIdx === -1) return;
-          var match = matches[mIdx];
-          if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
+      db.runTransaction(function(t) {
+          var ref = db.collection('tournaments').doc(tourId);
+          return t.get(ref).then(function(doc) {
+              if (!doc.exists) return; var data = doc.data(); var matches = data.matches || [];
+              var mIdx = -1; for (var j = 0; j < matches.length; j++) { if (matches[j].id === matchId) { mIdx = j; break; } }
+              if (mIdx === -1) return;
+              var match = matches[mIdx];
+              if (!isSuperAdmin() && match.p1Uid !== uid && match.p2Uid !== uid) return; 
 
-          // === БЛОК РЕДАКТИРОВАНИЯ ===
-          if (match.score1 !== null) {
-              isEditMode = true;
-              var oldS1 = match.score1, oldS2 = match.score2;
-              var oldPWin = oldS1 > oldS2, isPWin = s1 > s2;
+              // === БЛОК РЕДАКТИРОВАНИЯ ===
+              if (match.score1 !== null) {
+                  isEditMode = true;
+                  var oldS1 = match.score1, oldS2 = match.score2;
+                  var oldPWin = oldS1 > oldS2, isPWin = s1 > s2;
+                  match.score1 = s1; match.score2 = s2;
+
+                  if (match.stage === 'group') {
+                      var groups = data.groups; var grp = groups[match.group];
+                      var pl1 = null, pl2 = null;
+                      for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
+                      
+                      if (oldPWin) { pl1.w--; pl1.pts -= 2; pl2.l--; pl2.pts -= 1; } else { pl2.w--; pl2.pts -= 2; pl1.l--; pl1.pts -= 1; }
+                      if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+                      
+                      t.update(ref, { matches: matches, groups: groups });
+                  } else {
+                      t.update(ref, { matches: matches });
+                  }
+                  return; 
+              }
+
+              // === БЛОК НОВОГО СОХРАНЕНИЯ ===
               match.score1 = s1; match.score2 = s2;
+              recordedMatch = match;
 
-              if (match.stage === 'group') {
-                  var groups = data.groups; var grp = groups[match.group];
-                  var pl1 = null, pl2 = null;
-                  for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
-                  
-                  // Откатываем старые очки
-                  if (oldPWin) { pl1.w--; pl1.pts -= 2; pl2.l--; pl2.pts -= 1; } else { pl2.w--; pl2.pts -= 2; pl1.l--; pl1.pts -= 1; }
-                  // Начисляем новые очки
-                  if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
-                  
-                  t.update(ref, { matches: matches, groups: groups });
-              } else {
-                  t.update(ref, { matches: matches });
-              }
-              return; // Выходим без начисления ЭЛО
-          }
-
-          // === БЛОК НОВОГО СОХРАНЕНИЯ (С ЭЛО) ===
-          match.score1 = s1; match.score2 = s2;
-          recordedMatch = match;
-
-          var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
-          
-          return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
-              var p1Doc = uDocs[0], p2Doc = uDocs[1];
-              var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
-              var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+              var p1Ref = db.collection('users').doc(match.p1Uid), p2Ref = db.collection('users').doc(match.p2Uid);
               
-              var isPWin = s1 > s2; 
-              var p1Elo = parseInt(p1Data.elo, 10) || 1000; 
-              var p2Elo = parseInt(p2Data.elo, 10) || 1000;
-              var myDelta = typeof calculateElo === 'function' ? calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0) : 10;
-              var newP1Elo = Math.max(100, p1Elo + myDelta); 
-              var newP2Elo = Math.max(100, p2Elo - myDelta);
-              var p1S = isPWin ? ((parseInt(p1Data.winStreak, 10) || 0) + 1) : 0; 
-              var p2S = isPWin ? 0 : ((parseInt(p2Data.winStreak, 10) || 0) + 1);
+              return Promise.all([t.get(p1Ref), t.get(p2Ref)]).then(function(uDocs) {
+                  var p1Doc = uDocs[0], p2Doc = uDocs[1];
+                  var p1Data = p1Doc.exists ? p1Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                  var p2Data = p2Doc.exists ? p2Doc.data() : { elo: 1000, wins:0, losses:0, matches:0, winStreak:0 };
+                  
+                  var isPWin = s1 > s2; 
+                  var p1Elo = parseInt(p1Data.elo, 10) || 1000; 
+                  var p2Elo = parseInt(p2Data.elo, 10) || 1000;
+                  var myDelta = typeof calculateElo === 'function' ? calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0) : 10;
+                  var newP1Elo = Math.max(100, p1Elo + myDelta); 
+                  var newP2Elo = Math.max(100, p2Elo - myDelta);
+                  var p1S = isPWin ? ((parseInt(p1Data.winStreak, 10) || 0) + 1) : 0; 
+                  var p2S = isPWin ? 0 : ((parseInt(p2Data.winStreak, 10) || 0) + 1);
 
-              t.update(p1Ref, { 
-                elo: newP1Elo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: p1S, 
-                matches: (parseInt(p1Data.matches, 10) || 0) + 1, wins: (parseInt(p1Data.wins, 10) || 0) + (isPWin ? 1 : 0), losses: (parseInt(p1Data.losses, 10) || 0) + (isPWin ? 0 : 1) 
-              });
+                  t.update(p1Ref, { 
+                    elo: newP1Elo, lastEloDelta: isPWin ? myDelta : -myDelta, winStreak: p1S, 
+                    matches: (parseInt(p1Data.matches, 10) || 0) + 1, wins: (parseInt(p1Data.wins, 10) || 0) + (isPWin ? 1 : 0), losses: (parseInt(p1Data.losses, 10) || 0) + (isPWin ? 0 : 1) 
+                  });
 
-              t.update(p2Ref, { 
-                elo: newP2Elo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: p2S, 
-                matches: (parseInt(p2Data.matches, 10) || 0) + 1, wins: (parseInt(p2Data.wins, 10) || 0) + (isPWin ? 0 : 1), losses: (parseInt(p2Data.losses, 10) || 0) + (isPWin ? 1 : 0) 
+                  t.update(p2Ref, { 
+                    elo: newP2Elo, lastEloDelta: isPWin ? -myDelta : myDelta, winStreak: p2S, 
+                    matches: (parseInt(p2Data.matches, 10) || 0) + 1, wins: (parseInt(p2Data.wins, 10) || 0) + (isPWin ? 0 : 1), losses: (parseInt(p2Data.losses, 10) || 0) + (isPWin ? 1 : 0) 
+                  });
+                  
+                  if (match.stage === 'group') {
+                    var groups = data.groups; var grp = groups[match.group];
+                    var pl1 = null, pl2 = null;
+                    for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
+                    if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
+                    t.update(ref, { matches: matches, groups: groups });
+                  } else { 
+                    t.update(ref, { matches: matches }); 
+                  }
               });
-              
-              if (match.stage === 'group') {
-                var groups = data.groups; var grp = groups[match.group];
-                var pl1 = null, pl2 = null;
-                for(var k=0; k<grp.length; k++) { if(grp[k].uid === match.p1Uid) pl1 = grp[k]; if(grp[k].uid === match.p2Uid) pl2 = grp[k]; }
-                if (isPWin) { pl1.w++; pl1.pts += 2; pl2.l++; pl2.pts += 1; } else { pl2.w++; pl2.pts += 2; pl1.l++; pl1.pts += 1; }
-                t.update(ref, { matches: matches, groups: groups });
-              } else { 
-                t.update(ref, { matches: matches }); 
-              }
           });
-      });
-  }).then(function() {
-      if (isEditMode) {
-          if (typeof customAlert === 'function') customAlert('✏️ <b>Счет успешно изменен!</b><br><br><span style="font-size: 12px; color: var(--text-muted);">Таблица групп обновлена. Эло игроков не пересчитывалось, чтобы не было задвоений.</span>');
-      } else if (recordedMatch) {
-        db.collection('matches_history').add({ 
-          type: 'singles', p1Uid: recordedMatch.p1Uid, p1Name: recordedMatch.p1Name, p1Score: s1, p2Uid: recordedMatch.p2Uid, p2Name: recordedMatch.p2Name, p2Score: s2, participants: [recordedMatch.p1Uid, recordedMatch.p2Uid], timestamp: Date.now() 
-        });
-        if (typeof triggerConfetti === 'function') triggerConfetti();
-      }
-  }).catch(function(e){});
+      }).then(function() {
+          if (isEditMode) {
+              if (typeof customAlert === 'function') customAlert('✏️ <b>Счет успешно изменен!</b><br><br><span style="font-size: 12px; color: var(--text-muted);">Таблица групп обновлена. Эло игроков не пересчитывалось, чтобы не было задвоений.</span>');
+          } else if (recordedMatch) {
+            db.collection('matches_history').add({ 
+              type: 'singles', p1Uid: recordedMatch.p1Uid, p1Name: recordedMatch.p1Name, p1Score: s1, p2Uid: recordedMatch.p2Uid, p2Name: recordedMatch.p2Name, p2Score: s2, participants: [recordedMatch.p1Uid, recordedMatch.p2Uid], timestamp: Date.now() 
+            });
+            if (typeof triggerConfetti === 'function') triggerConfetti();
+          }
+      }).catch(function(e){});
+  }); // КОНЕЦ БЛОКА ПОДТВЕРЖДЕНИЯ
 }
 
 function renderGroupTable(groupPlayers, groupName) {
