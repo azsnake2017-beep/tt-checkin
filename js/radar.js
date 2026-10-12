@@ -355,6 +355,7 @@ function renderAll() {
       var badge = document.getElementById('badge-' + loc); 
       if(badge) { badge.innerText = players.length + ' ' + (typeof getPlayersCountSuffix === 'function' ? getPlayersCountSuffix(players.length) : 'игр.'); badge.className = players.length > 0 ? 'counter has-players' : 'counter'; }
 
+      // 1. РЕНДЕР ИГРОКОВ ЗА СТОЛОМ (С МИНИ-АВАТАРАМИ)
       var listEl = document.getElementById('list-' + loc);
       if(listEl) {
         if (players.length === 0) { listEl.innerHTML = '<span class="empty-note">У столов пока свободно</span>'; } 
@@ -363,12 +364,15 @@ function renderAll() {
             for(var i=0; i<players.length; i++) {
                 var item = players[i];
                 var itemTime = typeof parseTime === 'function' ? parseTime(item.time) : (item.time || Date.now());
-                pRows.push('<div class="player-row"><div class="player-name"><span>🏓</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + (typeof formatTime === 'function' ? formatTime(itemTime) : '') + '</span><span class="time-badge">'+ (typeof formatDuration === 'function' ? formatDuration(itemTime) : '') + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
+                var avatarHtml = item.avatarSvg ? '<div class="mini-avatar">' + item.avatarSvg + '</div>' : '<div class="mini-avatar">👤</div>';
+                
+                pRows.push('<div class="player-row"><div class="player-name">' + avatarHtml + '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">' + cleanHtml(item.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>с ' + (typeof formatTime === 'function' ? formatTime(itemTime) : '') + '</span><span class="time-badge">'+ (typeof formatDuration === 'function' ? formatDuration(itemTime) : '') + '</span></div>' + (item.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(item.uid) + '\')">i</button>' : '') + '</div></div>');
             }
             listEl.innerHTML = pRows.join(''); 
         }
       }
 
+      // 2. РЕНДЕР ПЛАНИРУЮЩИХ (С МИНИ-АВАТАРАМИ)
       var planListEl = document.getElementById('plan-list-' + loc);
       if(planListEl) {
         if (plans.length === 0) { planListEl.innerHTML = '<span class="empty-note">Никто не планировал</span>'; } 
@@ -377,7 +381,9 @@ function renderAll() {
             for(var j=0; j<plans.length; j++) {
                 var p = plans[j];
                 var pPlanTime = typeof parseTime === 'function' ? parseTime(p.planTime) : p.planTime;
-                plRows.push('<div class="player-row"><div class="player-name"><span>⏳</span><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + (typeof formatTime === 'function' ? formatTime(pPlanTime) : '') + '</span><span class="time-badge-plan">' + (typeof formatUntil === 'function' ? formatUntil(pPlanTime) : '') + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>');
+                var avatarHtml = p.avatarSvg ? '<div class="mini-avatar">' + p.avatarSvg + '</div>' : '<div class="mini-avatar">👤</div>';
+                
+                plRows.push('<div class="player-row"><div class="player-name">' + avatarHtml + '<span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span></div><div style="display: flex; align-items: center; gap: 8px;"><div class="player-time-box"><span>к ' + (typeof formatTime === 'function' ? formatTime(pPlanTime) : '') + '</span><span class="time-badge-plan">' + (typeof formatUntil === 'function' ? formatUntil(pPlanTime) : '') + '</span></div>' + (p.uid ? '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(p.uid) + '\')">i</button>' : '') + '</div></div>');
             }
             planListEl.innerHTML = plRows.join(''); 
         }
