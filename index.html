@@ -676,19 +676,14 @@
   <div class="modal-box">
     <h3 style="margin-bottom: 12px;">Ваш профиль</h3>
     
-    <!-- Блок генератора NFT-аватара и селфи -->
+  <!-- Блок генератора NFT-аватара -->
     <div style="display: flex; flex-direction: column; align-items: center; gap: 12px; margin-bottom: 16px; background: var(--list-bg); padding: 16px; border-radius: 16px; border: 1px solid var(--card-border);">
       <div id="avatar-preview-container" style="width: 96px; height: 96px; border-radius: 12px; overflow: hidden; border: 3px solid var(--accent-sky); background: #000; box-shadow: 0 8px 20px rgba(0,0,0,0.4); display: flex; align-items: center; justify-content: center;">
         <span style="font-size: 32px;">👤</span>
       </div>
-      <div style="display: flex; gap: 8px; width: 100%;">
-        <button class="btn btn-join" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);" onclick="triggerCameraUpload()">
-          <span>📷</span> Фото
-        </button>
-        <button class="btn btn-join" style="flex: 1; padding: 10px; font-size: 13px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%);" onclick="generateRandomAvatar()">
-          <span>🤖</span> Аватар
-        </button>
-      </div>
+      <button class="btn btn-join" style="width: 100%; padding: 10px; font-size: 14px; background: linear-gradient(135deg, #8b5cf6 0%, #6d28d9 100%); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="generateRandomAvatar()">
+        <span>🤖</span> Сгенерировать Кибер-Аватар
+      </button>
     </div>
 
     <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Имя:</div>
