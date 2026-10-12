@@ -1873,23 +1873,15 @@ function listenLeaderboard() {
             var customTagBadge = item.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(item.customTag) + '\')">' + cleanHtml(item.customTag) + '</span>' : '';
 
             // ДОБАВЛЕН МИНИ-АВАТАР
-            html += '<div class="leader-row">' +
-                      '<div class="leader-left">' +
-                        '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
-                        '<div class="mini-avatar">' + (item.avatarSvg || '👤') + '</div>' +
-                        '<div>' +
-                          '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(item.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
-                          '<div class="player-status-tag" style="color: var(--accent-sky);">⏱ Время за столом: ' + hoursFormatted + ' ч (' + totalMins + ' мин)</div>' +
-                        '</div>' +
-                      '</div>' +
-                      '<div style="display: flex; align-items: center; gap: 8px;">' +
-                        '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">' +
-                          '<div><span class="rating-score" style="color: var(--accent-gold);">' + hoursFormatted + ' ч</span></div>' +
-                          '<span style="font-size: 10px; color: var(--text-muted);">Активность</span>' +
-                        '</div>' +
-                        '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button>' +
-                      '</div>' +
-                    '</div>';
+           html += '<div class="leader-row">' +
+          '<div class="leader-left">' +
+            '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+            '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
+            '<div>' +
+              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b>...</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
             rank++;
           } catch (e) {
               console.error("Ошибка рендера игрока в топ-часов:", e);
