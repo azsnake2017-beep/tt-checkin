@@ -1793,23 +1793,15 @@ function listenRatings() {
         var deltaHtml = deltaNum ? (deltaNum > 0 ? '<span class="elo-delta elo-up">(+' + deltaNum + ') 📈</span>' : '<span class="elo-delta elo-down">(' + deltaNum + ') 📉</span>') : '';
 
         // ДОБАВЛЕН МИНИ-АВАТАР
-        html += '<div class="leader-row">' +
-                  '<div class="leader-left">' +
-                    '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
-                    '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
-                    '<div>' +
-                      '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
-                      '<div class="player-status-tag">' + (typeof getPlayerStatus==='function'?getPlayerStatus(parseInt(d.elo, 10) || 1000):'Игрок') + rttfText + streakHtml + '</div>' +
-                    '</div>' +
-                  '</div>' +
-                  '<div style="display: flex; align-items: center; gap: 8px;">' +
-                    '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">' +
-                      '<div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div>' +
-                      '<span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' +
-                    '</div>' +
-                    '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button>' +
-                  '</div>' +
-                '</div>';
+       html += '<div class="leader-row">' +
+          '<div class="leader-left">' +
+            '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+            '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
+            '<div>' +
+              '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b>...</div>' +
+            '</div>' +
+          '</div>' +
+        '</div>';
 
         rank++;
       } catch(e) {}
