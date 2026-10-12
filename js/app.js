@@ -3024,159 +3024,115 @@ document.addEventListener('click', function(e) {
 });
 
 /* ==========================================
-   NFT АВАТАРЫ (CRYPTOPUNKS STYLE) - МИЛЛИОНЫ КОМБИНАЦИЙ
+   ГЕНЕРАТОР ПИКСЕЛЬНЫХ NFT-АВАТАРОВ (CryptoPunks Style)
    ========================================== */
+window.currentPreviewAvatarSvg = "";
+
 window.generateRandomAvatar = function() {
     if (typeof vibrate === 'function') vibrate('light');
     if (window.TTAudio && typeof window.TTAudio.playPop === 'function') window.TTAudio.playPop();
     
-    // 1. ПАЛИТРЫ ЦВЕТОВ
-    const bgColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#1e293b', '#64748b', '#000000'];
-    const skinColors = ['#ffdbac', '#f1c27d', '#e0ac69', '#8d5524', '#c68642', '#e8beac', '#d2b48c', '#a0522d', '#718096', '#86efac']; // Включая зомби и алиенов
-    const hairColors = ['#ef4444', '#a855f7', '#3b82f6', '#10b981', '#f59e0b', '#000000', '#78350f', '#fbbf24', '#e2e8f0', '#ec4899'];
-    const clothColors = ['#0f172a', '#1d4ed8', '#047857', '#b91c1c', '#6d28d9', '#eab308', '#f8fafc', '#475569', '#fbbf24'];
+    const bgColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f43f5e', '#f59e0b', '#10b981', '#06b6d4', '#3b82f6', '#1e293b', '#94a3b8', '#14b8a6'];
+    const skinColors = ['#fcd34d', '#fde047', '#ffedd5', '#fed7aa', '#fdba74', '#fca5a5', '#d97706', '#b45309', '#78350f', '#451a03', '#86efac', '#cbd5e1'];
+    const hairColors = ['#0f172a', '#334155', '#713f12', '#a16207', '#ca8a04', '#fef08a', '#dc2626', '#db2777', '#9333ea', '#2563eb', '#ffffff', '#10b981'];
+    const clothColors = ['#0f172a', '#1d4ed8', '#047857', '#b91c1c', '#a21caf', '#be185d', '#eab308', '#f8fafc', '#64748b', '#000000'];
 
     const bg = bgColors[Math.floor(Math.random() * bgColors.length)];
     const skin = skinColors[Math.floor(Math.random() * skinColors.length)];
     const hairC = hairColors[Math.floor(Math.random() * hairColors.length)];
-    const cloth = clothColors[Math.floor(Math.random() * clothColors.length)];
-    
-    // Темная борода для светлой кожи, черная для темной
-    const beardC = (skin === '#8d5524' || skin === '#a0522d' || skin === '#c68642') ? '#000000' : '#451a03';
-    const isFemale = Math.random() > 0.6; // 40% женщин, 60% мужчин
+    const cloth1 = clothColors[Math.floor(Math.random() * clothColors.length)];
+    const cloth2 = clothColors[Math.floor(Math.random() * clothColors.length)];
+
+    const isFemale = Math.random() > 0.5;
 
     let svg = `<svg width="100%" height="100%" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="image-rendering: pixelated; background: ${bg};">`;
 
-    // --- БАЗА: ГОЛОВА И ШЕЯ (С ЧЕРНЫМИ КОНТУРАМИ) ---
-    svg += `
-        <!-- Шея -->
-        <rect x="10" y="16" width="4" height="3" fill="${skin}"/>
-        <rect x="9" y="16" width="1" height="3" fill="#000"/>
-        <rect x="14" y="16" width="1" height="3" fill="#000"/>
-        <!-- Тело (База) -->
-        <rect x="5" y="19" width="14" height="5" fill="${cloth}"/>
-        <rect x="4" y="19" width="1" height="5" fill="#000"/>
-        <rect x="19" y="19" width="1" height="5" fill="#000"/>
-        <!-- Голова -->
-        <rect x="8" y="8" width="8" height="8" fill="${skin}"/>
-        <!-- Контуры головы -->
-        <rect x="8" y="7" width="8" height="1" fill="#000"/>
-        <rect x="7" y="8" width="1" height="8" fill="#000"/>
-        <rect x="16" y="8" width="1" height="8" fill="#000"/>
-        <rect x="8" y="16" width="2" height="1" fill="#000"/>
-        <rect x="14" y="16" width="2" height="1" fill="#000"/>
-    `;
-
-    // --- ОДЕЖДА И ВЫРЕЗЫ ---
-    const clothesStyles = [
-        // V-вырез (Майка)
-        `<rect x="10" y="19" width="4" height="2" fill="${skin}"/><rect x="9" y="19" width="1" height="2" fill="#000"/><rect x="14" y="19" width="1" height="2" fill="#000"/><rect x="10" y="21" width="4" height="1" fill="#000"/><rect x="5" y="18" width="4" height="1" fill="#000"/><rect x="15" y="18" width="4" height="1" fill="#000"/>`,
-        // Худи
-        `<rect x="5" y="18" width="14" height="1" fill="#000"/><rect x="9" y="19" width="6" height="5" fill="${clothColors[Math.floor(Math.random() * clothColors.length)]}" opacity="0.8"/>`,
-        // Рубашка с воротником
-        `<rect x="5" y="18" width="14" height="1" fill="#000"/><rect x="11" y="19" width="2" height="5" fill="#fff"/><rect x="10" y="19" width="1" height="5" fill="#000"/><rect x="13" y="19" width="1" height="5" fill="#000"/>`,
-        // Голый торс (Мужчины) / Топик (Женщины)
-        isFemale ? `<rect x="5" y="18" width="4" height="1" fill="#000"/><rect x="15" y="18" width="4" height="1" fill="#000"/><rect x="10" y="19" width="4" height="3" fill="${skin}"/><rect x="9" y="19" width="1" height="3" fill="#000"/><rect x="14" y="19" width="1" height="3" fill="#000"/><rect x="10" y="22" width="4" height="1" fill="#000"/>` 
-                 : `<rect x="5" y="19" width="14" height="5" fill="${skin}"/><rect x="5" y="18" width="4" height="1" fill="#000"/><rect x="15" y="18" width="4" height="1" fill="#000"/>`
+    svg += `<rect x="10" y="17" width="4" height="2" fill="${skin}"/>`;
+    
+    const clothes = [
+        `<rect x="5" y="19" width="14" height="5" fill="${cloth1}"/><rect x="6" y="18" width="12" height="1" fill="${cloth1}"/>`,
+        `<rect x="4" y="18" width="16" height="6" fill="${cloth1}"/><rect x="11" y="19" width="2" height="5" fill="${cloth2}"/><rect x="5" y="18" width="1" height="6" fill="${cloth2}"/><rect x="18" y="18" width="1" height="6" fill="${cloth2}"/>`,
+        `<rect x="6" y="19" width="3" height="5" fill="${cloth1}"/><rect x="15" y="19" width="3" height="5" fill="${cloth1}"/><rect x="6" y="22" width="12" height="2" fill="${cloth1}"/>`,
+        `<rect x="4" y="19" width="16" height="5" fill="#0f172a"/><rect x="6" y="18" width="12" height="1" fill="#0f172a"/><rect x="10" y="19" width="4" height="5" fill="#fff"/><rect x="11" y="20" width="2" height="4" fill="#dc2626"/>`,
+        `<rect x="5" y="19" width="14" height="5" fill="${cloth1}"/><rect x="6" y="18" width="12" height="1" fill="${cloth1}"/><rect x="5" y="21" width="14" height="1" fill="${cloth2}"/>`
     ];
-    svg += clothesStyles[Math.floor(Math.random() * clothesStyles.length)];
+    svg += clothes[Math.floor(Math.random() * clothes.length)];
 
-    // Золотая цепь (20% шанс)
     if (Math.random() > 0.8) {
         svg += `<rect x="9" y="19" width="1" height="1" fill="#fbbf24"/><rect x="14" y="19" width="1" height="1" fill="#fbbf24"/><rect x="10" y="20" width="1" height="1" fill="#fbbf24"/><rect x="13" y="20" width="1" height="1" fill="#fbbf24"/><rect x="11" y="21" width="2" height="1" fill="#fbbf24"/>`;
     }
 
-    // --- ЛИЦО (Рот, Нос) ---
-    svg += `<rect x="11" y="12" width="2" height="2" fill="#000" opacity="0.15"/>`; // Нос
-    
-    const lipColor = isFemale ? ['#ef4444', '#db2777', '#9333ea', '#000'][Math.floor(Math.random() * 4)] : '#000';
-    const mouths = [
-        `<rect x="11" y="15" width="2" height="1" fill="${lipColor}"/>`, // Обычный
-        `<rect x="10" y="14" width="1" height="1" fill="${lipColor}"/><rect x="11" y="15" width="2" height="1" fill="${lipColor}"/><rect x="13" y="14" width="1" height="1" fill="${lipColor}"/>`, // Улыбка
-        `<rect x="11" y="15" width="2" height="1" fill="#000"/><rect x="13" y="15" width="3" height="1" fill="#fff"/><rect x="16" y="15" width="1" height="1" fill="#ef4444"/>`, // Сигарета
-        `<rect x="10" y="14" width="4" height="2" fill="#000"/><rect x="11" y="14" width="2" height="1" fill="#fff"/>` // Открытый рот с зубами
-    ];
-    svg += mouths[Math.floor(Math.random() * mouths.length)];
+    svg += `<rect x="8" y="9" width="8" height="8" fill="${skin}"/>`; 
+    svg += `<rect x="9" y="17" width="6" height="1" fill="${skin}"/>`; 
+    svg += `<rect x="7" y="11" width="1" height="4" fill="${skin}"/>`; 
+    svg += `<rect x="16" y="11" width="1" height="4" fill="${skin}"/>`; 
 
-    // --- БОРОДА (Только мужчины, 40% шанс) ---
-    if (!isFemale && Math.random() > 0.6) {
+    if (isFemale) {
+        const lipColor = ['#ef4444', '#db2777', '#9333ea', '#78350f'][Math.floor(Math.random() * 4)];
+        const eyeColor = ['#000', '#1e3a8a', '#064e3b'][Math.floor(Math.random() * 3)];
+        svg += `<rect x="9" y="12" width="2" height="1" fill="${eyeColor}"/><rect x="13" y="12" width="2" height="1" fill="${eyeColor}"/>`; 
+        svg += `<rect x="8" y="11" width="1" height="1" fill="${eyeColor}"/><rect x="15" y="11" width="1" height="1" fill="${eyeColor}"/>`; 
+        svg += `<rect x="11" y="16" width="3" height="1" fill="${lipColor}"/>`; 
+    } else {
+        svg += `<rect x="9" y="12" width="2" height="1" fill="#000"/><rect x="13" y="12" width="2" height="1" fill="#000"/>`; 
+        svg += `<rect x="11" y="16" width="3" height="1" fill="#444"/>`; 
+    }
+
+    if (!isFemale && Math.random() > 0.4) {
         const beards = [
-            `<rect x="10" y="16" width="4" height="1" fill="${beardC}"/><rect x="10" y="15" width="1" height="1" fill="${beardC}"/><rect x="13" y="15" width="1" height="1" fill="${beardC}"/>`, // Эспаньолка
-            `<rect x="8" y="14" width="1" height="3" fill="${beardC}"/><rect x="15" y="14" width="1" height="3" fill="${beardC}"/><rect x="9" y="16" width="6" height="2" fill="${beardC}"/><rect x="10" y="17" width="4" height="1" fill="${beardC}"/>`, // Полная
-            `<rect x="8" y="14" width="8" height="4" fill="#000" opacity="0.2"/>` // Легкая небритость
+            `<rect x="11" y="17" width="3" height="1" fill="${hairC}"/><rect x="12" y="18" width="1" height="1" fill="${hairC}"/>`,
+            `<rect x="10" y="15" width="5" height="1" fill="${hairC}"/>`,
+            `<rect x="8" y="14" width="1" height="4" fill="${hairC}"/><rect x="15" y="14" width="1" height="4" fill="${hairC}"/><rect x="9" y="16" width="6" height="3" fill="${hairC}"/>`,
+            `<rect x="8" y="15" width="1" height="3" fill="#000" opacity="0.2"/><rect x="15" y="15" width="1" height="3" fill="#000" opacity="0.2"/><rect x="9" y="16" width="6" height="2" fill="#000" opacity="0.2"/>`
         ];
         svg += beards[Math.floor(Math.random() * beards.length)];
     }
 
-    // --- ГЛАЗА И ОЧКИ ---
-    const eyeColor = ['#1e3a8a', '#064e3b', '#000'][Math.floor(Math.random() * 3)];
-    const hasGlasses = Math.random() > 0.4; // 60% шанс на крутые очки
-
-    if (!hasGlasses) {
-        if (isFemale) {
-            svg += `<rect x="9" y="11" width="1" height="1" fill="#000"/><rect x="13" y="11" width="1" height="1" fill="#000"/><rect x="8" y="10" width="2" height="1" fill="${eyeColor}"/><rect x="13" y="10" width="2" height="1" fill="${eyeColor}"/>`; // Ресницы/Тени
-        } else {
-            svg += `<rect x="9" y="11" width="1" height="1" fill="#000"/><rect x="13" y="11" width="1" height="1" fill="#000"/>`;
-            if (Math.random() > 0.5) svg += `<rect x="9" y="12" width="2" height="1" fill="#000" opacity="0.2"/><rect x="13" y="12" width="2" height="1" fill="#000" opacity="0.2"/>`; // Мешки под глазами
-        }
-    } else {
-        const glasses = [
-            // Пиксельные очки Thug Life
-            `<path d="M7 10 h10 v2 h-1 v1 h-2 v-1 H10 v1 H8 v-1 H7 Z" fill="#000"/><rect x="9" y="10" width="1" height="1" fill="#fff"/><rect x="14" y="10" width="1" height="1" fill="#fff"/>`,
-            // Фиолетовый кибер-визор
-            `<rect x="7" y="10" width="10" height="2" fill="#a855f7"/><rect x="7" y="9" width="10" height="1" fill="#000"/><rect x="7" y="12" width="10" height="1" fill="#000"/><rect x="6" y="10" width="1" height="2" fill="#000"/><rect x="17" y="10" width="1" height="2" fill="#000"/>`,
-            // Обычные темные очки
-            `<rect x="8" y="10" width="3" height="2" fill="#000"/><rect x="13" y="10" width="3" height="2" fill="#000"/><rect x="11" y="10" width="2" height="1" fill="#000"/><rect x="7" y="10" width="1" height="1" fill="#000"/><rect x="16" y="10" width="1" height="1" fill="#000"/>`,
-            // 3D очки (красно-синие)
-            `<rect x="8" y="10" width="3" height="2" fill="#ef4444"/><rect x="13" y="10" width="3" height="2" fill="#3b82f6"/><rect x="11" y="10" width="2" height="1" fill="#000"/><rect x="7" y="10" width="1" height="2" fill="#000"/><rect x="16" y="10" width="1" height="2" fill="#000"/><rect x="8" y="9" width="3" height="1" fill="#000"/><rect x="13" y="9" width="3" height="1" fill="#000"/><rect x="8" y="12" width="3" height="1" fill="#000"/><rect x="13" y="12" width="3" height="1" fill="#000"/>`
-        ];
-        svg += glasses[Math.floor(Math.random() * glasses.length)];
-    }
-
-    // --- ПРИЧЕСКИ / ГОЛОВНЫЕ УБОРЫ ---
     const hairstyles = [];
     if (isFemale) {
         hairstyles.push(
-            // Длинные волосы
-            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="6" y="8" width="1" height="9" fill="${hairC}"/><rect x="17" y="8" width="1" height="9" fill="${hairC}"/><rect x="5" y="10" width="1" height="8" fill="${hairC}"/><rect x="18" y="10" width="1" height="8" fill="${hairC}"/><rect x="6" y="7" width="12" height="1" fill="#000"/><rect x="5" y="8" width="1" height="10" fill="#000"/><rect x="18" y="8" width="1" height="10" fill="#000"/>`,
-            // Каре
-            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="6" y="8" width="2" height="6" fill="${hairC}"/><rect x="16" y="8" width="2" height="6" fill="${hairC}"/><rect x="6" y="7" width="12" height="1" fill="#000"/><rect x="5" y="8" width="1" height="6" fill="#000"/><rect x="18" y="8" width="1" height="6" fill="#000"/>`,
-            // Стрижка пикси
-            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="9" y="4" width="6" height="3" fill="${hairC}"/><rect x="10" y="3" width="4" height="1" fill="${hairC}"/><rect x="9" y="3" width="1" height="1" fill="#000"/><rect x="14" y="3" width="1" height="1" fill="#000"/><rect x="10" y="2" width="4" height="1" fill="#000"/><rect x="7" y="6" width="2" height="1" fill="#000"/><rect x="15" y="6" width="2" height="1" fill="#000"/>`
+            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="6" y="8" width="1" height="9" fill="${hairC}"/><rect x="17" y="8" width="1" height="9" fill="${hairC}"/><rect x="5" y="10" width="1" height="8" fill="${hairC}"/><rect x="18" y="10" width="1" height="8" fill="${hairC}"/>`,
+            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="6" y="8" width="2" height="6" fill="${hairC}"/><rect x="16" y="8" width="2" height="6" fill="${hairC}"/>`,
+            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="4" y="9" width="3" height="3" fill="${hairC}"/><rect x="17" y="9" width="3" height="3" fill="${hairC}"/>`,
+            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="9" y="4" width="6" height="3" fill="${hairC}"/><rect x="10" y="3" width="4" height="1" fill="${hairC}"/>`
         );
     } else {
         hairstyles.push(
-            ``, // Лысый
-            // Короткая стрижка
-            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="8" y="6" width="8" height="1" fill="${hairC}"/><rect x="8" y="5" width="8" height="1" fill="#000"/><rect x="7" y="6" width="1" height="1" fill="#000"/><rect x="16" y="6" width="1" height="1" fill="#000"/>`,
-            // Ирокез (Панк)
-            `<rect x="11" y="2" width="2" height="6" fill="${hairC}"/><rect x="10" y="2" width="1" height="6" fill="#000"/><rect x="13" y="2" width="1" height="6" fill="#000"/><rect x="11" y="1" width="2" height="1" fill="#000"/>`,
-            // Бандана
-            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="7" y="6" width="10" height="1" fill="#000"/><rect x="7" y="9" width="10" height="1" fill="#000"/><rect x="6" y="7" width="1" height="2" fill="#000"/><rect x="17" y="7" width="1" height="2" fill="#000"/><rect x="16" y="8" width="3" height="3" fill="${hairC}"/><rect x="19" y="8" width="1" height="3" fill="#000"/>`
+            ``,
+            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="8" y="6" width="8" height="1" fill="${hairC}"/>`,
+            `<rect x="7" y="7" width="10" height="2" fill="${hairC}"/><rect x="7" y="6" width="1" height="1" fill="${hairC}"/><rect x="9" y="5" width="2" height="2" fill="${hairC}"/><rect x="12" y="4" width="2" height="3" fill="${hairC}"/><rect x="15" y="6" width="1" height="1" fill="${hairC}"/>`,
+            `<rect x="11" y="4" width="2" height="5" fill="${hairC}"/><rect x="10" y="5" width="1" height="4" fill="${hairC}"/>`
         );
     }
-
-    // Кепки / Шапки (заменяют прическу)
-    if (Math.random() > 0.8) {
+    
+    if (Math.random() > 0.65) {
         const hats = [
-            // Шапка бини
-            `<rect x="7" y="5" width="10" height="3" fill="${cloth}"/><rect x="8" y="4" width="8" height="1" fill="${cloth}"/><rect x="6" y="8" width="12" height="2" fill="${cloth}"/><rect x="8" y="3" width="8" height="1" fill="#000"/><rect x="6" y="4" width="2" height="4" fill="#000"/><rect x="16" y="4" width="2" height="4" fill="#000"/><rect x="5" y="8" width="1" height="2" fill="#000"/><rect x="18" y="8" width="1" height="2" fill="#000"/><rect x="6" y="10" width="12" height="1" fill="#000"/>`,
-            // Кепка козырьком вперед
-            `<rect x="7" y="6" width="10" height="2" fill="${cloth}"/><rect x="8" y="5" width="8" height="1" fill="${cloth}"/><rect x="7" y="8" width="14" height="1" fill="${cloth}"/><rect x="8" y="4" width="8" height="1" fill="#000"/><rect x="6" y="5" width="1" height="3" fill="#000"/><rect x="17" y="5" width="1" height="3" fill="#000"/><rect x="7" y="9" width="14" height="1" fill="#000"/><rect x="21" y="8" width="1" height="1" fill="#000"/>`
+            `<rect x="7" y="7" width="10" height="2" fill="${cloth2}"/><rect x="8" y="6" width="8" height="1" fill="${cloth2}"/><rect x="7" y="9" width="14" height="1" fill="${cloth2}"/>`,
+            `<rect x="7" y="7" width="10" height="2" fill="${cloth2}"/><rect x="8" y="6" width="8" height="1" fill="${cloth2}"/><rect x="3" y="8" width="4" height="1" fill="${cloth2}"/>`,
+            `<rect x="7" y="6" width="10" height="3" fill="${cloth2}"/><rect x="8" y="5" width="8" height="1" fill="${cloth2}"/><rect x="7" y="8" width="10" height="1" fill="${cloth1}"/>`,
+            `<rect x="7" y="8" width="10" height="1" fill="${cloth2}"/><rect x="6" y="8" width="1" height="2" fill="${cloth2}"/><rect x="17" y="8" width="1" height="2" fill="${cloth2}"/>`,
+            `<rect x="4" y="8" width="16" height="1" fill="#92400e"/><rect x="7" y="5" width="10" height="3" fill="#92400e"/><rect x="7" y="7" width="10" height="1" fill="#451a03"/>`
         ];
         svg += hats[Math.floor(Math.random() * hats.length)];
     } else {
         svg += hairstyles[Math.floor(Math.random() * hairstyles.length)];
     }
 
-    // --- СЕРЬГИ (25% шанс) ---
-    if (Math.random() > 0.75) {
-        svg += `<rect x="6" y="12" width="1" height="2" fill="#fbbf24"/><rect x="7" y="14" width="1" height="1" fill="#fbbf24"/>`;
+    if (Math.random() > 0.5) {
+        const accs = [
+            `<rect x="8" y="11" width="3" height="2" fill="#ef4444"/><rect x="13" y="11" width="3" height="2" fill="#3b82f6"/><rect x="11" y="11" width="2" height="1" fill="#fff"/><rect x="7" y="11" width="1" height="1" fill="#fff"/><rect x="16" y="11" width="1" height="1" fill="#fff"/>`,
+            `<rect x="8" y="11" width="8" height="2" fill="#0f172a"/><rect x="7" y="11" width="1" height="1" fill="#0f172a"/><rect x="16" y="11" width="1" height="1" fill="#0f172a"/><rect x="9" y="11" width="2" height="1" fill="#475569"/><rect x="14" y="11" width="2" height="1" fill="#475569"/>`,
+            `<rect x="12" y="11" width="4" height="3" fill="#0f172a"/><rect x="7" y="10" width="9" height="1" fill="#0f172a"/>`,
+            `<rect x="13" y="16" width="3" height="1" fill="#fff"/><rect x="16" y="16" width="1" height="1" fill="#ef4444"/><rect x="17" y="15" width="1" height="1" fill="#94a3b8" opacity="0.6"/>`,
+            `<circle cx="12" cy="16" r="2.5" fill="#f472b6" opacity="0.9"/>`,
+            `<rect x="6" y="13" width="1" height="1" fill="#fbbf24"/>`
+        ];
+        svg += accs[Math.floor(Math.random() * accs.length)];
     }
 
     svg += `</svg>`;
-    
     window.currentPreviewAvatarSvg = svg;
+
     var container = document.getElementById('avatar-preview-container');
     if (container) container.innerHTML = svg;
 };
