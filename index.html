@@ -23,7 +23,53 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
+/* ==========================================
+     CYBERPUNK UI & MINI-AVATARS
+     ========================================== */
+  h1, h2, h3, .card-title, .platform-badge, .player-status-tag {
+    font-family: 'Russo One', sans-serif !important;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
 
+  /* Неоновые бейджи */
+  .platform-badge, .player-status-tag {
+    border-radius: 4px !important;
+    box-shadow: 0 0 10px currentColor inset, 0 0 5px currentColor !important;
+    text-shadow: 0 0 5px currentColor;
+    background: rgba(0,0,0,0.6) !important;
+    border: 1px solid currentColor !important;
+  }
+
+  /* Класс для мини-аватаров в списках */
+  .mini-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    border: 1px solid var(--accent-sky);
+    box-shadow: 0 0 8px var(--accent-sky);
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #000;
+    flex-shrink: 0;
+    font-size: 20px;
+  }
+  .mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .mini-avatar svg { width: 100%; height: 100%; }
+
+  /* 3D-контейнер для ракетки */
+  #racket-3d-container {
+    width: 100%;
+    height: 200px;
+    margin-top: 15px;
+    border-radius: 16px;
+    background: radial-gradient(circle, rgba(14,165,233,0.15) 0%, rgba(0,0,0,0.8) 100%);
+    border: 1px solid rgba(14,165,233,0.3);
+    box-shadow: inset 0 0 20px rgba(14,165,233,0.2);
+    overflow: hidden;
+  }
   <style>
   /* Жестко глушим прелоадер, если страница просто обновляется */
   html.fast-reload #app-preloader { 
