@@ -687,3 +687,130 @@ html, body {
 .modal-box {
   padding-bottom: max(env(safe-area-inset-bottom, 24px), 30px) !important; 
 }
+
+/* ==========================================
+   CYBERPONG THEME: СТИЛЬ, ШРИФТЫ И НЕОН
+   ========================================== */
+
+/* 1. ГЛОБАЛЬНЫЕ ШРИФТЫ И ЗАГОЛОВКИ */
+h1, h2, h3, .card-title, .card-block-title span, .club-header-text h1 {
+  font-family: 'Russo One', sans-serif !important;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+/* Огромные аркадные цифры для рейтинга и счета */
+.rating-score, .tour-score-badge, #match-my-score, #match-opp-score {
+  font-family: 'Bangers', cursive !important;
+  letter-spacing: 2px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+/* 2. НЕОНОВЫЕ КАРТОЧКИ (Стиль игровых панелей) */
+.card, .modal-box {
+  background: linear-gradient(145deg, #0f172a 0%, #020617 100%) !important;
+  border: 1px solid rgba(14, 165, 233, 0.3) !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(14, 165, 233, 0.05) !important;
+  border-radius: 16px !important;
+  position: relative;
+  overflow: hidden;
+}
+/* Блик на карточках в стиле киберпанк */
+.card::before {
+  content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(14, 165, 233, 0.05), transparent);
+  transform: skewX(-20deg);
+  animation: cyberSwipe 6s infinite;
+}
+@keyframes cyberSwipe { 0%, 80% { left: -100%; } 100% { left: 200%; } }
+
+/* 3. КИБЕР-ПЛАШКИ И СТАТУСЫ (Nemesis, Король стола и т.д.) */
+.platform-badge, .player-status-tag, .badge-mode {
+  font-family: 'Russo One', sans-serif !important;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-size: 10px !important;
+  padding: 4px 8px !important;
+  border-radius: 4px !important;
+  border: 1px solid currentColor !important;
+  background: rgba(0, 0, 0, 0.6) !important;
+  box-shadow: 0 0 8px currentColor inset, 0 0 4px currentColor !important;
+  text-shadow: 0 0 5px currentColor;
+  clip-path: polygon(5px 0, 100% 0, 100% calc(100% - 5px), calc(100% - 5px) 100%, 0 100%, 0 5px);
+}
+
+/* 4. АРКАДНЫЕ КНОПКИ (Светящиеся при нажатии) */
+.btn-join, .btn-opt {
+  font-family: 'Russo One', sans-serif !important;
+  text-transform: uppercase;
+  border-radius: 8px !important;
+  border: 1px solid rgba(255,255,255,0.2) !important;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.4) !important;
+  transition: all 0.2s ease !important;
+  letter-spacing: 0.5px;
+}
+.btn-join:active, .btn-opt:active {
+  transform: scale(0.95) translateY(2px) !important;
+  box-shadow: 0 0 20px currentColor, inset 0 0 10px rgba(0,0,0,0.5) !important;
+  border-color: currentColor !important;
+}
+
+/* 5. МИНИ-АВАТАРЫ В СПИСКАХ (Неоновые рамки) */
+.mini-avatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px; /* Чуть квадратные для кибер-стиля */
+  border: 2px solid var(--accent-sky, #0ea5e9);
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.5), inset 0 0 5px rgba(14, 165, 233, 0.5);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #000;
+  flex-shrink: 0;
+  font-size: 20px;
+  margin: 0 10px;
+}
+.mini-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.mini-avatar svg { width: 100%; height: 100%; }
+
+/* 6. НИЖНЯЯ ПАНЕЛЬ НАВИГАЦИИ (Свечение активного пункта) */
+.bottom-nav {
+  background: rgba(11, 17, 32, 0.95) !important;
+  backdrop-filter: blur(10px);
+  border-top: 1px solid rgba(14, 165, 233, 0.3) !important;
+  box-shadow: 0 -5px 20px rgba(0,0,0,0.8);
+}
+.nav-item.active {
+  color: #0ea5e9 !important;
+  text-shadow: 0 0 10px rgba(14, 165, 233, 0.8);
+  transform: translateY(-2px);
+}
+.nav-item.active .nav-icon {
+  filter: drop-shadow(0 0 5px rgba(14, 165, 233, 0.8));
+}
+
+/* 7. ИНПУТЫ И СЕЛЕКТЫ (Cyber-Focus) */
+.input-name, .textarea-announcement, .input-select, .input-time {
+  background: rgba(0, 0, 0, 0.5) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+  color: #0ea5e9 !important;
+  font-family: 'Russo One', sans-serif !important;
+  border-radius: 6px !important;
+  transition: all 0.3s ease;
+}
+.input-name:focus, .textarea-announcement:focus, .input-select:focus {
+  outline: none;
+  border-color: #0ea5e9 !important;
+  box-shadow: 0 0 15px rgba(14, 165, 233, 0.4) inset, 0 0 10px rgba(14, 165, 233, 0.2) !important;
+}
+
+/* 8. АНИМАЦИЯ ПОДГРУЗКИ (Радар/Рейтинг) */
+.empty-note {
+  font-family: 'Russo One', sans-serif;
+  color: var(--accent-sky, #0ea5e9) !important;
+  opacity: 0.7;
+  text-shadow: 0 0 8px rgba(14, 165, 233, 0.5);
+  animation: pulseCyber 2s infinite alternate;
+}
+@keyframes pulseCyber { 0% { opacity: 0.4; } 100% { opacity: 0.9; } }
