@@ -1798,49 +1798,103 @@ html += '<div class="leader-row"><div class="leader-left"><span class="leader-ra
 }
 
 function listenLeaderboard() {
-  db.collection('leaderboard').onSnapshot(function(snap) {
+  db.collection('leaderboard').onSnapshot(function(leadSnap) {
     var listEl = document.getElementById('leaderboard-list');
     if (!listEl) return;
-    if (snap.empty) { listEl.innerHTML = '<span class="empty-note">Статистика собирается...</span>'; return; }
     
-    var items = [];
-    snap.forEach(function(doc) {
-      if (doc.id.match(/^(tg|google)_/)) {
-        items.push({ uid: doc.id, data: doc.data() });
-      }
-    });
-
-    items.sort(function(a, b) { return (b.data.totalMinutes || 0) - (a.data.totalMinutes || 0); });
-
-    window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
-    for (var k in window.__TT_DYNAMIC_BADGES) {
-       window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король стола') === -1; });
-    }
-    if (items.length > 0 && items[0].data.totalMinutes > 0) {
-        var kingUid = items[0].uid;
-        window.__TT_DYNAMIC_BADGES[kingUid] = window.__TT_DYNAMIC_BADGES[kingUid] || [];
-        window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5); cursor: pointer;" onclick="showBadgeInfo(\'👑 Король стола\')">👑 Король стола</span>');
+    if (leadSnap.empty) { 
+        listEl.innerHTML = '<span class="empty-note">Статистика по времени пока собирается...</span>'; 
+        return; 
     }
 
-    var html = '', rank = 1;
-    items.forEach(function(item) {
-      try {
-        var d = item.data;
-        var docId = item.uid;
-        var hours = ((d.totalMinutes || 0) / 60).toFixed(1), rankClass = rank <= 3 ? 'leader-rank-' + rank : '', medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
-        var adminBadgeHTML = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(docId) !== -1) ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
-        var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : ''; 
-        // Генерация премиум-плашки Ниндзя
-        var customTagBadge = d.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(d.customTag) + '\')">' + cleanHtml(d.customTag) + '</span>' : '';
+    // Параллельно получаем имена и профили игроков из коллекции users
+    db.collection('users').get().then(function(usersSnap) {
+        var usersMap = {};
+        usersSnap.forEach(function(uDoc) {
+            usersMap[uDoc.id] = uDoc.data();
+        });
+
+        var items = [];
+        leadSnap.forEach(function(doc) {
+            var uid = doc.id;
+            var lData = doc.data() || {};
+            var uData = usersMap[uid]; // Ищем профиль игрока по UID
+            
+            // Добавляем в топ только если профиль существует
+            if (uData && (uid.match(/^(tg|google)_/) || uData.isVerified)) {
+                items.push({ 
+                    uid: uid, 
+                    totalMinutes: lData.totalMinutes || 0,
+                    name: uData.name || 'Игрок',
+                    elo: uData.elo || 1000,
+                    customTag: uData.customTag || ''
+                });
+            }
+        });
+
+        // Сортируем топ по убыванию времени
+        items.sort(function(a, b) { 
+            return b.totalMinutes - a.totalMinutes; 
+        });
+
+        // Выдаем уникальную корону за первое место по времени
+        window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
+        for (var k in window.__TT_DYNAMIC_BADGES) {
+           window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король стола') === -1; });
+        }
+        if (items.length > 0 && items[0].totalMinutes > 0) {
+            var kingUid = items[0].uid;
+            window.__TT_DYNAMIC_BADGES[kingUid] = window.__TT_DYNAMIC_BADGES[kingUid] || [];
+            window.__TT_DYNAMIC_BADGES[kingUid].push('<span class="platform-badge" style="background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%); color: #000; border:none; box-shadow: 0 0 8px rgba(245,158,11,0.5); cursor: pointer;" onclick="showBadgeInfo(\'👑 Король стола\')">👑 Король стола</span>');
+        }
+
+        var html = '', rank = 1;
+        items.forEach(function(item) {
+          try {
+            var docId = item.uid;
+            var totalMins = item.totalMinutes;
+            var hoursFormatted = (totalMins / 60).toFixed(1); 
+            
+            var rankClass = rank <= 3 ? 'leader-rank-' + rank : '';
+            var medal = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : rank + '.';
+            
+            var adminBadgeHTML = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(docId) !== -1) ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
+            var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : ''; 
+            var customTagBadge = item.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(item.customTag) + '\')">' + cleanHtml(item.customTag) + '</span>' : '';
+
+            // Красивая карточка с часами
+            html += '<div class="leader-row">' +
+                      '<div class="leader-left">' +
+                        '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+                        '<div>' +
+                          '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(item.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
+                          '<div class="player-status-tag" style="color: var(--accent-sky);">⏱ Время за столом: ' + hoursFormatted + ' ч (' + totalMins + ' мин)</div>' +
+                        '</div>' +
+                      '</div>' +
+                      '<div style="display: flex; align-items: center; gap: 8px;">' +
+                        '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">' +
+                          '<div><span class="rating-score" style="color: var(--accent-gold);">' + hoursFormatted + ' ч</span></div>' +
+                          '<span style="font-size: 10px; color: var(--text-muted);">Активность</span>' +
+                        '</div>' +
+                        '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button>' +
+                      '</div>' +
+                    '</div>';
+            rank++;
+          } catch (e) {
+              console.error("Ошибка рендера игрока в топ-часов:", e);
+          }
+        });
         
-html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div><div class="player-status-tag">' + (typeof getPlayerStatus==='function'?getPlayerStatus(parseInt(d.elo, 10) || 1000):'Игрок') + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
-        rank++;
-      } catch (e) {}
+        listEl.innerHTML = html || '<span class="empty-note">Никто еще не играл</span>';
+        
+        if (typeof updateProfileDisplay === 'function') updateProfileDisplay(); 
+        
+    }).catch(function(err) {
+        console.error("Ошибка получения users:", err);
     });
-    listEl.innerHTML = html || '<span class="empty-note">Статистика собирается...</span>';
-    
-    if (typeof updateProfileDisplay === 'function') updateProfileDisplay(); 
-  }, function(err) {});
+  }, function(err) {
+      console.error("Ошибка слушателя leaderboard:", err);
+  });
 }
 
 // ==========================================
