@@ -2639,21 +2639,34 @@ window.customAlert = function(htmlMsg) {
   openModalSmoothly('custom-alert-modal'); // <- ИСПОЛЬЗУЕМ ПРАВИЛЬНУЮ ФУНКЦИЮ ОТКРЫТИЯ
 };
 
+// ==========================================
+// УМНОЕ ОКНО ПОДТВЕРЖДЕНИЯ (С ПЕРЕДАЧЕЙ ФУНКЦИИ)
+// ==========================================
 window.openConfirmModal = function(htmlText, onConfirm) {
   var el = document.getElementById('confirm-modal-text');
   if (el) el.innerHTML = htmlText; 
-  window.confirmCallback = onConfirm;
-  openModalSmoothly('confirm-modal'); // <- ИСПОЛЬЗУЕМ ПРАВИЛЬНУЮ ФУНКЦИЮ ОТКРЫТИЯ
+  
+  // Сохраняем переданную функцию в глобальную переменную
+  window.currentConfirmCallback = onConfirm;
+  
+  openModalSmoothly('confirm-modal');
 };
 
 window.executeConfirm = function() {
-  if (typeof window.confirmCallback === 'function') window.confirmCallback();
-  if (typeof closeModalSmoothly === 'function') closeModalSmoothly('confirm-modal');
+  // Закрываем окно подтверждения
+  closeModalSmoothly('confirm-modal');
+  
+  // Если была передана функция (например, сохранение матча) - запускаем её!
+  if (typeof window.currentConfirmCallback === 'function') {
+      window.currentConfirmCallback();
+      // Очищаем, чтобы функция не сработала случайно в следующий раз
+      window.currentConfirmCallback = null;
+  }
 };
 
 window.closeConfirmModal = function() {
-  if (typeof closeModalSmoothly === 'function') closeModalSmoothly('confirm-modal');
-  window.confirmCallback = null;
+  closeModalSmoothly('confirm-modal');
+  window.currentConfirmCallback = null;
 };
 
 // 2. ИДЕАЛЬНАЯ ИСТОРИЯ МАТЧЕЙ (КЛИКАБЕЛЬНЫЕ ИМЕНА 2х2 И ВЫРАВНИВАНИЕ)
