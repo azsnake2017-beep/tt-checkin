@@ -129,25 +129,36 @@ function submitMatchProposal() {
   var myScore = parseInt(document.getElementById('match-my-score').value, 10);
   var oppScore = parseInt(document.getElementById('match-opp-score').value, 10);
 
+  // Стилизуем окно подтверждения под "Матч" (фиолетовый акцент)
+  var btn = document.querySelector('#confirm-modal .btn-join');
+  var title = document.querySelector('#confirm-modal h3');
+  var box = document.querySelector('#confirm-modal .modal-box');
+  if (btn) { btn.innerText = "Отправить запрос"; btn.style.background = "linear-gradient(135deg, #7c3aed 0%, #4f46e5 100%)"; }
+  if (title) { title.innerText = "Запись матча"; title.style.color = "var(--accent-purple)"; }
+  if (box) { box.style.borderColor = "var(--accent-purple)"; }
+
   if (currentMatchModalType === 'singles') {
     var sel = document.getElementById('match-opponent-select');
     var oppUid = sel.value;
     if (!oppUid || uid === oppUid) return customAlert("Выберите соперника у стола!");
     
-    closeMatchModal();
-    db.collection('pending_matches').add({ 
-      type: 'singles',
-      proposerUid: uid, 
-      proposerName: currentUserProfile.name, 
-      opponentUid: oppUid, 
-      opponentName: sel.options[sel.selectedIndex].text, 
-      scoreProposer: myScore, 
-      scoreOpponent: oppScore, 
-      targetUids: [oppUid],
-      timestamp: Date.now() 
-    }).then(function() { 
-      customAlert("✅ Запрос на подтверждение матча 1х1 отправлен!"); 
-    }).catch(function(e){});
+    // ВЫЗЫВАЕМ ОКНО ПОДТВЕРЖДЕНИЯ
+    openConfirmModal('Вы уверены, что хотите отправить запрос на матч со счетом <b>' + myScore + ' : ' + oppScore + '</b>?', function() {
+        closeMatchModal();
+        db.collection('pending_matches').add({ 
+          type: 'singles',
+          proposerUid: uid, 
+          proposerName: currentUserProfile.name, 
+          opponentUid: oppUid, 
+          opponentName: sel.options[sel.selectedIndex].text, 
+          scoreProposer: myScore, 
+          scoreOpponent: oppScore, 
+          targetUids: [oppUid],
+          timestamp: Date.now() 
+        }).then(function() { 
+          customAlert("✅ Запрос на подтверждение матча 1х1 отправлен!"); 
+        }).catch(function(e){});
+    });
 
   } else {
     var pSel = document.getElementById('match-partner-select');
@@ -171,23 +182,26 @@ function submitMatchProposal() {
     var opp1Name = o1Sel.options[o1Sel.selectedIndex].text;
     var opp2Name = o2Sel.options[o2Sel.selectedIndex].text;
 
-    closeMatchModal();
-    db.collection('pending_matches').add({ 
-      type: 'doubles',
-      proposerUid: uid,
-      team1Uids: [uid, partnerUid],
-      team1Names: currentUserProfile.name + " & " + partnerName,
-      team1NamesArr: [currentUserProfile.name, partnerName],
-      team2Uids: [opp1Uid, opp2Uid],
-      team2Names: opp1Name + " & " + opp2Name,
-      team2NamesArr: [opp1Name, opp2Name],
-      scoreTeam1: myScore,
-      scoreTeam2: oppScore,
-      targetUids: [opp1Uid, opp2Uid],
-      timestamp: Date.now() 
-    }).then(function() { 
-      customAlert("✅ Запрос на подтверждение парного матча 2х2 отправлен соперникам!"); 
-    }).catch(function(e){});
+    // ВЫЗЫВАЕМ ОКНО ПОДТВЕРЖДЕНИЯ
+    openConfirmModal('Отправить запрос на парный матч 2x2 со счетом <b>' + myScore + ' : ' + oppScore + '</b>?', function() {
+        closeMatchModal();
+        db.collection('pending_matches').add({ 
+          type: 'doubles',
+          proposerUid: uid,
+          team1Uids: [uid, partnerUid],
+          team1Names: currentUserProfile.name + " & " + partnerName,
+          team1NamesArr: [currentUserProfile.name, partnerName],
+          team2Uids: [opp1Uid, opp2Uid],
+          team2Names: opp1Name + " & " + opp2Name,
+          team2NamesArr: [opp1Name, opp2Name],
+          scoreTeam1: myScore,
+          scoreTeam2: oppScore,
+          targetUids: [opp1Uid, opp2Uid],
+          timestamp: Date.now() 
+        }).then(function() { 
+          customAlert("✅ Запрос на подтверждение парного матча 2х2 отправлен соперникам!"); 
+        }).catch(function(e){});
+    });
   }
 }
 
