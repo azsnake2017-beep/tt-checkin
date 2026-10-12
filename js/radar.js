@@ -129,7 +129,13 @@ function checkIn(loc) {
           var fFn = function(p) { return (p.uid || p) !== uid; };
           tP = tP.filter(fFn); oP = oP.filter(fFn); tPl = tPl.filter(fFn);
           
-          tP.unshift({ name: currentUserProfile.name || 'Игрок', time: now, uid: uid, maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) }); 
+         tP.unshift({ 
+    name: currentUserProfile.name || 'Игрок', 
+    time: now, 
+    uid: uid, 
+    avatarSvg: currentUserProfile.avatarSvg || '', 
+    maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) 
+});
           finalList = tP;
           
           t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); 
