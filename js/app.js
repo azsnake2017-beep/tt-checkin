@@ -1785,16 +1785,32 @@ function listenRatings() {
         var adminBadgeHTML = (typeof ADMIN_UIDS !== 'undefined' && ADMIN_UIDS.indexOf(docId) !== -1) ? '<span class="platform-badge badge-admin" style="cursor: pointer;" onclick="showBadgeInfo(\'Админ ⭐\')">Админ ⭐</span>' : '';
         var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : '';
         
-        // Генерация премиум-плашки Ниндзя
         var customTagBadge = d.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(d.customTag) + '\')">' + cleanHtml(d.customTag) + '</span>' : '';
         
         var rttfText = d.rttf ? ' • РТТФ: ' + d.rttf : '';
-        
         var streakHtml = (d.winStreak && d.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + d.winStreak + '</span>' : '';
         var deltaNum = parseInt(d.lastEloDelta, 10) || 0;
         var deltaHtml = deltaNum ? (deltaNum > 0 ? '<span class="elo-delta elo-up">(+' + deltaNum + ') 📈</span>' : '<span class="elo-delta elo-down">(' + deltaNum + ') 📉</span>') : '';
 
-html += '<div class="leader-row"><div class="leader-left"><span class="leader-rank ' + rankClass + '">' + medal + '</span><div><div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div><div class="player-status-tag">' + (typeof getPlayerStatus==='function'?getPlayerStatus(parseInt(d.elo, 10) || 1000):'Игрок') + rttfText + streakHtml + '</div></div></div><div style="display: flex; align-items: center; gap: 8px;"><div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;"><div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div><span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button></div></div>';
+        // ДОБАВЛЕН МИНИ-АВАТАР
+        html += '<div class="leader-row">' +
+                  '<div class="leader-left">' +
+                    '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+                    '<div class="mini-avatar">' + (d.avatarSvg || '👤') + '</div>' +
+                    '<div>' +
+                      '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(d.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
+                      '<div class="player-status-tag">' + (typeof getPlayerStatus==='function'?getPlayerStatus(parseInt(d.elo, 10) || 1000):'Игрок') + rttfText + streakHtml + '</div>' +
+                    '</div>' +
+                  '</div>' +
+                  '<div style="display: flex; align-items: center; gap: 8px;">' +
+                    '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 2px;">' +
+                      '<div><span class="rating-score">' + (parseInt(d.elo, 10) || 1000) + '</span>' + deltaHtml + '</div>' +
+                      '<span style="font-size: 10px; color: var(--text-muted);">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' +
+                    '</div>' +
+                    '<button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(docId) + '\')">i</button>' +
+                  '</div>' +
+                '</div>';
+
         rank++;
       } catch(e) {}
     });
@@ -1814,7 +1830,6 @@ function listenLeaderboard() {
         return; 
     }
 
-    // Параллельно получаем имена и профили игроков из коллекции users
     db.collection('users').get().then(function(usersSnap) {
         var usersMap = {};
         usersSnap.forEach(function(uDoc) {
@@ -1825,26 +1840,22 @@ function listenLeaderboard() {
         leadSnap.forEach(function(doc) {
             var uid = doc.id;
             var lData = doc.data() || {};
-            var uData = usersMap[uid]; // Ищем профиль игрока по UID
+            var uData = usersMap[uid]; 
             
-            // Добавляем в топ только если профиль существует
             if (uData && (uid.match(/^(tg|google)_/) || uData.isVerified)) {
                 items.push({ 
                     uid: uid, 
                     totalMinutes: lData.totalMinutes || 0,
                     name: uData.name || 'Игрок',
                     elo: uData.elo || 1000,
-                    customTag: uData.customTag || ''
+                    customTag: uData.customTag || '',
+                    avatarSvg: uData.avatarSvg || '' // Добавили извлечение аватара
                 });
             }
         });
 
-        // Сортируем топ по убыванию времени
-        items.sort(function(a, b) { 
-            return b.totalMinutes - a.totalMinutes; 
-        });
+        items.sort(function(a, b) { return b.totalMinutes - a.totalMinutes; });
 
-        // Выдаем уникальную корону за первое место по времени
         window.__TT_DYNAMIC_BADGES = window.__TT_DYNAMIC_BADGES || {};
         for (var k in window.__TT_DYNAMIC_BADGES) {
            window.__TT_DYNAMIC_BADGES[k] = window.__TT_DYNAMIC_BADGES[k].filter(function(b) { return b.indexOf('Король стола') === -1; });
@@ -1869,10 +1880,11 @@ function listenLeaderboard() {
             var customBadge = typeof getCustomBadge === 'function' ? getCustomBadge(docId) : ''; 
             var customTagBadge = item.customTag ? '<span class="platform-badge" style="background: linear-gradient(135deg, #0f172a 0%, #000000 100%); color: #10b981; border: 1px solid #10b981; margin-left: 4px; box-shadow: 0 0 10px rgba(16, 185, 129, 0.5); cursor: pointer;" onclick="showBadgeInfo(\'' + cleanHtml(item.customTag) + '\')">' + cleanHtml(item.customTag) + '</span>' : '';
 
-            // Красивая карточка с часами
+            // ДОБАВЛЕН МИНИ-АВАТАР
             html += '<div class="leader-row">' +
                       '<div class="leader-left">' +
                         '<span class="leader-rank ' + rankClass + '">' + medal + '</span>' +
+                        '<div class="mini-avatar">' + (item.avatarSvg || '👤') + '</div>' +
                         '<div>' +
                           '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(item.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
                           '<div class="player-status-tag" style="color: var(--accent-sky);">⏱ Время за столом: ' + hoursFormatted + ' ч (' + totalMins + ' мин)</div>' +
@@ -1893,17 +1905,10 @@ function listenLeaderboard() {
         });
         
         listEl.innerHTML = html || '<span class="empty-note">Никто еще не играл</span>';
-        
         if (typeof updateProfileDisplay === 'function') updateProfileDisplay(); 
-        
-    }).catch(function(err) {
-        console.error("Ошибка получения users:", err);
-    });
-  }, function(err) {
-      console.error("Ошибка слушателя leaderboard:", err);
-  });
+    }).catch(function(err) { console.error("Ошибка получения users:", err); });
+  }, function(err) { console.error("Ошибка слушателя leaderboard:", err); });
 }
-
 // ==========================================
 // ТОЧКА СТАРТА ПРИЛОЖЕНИЯ И ОТЛОЖЕННАЯ ИНИЦИАЛИЗАЦИЯ
 // ==========================================
