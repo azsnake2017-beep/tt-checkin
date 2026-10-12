@@ -239,7 +239,12 @@ function applyPlan(ts) {
   db.runTransaction(function(t) {
       return t.get(db.collection('locations').doc(loc)).then(function(d) {
           var pl = (d.exists ? d.data().plans || [] : []).filter(function(p) { return (p.uid||p) !== uid; });
-          pl.push({ name: currentUserProfile.name || 'Игрок', planTime: ts, uid: uid }); 
+          pl.push({ 
+    name: currentUserProfile.name || 'Игрок', 
+    planTime: ts, 
+    uid: uid, 
+    avatarSvg: currentUserProfile.avatarSvg || '' 
+}); 
           t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
       });
   }).then(function() {
