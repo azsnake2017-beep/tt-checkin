@@ -1489,20 +1489,75 @@ function startTournament(id, type) {
 }
 
 function generatePlayoffs(id) {
-  if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
+  if (!isSuperAdmin()) return; 
+  var ref = db.collection('tournaments').doc(id);
   ref.get().then(function(doc) {
-    if (!doc.exists) return; var data = doc.data();
-    var aRaw = (data.groups && data.groups.A) ? data.groups.A : []; var bRaw = (data.groups && data.groups.B) ? data.groups.B : [];
+    if (!doc.exists) return; 
+    var data = doc.data();
+    var aRaw = (data.groups && data.groups.A) ? data.groups.A : []; 
+    var bRaw = (data.groups && data.groups.B) ? data.groups.B : [];
     var a = aRaw.slice().sort(function(x,y) { return (y.w||0) - (x.w||0) || (y.pts||0) - (x.pts||0); }); 
     var b = bRaw.slice().sort(function(x,y) { return (y.w||0) - (x.w||0) || (y.pts||0) - (x.pts||0); });
-    if (a.length < 2 || b.length < 2) { if(typeof customAlert === 'function') customAlert("Недостаточно игроков в группах для плей-офф!"); return; }
+    
+    if (a.length < 2 || b.length < 2) { 
+      if(typeof customAlert === 'function') customAlert("Недостаточно игроков в группах для плей-офф!"); 
+      return; 
+    }
 
     var matches = data.matches || [];
     var nextNum = matches.length + 1;
-    matches.push({ id: 'semi1', orderNum: nextNum, stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, eloDelta: null, title: 'Полуфинал 1' });
-    matches.push({ id: 'semi2', orderNum: nextNum + 1, stage: 'semi', p1Uid: b[0].uid, p1Name: b[0].name, p2Uid: a[1].uid, p2Name: a[1].name, score1: null, score2: null, eloDelta: null, title: 'Полуфинал 2' });
+
+    // Если в обеих группах по 4+ игрока (от 8 участников) — запускаем с 1/4 финала (до 2 побед)
+    if (a.length >= 4 && b.length >= 4) {
+      matches.push({ id: 'qf1', orderNum: nextNum,     stage: 'quarter', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[3].uid, p2Name: b[3].name, score1: null, score2: null, eloDelta: null, title: '1/4 Финала (А1 — В4)' });
+      matches.push({ id: 'qf2', orderNum: nextNum + 1, stage: 'quarter', p1Uid: b[1].uid, p1Name: b[1].name, p2Uid: a[2].uid, p2Name: a[2].name, score1: null, score2: null, eloDelta: null, title: '1/4 Финала (В2 — А3)' });
+      matches.push({ id: 'qf3', orderNum: nextNum + 2, stage: 'quarter', p1Uid: b[0].uid, p1Name: b[0].name, p2Uid: a[3].uid, p2Name: a[3].name, score1: null, score2: null, eloDelta: null, title: '1/4 Финала (В1 — А4)' });
+      matches.push({ id: 'qf4', orderNum: nextNum + 3, stage: 'quarter', p1Uid: a[1].uid, p1Name: a[1].name, p2Uid: b[2].uid, p2Name: b[2].name, score1: null, score2: null, eloDelta: null, title: '1/4 Финала (А2 — В3)' });
+      
+      ref.update({ status: 'quarters', matches: matches });
+    } else {
+      // Если меньше 8 участников — сразу 1/2 финала (до 3 побед)
+      matches.push({ id: 'semi1', orderNum: nextNum,     stage: 'semi', p1Uid: a[0].uid, p1Name: a[0].name, p2Uid: b[1].uid, p2Name: b[1].name, score1: null, score2: null, eloDelta: null, title: 'Полуфинал 1 (А1 — В2)' });
+      matches.push({ id: 'semi2', orderNum: nextNum + 1, stage: 'semi', p1Uid: b[0].uid, p1Name: b[0].name, p2Uid: a[1].uid, p2Name: a[1].name, score1: null, score2: null, eloDelta: null, title: 'Полуфинал 2 (В1 — А2)' });
+      
+      ref.update({ status: 'playoffs', matches: matches, playoffs: { a1: a[0], a2: a[1], b1: b[0], b2: b[1] } });
+    }
+  }).catch(function(e) {});
+}
+
+function generateSemisFromQuarters(id) {
+  if (!isSuperAdmin()) return; 
+  var ref = db.collection('tournaments').doc(id);
+  ref.get().then(function(doc) {
+    if (!doc.exists) return; 
+    var data = doc.data();
+    var matches = data.matches || [];
+    var qfs = matches.filter(function(m) { return m.stage === 'quarter'; });
+    if (qfs.length < 4) return;
     
-    ref.update({ status: 'playoffs', matches: matches, playoffs: { a1: a[0], a2: a[1], b1: b[0], b2: b[1] } });
+    for (var i = 0; i < qfs.length; i++) {
+      if (qfs[i].score1 === null) return;
+    }
+
+    var getWinner = function(m) {
+      return m.score1 > m.score2 ? { uid: m.p1Uid, name: m.p1Name } : { uid: m.p2Uid, name: m.p2Name };
+    };
+
+    var qf1 = matches.find(function(m) { return m.id === 'qf1'; }) || qfs[0];
+    var qf2 = matches.find(function(m) { return m.id === 'qf2'; }) || qfs[1];
+    var qf3 = matches.find(function(m) { return m.id === 'qf3'; }) || qfs[2];
+    var qf4 = matches.find(function(m) { return m.id === 'qf4'; }) || qfs[3];
+
+    var w1 = getWinner(qf1);
+    var w2 = getWinner(qf2);
+    var w3 = getWinner(qf3);
+    var w4 = getWinner(qf4);
+
+    var nextNum = matches.length + 1;
+    matches.push({ id: 'semi1', orderNum: nextNum,     stage: 'semi', p1Uid: w1.uid, p1Name: w1.name, p2Uid: w2.uid, p2Name: w2.name, score1: null, score2: null, eloDelta: null, title: 'Полуфинал 1' });
+    matches.push({ id: 'semi2', orderNum: nextNum + 1, stage: 'semi', p1Uid: w3.uid, p1Name: w3.name, p2Uid: w4.uid, p2Name: w4.name, score1: null, score2: null, eloDelta: null, title: 'Полуфинал 2' });
+
+    ref.update({ status: 'playoffs', matches: matches });
   }).catch(function(e) {});
 }
 
@@ -1578,7 +1633,8 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name, stage) {
   
   var picker = document.getElementById('tour-match-score-picker');
   if (picker) {
-      if (stage === 'group') {
+      // Отборочные (Группы) И 1/4 финала играются быстро — до 2 побед!
+      if (stage === 'group' || stage === 'quarter') {
           picker.style.gridTemplateColumns = 'repeat(2, 1fr)';
           picker.innerHTML = 
               '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 0)">2 : 0</button>' +
@@ -1587,6 +1643,7 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name, stage) {
               '<button class="score-btn tour-score-btn" onclick="selectTourScore(0, 2)">0 : 2</button>';
           selectTourScore(2, 0);
       } else {
+          // 1/2 финала, матч за 3-е место и Финал — до 3 побед!
           picker.style.gridTemplateColumns = 'repeat(3, 1fr)';
           picker.innerHTML = 
               '<button class="score-btn tour-score-btn" onclick="selectTourScore(3, 0)">3 : 0</button>' +
@@ -1688,7 +1745,6 @@ function submitTourMatchScore() {
                   var rawDelta = typeof calculateElo === 'function' ? calculateElo(p1Elo, p2Elo, isPWin ? 1 : 0) : (isPWin ? 16 : -16);
                   var absDelta = Math.abs(rawDelta);
                   
-                  // Сохраняем дельту Эло прямо в матч турнира для сводной таблицы
                   match.eloDelta = absDelta;
                   recordedMatch = match;
 
@@ -1854,7 +1910,6 @@ function listenTournaments() {
             '</div>';
             
             detailsHtml += infoHtml;
-            // Сводная таблица итогов турнира с дельтой Эло
             detailsHtml += buildTournamentSummaryHtml(d);
             
             if (groupA.length > 0 || groupB.length > 0) {
@@ -1864,18 +1919,18 @@ function listenTournaments() {
                 
                 var allMatches = d.matches || [];
                 if (allMatches.length > 0) {
-                    var playoffsMatches = allMatches.filter(function(m){ return m.stage === 'semi' || m.stage === 'final'; });
+                    var playoffsMatches = allMatches.filter(function(m){ return m.stage === 'quarter' || m.stage === 'semi' || m.stage === 'final'; });
                     if (playoffsMatches.length > 0) {
                         playoffsMatches.sort(function(a, b) {
-                            var rankA = a.stage === 'semi' ? 1 : (a.id === 'first' ? 3 : 2);
-                            var rankB = b.stage === 'semi' ? 1 : (b.id === 'first' ? 3 : 2);
+                            var rankA = a.stage === 'quarter' ? 0 : (a.stage === 'semi' ? 1 : (a.id === 'first' ? 3 : 2));
+                            var rankB = b.stage === 'quarter' ? 0 : (b.stage === 'semi' ? 1 : (b.id === 'first' ? 3 : 2));
                             return rankA - rankB;
                         });
 
                         detailsHtml += '<div style="font-size: 14px; font-weight: 800; color: var(--accent-sky); margin: 24px 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">⚔️ Сетка Плей-Офф:</div>';
                         for(var pmi=0; pmi<playoffsMatches.length; pmi++) {
                             var pm = playoffsMatches[pmi];
-                            var stLabel = pm.stage === 'semi' ? 'ПОЛУФИНАЛ' : (pm.title ? pm.title.toUpperCase() : 'ФИНАЛ');
+                            var stLabel = pm.title ? pm.title.toUpperCase() : (pm.stage === 'quarter' ? '1/4 ФИНАЛА' : (pm.stage === 'semi' ? 'ПОЛУФИНАЛ' : 'ФИНАЛ'));
                             var isP1Win = pm.score1 !== null && pm.score1 > pm.score2;
                             var isP2Win = pm.score1 !== null && pm.score2 > pm.score1;
                             var p1Color = isP1Win ? '#10b981' : '#fff';
@@ -1952,10 +2007,20 @@ function listenTournaments() {
             content += buildTournamentSummaryHtml(d);
             
             var isUnfinishedGroups = false; for(var k=0; k<groupMatches.length; k++) { if (groupMatches[k].score1 === null) isUnfinishedGroups = true; }
-            if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs(\''+escapeJS(id)+'\')">Сформировать Плей-офф</button>' + adminActionHtml; }
+            var nextStageBtnText = (groupA.length >= 4 && groupB.length >= 4) ? 'Сформировать 1/4 Финала (Топ-8)' : 'Сформировать 1/2 Финала (Топ-4)';
+            if (isAdmin && groupMatches.length > 0 && !isUnfinishedGroups) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generatePlayoffs(\''+escapeJS(id)+'\')">' + nextStageBtnText + '</button>' + adminActionHtml; }
+          }
+          else if (d.status === 'quarters') {
+            content += '<div style="font-size: 13px; font-weight: 800; color: var(--accent-sky); margin: 12px 0 6px 0; display: flex; justify-content: space-between; align-items: center;"><span>⚔️ 1/4 Финала (Плей-офф)</span><span style="font-size: 10px; color: var(--text-muted);">ДО 2 ПОБЕД</span></div>';
+            var qfMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'quarter'; }) : [];
+            content += renderMatchList(qfMatches, id, true, queueMap);
+            content += buildTournamentSummaryHtml(d);
+
+            var isUnfinishedQfs = false; for(var q=0; q<qfMatches.length; q++) { if (qfMatches[q].score1 === null) isUnfinishedQfs = true; }
+            if (isAdmin && qfMatches.length > 0 && !isUnfinishedQfs) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="generateSemisFromQuarters(\''+escapeJS(id)+'\')">Сформировать 1/2 Финала</button>' + adminActionHtml; }
           }
           else if (d.status === 'playoffs') {
-            content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-purple); margin: 12px 0 6px 0;">Плей-офф (Полуфиналы)</div>';
+            content += '<div style="font-size: 13px; font-weight: 800; color: var(--accent-purple); margin: 12px 0 6px 0; display: flex; justify-content: space-between; align-items: center;"><span>🔥 1/2 Финала (Полуфиналы)</span><span style="font-size: 10px; color: var(--text-muted);">ДО 3 ПОБЕД</span></div>';
             var semiMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'semi'; }) : []; 
             content += renderMatchList(semiMatches, id, true, queueMap);
             content += buildTournamentSummaryHtml(d);
@@ -1964,7 +2029,7 @@ function listenTournaments() {
             if (isAdmin && semiMatches.length > 0 && !isUnfinishedSemis) { adminActionHtml = '<button class="btn-join" style="background: var(--accent-gold); color: #0b1120; padding: 8px; margin-top: 12px; width: 100%;" onclick="generateFinals(\''+escapeJS(id)+'\')">Создать Финалы</button>' + adminActionHtml; }
           }
           else if (d.status === 'finals') {
-            content += '<div style="font-size: 13px; font-weight: 700; color: var(--accent-gold); margin: 12px 0 6px 0;">Финалы</div>';
+            content += '<div style="font-size: 13px; font-weight: 800; color: var(--accent-gold); margin: 12px 0 6px 0; display: flex; justify-content: space-between; align-items: center;"><span>🏆 Финалы</span><span style="font-size: 10px; color: var(--text-muted);">ДО 3 ПОБЕД</span></div>';
             var finalMatches = d.matches ? d.matches.filter(function(m) { return m.stage === 'final'; }) : []; 
             content += renderMatchList(finalMatches, id, true, queueMap);
             content += buildTournamentSummaryHtml(d);
