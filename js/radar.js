@@ -1,4 +1,11 @@
-// js/radar.js — Логика столов, чекинов, таймеров и отказоустойчивой погоды
+// js/radar.js — Логика столов, чекинов, таймеров и отказоустойчивой погоды (Челябинск)
+
+// Вспомогательная функция: возвращает список всех локаций города из config.js
+function getAllLocs() {
+  return (typeof ALL_LOCATIONS !== 'undefined' && Array.isArray(ALL_LOCATIONS)) 
+    ? ALL_LOCATIONS 
+    : ['park', 'vostok', 'tttop', 'olimp', 'chemk'];
+}
 
 // ==========================================
 // ПОГОДНЫЙ ВИДЖЕТ (Идеальная версия: Fail-Fast 2.5 сек)
@@ -103,7 +110,7 @@ function recordTrainingTime(uid, name, durationMinutes) {
 window.isTableActionRunning = false; 
 
 // ==========================================
-// БЕЗОПАСНЫЙ CHECK-IN (Не стирает чужих игроков)
+// БЕЗОПАСНЫЙ CHECK-IN НА ВСЕ ЛОКАЦИИ ГОРОДА
 // ==========================================
 function checkIn(loc) {
   var uid = getVerifiedUserId(); if (!uid) return;
@@ -114,37 +121,57 @@ function checkIn(loc) {
   if (btnBox) btnBox.innerHTML = '<div style="padding: 12px; font-size: 13px; font-weight: bold; color: var(--accent-sky); text-align: center;">⏳ Отмечаем...</div>';
 
   if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission();
-  var now = Date.now(), otherLoc = loc === 'park' ? 'vostok' : 'park'; var finalList = [];
+  var now = Date.now();
+  var allLocs = getAllLocs();
+  var finalList = [];
   
   db.runTransaction(function(t) {
-      return Promise.all([t.get(db.collection('locations').doc(loc)), t.get(db.collection('locations').doc(otherLoc))]).then(function(docs) {
-          var tDoc = docs[0], oDoc = docs[1];
-          var tP = tDoc.exists ? tDoc.data().players || [] : [], oP = oDoc.exists ? oDoc.data().players || [] : [], tPl = tDoc.exists ? tDoc.data().plans || [] : [];
+      var reads = allLocs.map(function(l) { return t.get(db.collection('locations').doc(l)); });
+      return Promise.all(reads).then(function(docs) {
+          var targetIdx = allLocs.indexOf(loc);
+          if (targetIdx === -1) return;
+
+          var tDoc = docs[targetIdx];
+          var tP = tDoc.exists ? (tDoc.data().players || []) : [];
+          var tPl = tDoc.exists ? (tDoc.data().plans || []) : [];
           
           var alreadyIn = false;
           for(var i=0; i<tP.length; i++) { if ((tP[i].uid || tP[i]) === uid) alreadyIn = true; }
           if (alreadyIn) return; // Мы уже тут
 
-          // Удаляем себя из всех списков. Чужих игроков НЕ ТРОГАЕМ.
           var fFn = function(p) { return (p.uid || p) !== uid; };
-          tP = tP.filter(fFn); oP = oP.filter(fFn); tPl = tPl.filter(fFn);
+
+          // Удаляем себя из всех других локаций города (чужих игроков НЕ ТРОГАЕМ)
+          for (var k = 0; k < allLocs.length; k++) {
+              if (k === targetIdx) continue;
+              var oDoc = docs[k];
+              if (oDoc.exists) {
+                  var oP = oDoc.data().players || [];
+                  var filteredOP = oP.filter(fFn);
+                  if (filteredOP.length !== oP.length) {
+                      t.set(db.collection('locations').doc(allLocs[k]), { players: filteredOP }, { merge: true });
+                  }
+              }
+          }
+
+          tP = tP.filter(fFn);
+          tPl = tPl.filter(fFn);
           
-         tP.unshift({ 
-    name: currentUserProfile.name || 'Игрок', 
-    time: now, 
-    uid: uid, 
-    avatarSvg: currentUserProfile.avatarSvg || '', 
-    maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) 
-});
+          tP.unshift({ 
+              name: currentUserProfile.name || 'Игрок', 
+              time: now, 
+              uid: uid, 
+              avatarSvg: currentUserProfile.avatarSvg || '', 
+              maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) 
+          });
           finalList = tP;
           
           t.set(db.collection('locations').doc(loc), { players: tP, plans: tPl }, { merge: true }); 
-          t.set(db.collection('locations').doc(otherLoc), { players: oP }, { merge: true });
       });
   }).then(function() {
       if(typeof hasTriggeredPush !== 'undefined') hasTriggeredPush = false; 
       if (typeof canSendTgAlert === 'function' && canSendTgAlert('status_checkin_' + loc + '_' + uid)) {
-          var lName = typeof LOCATION_NAMES !== 'undefined' ? LOCATION_NAMES[loc] : (loc === 'vostok' ? 'в ДК «Восток»' : 'в парке им. Тищенко');
+          var lName = (typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[loc]) ? LOCATION_NAMES[loc] : loc;
           if (typeof sendTelegramAlert === 'function') sendTelegramAlert("🏓 игрок <b>" + cleanHtml(currentUserProfile.name || 'Игрок') + "</b> уже у стола " + lName + "!" + (typeof buildBlockquoteList === 'function' ? buildBlockquoteList(finalList, "Сейчас за столом") : "") + "\n\nКто составит компанию?");
       }
       window.isTableActionRunning = false; 
@@ -190,7 +217,7 @@ function leave(loc) {
       if(typeof hasTriggeredPush !== 'undefined') hasTriggeredPush = false;
       
       if (typeof canSendTgAlert === 'function' && canSendTgAlert('status_leave_' + loc + '_' + uid)) {
-          var lName = typeof LOCATION_NAMES !== 'undefined' ? LOCATION_NAMES[loc] : (loc === 'vostok' ? 'в ДК «Восток»' : 'в парке им. Тищенко');
+          var lName = (typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[loc]) ? LOCATION_NAMES[loc] : loc;
           if (typeof sendTelegramAlert === 'function') sendTelegramAlert("👋 игрок <b>" + cleanHtml(currentUserProfile.name || 'Игрок') + "</b> закончил тренировку и покинул стол " + lName + (spentStr ? " (время: <code>" + spentStr + "</code>)." : ".") + (finalList.length > 0 && typeof buildBlockquoteList === 'function' ? buildBlockquoteList(finalList, "Остались у столов") : "\n\n<i>(столы освободились)</i>"));
       }
       window.isTableActionRunning = false; 
@@ -240,16 +267,16 @@ function applyPlan(ts) {
       return t.get(db.collection('locations').doc(loc)).then(function(d) {
           var pl = (d.exists ? d.data().plans || [] : []).filter(function(p) { return (p.uid||p) !== uid; });
           pl.push({ 
-    name: currentUserProfile.name || 'Игрок', 
-    planTime: ts, 
-    uid: uid, 
-    avatarSvg: currentUserProfile.avatarSvg || '' 
-}); 
+              name: currentUserProfile.name || 'Игрок', 
+              planTime: ts, 
+              uid: uid, 
+              avatarSvg: currentUserProfile.avatarSvg || '' 
+          }); 
           t.set(db.collection('locations').doc(loc), { plans: pl }, { merge: true });
       });
   }).then(function() {
       if (typeof canSendTgAlert === 'function' && canSendTgAlert('status_plan_' + loc + '_' + uid)) {
-          var lName = typeof LOCATION_NAMES !== 'undefined' ? LOCATION_NAMES[loc] : (loc === 'vostok' ? 'в ДК «Восток»' : 'в парке им. Тищенко');
+          var lName = (typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[loc]) ? LOCATION_NAMES[loc] : loc;
           if(typeof sendTelegramAlert === 'function') sendTelegramAlert("⏳ игрок <b>" + cleanHtml(currentUserProfile.name || 'Игрок') + "</b> планирует быть у стола " + lName + " <b>" + (typeof formatUntil==='function' ? formatUntil(ts) : '') + "</b>!\n\nКто готов составить пару?");
       }
   }).catch(function(e) {});
@@ -270,13 +297,13 @@ function closeExtendModal() {
 }
 
 // ==========================================
-// УМНЫЙ МОНИТОРИНГ (Удаляет ТОЛЬКО себя)
+// УМНЫЙ МОНИТОРИНГ (Удаляет ТОЛЬКО себя во всех локациях)
 // ==========================================
 function monitorSessions() {
   var myUid = getVerifiedUserId();
   var now = Date.now();
   
-  ['park', 'vostok'].forEach(function(loc) {
+  getAllLocs().forEach(function(loc) {
     db.runTransaction(function(t) {
       return t.get(db.collection('locations').doc(loc)).then(function(doc) {
         if (!doc.exists) return null;
@@ -301,7 +328,7 @@ function monitorSessions() {
                 changed = true;
                 leftPlayers.push({ uid: p.uid, name: p.name || 'Игрок', recordedMins: Math.floor(limit / 60000) });
             } else if (!isMe && elapsed >= limit + 10800000) { 
-                // Чужое время вышло 3 часа назад (защита от сломанных часов/приложений)
+                // Чужое время вышло 3 часа назад (защита от зависших сессий)
                 changed = true;
             } else {
                 activePlayers.push(p);
@@ -325,7 +352,7 @@ function monitorSessions() {
 
         if (changed) {
             t.set(db.collection('locations').doc(loc), { players: activePlayers, plans: activePlans }, { merge: true });
-            return { leftPlayers: leftPlayers, locName: typeof LOCATION_NAMES !== 'undefined' ? LOCATION_NAMES[loc] : (loc === 'vostok' ? 'в ДК «Восток»' : 'в парке им. Тищенко') };
+            return { leftPlayers: leftPlayers, locName: (typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[loc]) ? LOCATION_NAMES[loc] : loc };
         }
         return null;
       });
@@ -347,7 +374,7 @@ function renderAll() {
   if (typeof currentUserActiveLoc !== 'undefined') currentUserActiveLoc = null; 
   if (typeof currentUserActivePlayer !== 'undefined') currentUserActivePlayer = null;
 
-  ['park', 'vostok'].forEach(function(loc) {
+  getAllLocs().forEach(function(loc) {
     try {
       var rawData = (typeof locationsData !== 'undefined' && locationsData[loc]) ? locationsData[loc] : { players: [], plans: [] };
       
@@ -429,7 +456,7 @@ function renderAll() {
         document.getElementById('extend-modal').style.display = 'flex'; 
         if(typeof hasTriggeredPush !== 'undefined' && !hasTriggeredPush) { 
             hasTriggeredPush = true; 
-            if (typeof sendDevicePushNotification === 'function') sendDevicePushNotification("🏓 Настольный теннис ЧМЗ", "Вы уже давно у стола! Продлите визит."); 
+            if (typeof sendDevicePushNotification === 'function') sendDevicePushNotification("🏓 Настольный теннис Челябинск", "Вы уже давно у стола! Продлите визит."); 
         } 
     } else { document.getElementById('extend-modal').style.display = 'none'; } 
   } else { 
