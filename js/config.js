@@ -140,9 +140,9 @@ function initTheme() {
   updateThemeIcon(savedTheme);
 }
 function toggleTheme() {
-  var root = document.documentElement; // Это и есть :root
+  var root = document.documentElement;
   if (root.getAttribute('data-theme') === 'light') {
-    root.removeAttribute('data-theme'); // Возврат к темной
+    root.removeAttribute('data-theme');
   } else {
     root.setAttribute('data-theme', 'light');
   }
@@ -155,7 +155,7 @@ function updateThemeIcon(theme) {
 }
 
 function switchNavTab(tabId) {
- vibrate('light'); // Мягкий щелчок при нажатии на нижнее меню
+  vibrate('light');
   var views = document.querySelectorAll('.main-view'); for(var i=0; i<views.length; i++) views[i].classList.remove('active');
   var items = document.querySelectorAll('.nav-item'); for(var j=0; j<items.length; j++) items[j].classList.remove('active');
   var viewEl = document.getElementById('view-' + tabId);
@@ -164,22 +164,18 @@ function switchNavTab(tabId) {
   if(navEl) navEl.classList.add('active');
   window.scrollTo(0, 0); 
   
-  // Сохраняем вкладку только на время текущей сессии
   sessionStorage.setItem('tt_session_tab', tabId);
   
   if (tabId === 'radar' && typeof updateAdminControls === 'function') {
     updateAdminControls();
   }
 
-  // Обновляем доску квестов при открытии вкладки
   if (tabId === 'quests' && typeof renderQuestBoard === 'function') {
     renderQuestBoard();
   }
 }
 
 function initNavTab() {
-  // Пытаемся получить вкладку из текущей сессии (при обновлении страницы). 
-  // Если это свежий запуск приложения (сессия пуста) — открываем 'profile'.
   var savedTab = sessionStorage.getItem('tt_session_tab') || 'profile';
   switchNavTab(savedTab);
 }
@@ -203,19 +199,55 @@ function switchTab(tab) {
   }
 }
 
+// ==========================================
+// ГОРОДСКОЙ РЕЕСТР ЛОКАЦИЙ ЧЕЛЯБИНСКА
+// ==========================================
+var ALL_LOCATIONS = ['park', 'vostok', 'tttop', 'olimp', 'chemk'];
+var HALL_LOCATIONS = ['vostok', 'tttop', 'olimp', 'chemk']; // Крытые площадки с анонсами встреч
+
+var LOCATIONS_CONFIG = {
+  park:   { name: "Парк им. Тищенко", desc: "Столы на свежем воздухе", type: "park", logo: "loc_park.webp" },
+  vostok: { name: "ДК «Восток»", desc: "ул. Сталеваров, 5а", type: "hall", logo: "loc_vostok.webp" },
+  tttop:  { name: "Клуб «ТТ Топ»", desc: "пр. Победы, 348 ст. 1 (2 этаж)", type: "hall", logo: "loc_tttop.webp" },
+  olimp:  { name: "СОК МУ «Олимп»", desc: "с. Долгодеревенское, ул. 1 Мая, 120А/1", type: "hall", logo: "loc_olimp.webp" },
+  chemk:  { name: "ДС «ЧЭМК»", desc: "ул. Российская, 36", type: "hall", logo: "loc_chemk.webp" }
+};
+
+var LOCATION_NAMES = {
+  park:   "в Парке им. Тищенко 🌳",
+  vostok: "в ДК «Восток» 🏛",
+  tttop:  "в клубе «ТТ Топ» (пр. Победы, 348) 🏓",
+  olimp:  "в СОК «Олимп» (Долгодеревенское) 🏅",
+  chemk:  "в ДС «ЧЭМК» (Российская, 36) ⚡"
+};
+
+var locationsData = {
+  park:   { players: [], plans: [] },
+  vostok: { players: [], plans: [] },
+  tttop:  { players: [], plans: [] },
+  olimp:  { players: [], plans: [] },
+  chemk:  { players: [], plans: [] }
+};
+
+var announcementsData = {
+  vostok: null,
+  tttop:  null,
+  olimp:  null,
+  chemk:  null
+};
+
 // Плавное переключение шторки карточек с памятью состояния
 function toggleCard(loc) { 
-  vibrate('medium'); // Добавляем приятный тактильный отклик при клике
-  
+  if (typeof vibrate === 'function') vibrate('medium');
   var c = document.getElementById('card-' + loc);
   if (!c) return;
   var isExpanded = c.classList.toggle('expanded');
   localStorage.setItem('tt_card_' + loc, isExpanded ? '1' : '0');
 }
 
-// Восстановление состояния шторки при запуске приложения
+// Восстановление состояния шторки для ВСЕХ локаций при запуске
 function restoreCardStates() {
-  ['park', 'vostok'].forEach(function(loc) {
+  ALL_LOCATIONS.forEach(function(loc) {
     var c = document.getElementById('card-' + loc);
     if (!c) return;
     var savedState = localStorage.getItem('tt_card_' + loc);
@@ -231,20 +263,17 @@ var GOOGLE_GATEWAY_URL = "https://script.google.com/macros/s/AKfycbzr4o4qbDEuLjQ
 var TELEGRAM_BOT_USERNAME = "tennis_club_chmz_bot";
 var TELEGRAM_CHAT_URL = "https://t.me/ttchmz";
 var MAX_CHAT_URL = "https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E";
-var LOCATION_NAMES = { park: "в Парке им. Тищенко 🌳", vostok: "в ДК «Восток» 🏛" };
 var DEFAULT_LIMIT_MS = 120 * 60 * 1000;
 var REMIND_BEFORE_MS = 15 * 60 * 1000;
 var ANTI_SPAM_COOLDOWN = 20 * 1000;
 
 var ADMIN_UIDS = ['tg_153650895', 'tg_azsnake'];
 
-var locationsData = { park: { players: [], plans: [] }, vostok: { players: [], plans: [] } };
 var currentUserProfile = { uid: null, name: "", totalMinutes: 0 };
 var activePlanningLoc = null;
 var currentUserActiveLoc = null;
 var currentUserActivePlayer = null;
 var hasTriggeredPush = false;
-var announcementsData = { vostok: null };
 var currentModalUrl = "";
 var currentUserLeaderboardUnsubscribe = null;
 var currentEditingTourId = null;
@@ -264,13 +293,10 @@ if (!firebase.apps.length) {
 }
 var db = firebase.firestore();
 
-// Включаем офлайн-кэш (без synchronizeTabs, чтобы не вешать Chrome на главном экране)
 db.enablePersistence().catch(function(err) {
     console.log('Кэш:', err);
 });
 
-
-// Глобальная память для анти-спам фильтра
 window.recentTgAlerts = {};
 window.lastTableAlertTime = 0;
 
@@ -286,37 +312,30 @@ function sendTelegramAlert(text) {
   if (!GOOGLE_GATEWAY_URL || !text) return;
 
   var now = Date.now();
-  
-  // 1. Создаем подпись текста (первые 40 символов) для защиты от дублей при перезагрузке
   var textSignature = text.substring(0, 40).replace(/[^a-zA-Zа-яА-Я0-9]/g, '');
   var lastSentSign = localStorage.getItem('tt_last_msg_sign');
   var lastSentTime = parseInt(localStorage.getItem('tt_last_msg_time') || '0', 10);
 
-  // Жесткая защита от точных дублей (60 секунд) - переживет перезагрузку приложения
   if (lastSentSign === textSignature && (now - lastSentTime < 60000)) {
     console.log("Анти-спам: точный дубль заблокирован.");
     return; 
   }
 
-  // 2. Жесткая защита от прыжков по столам (сохраняется в памяти телефона)
   var isTableAlert = text.indexOf('уже у стола') !== -1 || text.indexOf('покинул стол') !== -1;
   if (isTableAlert) {
      var lastTableTime = parseInt(localStorage.getItem('tt_last_table_alert') || '0', 10);
-     if (now - lastTableTime < 60000) { // Блок на 1 минуту
+     if (now - lastTableTime < 60000) {
         console.log("Анти-спам: блокировка частой смены столов");
         return;
      }
      localStorage.setItem('tt_last_table_alert', now.toString());
   }
 
-  // 3. Запоминаем факт отправки на жесткий диск
   localStorage.setItem('tt_last_msg_sign', textSignature);
   localStorage.setItem('tt_last_msg_time', now.toString());
 
   var targetUrl = GOOGLE_GATEWAY_URL + '?text=' + encodeURIComponent(text);
   
-  // 4. ГЛАВНЫЙ ФИКС: Убрали дублирующий резерв со <script> при ошибке fetch.
-  // Если интернет моргнет, скрипт просто промолчит, не дублируя запрос.
   if (window.fetch) {
     fetch(targetUrl, { mode: 'no-cors' }).catch(function(e) { console.log('TG alert muted error'); });
   } else {
@@ -338,15 +357,14 @@ function sendDevicePushNotification(title, body) {
 
 function shareModalUrl() {
   if (!currentModalUrl) return;
-  var shareText = "Присоединяйся к клубу любителей настольного тенниса ЧМЗ";
+  var shareText = "Присоединяйся к клубу любителей настольного тенниса Челябинска!";
   if (navigator.share) { 
-      navigator.share({ title: 'Клуб ЧМЗ', text: shareText, url: currentModalUrl }).catch(function(){}); 
+      navigator.share({ title: 'Настольный теннис Челябинск', text: shareText, url: currentModalUrl }).catch(function(){}); 
   } else { 
-      navigator.clipboard.writeText(shareText + ': ' + currentModalUrl).then(function() { customAlert("📋 Ссылка скопирована!"); }); 
+      navigator.clipboard.writeText(shareText + ' ' + currentModalUrl).then(function() { customAlert("📋 Ссылка скопирована!"); }); 
   }
 }
 
-// ПУЛНЕПРОБИВАЕМЫЕ ЛОКАЛЬНЫЕ QR-КОДЫ (РАБОТАЮТ БЕЗ VPN)
 function openQrModal(type) {
   var targetUrl = "https://azsnake2017-beep.github.io/tt-checkin/";
   var title = "QR-код приложения";
@@ -369,9 +387,7 @@ function openQrModal(type) {
 
   var container = document.getElementById('qr-canvas-container');
   if(container) {
-    container.innerHTML = ''; // Очистка контейнера перед перерисовкой
-
-    // Генерация QR-кода прямо в браузере клиента (0 сетевых запросов к внешним API)
+    container.innerHTML = '';
     if (window.QRCode) {
       new QRCode(container, {
         text: targetUrl,
@@ -390,10 +406,7 @@ function openQrModal(type) {
 }
 
 function closeQrModal() { 
-  // Запускаем плавное закрытие шторки
   closeModalSmoothly('qr-modal'); 
-  
-  // Ждем 300 миллисекунд (пока шторка уезжает), а затем тихо очищаем холст
   setTimeout(function() {
     var container = document.getElementById('qr-canvas-container');
     if (container) container.innerHTML = '';
@@ -418,7 +431,6 @@ function getInventoryRowHtml(icon, label, value, searchPrefix) {
 // ==========================================
 // СИСТЕМА ДОСТИЖЕНИЙ И КОНФЕТТИ
 // ==========================================
-
 function triggerConfetti() {
   if (typeof confetti !== 'function') return;
   
@@ -456,7 +468,6 @@ function showAchievement(title, icon, name, desc) {
   var modal = document.getElementById('achievement-modal');
   if (modal) modal.style.display = 'flex';
   
-  // Включаем вибрацию (если это Telegram Web App)
   if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.HapticFeedback) {
     window.Telegram.WebApp.HapticFeedback.notificationOccurred('success');
   }
