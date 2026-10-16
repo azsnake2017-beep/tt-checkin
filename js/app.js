@@ -2451,6 +2451,8 @@ document.addEventListener('DOMContentLoaded', function() {
       if (typeof loadTableTennisNews === 'function') loadTableTennisNews();
 
       if (typeof setAppProgress === 'function') setAppProgress(100, 'Готово!');
+ }, 100);
+}); // ← Закрываем document.addEventListener('DOMContentLoaded', ...)
 
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
