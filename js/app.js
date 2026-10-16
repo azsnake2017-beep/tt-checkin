@@ -40,8 +40,10 @@ function updateAdminControls() {
   var btnAddTour = document.getElementById('btn-add-tournament'); 
   if (btnAddTour) btnAddTour.style.display = isAdmin ? 'block' : 'none';
   
-  var btnEditAnnVostok = document.getElementById('btn-edit-announcement-vostok');
-  if (btnEditAnnVostok) btnEditAnnVostok.style.display = isAdmin ? 'block' : 'none';
+  ['vostok', 'tttop', 'olimp', 'chemk'].forEach(function(loc) {
+    var btnEditAnn = document.getElementById('btn-edit-announcement-' + loc);
+    if (btnEditAnn) btnEditAnn.style.display = isAdmin ? 'block' : 'none';
+  });
 }
 
 window.onTelegramAuth = function(user) {
@@ -696,9 +698,10 @@ function sendClubStatsBroadcast() {
 
 function openAnnouncementModal(loc) { 
   if(!isSuperAdmin()) return; 
-  document.getElementById('announcement-target-loc').value = 'vostok'; 
+  var targetLoc = loc || 'vostok';
+  document.getElementById('announcement-target-loc').value = targetLoc; 
   
-  var aData = announcementsData.vostok;
+  var aData = announcementsData[targetLoc];
   var dateInput = document.getElementById('announcement-date');
   var descInput = document.getElementById('announcement-textarea');
 
@@ -715,17 +718,19 @@ function openAnnouncementModal(loc) {
 function closeAnnouncementModal() { if(typeof closeModalSmoothly === 'function') closeModalSmoothly('announcement-modal'); }
 
 function saveAnnouncement() { 
+  var targetLoc = document.getElementById('announcement-target-loc').value || 'vostok';
   var dateStr = document.getElementById('announcement-date').value.trim();
   var descStr = document.getElementById('announcement-textarea').value.trim();
   
   if (!dateStr && !descStr) return deleteAnnouncement();
 
-  var obj = { vostok: { date: dateStr, desc: descStr } };
+  var obj = {};
+  obj[targetLoc] = { date: dateStr, desc: descStr };
   
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
       closeAnnouncementModal(); 
-      
-      var tgText = "📢 <b>АНОНС ВСТРЕЧИ КЛУБА!</b>\n\n📍 Место: <b>в ДК «Восток» 🏛</b>\n";
+      var locTitle = (typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[targetLoc]) ? LOCATION_NAMES[targetLoc] : ('в клубе');
+      var tgText = "📢 <b>АНОНС ВСТРЕЧИ КЛУБА!</b>\n\n📍 Место: <b>" + locTitle + "</b>\n";
       if (dateStr) tgText += "🗓 <b>Дата и время:</b> " + cleanHtml(dateStr) + "\n";
       if (descStr) tgText += "\n📝 " + cleanHtml(descStr) + "\n";
       tgText += "\n<i>Заходите в приложение, чтобы спланировать визит и занять стол!</i> 🏓";
@@ -736,7 +741,9 @@ function saveAnnouncement() {
 
 function deleteAnnouncement() { 
   if(!isSuperAdmin()) return; 
-  var obj = { vostok: null };
+  var targetLoc = document.getElementById('announcement-target-loc').value || 'vostok';
+  var obj = {};
+  obj[targetLoc] = null;
   db.collection('settings').doc('announcements').set(obj, { merge: true }).then(function() {
       closeAnnouncementModal(); 
       if(typeof customAlert==='function') customAlert("✅ Анонс успешно удален");
@@ -2358,42 +2365,56 @@ document.addEventListener('DOMContentLoaded', function() {
       try { initUserProfile(); } catch(e) {}
       try { updateAdminControls(); } catch(e) {}
       
-      // Запуск фоновых слушателей Firebase
+    // Запуск фоновых слушателей Firebase
       if(typeof listenPendingMatches === 'function') { try { listenPendingMatches(); } catch(e) {} }
       
-      ['park', 'vostok'].forEach(function(loc) {
+      // Подписка на все локации из городского реестра (Челябинск)
+      var targetLocs = (typeof ALL_LOCATIONS !== 'undefined' && Array.isArray(ALL_LOCATIONS)) 
+          ? ALL_LOCATIONS 
+          : ['park', 'vostok', 'tttop', 'olimp', 'chemk'];
+
+      targetLocs.forEach(function(loc) {
         try {
-          db.collection('locations').doc(loc).onSnapshot(function(doc) { 
-              try { 
-                  var data = doc.data() || {}; 
-                  if(typeof locationsData !== 'undefined' && locationsData[loc]) {
-                     locationsData[loc].plans = data.plans || []; 
-                     locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) } : p; }); 
-                     if(typeof renderAll === 'function') renderAll(); 
+          db.collection('locations').doc(loc).onSnapshot(function(doc) {  
+              try {  
+                  var data = doc.data() || {};  
+                  if(typeof locationsData !== 'undefined') {
+                     if (!locationsData[loc]) locationsData[loc] = { players: [], plans: [] };
+                     locationsData[loc].plans = data.plans || [];  
+                     locationsData[loc].players = (data.players || []).map(function(p) { return typeof p === 'string' ? { name: p, time: Date.now(), uid: p, maxLimitMs: (typeof DEFAULT_LIMIT_MS !== 'undefined' ? DEFAULT_LIMIT_MS : 7200000) } : p; });  
+                     if(typeof renderAll === 'function') renderAll();  
                   }
-              } catch(e){} 
+              } catch(e){}  
           }, function(err) {});
         } catch(e) {}
       });
 
+      // Слушатель анонсов для всех крытых залов города
       try {
         db.collection('settings').doc('announcements').onSnapshot(function(doc) {
           try {
-            if(typeof announcementsData !== 'undefined') announcementsData = doc.data() || { vostok: null };
-            var badgeBox = document.getElementById('announcement-box-vostok');
-            var textBox = document.getElementById('announcement-text-vostok');
-            if (badgeBox && textBox && typeof announcementsData !== 'undefined') { 
-                var aData = announcementsData.vostok;
-                if (aData) { 
-                    if (typeof aData === 'object') {
-                        var resHtml = '';
-                        if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
-                        if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
-                        textBox.innerHTML = resHtml;
-                    } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
-                    badgeBox.style.display = 'flex'; 
-                } else { badgeBox.style.display = 'none'; } 
-            }
+            if(typeof announcementsData !== 'undefined') announcementsData = doc.data() || {};
+            
+            var hallKeys = (typeof HALL_LOCATIONS !== 'undefined' && Array.isArray(HALL_LOCATIONS))
+                ? HALL_LOCATIONS
+                : ['vostok', 'tttop', 'olimp', 'chemk'];
+
+            hallKeys.forEach(function(loc) {
+                var badgeBox = document.getElementById('announcement-box-' + loc);
+                var textBox = document.getElementById('announcement-text-' + loc);
+                if (badgeBox && textBox && typeof announcementsData !== 'undefined') {  
+                    var aData = announcementsData[loc];
+                    if (aData) {  
+                        if (typeof aData === 'object') {
+                            var resHtml = '';
+                            if (aData.date) resHtml += '🗓 <b>' + cleanHtml(aData.date) + '</b><br>';
+                            if (aData.desc) resHtml += cleanHtml(aData.desc).replace(/\n/g,'<br>');
+                            textBox.innerHTML = resHtml;
+                        } else { textBox.innerHTML = cleanHtml(aData).replace(/\n/g,'<br>'); }
+                        badgeBox.style.display = 'flex';  
+                    } else { badgeBox.style.display = 'none'; }  
+                }
+            });
           } catch(e) {}
         });
       } catch(e) {}
@@ -2405,7 +2426,7 @@ document.addEventListener('DOMContentLoaded', function() {
             window.currentEloMultiplier = mult;
             var selectEl = document.getElementById('admin-elo-boost'); if (selectEl) selectEl.value = mult;
             var banner = document.getElementById('global-boost-banner'), btnBadge = document.getElementById('match-btn-boost-badge');
-            if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } } 
+            if (mult > 1) { if (banner) { banner.style.display = 'block'; document.getElementById('global-boost-value').innerText = 'x' + mult; } if (btnBadge) { btnBadge.style.display = 'block'; btnBadge.innerText = '🔥 x' + mult; } }  
             else { if (banner) banner.style.display = 'none'; if (btnBadge) btnBadge.style.display = 'none'; }
           }
         });
@@ -2418,21 +2439,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
       if(typeof monitorSessions === 'function') {
          setTimeout(monitorSessions, 1000);
-         setInterval(monitorSessions, 60000); 
+         setInterval(monitorSessions, 60000);  
       }
-      if(typeof renderAll === 'function') setInterval(renderAll, 30000); 
+      if(typeof renderAll === 'function') setInterval(renderAll, 30000);  
 
-      if (typeof loadParkWeather === 'function') { 
-          try { loadParkWeather(); } catch(e) {} 
-          setInterval(loadParkWeather, 600000); 
+      if (typeof loadParkWeather === 'function') {  
+          try { loadParkWeather(); } catch(e) {}  
+          setInterval(loadParkWeather, 600000);  
       }
       
       if (typeof loadTableTennisNews === 'function') loadTableTennisNews();
 
       if (typeof setAppProgress === 'function') setAppProgress(100, 'Готово!');
-      
-  }, 100); 
-});
 
 function deleteHistoryMatch(docId, profileUid) {
   if (!isSuperAdmin()) return;
