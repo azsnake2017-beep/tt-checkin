@@ -22,7 +22,7 @@
   <link rel="dns-prefetch" href="https://telegram.org">
 
   <link rel="manifest" href="manifest.json">
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=12">
 
   <style>
   /* Жестко глушим прелоадер, если страница просто обновляется */
@@ -128,7 +128,7 @@
 </style>
 
 <div id="app-preloader" class="app-preloader">
-  <img src="logo.webp" alt="ЧМЗ" class="preloader-logo" onerror="this.style.display='none'">
+  <img src="logo.webp" alt="Челябинск" class="preloader-logo" onerror="this.style.display='none'">
   <div class="preloader-bar-bg"><div id="preloader-bar" class="preloader-bar-fill"></div></div>
   <div id="preloader-text" class="preloader-text">Инициализация...</div>
   <!-- Контейнер для шутки -->
@@ -147,7 +147,7 @@
   <div class="club-header">
     <div class="club-header-top">
       <div class="club-header-left">
-        <img src="logo.webp" alt="ЧМЗ" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
+        <img src="logo.webp" alt="Челябинск" class="club-logo" width="48" height="48" onerror="this.style.display='none'">
         <div class="club-header-text">
           <h1>Настольный теннис Челябинск</h1>
           <p>Радар, рейтинг, статистика</p>
@@ -241,17 +241,22 @@
   <span>➕</span> Добавить участника в клуб
 </button>    
     <div class="profile-logo-container">
-      <img src="logo.webp" alt="Логотип ЧМЗ" class="profile-large-logo" onerror="this.style.display='none'">
+      <img src="logo.webp" alt="Логотип Челябинск" class="profile-large-logo" onerror="this.style.display='none'">
     </div>
   </div>
 
-  <!-- ЭКРАН 2: РАДАР -->
+  <!-- ЭКРАН 2: РАДАР (ГОРОДСКОЕ СООБЩЕСТВО ЧЕЛЯБИНСК) -->
   <div id="view-radar" class="main-view">
+    
+    <!-- Локация 1: Парк им. Тищенко -->
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
-        <div>
-          <div class="card-title">🌳 Парк им. Тищенко</div>
-          <div class="card-desc">Столы на свежем воздухе</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="loc_park.webp" alt="Парк" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+          <div>
+            <div class="card-title">🌳 Парк им. Тищенко</div>
+            <div class="card-desc">Столы на свежем воздухе</div>
+          </div>
         </div>
         <span class="counter" id="badge-park">0 игроков</span>
       </div>
@@ -275,11 +280,15 @@
       </div>
     </div>
 
+    <!-- Локация 2: ДК «Восток» -->
     <div class="card" id="card-vostok">
       <div class="card-top" onclick="toggleCard('vostok')">
-        <div>
-          <div class="card-title">🏛 ДК «Восток»</div>
-          <div class="card-desc">ул. Сталеваров, 5а</div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="loc_vostok.webp" alt="Восток" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+          <div>
+            <div class="card-title">🏛 ДК «Восток»</div>
+            <div class="card-desc">ул. Сталеваров, 5а</div>
+          </div>
         </div>
         <span class="counter" id="badge-vostok">0 игроков</span>
       </div>
@@ -303,6 +312,103 @@
         </div>
       </div>
     </div>
+
+    <!-- Локация 3: Клуб «ТТ Топ» -->
+    <div class="card" id="card-tttop">
+      <div class="card-top" onclick="toggleCard('tttop')">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="loc_tttop.webp" alt="ТТ Топ" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+          <div>
+            <div class="card-title">🏓 Клуб «ТТ Топ»</div>
+            <div class="card-desc">пр. Победы, 348 ст. 1 (2 этаж)</div>
+          </div>
+        </div>
+        <span class="counter" id="badge-tttop">0 игроков</span>
+      </div>
+      
+      <div class="event-badge" id="announcement-box-tttop" style="display: none; margin-top: 0;"><span id="announcement-text-tttop"></span></div>
+
+      <div class="card-collapse-wrapper">
+        <div class="card-body-collapse">
+          <div class="card-body-inner">
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-tttop" onclick="openAnnouncementModal('tttop')">✏️ Изменить анонс встречи</button>
+            <div class="section-label">Сейчас играют:</div>
+            <div class="player-list" id="list-tttop"><span class="empty-note">У столов пока свободно</span></div>
+            <div class="section-label">Собираются прийти:</div>
+            <div class="player-list" id="plan-list-tttop"><span class="empty-note">Никто не планировал</span></div>
+            <div class="action-group" id="btn-container-tttop">
+              <button class="btn btn-join" onclick="handleCheckInClick('tttop')">🏓 Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('tttop')">⏳ Буду позже...</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Локация 4: СОК МУ «Олимп» -->
+    <div class="card" id="card-olimp">
+      <div class="card-top" onclick="toggleCard('olimp')">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="loc_olimp.webp" alt="Олимп" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+          <div>
+            <div class="card-title">🏅 СОК МУ «Олимп»</div>
+            <div class="card-desc">с. Долгодеревенское, ул. 1 Мая, 120А/1</div>
+          </div>
+        </div>
+        <span class="counter" id="badge-olimp">0 игроков</span>
+      </div>
+      
+      <div class="event-badge" id="announcement-box-olimp" style="display: none; margin-top: 0;"><span id="announcement-text-olimp"></span></div>
+
+      <div class="card-collapse-wrapper">
+        <div class="card-body-collapse">
+          <div class="card-body-inner">
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-olimp" onclick="openAnnouncementModal('olimp')">✏️ Изменить анонс встречи</button>
+            <div class="section-label">Сейчас играют:</div>
+            <div class="player-list" id="list-olimp"><span class="empty-note">У столов пока свободно</span></div>
+            <div class="section-label">Собираются прийти:</div>
+            <div class="player-list" id="plan-list-olimp"><span class="empty-note">Никто не планировал</span></div>
+            <div class="action-group" id="btn-container-olimp">
+              <button class="btn btn-join" onclick="handleCheckInClick('olimp')">🏓 Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('olimp')">⏳ Буду позже...</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Локация 5: ДС «ЧЭМК» -->
+    <div class="card" id="card-chemk">
+      <div class="card-top" onclick="toggleCard('chemk')">
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <img src="loc_chemk.webp" alt="ЧЭМК" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+          <div>
+            <div class="card-title">⚡ ДС «ЧЭМК»</div>
+            <div class="card-desc">ул. Российская, 36</div>
+          </div>
+        </div>
+        <span class="counter" id="badge-chemk">0 игроков</span>
+      </div>
+      
+      <div class="event-badge" id="announcement-box-chemk" style="display: none; margin-top: 0;"><span id="announcement-text-chemk"></span></div>
+
+      <div class="card-collapse-wrapper">
+        <div class="card-body-collapse">
+          <div class="card-body-inner">
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-chemk" onclick="openAnnouncementModal('chemk')">✏️ Изменить анонс встречи</button>
+            <div class="section-label">Сейчас играют:</div>
+            <div class="player-list" id="list-chemk"><span class="empty-note">У столов пока свободно</span></div>
+            <div class="section-label">Собираются прийти:</div>
+            <div class="player-list" id="plan-list-chemk"><span class="empty-note">Никто не планировал</span></div>
+            <div class="action-group" id="btn-container-chemk">
+              <button class="btn btn-join" onclick="handleCheckInClick('chemk')">🏓 Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('chemk')">⏳ Буду позже...</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div>
 
   <!-- ЭКРАН 3: РЕЙТИНГИ И ИСТОРИЯ МАТЧЕЙ -->
@@ -456,7 +562,6 @@
       <button class="btn btn-leave" style="margin-top: 8px; width: 100%; padding: 6px;" onclick="clearBounty()">❌ Отменить охоту</button>
     </div>
 
-    <!-- ВОТ ЭТИ СТРОКИ БЫЛИ ПОТЕРЯНЫ (Закрываем админку): -->
     <button class="btn btn-leave" style="margin-top: 12px;" onclick="closeAdminMenu()">Вернуться назад</button>
   </div>
 </div>
@@ -687,7 +792,7 @@
   @keyframes rotateGlow { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
   @keyframes popIcon { 0% { transform: scale(0); } 100% { transform: scale(1); } }
 </style>
-   <!-- ... здесь заканчиваются все ваши модальные окна (qr-modal, match-modal и т.д.) ... -->
+
   <!-- 1. Сторонние библиотеки (Telegram загружаем асинхронно!) -->
   <script async src="https://telegram.org/js/telegram-web-app.js"></script>
   <script defer src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -699,12 +804,12 @@
 
   <!-- 3. Ваши локальные модули -->
   <script defer src="js/sounds.js?v=10"></script>
-  <script defer src="js/config.js?v=7"></script>
+  <script defer src="js/config.js?v=8"></script>
   <script defer src="js/matches.js?v=3"></script>
-  <script defer src="js/radar.js?v=8"></script>
+  <script defer src="js/radar.js?v=9"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=16"></script>
-  <script defer src="js/app.js?v=106"></script>
+  <script defer src="js/app.js?v=107"></script>
    <!-- Генератор конфетти -->
   <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
