@@ -1,92 +1,87 @@
 // ==========================================
 // НОВОСТНОЙ МОДУЛЬ TT-CHECKIN
 // js/news.js
-// Версия 16.0 (Только RU источники — Усиленный сбор через Bing)
+// Версия 17.1 (RU СМИ без VPN + Прямые ссылки + Мульти-прокси)
 // ==========================================
 
 (function () {
     'use strict';
 
     var CONFIG = {
-        proxy: 'https://api.rss2json.com/v1/api.json?rss_url=',
-        maxAgeMs: 120 * 60 * 60 * 1000, // Новости до 5 дней
+        rss2jsonProxy: 'https://api.rss2json.com/v1/api.json?rss_url=',
+        xmlProxies: [
+            'https://api.allorigins.win/raw?url=',
+            'https://api.codetabs.com/v1/proxy?quest='
+        ],
+        maxAgeMs: 14 * 24 * 60 * 60 * 1000, // До 14 дней
         maxArticles: 15,
-        refreshMs: 5 * 60 * 1000,
-        cacheKey: 'tt_news_cache_v16',
+        refreshMs: 10 * 60 * 1000,
+        cacheKey: 'tt_news_cache_v17_ru',
         cacheTtlMs: 30 * 60 * 1000
     };
 
-   // 10 независимых запросов к Bing RU для максимального охвата
+    // 4 сгруппированных запроса вместо 10 (не перегружают прокси)
     var SOURCES = [
         {
-            name: 'Bing Главное', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&format=rss',
+            name: 'Главное',
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('настольный теннис') + '&cc=ru&setlang=ru&format=rss',
             priority: 100
         },
         {
-            name: 'Bing Пинг-понг', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('пинг-понг') + '&cc=ru&format=rss',
+            name: 'ФНТР и Пинг-понг',
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('ФНТР OR пинг-понг настольный теннис') + '&cc=ru&setlang=ru&format=rss',
             priority: 95
         },
         {
-            name: 'Bing WTT', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('WTT настольный теннис') + '&cc=ru&format=rss',
+            name: 'Мировые турниры',
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('WTT OR ITTF настольный теннис') + '&cc=ru&setlang=ru&format=rss',
             priority: 90
         },
         {
-            name: 'Bing ФНТР', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('ФНТР') + '&cc=ru&format=rss',
+            name: 'Чемпионаты и Лига Про',
+            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('чемпионат России OR турнир настольный теннис') + '&cc=ru&setlang=ru&format=rss',
             priority: 85
-        },
-        {
-            name: 'Bing ITTF', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('ITTF настольный теннис') + '&cc=ru&format=rss',
-            priority: 80
-        },
-        {
-            name: 'Bing Чемпионат', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('чемпионат России настольный теннис') + '&cc=ru&format=rss',
-            priority: 75
-        },
-        {
-            name: 'Bing Турниры', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('турнир настольный теннис') + '&cc=ru&format=rss',
-            priority: 70
-        },
-        {
-            name: 'Bing Сборная', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('сборная России настольный теннис') + '&cc=ru&format=rss',
-            priority: 65
-        },
-        {
-            name: 'Bing Лига Про', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('Лига Про настольный теннис') + '&cc=ru&format=rss',
-            priority: 60
-        },
-        {
-            name: 'Bing Игроки', 
-            rss: 'https://www.bing.com/news/search?q=' + encodeURIComponent('теннисист настольный теннис') + '&cc=ru&format=rss',
-            priority: 55
         }
     ];
 
     var isLoading = false;
     window.__TT_NEWS_ARTICLES = [];
 
+    // Извлекаем прямую ссылку на российский сайт из редиректа Bing (чтобы всё летало без VPN)
+    function extractDirectUrl(rawLink) {
+        if (!rawLink) return '';
+        try {
+            var match = String(rawLink).match(/[?&]url=([^&]+)/i);
+            if (match && match[1]) {
+                return decodeURIComponent(match[1]);
+            }
+        } catch (e) {}
+        return rawLink;
+    }
+
     window.openNewsLink = function (url) {
         if (!url) return;
+        var directUrl = extractDirectUrl(url);
         if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openLink === 'function') {
-            try { window.Telegram.WebApp.openLink(url, { try_instant_view: true }); return; } catch (e) {}
+            try { window.Telegram.WebApp.openLink(directUrl, { try_instant_view: true }); return; } catch (e) {}
         }
-        window.open(url, '_blank', 'noopener,noreferrer');
+        window.open(directUrl, '_blank', 'noopener,noreferrer');
     };
 
     function escapeHtml(value) {
         return String(value || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#039;');
     }
 
-    function cleanText(value) {
-        return String(value || '').replace(/<[^>]*>/g, ' ').replace(/&quot;/gi, '"').replace(/&amp;/gi, '&').replace(/&#39;/gi, "'").replace(/\s+/g, ' ').trim();
+    function parseSafeDate(rawDate) {
+        if (!rawDate) return Date.now();
+        var ms = Date.parse(rawDate);
+        if (isNaN(ms)) {
+            ms = Date.parse(String(rawDate).replace(/-/g, '/'));
+        }
+        if (isNaN(ms) || ms > Date.now() + 86400000) {
+            return Date.now();
+        }
+        return ms;
     }
 
     function formatDate(timestamp) {
@@ -124,7 +119,7 @@
         });
 
         c.innerHTML = html;
-        window.__TT_NEWS_ARTICLES = articles; 
+        window.__TT_NEWS_ARTICLES = articles;
 
         var cards = c.querySelectorAll('.tt-news-card');
         cards.forEach(function (card) {
@@ -137,46 +132,106 @@
         });
     }
 
+    function normalizeAndFilterItems(rawItems, sourceObj) {
+        var articles = [];
+        rawItems.forEach(function (item) {
+            var rawTitle = item.title || '';
+            var parts = rawTitle.split(' - ');
+            var realSource = item.sourceName || 'Новости';
+            var cleanTitle = rawTitle;
+
+            if (parts.length > 1) {
+                realSource = parts.pop().trim();
+                cleanTitle = parts.join(' - ').trim();
+            }
+
+            cleanTitle = cleanTitle.replace(/&quot;/g, '"').replace(/&amp;/g, '&').replace(/&#39;/g, "'").trim();
+            if (!cleanTitle) return;
+
+            var tl = cleanTitle.toLowerCase();
+            // Отсекаем большой теннис
+            if (tl.indexOf('большой теннис') !== -1 || tl.indexOf('уимблдон') !== -1 || tl.indexOf('медведев') !== -1 || tl.indexOf('джокович') !== -1 || tl.indexOf('синнер') !== -1 || tl.indexOf('рублев') !== -1 || tl.indexOf('алькарас') !== -1 || tl.indexOf('ролан гаррос') !== -1) {
+                return;
+            }
+
+            var directUrl = extractDirectUrl(item.link);
+            // Если имя источника не нашлось в заголовке, берем домен сайта (например, championat.com)
+            if (realSource === 'Новости' && directUrl) {
+                try {
+                    realSource = new URL(directUrl).hostname.replace(/^www\./, '');
+                } catch (e) {}
+            }
+
+            articles.push({
+                title: cleanTitle,
+                link: directUrl,
+                source: realSource,
+                date: parseSafeDate(item.pubDate),
+                priority: sourceObj.priority
+            });
+        });
+        return articles;
+    }
+
+    function parseXmlItems(xmlText, source) {
+        var parser = new DOMParser();
+        var xmlDoc = parser.parseFromString(xmlText, 'text/xml');
+        var nodes = xmlDoc.querySelectorAll('item');
+        var rawItems = [];
+        nodes.forEach(function (node) {
+            var titleNode = node.querySelector('title');
+            var linkNode = node.querySelector('link');
+            var dateNode = node.querySelector('pubDate');
+            var sourceNode = node.querySelector('source');
+            rawItems.push({
+                title: titleNode ? titleNode.textContent : '',
+                link: linkNode ? linkNode.textContent : '',
+                pubDate: dateNode ? dateNode.textContent : '',
+                sourceName: sourceNode ? sourceNode.textContent : ''
+            });
+        });
+        return normalizeAndFilterItems(rawItems, source);
+    }
+
+    function fetchViaXmlFallback(source, proxyIndex) {
+        var idx = proxyIndex || 0;
+        if (idx >= CONFIG.xmlProxies.length) return Promise.resolve([]);
+
+        var url = CONFIG.xmlProxies[idx] + encodeURIComponent(source.rss);
+        return fetch(url)
+            .then(function (res) {
+                if (!res.ok) throw new Error('Proxy error');
+                return res.text();
+            })
+            .then(function (xmlText) {
+                var items = parseXmlItems(xmlText, source);
+                if (!items || items.length === 0) {
+                    return fetchViaXmlFallback(source, idx + 1);
+                }
+                return items;
+            })
+            .catch(function () {
+                return fetchViaXmlFallback(source, idx + 1);
+            });
+    }
+
     function fetchSource(source) {
-        var cb = Math.floor(Date.now() / 3600000); 
-        var fetchUrl = CONFIG.proxy + encodeURIComponent(source.rss + '&cb=' + cb);
+        var fetchUrl = CONFIG.rss2jsonProxy + encodeURIComponent(source.rss);
 
         return fetch(fetchUrl)
-            .then(function(res) { return res.json(); })
-            .then(function(data) {
-                if (!data || !Array.isArray(data.items)) return [];
-                
-                var articles = [];
-                data.items.forEach(function(item) {
-                    var rawTitle = item.title || "";
-                    var parts = rawTitle.split(' - ');
-                    var realSource = "Новости";
-                    var cleanTitle = rawTitle;
-
-                    // Извлекаем настоящее название российского издания из Bing News (например: "Чемпионат", "Спорт-Экспресс")
-                    if (parts.length > 1) {
-                        realSource = parts.pop().trim();
-                        cleanTitle = parts.join(' - ').trim();
-                    }
-
-                    cleanTitle = cleanTitle.replace(/&quot;/g, '"').replace(/&amp;/g, '&');
-                    var dateMs = item.pubDate ? new Date(item.pubDate.replace(/-/g, '/')).getTime() : Date.now();
-                    
-                    var tl = cleanTitle.toLowerCase();
-                    
-                    // Жесткая фильтрация мусора из большого тенниса
-                    if (tl.indexOf('большой теннис') !== -1 || tl.indexOf('уимблдон') !== -1 || tl.indexOf('медведев') !== -1 || tl.indexOf('джокович') !== -1 || tl.indexOf('синнер') !== -1 || tl.indexOf('рублев') !== -1 || tl.indexOf('алькарас') !== -1) return;
-
-                    articles.push({
-                        title: cleanTitle,
-                        link: item.link,
-                        source: realSource,
-                        date: dateMs,
-                        priority: source.priority
-                    });
-                });
-                return articles;
-            }).catch(function() { return []; });
+            .then(function (res) {
+                if (!res.ok) throw new Error('HTTP ' + res.status);
+                return res.json();
+            })
+            .then(function (data) {
+                if (!data || data.status !== 'ok' || !Array.isArray(data.items) || data.items.length === 0) {
+                    return fetchViaXmlFallback(source, 0);
+                }
+                return normalizeAndFilterItems(data.items, source);
+            })
+            .catch(function () {
+                return fetchViaXmlFallback(source, 0);
+            });
     }
 
     function loadFreshNews() {
@@ -188,31 +243,33 @@
             c.innerHTML = '<div style="padding:20px; text-align:center; color:var(--text-muted); font-weight:600;">Сбор новостей… 🏓</div>';
         }
 
-        Promise.all(SOURCES.map(fetchSource)).then(function(results) {
+        Promise.all(SOURCES.map(fetchSource)).then(function (results) {
             var all = [];
-            results.forEach(function(res) { all = all.concat(res); });
-            
+            results.forEach(function (res) { all = all.concat(res); });
+
             var unique = [];
             var seen = {};
-            all.forEach(function(a) {
-                // Удаляем дубликаты, которые могут найтись по разным запросам
-                var sig = a.title.toLowerCase().replace(/[^а-яa-z]/gi, '').substring(0, 30);
-                if (!seen[sig] && a.date >= (Date.now() - CONFIG.maxAgeMs)) {
-                    seen[sig] = true;
-                    unique.push(a);
-                }
+            all.sort(function (a, b) { return b.date - a.date; });
+
+            all.forEach(function (a) {
+                var sig = a.title.toLowerCase().replace(/[^а-яёa-z0-9]/gi, '').substring(0, 35);
+                if (!sig || seen[sig]) return;
+                seen[sig] = true;
+                unique.push(a);
             });
 
-            unique.sort(function(a, b) { return b.date - a.date; });
-            unique = unique.slice(0, CONFIG.maxArticles);
+            var recent = unique.filter(function (a) {
+                return a.date >= (Date.now() - CONFIG.maxAgeMs);
+            });
+            var finalArticles = (recent.length >= 3 ? recent : unique).slice(0, CONFIG.maxArticles);
 
-            if (unique.length > 0) {
-                localStorage.setItem(CONFIG.cacheKey, JSON.stringify({ savedAt: Date.now(), items: unique }));
-                renderNewsCards(unique);
-            } else {
-                if (c) c.innerHTML = '<div style="padding:18px; text-align:center; color:var(--text-muted);"><div style="font-size:14px; font-weight:700; margin-bottom:6px;">Свежих новостей пока нет</div></div>';
+            if (finalArticles.length > 0) {
+                localStorage.setItem(CONFIG.cacheKey, JSON.stringify({ savedAt: Date.now(), items: finalArticles }));
+                renderNewsCards(finalArticles);
+            } else if (!window.__TT_NEWS_ARTICLES || window.__TT_NEWS_ARTICLES.length === 0) {
+                renderNewsCards([]);
             }
-        }).finally(function() {
+        }).finally(function () {
             isLoading = false;
         });
     }
@@ -220,15 +277,18 @@
     window.loadTableTennisNews = function () {
         try {
             var cache = JSON.parse(localStorage.getItem(CONFIG.cacheKey));
-            if (cache && cache.items && cache.items.length > 0 && (Date.now() - cache.savedAt < CONFIG.cacheTtlMs)) {
+            if (cache && cache.items && cache.items.length > 0) {
                 renderNewsCards(cache.items);
+                if (Date.now() - cache.savedAt < CONFIG.cacheTtlMs) {
+                    return;
+                }
             }
-        } catch(e) {}
+        } catch (e) {}
 
         setTimeout(loadFreshNews, 100);
 
         if (!window.__TT_NEWS_RESTORE_INTERVAL) {
-            window.__TT_NEWS_RESTORE_INTERVAL = setInterval(function() {
+            window.__TT_NEWS_RESTORE_INTERVAL = setInterval(function () {
                 var c = getContainer();
                 if (c && c.innerHTML.indexOf('tt-news-card') === -1 && window.__TT_NEWS_ARTICLES.length > 0) {
                     renderNewsCards(window.__TT_NEWS_ARTICLES);
@@ -237,5 +297,5 @@
         }
     };
 
-    console.log('[TT News] Модуль v16.0 загружен (Расширенный поиск RU)');
+    console.log('[TT News] Модуль v17.1 загружен (RU СМИ без VPN + прямые ссылки)');
 })();
