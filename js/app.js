@@ -367,31 +367,11 @@ function updateProfileDisplay() {
               } catch(e) {}
           }
           
-                   // Считаем, сколько дней прошло с последней игры (для предупреждения о штрафе)
-          var daysSinceLast = 999;
-          if (matches.length > 0) {
-              try {
-                  var lastTsForDays = typeof parseTime === 'function' ? parseTime(matches[0].timestamp) : matches[0].timestamp;
-                  if (lastTsForDays) {
-                      var todayD = new Date(); todayD.setHours(0,0,0,0);
-                      var matchD = new Date(lastTsForDays); matchD.setHours(0,0,0,0);
-                      daysSinceLast = Math.round((todayD.getTime() - matchD.getTime()) / 86400000);
-                  }
-              } catch(e) {}
-          }
-
-          var el = document.getElementById('main-profile-last-match');
+var el = document.getElementById('main-profile-last-match');
           if (el) {
-              if (daysSinceLast >= 5 && daysSinceLast < 7) {
-                  var daysLeft = 7 - daysSinceLast;
-                  el.innerHTML = '⚠️ До штрафа (-50 Эло) осталось <b>' + daysLeft + ' дн.</b>!';
-                  el.style.color = '#ef4444';
-                  el.style.fontWeight = '700';
-              } else {
-                  el.innerHTML = '🗓 Последняя игра: ' + lastMatchStr;
-                  el.style.color = 'var(--accent-sky)';
-                  el.style.fontWeight = 'normal';
-              }
+              el.innerHTML = '🗓 Последняя игра: ' + lastMatchStr;
+              el.style.color = 'var(--accent-sky)';
+              el.style.fontWeight = 'normal';
           }
       }).catch(function(e) {
           var el = document.getElementById('main-profile-last-match');
@@ -2459,88 +2439,6 @@ function deleteHistoryMatch(docId, profileUid) {
   }
 }
 
-window.applyEloDecay = function() {
-  if (!isSuperAdmin()) return;
-
-  var confirmMsg = 'Запустить сканирование неактивных игроков?<br><br><span style="font-size: 12px; opacity: 0.8;">Все, кто не играл последние 7 дней (включая новичков), получат штраф <b>-50 Эло</b>. Система защищена: игрок не получит штраф дважды за одну неделю.</span>';
-  
-  var btn = document.querySelector('#confirm-modal .btn-join');
-  var title = document.querySelector('#confirm-modal h3');
-  var box = document.querySelector('#confirm-modal .modal-box');
-  if (btn) { btn.innerText = "Запустить списание"; btn.style.background = "var(--accent-red)"; }
-  if (title) { title.innerText = "Списание рейтинга"; title.style.color = "var(--accent-red)"; }
-  if (box) { box.style.borderColor = "var(--accent-red)"; }
-
-  if(typeof openConfirmModal === 'function') {
-      openConfirmModal(confirmMsg, function() {
-        if(typeof customAlert === 'function') customAlert("⏳ Анализируем историю матчей за 7 дней...");
-
-        var now = Date.now();
-        var sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
-
-        db.collection('matches_history').where('timestamp', '>=', sevenDaysAgo).get().then(function(snap) {
-          var activeUids = new Set();
-          snap.forEach(function(doc) {
-            var m = doc.data();
-            if (m.participants) {
-              m.participants.forEach(function(uid) { activeUids.add(uid); });
-            }
-          });
-
-          db.collection('users').get().then(function(usersSnap) {
-            var batch = db.batch();
-            var penalizedCount = 0;
-            var penalizedNames = [];
-
-            usersSnap.forEach(function(uDoc) {
-              var u = uDoc.data();
-              var uid = uDoc.id;
-
-              if (activeUids.has(uid)) return;
-
-              var regDate = u.createdAt || u.timestamp || 0;
-              if (regDate) {
-                var regTime = typeof parseTime === 'function' ? parseTime(regDate) : Number(regDate);
-                if (now - regTime < 7 * 24 * 60 * 60 * 1000) {
-                  return; 
-                }
-              }
-
-              var lastPenalty = u.lastPenaltyDate || 0;
-              if (now - lastPenalty >= (6 * 24 * 60 * 60 * 1000)) {
-                var currentElo = parseInt(u.elo, 10) || 1000;
-                var newElo = Math.max(100, currentElo - 50);
-
-                batch.set(db.collection('users').doc(uid), {
-                  elo: newElo,
-                  lastPenaltyDate: now, 
-                  lastEloDelta: -50 
-                }, { merge: true });
-
-                penalizedCount++;
-                penalizedNames.push(cleanHtml(u.name));
-              }
-            });
-
-            if (penalizedCount > 0) {
-              batch.commit().then(function() {
-                if(typeof customAlert === 'function') customAlert("✅ Штраф -50 Эло применен к " + penalizedCount + " игрокам!");
-                
-                var tgMessage = "⏳ <b>Рейтинг тает!</b>\n\nСледующие игроки не выходили к столу более 7 дней и получают штраф за неактивность (<b>-50 Эло</b>):\n\n• " + penalizedNames.join('\n• ') + "\n\n<i>Пора расчехлять ракетки и возвращать позиции!</i> 🏓";
-                if(typeof sendTelegramAlert === 'function') sendTelegramAlert(tgMessage);
-                
-                closeAdminMenu();
-              }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка при списании: " + e.message); });
-            } else {
-              if(typeof customAlert === 'function') customAlert("✅ Проверка завершена. Все лентяи уже оштрафованы, остальные — активно играют!");
-              closeAdminMenu();
-            }
-
-          }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка базы пользователей: " + e.message); });
-        }).catch(function(e) { if(typeof customAlert === 'function') customAlert("❌ Ошибка истории матчей: " + e.message); });
-      });
-  }
-};
 
 
 // ==========================================
