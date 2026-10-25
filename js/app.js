@@ -1560,20 +1560,36 @@ function completeTournament(id) {
     var slv = firstM.score1 > firstM.score2 ? {uid: firstM.p2Uid, name: firstM.p2Name} : {uid: firstM.p1Uid, name: firstM.p1Name};
     var brn = thirdM.score1 > thirdM.score2 ? {uid: thirdM.p1Uid, name: thirdM.p1Name} : {uid: thirdM.p2Uid, name: thirdM.p2Name};
 
-    var parts = data.participants || []; var batch = db.batch();
+    var parts = data.participants || []; 
+    var batch = db.batch();
     var promises = [];
+    
     for (var j = 0; j < parts.length; j++) {
       var p = parts[j];
       var uRef = db.collection('users').doc(p.uid);
       promises.push(uRef.get().then((function(puid) {
           return function(uDoc) {
               if (uDoc.exists) {
-                  var uData = uDoc.data(); var m = uData.medals || {gold:0, silver:0, bronze:0};
-                  if (puid === gld.uid) m.gold++; if (puid === slv.uid) m.silver++; if (puid === brn.uid) m.bronze++;
-                  var updateObj = { tournamentsPlayed: (uData.tournamentsPlayed||0) + 1, medals: m };
-                  if (puid === gld.uid && data.title && data.title.toLowerCase().indexOf('ниндзя') !== -1) {
-                      updateObj.customTag = 'Супер Ниндзя 🥷';
+                  var uData = uDoc.data(); 
+                  var m = uData.medals || {gold:0, silver:0, bronze:0};
+                  
+                  // Жесткая конвертация в числа, чтобы избежать сбоев
+                  m.gold = parseInt(m.gold, 10) || 0;
+                  m.silver = parseInt(m.silver, 10) || 0;
+                  m.bronze = parseInt(m.bronze, 10) || 0;
+
+                  if (puid === gld.uid) m.gold += 1; 
+                  if (puid === slv.uid) m.silver += 1; 
+                  if (puid === brn.uid) m.bronze += 1;
+                  
+                  var updateObj = { tournamentsPlayed: (parseInt(uData.tournamentsPlayed, 10) || 0) + 1, medals: m };
+                  
+                  // АБСОЛЮТНО УНИВЕРСАЛЬНАЯ ВЫДАЧА ТИТУЛА
+                  if (puid === gld.uid && data.title) {
+                      // Плашка будет равна названию турнира + кубок (например, "Новогодний кубок 🏆")
+                      updateObj.customTag = data.title.trim() + ' 🏆';
                   }
+                  
                   batch.update(uRef, updateObj);
               }
           };
@@ -1585,11 +1601,16 @@ function completeTournament(id) {
         batch.commit().then(function() {
           if (typeof triggerConfetti === 'function') triggerConfetti();
             
-            if(typeof sendTelegramAlert === 'function') sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
+            if(typeof sendTelegramAlert === 'function') {
+                sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
+            }
         });
     });
-  }).catch(function(e) {});
+  }).catch(function(e) {
+      if(typeof customAlert === 'function') customAlert("Ошибка при завершении: " + e.message);
+  });
 }
+
 
 function openTourMatchModal(tourId, matchId, p1Name, p2Name, stage) {
   document.getElementById('tour-match-id-val').value = matchId; 
