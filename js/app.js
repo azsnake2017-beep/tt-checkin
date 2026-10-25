@@ -3604,3 +3604,75 @@ document.addEventListener('click', function(e) {
         }
     }
 });
+
+// Функция для генерации парного турнира "Слепой жребий"
+async function generateBlindDoubles(participantUids) {
+    if (!isSuperAdmin()) return;
+    
+    console.log("🎲 Запускаем слепой жребий...");
+    let players = [];
+    
+    // 1. Получаем актуальный рейтинг всех участников из базы
+    for (let uid of participantUids) {
+        let doc = await db.collection('users').doc(uid).get();
+        if (doc.exists) {
+            let data = doc.data();
+            players.push({
+                uid: uid,
+                name: data.name,
+                rating: data.rating || 1000
+            });
+        }
+    }
+
+    // 2. Сортируем игроков по рейтингу (от сильных к слабым)
+    players.sort((a, b) => b.rating - a.rating);
+
+    // 3. Делим пополам на "Профи" и "Любителей"
+    let half = Math.ceil(players.length / 2);
+    let pros = players.slice(0, half);
+    let amateurs = players.slice(half);
+
+    // 4. Перемешиваем корзину "Любителей" (тот самый слепой жребий)
+    amateurs.sort(() => Math.random() - 0.5);
+
+    // 5. Формируем команды
+    let pairs = [];
+    for (let i = 0; i < pros.length; i++) {
+        let p1 = pros[i];
+        let p2 = amateurs[i];
+        
+        if (p2) {
+            let teamRating = Math.round((p1.rating + p2.rating) / 2);
+            pairs.push({
+                teamName: `${p1.name} и ${p2.name}`,
+                p1: p1,
+                p2: p2,
+                teamRating: teamRating
+            });
+        } else {
+            // Если нечетное количество игроков, последний профи остается без пары
+            pairs.push({
+                teamName: `${p1.name} (Без пары - автопроход)`,
+                p1: p1,
+                p2: null,
+                teamRating: p1.rating
+            });
+        }
+    }
+
+    // 6. Красиво выводим результат в консоль и на экран
+    let resultText = "🏆 ПАРЫ НА ТУРНИР СГЕНЕРИРОВАНЫ:\n\n";
+    pairs.forEach((p, idx) => {
+        resultText += `Команда ${idx + 1}: ${p.teamName} (Ср. Эло: ${p.teamRating})\n`;
+    });
+    
+    console.log(resultText);
+    if(typeof customAlert === 'function') {
+        customAlert(`<div style="text-align:left; font-size:14px; white-space: pre-wrap;">${resultText}</div>`);
+    } else {
+        alert(resultText);
+    }
+    
+    return pairs;
+}
