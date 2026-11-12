@@ -732,6 +732,15 @@
   <div class="modal-box" style="border-color: #ec4899;">
     <h3 style="font-size: 18px; color: #ec4899;">👥 Состав турнира</h3>
     
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Игрок клуба:</div>
+    <div style="display: flex; gap: 8px; margin-bottom: 10px;">
+      <select id="tour-club-player-select" class="input-select" style="margin: 0; flex: 1;">
+        <option value="">Загрузка списка...</option>
+      </select>
+      <button class="btn btn-join" style="background: var(--accent-amber); width: auto; margin: 0; padding: 0 15px; color: #0b1120; font-weight: bold;" onclick="addClubPlayerToTour()">+ В состав</button>
+    </div>
+    
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: -4px; padding-left: 4px; text-transform: uppercase;">Гость (без приложения):</div>
     <div style="display: flex; gap: 8px; margin-bottom: 12px;">
       <input type="text" id="new-tour-player-name" class="input-name" placeholder="Имя игрока (гостя)..." style="margin: 0; flex: 1;" />
       <button class="btn btn-join" style="background: #06b6d4; width: auto; margin: 0; padding: 0 15px; color: #000; font-weight: bold;" onclick="addPlayerToTour()">+ Добавить</button>
@@ -807,7 +816,7 @@
   <script defer src="js/radar.js?v=9"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=110"></script>
+  <script defer src="js/app.js?v=111"></script>
    <!-- Генератор конфетти -->
   <script defer src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
   
