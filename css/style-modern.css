@@ -1,0 +1,166 @@
+/* ============================================================
+   СТИЛЬ-МОДЕРН — Этап 1: материалы, типографика, фиолетово-синий акцент
+   Подключается ПОСЛЕ style.css и переопределяет оформление.
+   Разметка и JS не меняются. Откат: удалить <link> из index.html.
+   ============================================================ */
+
+/* ===== 1. Новые фирменные токены (работают в обеих темах) ===== */
+:root {
+  --accent-violet: #7c3aed;
+  --accent-violet-2: #4f46e5;
+  --accent-violet-text: #a78bfa;
+}
+
+/* ===== 2. Углублённые токены тёмной темы (имена прежние) ===== */
+:root:not([data-theme="light"]) {
+  --bg: #070c18;
+  --card-bg: #1a2438;
+  --card-border: rgba(255, 255, 255, 0.09);
+  --row-bg: rgba(15, 23, 42, 0.55);
+  --list-bg: rgba(9, 14, 28, 0.55);
+  --input-bg: #0a1020;
+  --bottom-nav-bg: rgba(10, 15, 30, 0.88);
+}
+
+/* ===== 3. Атмосфера: мягкие свечения + шумовая текстура (тёмная тема) ===== */
+:root:not([data-theme="light"]) body::before {
+  content: "";
+  position: fixed; inset: 0; z-index: 0; pointer-events: none;
+  background:
+    radial-gradient(520px 380px at 15% -5%, rgba(124, 58, 237, 0.12), transparent 70%),
+    radial-gradient(640px 480px at 90% 105%, rgba(79, 70, 229, 0.10), transparent 70%);
+}
+.container { position: relative; z-index: 1; }
+
+:root:not([data-theme="light"]) body::after {
+  content: "";
+  position: fixed; inset: 0; z-index: 2147483000; pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  opacity: 0.035; mix-blend-mode: overlay;
+}
+
+/* ===== 4. Типографика: Inter для текста, Russo One для заголовков и цифр ===== */
+body, button, input, select, textarea {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+}
+
+.card-title, .club-header-text h1, .main-view h2, .modal-box h3,
+.rating-score, .leader-score, .btn-match-quick, .card-block-title {
+  font-family: 'Russo One', 'Inter', sans-serif;
+  letter-spacing: 0.02em;
+}
+
+/* Табличные цифры: колонки рейтинга и счёт не «прыгают» */
+.rating-score, .leader-score, .elo-delta, .counter, .tour-score-badge,
+.leader-rank, #user-score-container, .di-text, .score-btn {
+  font-variant-numeric: tabular-nums;
+}
+
+.section-label { letter-spacing: 0.12em; }
+
+/* ===== 5. Кнопки ===== */
+.btn { border-radius: 14px; letter-spacing: 0.01em; }
+
+/* Главное действие — фирменный фиолетово-синий градиент (был розовый) */
+.btn-join {
+  background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-violet-2) 100%);
+  color: #ffffff;
+  box-shadow: 0 8px 22px -8px rgba(124, 58, 237, 0.5);
+}
+
+/* Вторичное действие — спокойная «стеклянная» кнопка */
+:root:not([data-theme="light"]) .btn-plan {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  color: var(--text);
+}
+
+/* Большая CTA «Записать результат матча»: сплошной акцент + блик */
+.btn-match-quick { position: relative; overflow: hidden; border-radius: 999px; }
+:root:not([data-theme="light"]) #btn-match-glow {
+  background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-violet-2) 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(167, 139, 250, 0.5) !important;
+  box-shadow: 0 12px 28px -10px rgba(124, 58, 237, 0.55) !important;
+  animation: none !important;
+}
+.btn-match-quick::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.25) 50%, transparent 60%);
+  transform: translateX(-120%);
+  animation: modernSheen 4s ease-in-out infinite;
+}
+@keyframes modernSheen {
+  0%, 55% { transform: translateX(-120%); }
+  100% { transform: translateX(120%); }
+}
+
+/* ===== 6. Сегментные переключатели (Эло/Часы, 1x1/2x2) ===== */
+.tabs-container { border-radius: 999px; padding: 4px; }
+.tab-btn { border-radius: 999px; min-height: 38px; }
+.tab-btn.active {
+  background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-violet-2) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px -4px rgba(124, 58, 237, 0.5);
+}
+
+/* ===== 7. Спокойные карточки вместо «бегущего неона» ===== */
+:root:not([data-theme="light"]) .card,
+:root:not([data-theme="light"]) .profile-card,
+:root:not([data-theme="light"]) .rating-card,
+:root:not([data-theme="light"]) .leaderboard-card,
+:root:not([data-theme="light"]) .tabs-container,
+:root:not([data-theme="light"]) #view-news > .card,
+:root:not([data-theme="light"]) .club-header,
+:root:not([data-theme="light"]) .auth-overlay-card {
+  background: linear-gradient(160deg, rgba(32, 42, 66, 0.6) 0%, rgba(13, 20, 38, 0.85) 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.09) !important;
+  box-shadow: 0 14px 34px -18px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
+  animation: none !important;
+  border-radius: 18px;
+}
+
+/* Модальные окна — тот же спокойный материал */
+:root:not([data-theme="light"]) .modal-overlay > .modal-box,
+:root:not([data-theme="light"]) .swal2-popup,
+:root:not([data-theme="light"]) .toast {
+  animation: none !important;
+  background: linear-gradient(160deg, #232f4d 0%, #101828 100%) !important;
+  border: 1px solid rgba(255, 255, 255, 0.1) !important;
+}
+
+/* Акцентные карточки (последние матчи, инвайт) — цветность сохраняем, пульс глушим */
+:root:not([data-theme="light"]) #card-recent-matches,
+:root:not([data-theme="light"]) #btn-invite-glow {
+  animation: none !important;
+}
+
+/* ===== 8. Поля ввода: радиус и фиолетовое кольцо фокуса ===== */
+.input-time, .input-select, .textarea-announcement, .input-name {
+  border-radius: 12px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.input-time:focus, .input-select:focus, .textarea-announcement:focus, .input-name:focus {
+  border-color: var(--accent-violet);
+  box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.22);
+}
+
+/* ===== 9. Кнопки выбора счёта: явное активное состояние в тёмной теме ===== */
+.score-btn { border-radius: 10px; }
+:root:not([data-theme="light"]) .score-btn.active {
+  background: rgba(124, 58, 237, 0.18) !important;
+  border-color: var(--accent-violet) !important;
+  color: var(--accent-violet-text) !important;
+  box-shadow: 0 0 0 1px var(--accent-violet), 0 4px 14px -6px rgba(124, 58, 237, 0.5);
+}
+
+/* ===== 10. Мелочи премиальности ===== */
+:focus-visible { outline: 2px solid var(--accent-violet); outline-offset: 2px; }
+
+.scrollable-list { scrollbar-width: none; }
+.scrollable-list::-webkit-scrollbar { display: none; }
+
+/* Уважение к reduced-motion: глушим блик CTA */
+@media (prefers-reduced-motion: reduce) {
+  .btn-match-quick::after { animation: none !important; }
+}
