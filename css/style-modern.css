@@ -164,3 +164,17 @@ body, button, input, select, textarea {
 @media (prefers-reduced-motion: reduce) {
   .btn-match-quick::after { animation: none !important; }
 }
+
+/* ===== 11. Фикс: кнопка-инвайт и счётчики игроков — в фирменный акцент ===== */
+:root:not([data-theme="light"]) #btn-invite-glow {
+  background: linear-gradient(135deg, var(--accent-violet) 0%, var(--accent-violet-2) 100%) !important;
+  border: 1px solid rgba(167, 139, 250, 0.5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 12px 28px -10px rgba(124, 58, 237, 0.55) !important;
+  animation: none !important;
+}
+
+/* Счётчик «N игроков»: нейтральный — фиолетовый, «есть игроки» — остаётся зелёным */
+.counter { background: rgba(124, 58, 237, 0.14); color: var(--accent-violet-text); }
+.counter.has-players { background: rgba(16, 185, 129, 0.15); color: #059669; }
+:root:not([data-theme="light"]) .counter.has-players { color: var(--accent-green); }
