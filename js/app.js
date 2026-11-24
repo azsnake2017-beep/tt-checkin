@@ -1,4 +1,4 @@
-// ==========================================
+﻿// ==========================================
 // ОСНОВНОЙ ДВИЖОК: ПРОФИЛЬ, ТУРНИРЫ, АНОНСЫ И UI
 // ==========================================
 
@@ -339,14 +339,15 @@ function updateProfileDisplay() {
 
   // --- ФОНОВЫЙ ПОИСК МАТЧЕЙ ДЛЯ ПРОФИЛЯ (СТАРЫЙ РАБОЧИЙ МЕТОД, КАК В КАРТОЧКЕ) ---
   try {
-      db.collection('matches_history').get().then(function(allSnaps) {
+      db.collection('matches_history')
+        .where('participants', 'array-contains', currentUserProfile.uid)
+        .orderBy('timestamp', 'desc')
+        .limit(20)
+        .get().then(function(allSnaps) {
           var matches = [];
           allSnaps.forEach(function(docX) {
               var mx = docX.data();
-              // Ищем матчи локально, не блокируя базу!
-              if (mx && mx.participants && mx.participants.indexOf(currentUserProfile.uid) !== -1) { 
-                  matches.push(mx); 
-              }
+              if (mx) { matches.push(mx); }
           });
           
           var lastMatchStr = 'Ещё не играл';
