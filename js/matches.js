@@ -1,4 +1,4 @@
-// js/matches.js — Логика расчёта и фиксации матчей (1х1 и 2х2)
+﻿// js/matches.js — Логика расчёта и фиксации матчей (1х1 и 2х2)
 
 // Глобальная блокировка от двойных (и пятерных) нажатий
 window.isProcessingMatch = false;
@@ -393,65 +393,38 @@ function confirmMatch(matchId) {
           var p1BountyTag = pBountyBonus > 0 ? " 🎯 <b>(ОХОТНИК +100)</b>" : "";
           var p2BountyTag = oBountyBonus > 0 ? " 🎯 <b>(ОХОТНИК +100)</b>" : "";
 // ==========================================
-          // СИСТЕМА КВЕСТОВ (Анализ матча)
+          // СИСТЕМА КВЕСТОВ (Анализ матча — одиночный)
           // ==========================================
           if (typeof window.triggerQuestAction === 'function') {
              var currentDay = new Date().getDay();
              var isWeekend = (currentDay === 0 || currentDay === 6);
              
-             if (m.type !== 'doubles') {
-                var wUid = isPWin ? m.proposerUid : m.opponentUid;
-                
-                window.triggerQuestAction(m.proposerUid, 'play_match');
-                window.triggerQuestAction(m.opponentUid, 'play_match');
-                if (isWeekend) {
-                   window.triggerQuestAction(m.proposerUid, 'play_weekend');
-                   window.triggerQuestAction(m.opponentUid, 'play_weekend');
-                }
-                
-                if ((m.scoreProposer === 3 && m.scoreOpponent === 2) || (m.scoreOpponent === 3 && m.scoreProposer === 2)) {
-                   window.triggerQuestAction(m.proposerUid, 'play_3_2');
-                   window.triggerQuestAction(m.opponentUid, 'play_3_2');
-                   window.triggerQuestAction(wUid, 'win_3_2');
-                }
-                
-                window.triggerQuestAction(wUid, 'win_match');
-                
-                if ((isPWin && m.scoreOpponent === 0) || (!isPWin && m.scoreProposer === 0)) {
-                   window.triggerQuestAction(wUid, 'win_flawless');
-                }
-                
-                if (isPWin && (oElo - pElo >= 50)) window.triggerQuestAction(wUid, 'win_higher_elo');
-                if (!isPWin && (pElo - oElo >= 50)) window.triggerQuestAction(wUid, 'win_higher_elo');
-                
-                if (isPWin && pWinStreak >= 5) window.triggerQuestAction(wUid, 'win_streak');
-                if (!isPWin && oWinStreak >= 5) window.triggerQuestAction(wUid, 'win_streak');
-
-             } else {
-                var allUids = m.team1Uids.concat(m.team2Uids);
-                allUids.forEach(function(u) {
-                   window.triggerQuestAction(u, 'play_match');
-                   window.triggerQuestAction(u, 'play_doubles');
-                   if (isWeekend) window.triggerQuestAction(u, 'play_weekend');
-                });
-                
-                if ((m.scoreTeam1 === 3 && m.scoreTeam2 === 2) || (m.scoreTeam2 === 3 && m.scoreTeam1 === 2)) {
-                   allUids.forEach(function(u) { window.triggerQuestAction(u, 'play_3_2'); });
-                }
-
-                var winTeamUids = isTeam1Win ? m.team1Uids : m.team2Uids;
-                winTeamUids.forEach(function(u) {
-                   window.triggerQuestAction(u, 'win_match');
-                   window.triggerQuestAction(u, 'win_doubles');
-                   
-                   if ((isTeam1Win && m.scoreTeam2 === 0) || (!isTeam1Win && m.scoreTeam1 === 0)) {
-                      window.triggerQuestAction(u, 'win_flawless');
-                   }
-                   if ((isTeam1Win && m.scoreTeam2 === 2) || (!isTeam1Win && m.scoreTeam1 === 2)) {
-                      window.triggerQuestAction(u, 'win_3_2');
-                   }
-                });
+             var wUid = isPWin ? m.proposerUid : m.opponentUid;
+             
+             window.triggerQuestAction(m.proposerUid, 'play_match');
+             window.triggerQuestAction(m.opponentUid, 'play_match');
+             if (isWeekend) {
+                window.triggerQuestAction(m.proposerUid, 'play_weekend');
+                window.triggerQuestAction(m.opponentUid, 'play_weekend');
              }
+             
+             if ((m.scoreProposer === 3 && m.scoreOpponent === 2) || (m.scoreOpponent === 3 && m.scoreProposer === 2)) {
+                window.triggerQuestAction(m.proposerUid, 'play_3_2');
+                window.triggerQuestAction(m.opponentUid, 'play_3_2');
+                window.triggerQuestAction(wUid, 'win_3_2');
+             }
+             
+             window.triggerQuestAction(wUid, 'win_match');
+             
+             if ((isPWin && m.scoreOpponent === 0) || (!isPWin && m.scoreProposer === 0)) {
+                window.triggerQuestAction(wUid, 'win_flawless');
+             }
+             
+             if (isPWin && (oElo - pElo >= 50)) window.triggerQuestAction(wUid, 'win_higher_elo');
+             if (!isPWin && (pElo - oElo >= 50)) window.triggerQuestAction(wUid, 'win_higher_elo');
+             
+             if (isPWin && pWinStreak >= 5) window.triggerQuestAction(wUid, 'win_streak');
+             if (!isPWin && oWinStreak >= 5) window.triggerQuestAction(wUid, 'win_streak');
           }
           sendTelegramAlert(
             "🏆 <b>Одиночный матч подтверждён!</b>\n\n" +
