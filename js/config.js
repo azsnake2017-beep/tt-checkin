@@ -1,4 +1,4 @@
-// js/config.js — Утилиты, анимации, переключатели и автономные модули
+﻿// js/config.js — Утилиты, анимации, переключатели и автономные модули
 
 function checkBrowserCompatibility() {
   var isSupported = true;
@@ -141,11 +141,10 @@ function initTheme() {
 }
 function toggleTheme() {
   var root = document.documentElement;
-  if (root.getAttribute('data-theme') === 'light') {
-    root.removeAttribute('data-theme');
-  } else {
-    root.setAttribute('data-theme', 'light');
-  }
+  var newTheme = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+  root.setAttribute('data-theme', newTheme);
+  localStorage.setItem('tt_theme', newTheme);
+  updateThemeIcon(newTheme);
 }
 function updateThemeIcon(theme) {
   var btn = document.getElementById('btn-theme');
