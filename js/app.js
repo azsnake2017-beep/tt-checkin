@@ -2618,11 +2618,11 @@ document.addEventListener('DOMContentLoaded', function() {
       jokeEl.style.display = 'flex';
     }
     if (bar) {
-      bar.style.transition = 'width 8s linear'; 
+      bar.style.transition = 'width 8s linear';
       setTimeout(function() { bar.style.width = '100%'; }, 50);
     }
-    window.setAppProgress = function(percent, text) {}; 
-    
+    window.setAppProgress = function(percent, text) {};
+
     setTimeout(function() {
       if (typeof vibrate === 'function') vibrate('medium');
       var loader = document.getElementById('app-preloader');
@@ -2635,7 +2635,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }, 600);
       }
     }, 8000); // 8 секунд на чтение шутки
-    
   } else {
     if (jokeEl) jokeEl.style.display = 'none';
     if (bar) bar.style.width = '100%';

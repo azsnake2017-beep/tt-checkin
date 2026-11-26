@@ -1,5 +1,5 @@
 // sw.js — Service Worker для клуба настольного тенниса Челябинск
-var CACHE_NAME = 'tt-chmz-v4';
+var CACHE_NAME = 'tt-chmz-v5';
 
 var STATIC_FILES = [
   './',
@@ -8,21 +8,7 @@ var STATIC_FILES = [
   './css/style-modern.css',
   './js/config.js',
   './js/app.js',
-  './js/matches.js',
-  './js/radar.js',
-  './js/news.js',
-  './js/quests.js',
-  './js/sounds.js',
-  './js/score-confirm.js',
-  './js/tour-roster.js',
-  './manifest.json',
-  './logo.webp',
-  './assets/icons/icons.svg',
-  './assets/locations/loc_park.jpg',
-  './assets/locations/loc_vostok.jpg',
-  './assets/locations/loc_tttop.jpg',
-  './assets/locations/loc_olimp.jpg',
-  './assets/locations/loc_chemk.jpg'
+  './js/radar.js'
 ];
 
 self.addEventListener('install', function(event) {
