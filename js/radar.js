@@ -503,6 +503,17 @@ window.submitOpenChallenge = function() {
     document.getElementById('challenge-time-input').value = '';
     document.getElementById('challenge-note-input').value = '';
     if (typeof vibrate === 'function') vibrate('medium');
+
+    if (typeof sendTelegramAlert === 'function') {
+      var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[loc]) ? LOCATIONS[loc].name : loc;
+      var msg = "⚔️ <b>Ищу соперника!</b>\n\n" +
+        "🏓 Игрок: <b>" + cleanHtml(name) + "</b> (Эло: <b>" + elo + "</b>)\n" +
+        "📍 Площадка: <b>" + cleanHtml(locTitle) + "</b>\n" +
+        "🕒 Время: <b>" + cleanHtml(timeStr) + "</b>" +
+        (noteStr ? ("\n💬 Пожелания: <i>" + cleanHtml(noteStr) + "</i>") : "") +
+        "\n\nОткройте вкладку «Радар» в приложении, чтобы принять вызов!";
+      sendTelegramAlert(msg);
+    }
   }).catch(function() {});
 };
 
@@ -510,10 +521,18 @@ window.acceptOpenChallenge = function(id) {
   var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
   if (!uid) { if (typeof customAlert === 'function') customAlert('Авторизуйтесь, чтобы принять вызов!'); return; }
   var name = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) ? currentUserProfile.name : 'Игрок';
-  db.collection('open_challenges').doc(id).update({
-    acceptedBy: { uid: uid, name: name }
-  }).then(function() {
-    if (typeof vibrate === 'function') vibrate('medium');
+  var docRef = db.collection('open_challenges').doc(id);
+  docRef.get().then(function(doc) {
+    var chData = doc.exists ? doc.data() : null;
+    return docRef.update({
+      acceptedBy: { uid: uid, name: name }
+    }).then(function() {
+      if (typeof vibrate === 'function') vibrate('medium');
+      if (chData && typeof sendTelegramAlert === 'function') {
+        var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[chData.loc]) ? LOCATIONS[chData.loc].name : (chData.loc || '');
+        sendTelegramAlert("🤝 <b>Вызов принят!</b>\n\n<b>" + cleanHtml(name) + "</b> сыграет с <b>" + cleanHtml(chData.name || 'Игроком') + "</b>\n📍 " + cleanHtml(locTitle) + " • " + cleanHtml(chData.timeStr || ''));
+      }
+    });
   }).catch(function() {});
 };
 
