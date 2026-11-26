@@ -335,6 +335,7 @@ function updateProfileDisplay() {
   }
 
   var bEdit = document.getElementById('btn-edit-profile'); if (bEdit) bEdit.style.display = 'block';
+  var bShare = document.getElementById('btn-share-card'); if (bShare) bShare.style.display = 'inline-flex';
   var bLogout = document.getElementById('btn-logout'); if (bLogout) bLogout.style.display = 'block';
 
   // --- ФОНОВЫЙ ПОИСК МАТЧЕЙ ДЛЯ ПРОФИЛЯ (СТАРЫЙ РАБОЧИЙ МЕТОД, КАК В КАРТОЧКЕ) ---
@@ -349,6 +350,10 @@ function updateProfileDisplay() {
               var mx = docX.data();
               if (mx) { matches.push(mx); }
           });
+          window._lastProfileMatches = matches;
+          if (typeof renderProfileAnalytics === 'function') {
+            renderProfileAnalytics('profile-analytics-container', currentUserProfile, matches, currentUserProfile.uid, currentUserProfile.totalMinutes || 0);
+          }
           
           var lastMatchStr = 'Ещё не играл';
           if (matches.length > 0) {
@@ -894,6 +899,17 @@ function showUserInfoModal(uid) {
         if (dynRow) dynRow.innerHTML = '<span style="color: var(--text-muted);">Последняя игра:</span>' + lastMatchStr;
 
         if (typeof renderUserHistoryList === 'function') renderUserHistoryList(matches, uid);
+        if (typeof renderProfileAnalytics === 'function') {
+          var histEl = document.getElementById('info-modal-history');
+          if (histEl) {
+            var oldAn = document.getElementById('modal-analytics-box');
+            if (oldAn) oldAn.remove();
+            var anDiv = document.createElement('div');
+            anDiv.id = 'modal-analytics-box';
+            histEl.parentNode.insertBefore(anDiv, histEl);
+            renderProfileAnalytics('modal-analytics-box', u, matches, uid, mins);
+          }
+        }
     }).catch(function(err) {
         document.getElementById('info-modal-history').innerHTML = '<span class="empty-note">История матчей временно недоступна</span>';
         var dynRow = document.getElementById('dynamic-last-match-date');
@@ -2169,9 +2185,12 @@ function listenTournaments() {
             var allMatches = d.matches || [];
             if (allMatches.length > 0) {
                 detailsHtml += '<div style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 16px;">';
-                if (allMatches.length > 0) {
-                    var playoffsMatches = allMatches.filter(function(m){ return m.stage !== 'group'; });
-                    if (playoffsMatches.length > 0) {
+                var playoffsMatches = allMatches.filter(function(m){ return m.stage !== 'group'; });
+                if (playoffsMatches.length > 0 && typeof renderOlympicBracketTree === 'function') {
+                    detailsHtml += '<div style="font-size: 13px; font-weight: 800; color: var(--accent-amber); margin: 16px 0 4px 0; text-transform: uppercase; text-align: center;">Дерево турнира</div>';
+                    detailsHtml += renderOlympicBracketTree(playoffsMatches);
+                }
+                if (playoffsMatches.length > 0) {
                         playoffsMatches.sort(function(a, b) {
                             var rank = function(m) {
                               if (m.stage === 'olympic_r32') return 0;
@@ -2223,7 +2242,6 @@ function listenTournaments() {
                                            '<span style="flex: 1; text-align: left; font-weight: ' + (mgIsP2Win ? '700' : 'normal') + '; color: ' + (mgIsP2Win ? '#10b981' : 'var(--text-muted)') + '; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">' + cleanHtml(m.p2Name) + '</span></div>';
                         }
                     }
-                }
                 detailsHtml += '</div>';
             }
 
@@ -2282,6 +2300,9 @@ function listenTournaments() {
             }
 
             content += buildTournamentSummaryHtml(d);
+            if (typeof renderOlympicBracketTree === 'function' && d.matches && d.matches.length > 0) {
+              content += renderOlympicBracketTree(d.matches);
+            }
             var hasMoreToPlay = pools.some(function(pl) { return pl.playersCount > 2; });
             if (isAdmin && isAllMatchesDone && curMatches.length > 0) {
               if (hasMoreToPlay) {
@@ -2899,7 +2920,7 @@ var swipeState = {
   direction: 0,
   width: 0,
   gap: 20,
-  tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests', 'news']
+  tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests']
 };
 
 document.addEventListener('touchstart', function(e) {
@@ -3994,3 +4015,155 @@ async function generateBlindDoubles(participantUids) {
     
     return pairs;
 }
+
+
+// ==========================================
+// ЭТАП 4: АНАЛИТИКА ПРОФИЛЯ (SPARKLINE + RADAR), ДЕРЕВО СЕТКИ И SHARE-КАРТОЧКА
+// ==========================================
+window.buildEloSparklineSvg = function(matches, currentElo, uid) {
+  var elo = parseInt(currentElo, 10) || 1000;
+  var pts = [elo];
+  var list = (matches || []).slice(0, 15);
+  var cur = elo;
+  for (var i = 0; i < list.length; i++) {
+    var m = list[i];
+    var isDoubles = m.type === 'doubles';
+    var isWin = false;
+    if (isDoubles) {
+      var inT1 = (m.team1Uids && m.team1Uids.indexOf(uid) !== -1) || (m.p1Uid === uid);
+      var s1 = m.team1Score !== undefined ? m.team1Score : (m.p1Score || 0);
+      var s2 = m.team2Score !== undefined ? m.team2Score : (m.p2Score || 0);
+      isWin = inT1 ? (s1 > s2) : (s2 > s1);
+    } else {
+      isWin = (m.p1Uid === uid) ? ((m.p1Score || 0) > (m.p2Score || 0)) : ((m.p2Score || 0) > (m.p1Score || 0));
+    }
+    var step = parseInt(m.eloDelta, 10) || 14;
+    cur = Math.max(100, cur + (isWin ? -step : step));
+    pts.unshift(cur);
+  }
+  if (pts.length < 2) pts = [elo - 12, elo];
+  var minV = Math.min.apply(null, pts) - 10;
+  var maxV = Math.max.apply(null, pts) + 10;
+  var span = Math.max(20, maxV - minV);
+  var W = 140, H = 54, pad = 5;
+  var coords = pts.map(function(v, idx) {
+    var x = pad + (idx / (pts.length - 1)) * (W - pad * 2);
+    var y = (H - pad) - ((v - minV) / span) * (H - pad * 2);
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  });
+  var linePts = coords.join(' ');
+  var areaPts = pad + ',' + (H - pad) + ' ' + linePts + ' ' + (W - pad) + ',' + (H - pad);
+  var trendUp = pts[pts.length - 1] >= pts[0];
+  var stroke = trendUp ? '#10b981' : '#f43f5e';
+  var gid = 'sp_' + Math.floor(Math.random() * 100000);
+  return '<svg viewBox="0 0 ' + W + ' ' + H + '" style="width:100%; height:56px; overflow:visible;">' +
+    '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+    '<stop offset="0%" stop-color="' + stroke + '" stop-opacity="0.35"/><stop offset="100%" stop-color="' + stroke + '" stop-opacity="0"/>' +
+    '</linearGradient></defs>' +
+    '<polygon points="' + areaPts + '" fill="url(#' + gid + ')"/>' +
+    '<polyline fill="none" stroke="' + stroke + '" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" points="' + linePts + '"/>' +
+    '<circle cx="' + coords[coords.length - 1].split(',')[0] + '" cy="' + coords[coords.length - 1].split(',')[1] + '" r="3.5" fill="' + stroke + '"/>' +
+    '</svg>';
+};
+
+window.buildRadarChartSvg = function(u, mins) {
+  var matches = parseInt(u.matches, 10) || 0;
+  var wins = parseInt(u.wins, 10) || 0;
+  var winrate = matches > 0 ? Math.min(1, wins / matches) : 0.25;
+  var activity = Math.min(1, Math.max(0.15, (matches / 30) * 0.6 + ((mins || 0) / 600) * 0.4));
+  var streak = Math.min(1, Math.max(0.15, (parseInt(u.winStreak, 10) || 0) / 5));
+  var tours = Math.min(1, Math.max(0.15, (parseInt(u.tournamentsPlayed, 10) || 0) / 5));
+  var vals = [winrate, activity, streak, tours];
+  var labels = ['Винрейт', 'Актив', 'Серия', 'Турниры'];
+  var cx = 60, cy = 46, R = 28;
+  var dirs = [[0, -1], [1, 0], [0, 1], [-1, 0]];
+  var poly = vals.map(function(v, i) {
+    return (cx + dirs[i][0] * R * v).toFixed(1) + ',' + (cy + dirs[i][1] * R * v).toFixed(1);
+  }).join(' ');
+  var grid1 = dirs.map(function(d) { return (cx + d[0] * R).toFixed(1) + ',' + (cy + d[1] * R).toFixed(1); }).join(' ');
+  var grid2 = dirs.map(function(d) { return (cx + d[0] * R * 0.5).toFixed(1) + ',' + (cy + d[1] * R * 0.5).toFixed(1); }).join(' ');
+  return '<svg viewBox="0 0 120 92" style="width:100%; max-width:130px; height:84px;">' +
+    '<polygon points="' + grid1 + '" fill="none" stroke="rgba(148,163,184,0.22)" stroke-width="1"/>' +
+    '<polygon points="' + grid2 + '" fill="none" stroke="rgba(148,163,184,0.15)" stroke-width="1"/>' +
+    '<line x1="' + cx + '" y1="' + (cy - R) + '" x2="' + cx + '" y2="' + (cy + R) + '" stroke="rgba(148,163,184,0.18)" stroke-width="1"/>' +
+    '<line x1="' + (cx - R) + '" y1="' + cy + '" x2="' + (cx + R) + '" y2="' + cy + '" stroke="rgba(148,163,184,0.18)" stroke-width="1"/>' +
+    '<polygon points="' + poly + '" fill="rgba(124,58,237,0.32)" stroke="#a78bfa" stroke-width="2"/>' +
+    '<text x="' + cx + '" y="10" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="700">' + labels[0] + '</text>' +
+    '<text x="' + (cx + R + 4) + '" y="' + (cy + 3) + '" text-anchor="start" fill="#94a3b8" font-size="8" font-weight="700">' + labels[1] + '</text>' +
+    '<text x="' + cx + '" y="' + (cy + R + 12) + '" text-anchor="middle" fill="#94a3b8" font-size="8" font-weight="700">' + labels[2] + '</text>' +
+    '<text x="' + (cx - R - 4) + '" y="' + (cy + 3) + '" text-anchor="end" fill="#94a3b8" font-size="8" font-weight="700">' + labels[3] + '</text>' +
+    '</svg>';
+};
+
+window.renderProfileAnalytics = function(containerId, u, matches, uid, mins) {
+  var el = document.getElementById(containerId);
+  if (!el || !u) return;
+  var elo = u.elo !== undefined ? u.elo : 1000;
+  el.innerHTML = '<div class="analytics-bento">' +
+    '<div class="analytics-card"><div class="analytics-title">Форма (Эло)</div>' + buildEloSparklineSvg(matches, elo, uid) + '</div>' +
+    '<div class="analytics-card"><div class="analytics-title">Профиль игры</div>' + buildRadarChartSvg(u, mins) + '</div>' +
+    '</div>';
+};
+
+window.renderOlympicBracketTree = function(matches) {
+  if (!matches || matches.length === 0) return '';
+  var roundsMap = {};
+  var roundKeys = [];
+  for (var i = 0; i < matches.length; i++) {
+    var m = matches[i];
+    if (m.stage === 'group') continue;
+    var rKey = m.olympicRound ? ('R' + m.olympicRound) : (m.stage === 'quarter' ? '1/4' : (m.stage === 'semi' ? '1/2' : 'Финал'));
+    if (!roundsMap[rKey]) { roundsMap[rKey] = []; roundKeys.push(rKey); }
+    roundsMap[rKey].push(m);
+  }
+  if (roundKeys.length === 0) return '';
+  var colsHtml = '';
+  for (var k = 0; k < roundKeys.length; k++) {
+    var rk = roundKeys[k];
+    var rMatches = roundsMap[rk];
+    var nodesHtml = '';
+    for (var j = 0; j < rMatches.length; j++) {
+      var pm = rMatches[j];
+      var p1Win = pm.score1 !== null && pm.score1 > pm.score2;
+      var p2Win = pm.score1 !== null && pm.score2 > pm.score1;
+      nodesHtml += '<div class="bracket-match-node ' + (pm.id === 'first' ? 'is-final' : '') + '">' +
+        '<div style="font-size:9px; color:var(--text-muted); font-weight:700;">' + cleanHtml(pm.title || '') + '</div>' +
+        '<div class="bracket-player-row ' + (p1Win ? 'winner' : '') + '"><span class="bracket-player-name">' + cleanHtml(pm.p1Name) + '</span><span class="bracket-score-pill">' + (pm.score1 !== null ? pm.score1 : '-') + '</span></div>' +
+        '<div class="bracket-player-row ' + (p2Win ? 'winner' : '') + '"><span class="bracket-player-name">' + cleanHtml(pm.p2Name) + '</span><span class="bracket-score-pill">' + (pm.score2 !== null ? pm.score2 : '-') + '</span></div>' +
+        '</div>';
+    }
+    colsHtml += '<div class="bracket-round-col"><div class="bracket-round-label">' + (rk.indexOf('R') === 0 ? ('Раунд ' + rk.slice(1)) : rk) + '</div>' + nodesHtml + '</div>';
+  }
+  return '<div class="bracket-scroll"><div class="bracket-tree">' + colsHtml + '</div></div>';
+};
+
+window.openShareCardModal = function() {
+  if (typeof currentUserProfile === 'undefined' || !currentUserProfile) return;
+  var u = currentUserProfile;
+  var elo = u.elo !== undefined ? u.elo : 1000;
+  var wins = parseInt(u.wins, 10) || 0;
+  var matches = parseInt(u.matches, 10) || 0;
+  var wr = matches > 0 ? Math.round((wins / matches) * 100) : 0;
+  var avEl = document.getElementById('share-card-avatar');
+  if (avEl) avEl.innerHTML = u.avatarSvg || '<svg class="tt-icon" style="width:36px;height:36px;"><use href="#icon-nav-profile"></use></svg>';
+  document.getElementById('share-card-name').innerText = u.name || 'Игрок';
+  document.getElementById('share-card-rank').innerText = typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок';
+  document.getElementById('share-card-elo').innerText = elo;
+  document.getElementById('share-card-stats').innerHTML = '<div><b>' + matches + '</b><br><span style="font-size:10px;color:#94a3b8;">Матчей</span></div><div><b>' + wins + '</b><br><span style="font-size:10px;color:#94a3b8;">Побед</span></div><div><b>' + wr + '%</b><br><span style="font-size:10px;color:#94a3b8;">Винрейт</span></div>';
+  document.getElementById('share-card-sparkline').innerHTML = buildEloSparklineSvg(window._lastProfileMatches || [], elo, u.uid);
+  openModalSmoothly('share-card-modal');
+};
+
+window.downloadShareStoryCard = function() {
+  var node = document.getElementById('share-story-capture');
+  if (!node || typeof html2canvas !== 'function') {
+    if (typeof customAlert === 'function') customAlert('Генератор картинок ещё загружается, попробуйте через секунду.');
+    return;
+  }
+  html2canvas(node, { backgroundColor: '#090d1a', scale: 2 }).then(function(canvas) {
+    var link = document.createElement('a');
+    link.download = 'tt-chelyabinsk-card.png';
+    link.href = canvas.toDataURL('image/png');
+    link.click();
+  });
+};

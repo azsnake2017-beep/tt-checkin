@@ -466,3 +466,94 @@ function renderAll() {
       if (typeof hasTriggeredPush !== 'undefined') hasTriggeredPush = false; 
   }
 }
+
+
+// ==========================================
+// ЗАЯВКИ «ИЩУ СОПЕРНИКА» (OPEN CHALLENGES)
+// ==========================================
+window.openChallengeModal = function() {
+  var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  if (!uid) {
+    if (typeof customAlert === 'function') customAlert('Сначала авторизуйтесь в клубе!');
+    return;
+  }
+  if (typeof openModalSmoothly === 'function') openModalSmoothly('challenge-modal');
+};
+
+window.submitOpenChallenge = function() {
+  var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  if (!uid) return;
+  var loc = document.getElementById('challenge-loc-select').value;
+  var timeStr = (document.getElementById('challenge-time-input').value || '').trim() || 'Сегодня вечером';
+  var noteStr = (document.getElementById('challenge-note-input').value || '').trim();
+  var name = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) ? currentUserProfile.name : 'Игрок';
+  var elo = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.elo) ? currentUserProfile.elo : 1000;
+
+  db.collection('open_challenges').add({
+    uid: uid,
+    name: name,
+    elo: elo,
+    loc: loc,
+    timeStr: timeStr,
+    note: noteStr,
+    acceptedBy: null,
+    createdAt: Date.now()
+  }).then(function() {
+    if (typeof closeModalSmoothly === 'function') closeModalSmoothly('challenge-modal');
+    document.getElementById('challenge-time-input').value = '';
+    document.getElementById('challenge-note-input').value = '';
+    if (typeof vibrate === 'function') vibrate('medium');
+  }).catch(function() {});
+};
+
+window.acceptOpenChallenge = function(id) {
+  var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+  if (!uid) { if (typeof customAlert === 'function') customAlert('Авторизуйтесь, чтобы принять вызов!'); return; }
+  var name = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) ? currentUserProfile.name : 'Игрок';
+  db.collection('open_challenges').doc(id).update({
+    acceptedBy: { uid: uid, name: name }
+  }).then(function() {
+    if (typeof vibrate === 'function') vibrate('medium');
+  }).catch(function() {});
+};
+
+window.deleteOpenChallenge = function(id) {
+  db.collection('open_challenges').doc(id).delete().catch(function() {});
+};
+
+window.listenOpenChallenges = function() {
+  var box = document.getElementById('open-challenges-list');
+  if (!box || typeof db === 'undefined') return;
+  db.collection('open_challenges').orderBy('createdAt', 'desc').limit(10).onSnapshot(function(snap) {
+    var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+    var cutoff = Date.now() - (12 * 3600 * 1000);
+    var html = '';
+    snap.forEach(function(doc) {
+      var d = doc.data();
+      if (!d || (d.createdAt && d.createdAt < cutoff)) return;
+      var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[d.loc]) ? LOCATIONS[d.loc].name : d.loc;
+      var actHtml = '';
+      if (d.acceptedBy) {
+        actHtml = '<span style="font-size:11px; color:var(--accent-green); font-weight:700;">Принял: ' + cleanHtml(d.acceptedBy.name) + '</span>';
+      } else if (uid && d.uid === uid) {
+        actHtml = '<button class="btn-leave" style="width:auto; padding:5px 10px; font-size:11px;" onclick="deleteOpenChallenge(\'' + escapeJS(doc.id) + '\')">Удалить</button>';
+      } else {
+        actHtml = '<button class="btn btn-join" style="width:auto; padding:6px 12px; font-size:11px; border-radius:999px;" onclick="acceptOpenChallenge(\'' + escapeJS(doc.id) + '\')">Принять</button>';
+      }
+      html += '<div class="challenge-card">' +
+        '<div class="challenge-meta">' +
+          '<div class="challenge-title">' + cleanHtml(d.name) + ' <span style="color:var(--accent-violet-text); font-size:11px;">(' + (d.elo || 1000) + ')</span></div>' +
+          '<div class="challenge-sub">' + cleanHtml(locTitle) + ' • ' + cleanHtml(d.timeStr) + (d.note ? (' • ' + cleanHtml(d.note)) : '') + '</div>' +
+        '</div>' +
+        '<div>' + actHtml + '</div>' +
+      '</div>';
+    });
+    box.innerHTML = html || '<span class="empty-note" style="padding: 2px 0;">Пока нет открытых вызовов</span>';
+  }, function() {});
+};
+
+document.addEventListener('DOMContentLoaded', function() {
+  setTimeout(function() {
+    if (typeof listenOpenChallenges === 'function') listenOpenChallenges();
+  }, 600);
+});

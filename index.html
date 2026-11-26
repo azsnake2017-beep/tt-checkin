@@ -267,10 +267,31 @@
       <div id="user-inventory-container" style="display: none;"></div>
 
       <div class="profile-actions-row">
-        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()" style="display:none;">Редактировать профиль</button>
+        <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()" style="display:none;">Редактировать</button>
+        <button class="btn-edit" id="btn-share-card" onclick="openShareCardModal()" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.22), rgba(79,70,229,0.22)); border: 1px solid rgba(167,139,250,0.4); color: var(--accent-violet-text);"><svg class="tt-icon"><use href="#icon-share"></use></svg> Карточка</button>
         <button class="btn-logout" id="btn-logout" onclick="logoutProfile()" style="display:none;">Выйти</button>
       </div>
     </div>
+
+    <div id="profile-analytics-container"></div>
+
+    <div class="bento-grid">
+      <button class="bento-tile" onclick="switchNavTab('arcade')">
+        <div class="bento-tile-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">
+          <svg class="tt-icon" style="width:20px; height:20px;"><use href="#icon-nav-arcade"></use></svg>
+        </div>
+        <div class="bento-tile-title">Cyber Pong 3D</div>
+        <div class="bento-tile-sub">Мини-аркада клуба</div>
+      </button>
+      <button class="bento-tile" onclick="switchNavTab('news')">
+        <div class="bento-tile-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+          <svg class="tt-icon" style="width:20px; height:20px;"><use href="#icon-nav-news"></use></svg>
+        </div>
+        <div class="bento-tile-title">Новости</div>
+        <div class="bento-tile-sub">Мир настольного тенниса</div>
+      </button>
+    </div>
+
 <button id="btn-invite-glow" class="btn btn-join" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
   <svg class="tt-icon"><use href="#icon-user-plus"></use></svg> Добавить участника в клуб
 </button>    
@@ -281,6 +302,15 @@
 
   <!-- ЭКРАН 2: РАДАР (ГОРОДСКОЕ СООБЩЕСТВО ЧЕЛЯБИНСК) -->
   <div id="view-radar" class="main-view">
+    <div class="challenges-box" id="open-challenges-box">
+      <div style="display: flex; justify-content: space-between; align-items: center; gap: 8px;">
+        <div style="font-size: 14px; font-weight: 800; color: var(--text); display:flex; align-items:center; gap:6px;">
+          <svg class="tt-icon" style="color: var(--accent-violet-text);"><use href="#icon-nav-tournaments"></use></svg> Ищу соперника
+        </div>
+        <button class="btn btn-join" style="width: auto; padding: 6px 12px; font-size: 12px; border-radius: 999px;" onclick="openChallengeModal()">+ Создать заявку</button>
+      </div>
+      <div id="open-challenges-list"><span class="empty-note" style="padding: 2px 0;">Пока нет открытых вызовов</span></div>
+    </div>
     
     <!-- Локация 1: Парк им. Тищенко -->
     <div class="card" id="card-park">
@@ -497,8 +527,10 @@
   <!-- ЭКРАН 5: НОВОСТИ (ОБЯЗАТЕЛЬНО ДОЛЖЕН БЫТЬ ЗДЕСЬ) -->
   <div id="view-news" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
-     <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
-  <h2 style="font-size: 18px; color: #3b82f6; margin: 0; display:flex; align-items:center; gap:8px;"><svg class="tt-icon"><use href="#icon-nav-news"></use></svg> Мир настольного тенниса</h2>
+     <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+  <button class="btn-edit" style="flex:0; padding: 6px 12px; font-size: 12px;" onclick="switchNavTab('profile')">← Назад</button>
+  <h2 style="font-size: 18px; color: #3b82f6; margin: 0; display:flex; align-items:center; gap:8px;"><svg class="tt-icon"><use href="#icon-nav-news"></use></svg> Новости</h2>
+  <span style="width: 60px;"></span>
       </div>
       <div id="news-container" style="display: flex; flex-direction: column; gap: 10px;">
         <div class="tt-skeleton-group"><div class="tt-skeleton lg"></div><div class="tt-skeleton lg"></div><div class="tt-skeleton lg"></div></div>
@@ -529,15 +561,13 @@
 </div>
 </div> <!-- ЭТОТ ЗАКРЫВАЮЩИЙ ТЕГ КОНТЕЙНЕРА ДОЛЖЕН БЫТЬ ПОСЛЕ ВСЕХ ЭКРАНОВ! -->
 
-<!-- BOTTOM NAVIGATION -->
+<!-- BOTTOM NAVIGATION (5 главных вкладок) -->
 <div class="bottom-nav">
   <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')" aria-label="Профиль"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-profile"></use></svg></span><span>Профиль</span></a>
   <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')" aria-label="Радар"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-radar"></use></svg></span><span>Радар</span></a>
   <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')" aria-label="Рейтинг"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-ratings"></use></svg></span><span>Рейтинг</span></a>
   <a class="nav-item" id="nav-tournaments" onclick="switchNavTab('tournaments')" aria-label="Турниры"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-tournaments"></use></svg></span><span>Турниры</span></a>
   <a class="nav-item" id="nav-quests" onclick="switchNavTab('quests')" aria-label="Задания"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-quests"></use></svg></span><span>Задания</span></a>
-  <a class="nav-item" id="nav-arcade" onclick="switchNavTab('arcade')" aria-label="Аркада"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-arcade"></use></svg></span><span>Аркада</span></a>
-  <a class="nav-item" id="nav-news" onclick="switchNavTab('news')" aria-label="Новости"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-news"></use></svg></span><span>Новости</span></a>
 </div>
 
 <!-- МОДАЛЬНЫЕ ОКНА -->
@@ -871,6 +901,47 @@
     <button class="btn btn-join" style="width: 100%; background: linear-gradient(135deg, #10b981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="shareMyRefLink()">
       <span>✉️</span> Или отправить ссылкой
     </button>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: ЗАЯВКА «ИЩУ СОПЕРНИКА» -->
+<div class="modal-overlay" id="challenge-modal">
+  <div class="modal-box" style="border-color: var(--accent-purple);">
+    <h3 style="font-size: 17px; color: var(--accent-violet-text);">Найти соперника</h3>
+    <select id="challenge-loc-select" class="input-select">
+      <option value="park">Парк им. Тищенко</option>
+      <option value="vostok">ДК «Восток»</option>
+      <option value="tttop">Клуб «ТТ Топ»</option>
+      <option value="olimp">СОК МУ «Олимп»</option>
+      <option value="chemk">ДС «ЧЭМК»</option>
+    </select>
+    <input type="text" id="challenge-time-input" class="input-name" placeholder="Когда (напр.: Сегодня, 19:00)" maxlength="40" />
+    <input type="text" id="challenge-note-input" class="input-name" placeholder="Пожелания (напр.: Эло 1100–1300)" maxlength="50" />
+    <button class="btn btn-join" onclick="submitOpenChallenge()">Опубликовать заявку</button>
+    <button class="btn-cancel-modal" onclick="closeModalSmoothly('challenge-modal')">Отмена</button>
+  </div>
+</div>
+
+<!-- МОДАЛЬНОЕ ОКНО: КАРТОЧКА ДЛЯ СОЦСЕТЕЙ -->
+<div class="modal-overlay" id="share-card-modal">
+  <div class="modal-box" style="border-color: var(--accent-purple); align-items: center;">
+    <div style="display: flex; align-items: center; justify-content: space-between; width: 100%; border-bottom: 1px solid var(--card-border); padding-bottom: 10px; margin-bottom: 10px;">
+      <h3 style="font-size: 16px; color: var(--accent-violet-text);">Карточка игрока</h3>
+      <button class="btn-cancel-modal" style="margin-top:0;" onclick="closeModalSmoothly('share-card-modal')">✕</button>
+    </div>
+    <div id="share-story-capture" class="share-story-card">
+      <div style="font-size: 10px; font-weight: 800; letter-spacing: 0.14em; color: #a78bfa; text-transform: uppercase;">КЛУБ НАСТОЛЬНОГО ТЕННИСА • ЧЕЛЯБИНСК</div>
+      <div id="share-card-avatar" style="width: 84px; height: 84px; border-radius: 16px; overflow: hidden; border: 2px solid #38bdf8; background: #000; display:flex; align-items:center; justify-content:center;"></div>
+      <div id="share-card-name" style="font-family: 'Russo One', sans-serif; font-size: 20px;">Игрок</div>
+      <div id="share-card-rank" style="font-size: 12px; padding: 3px 10px; border-radius: 999px; background: rgba(124,58,237,0.25); border: 1px solid rgba(167,139,250,0.4);">Ранг</div>
+      <div class="share-story-elo" id="share-card-elo">1000</div>
+      <div style="font-size: 11px; color: #94a3b8; margin-top: -8px;">РЕЙТИНГ ЭЛО</div>
+      <div id="share-card-stats" style="display: flex; justify-content: space-around; width: 100%; background: rgba(255,255,255,0.05); border-radius: 12px; padding: 10px; font-size: 12px;"></div>
+      <div id="share-card-sparkline" style="width: 100%;"></div>
+    </div>
+    <div style="display: flex; gap: 8px; width: 100%; margin-top: 12px;">
+      <button class="btn btn-join" style="flex: 1;" onclick="downloadShareStoryCard()"><svg class="tt-icon"><use href="#icon-download"></use></svg> Скачать PNG</button>
+    </div>
   </div>
 </div>
 
