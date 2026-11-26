@@ -2119,15 +2119,16 @@ function listenTournaments() {
             var tPartsCount = d.participants ? d.participants.length : 0;
             var tMatchesCount = d.matches ? d.matches.filter(function(m){ return m.score1 !== null; }).length : 0;
             
+            var ico = typeof ttIcon === 'function' ? ttIcon : function(){ return ''; };
             var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15); position: relative;">' +
                 '<div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 4px;">' +
-                    '<button onclick="downloadTournamentPoster(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px;">📸 PNG</button>' +
-                    '<button onclick="downloadTournamentPDF(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px;">📄 PDF</button>' +
+                    '<button onclick="downloadTournamentPoster(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px; display:inline-flex; align-items:center; gap:4px;">' + ico('icon-download') + ' PNG</button>' +
+                    '<button onclick="downloadTournamentPDF(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px; display:inline-flex; align-items:center; gap:4px;">' + ico('icon-download') + ' PDF</button>' +
                 '</div>' +
-                '<div style="font-size: 18px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-top: 8px;">🏆 ИТОГИ ТУРНИРА</div>' +
+                '<div style="font-size: 18px; font-weight: 900; color: #fbbf24; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; padding-top: 26px; display:flex; align-items:center; justify-content:center; gap:6px;">' + ico('icon-nav-ratings') + ' ИТОГИ ТУРНИРА</div>' +
                 '<div style="font-size: 15px; font-weight: 700; color: #fff; margin-bottom: 6px;">' + cleanHtml(d.title) + '</div>' +
-                '<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 24px;">' + (d.dateStr || 'Завершен') + '</div>' +
-                '<div style="display: flex; justify-content: center; align-items: flex-end; gap: 6px; margin-bottom: 24px; height: 110px;">' +
+                '<div style="font-size: 11px; color: var(--text-muted); margin-bottom: 30px;">' + (d.dateStr || 'Завершен') + '</div>' +
+                '<div style="display: flex; justify-content: center; align-items: flex-end; gap: 8px; margin-bottom: 24px; min-height: 120px; padding-top: 8px;">' +
                     '<div style="display: flex; flex-direction: column; align-items: center; width: 30%;">' +
                         '<div style="font-size: 11px; font-weight: 700; color: #fff; text-align: center; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%;">' + cleanHtml(silverName || '-') + '</div>' +
                         '<div style="font-size: 26px; margin: 4px 0; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));">🥈</div>' +
@@ -2229,7 +2230,7 @@ function listenTournaments() {
             archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.9;">' +
                            '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
                                 '<div><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div></div>' +
-                                '<button class="btn-info" style="font-size: 11px; width: auto; padding: 6px 12px; border-radius: 6px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">📜 История</button>' +
+                                '<button class="btn-info" style="font-size: 11px; width: auto; padding: 6px 12px; border-radius: 6px; display:inline-flex; align-items:center; gap:4px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">' + ico('icon-folder') + ' История</button>' +
                            '</div>' +
                            '<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; margin-top: 8px;">' +
                                 '<div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div>' +

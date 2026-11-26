@@ -471,12 +471,12 @@
 
     <div class="rating-card" id="view-rating-content">
       <div class="card-block-title" style="color: var(--accent-purple);"><svg class="tt-icon"><use href="#icon-nav-tournaments"></use></svg><span>Клубный рейтинг игроков</span></div>
-      <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Загрузка рейтинга...</span></div>
+      <div id="rating-list" class="scrollable-list"><div class="tt-skeleton-group"><div class="tt-skeleton"></div><div class="tt-skeleton"></div><div class="tt-skeleton"></div></div></div>
     </div>
 
     <div class="leaderboard-card" id="view-time-content" style="display: none;">
       <div class="card-block-title" style="color: var(--accent-gold);"><svg class="tt-icon"><use href="#icon-crown"></use></svg><span>Зал славы (Тренировки)</span></div>
-      <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span></div>
+      <div id="leaderboard-list" class="scrollable-list"><div class="tt-skeleton-group"><div class="tt-skeleton"></div><div class="tt-skeleton"></div><div class="tt-skeleton"></div></div></div>
     </div>
   </div>
 
@@ -501,7 +501,7 @@
   <h2 style="font-size: 18px; color: #3b82f6; margin: 0; display:flex; align-items:center; gap:8px;"><svg class="tt-icon"><use href="#icon-nav-news"></use></svg> Мир настольного тенниса</h2>
       </div>
       <div id="news-container" style="display: flex; flex-direction: column; gap: 10px;">
-        <span class="empty-note">Сбор свежих новостей...</span>
+        <div class="tt-skeleton-group"><div class="tt-skeleton lg"></div><div class="tt-skeleton lg"></div><div class="tt-skeleton lg"></div></div>
       </div>
     </div>
   </div>
@@ -513,7 +513,7 @@
         <button class="btn-info" onclick="customAlert('Испытания на неделю, выполняйте их в матчах и получайте бонусное Эло и уникальные статусы в профиль!')" aria-label="Справка по заданиям">?</button>
       </div>
       <div id="quest-board-content">
-        <span class="empty-note">Загрузка заданий...</span>
+        <div class="tt-skeleton-group"><div class="tt-skeleton lg"></div><div class="tt-skeleton lg"></div></div>
       </div>
     </div>
   </div>

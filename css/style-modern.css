@@ -266,3 +266,42 @@ body, button, input, select, textarea {
   color: var(--accent-amber);
   font-weight: 700;
 }
+
+/* ===== 13. Этап 3: Скелетон-лоадеры и полировка деталей ===== */
+.tt-skeleton-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  padding: 4px 0;
+}
+
+.tt-skeleton {
+  height: 44px;
+  border-radius: 12px;
+  background: linear-gradient(90deg, rgba(148, 163, 184, 0.08) 25%, rgba(148, 163, 184, 0.18) 50%, rgba(148, 163, 184, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: ttSkeletonShimmer 1.5s infinite linear;
+}
+
+.tt-skeleton.sm { height: 28px; width: 65%; margin: 0 auto; }
+.tt-skeleton.lg { height: 68px; }
+
+@keyframes ttSkeletonShimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.bottom-nav .nav-item.active .nav-icon {
+  background: rgba(124, 58, 237, 0.16);
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+#telegram-login-container:empty {
+  display: none !important;
+}
+
+#telegram-login-container {
+  background: transparent !important;
+}
