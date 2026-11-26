@@ -6,44 +6,76 @@
     <title>CYBER PONG: ЧМЗ СИНДИКАТ</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@500;700;800&family=Russo+One&family=Press+Start+2P&display=swap" rel="stylesheet">
     
     <style>
         * { box-sizing: border-box; user-select: none; -webkit-user-select: none; touch-action: none; }
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            background-color: #030303; color: #0ff;
-            font-family: 'Press Start 2P', monospace;
+            background-color: #050814; color: #f8fafc;
+            font-family: 'Inter', system-ui, sans-serif;
         }
+        .font-display { font-family: 'Russo One', sans-serif; letter-spacing: 0.04em; }
+        .font-pixel { font-family: 'Press Start 2P', monospace; }
 
         .scanlines {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: 100;
-            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 3px 100%;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.14) 50%);
+            background-size: 100% 4px;
+            opacity: 0.25;
             pointer-events: none;
         }
 
-        .glitch-text { text-shadow: 2px 0 #f0f, -2px 0 #0ff; }
+        .glitch-text { text-shadow: 0 0 14px rgba(56, 189, 248, 0.55), 2px 0 rgba(236, 72, 153, 0.7), -2px 0 rgba(34, 211, 238, 0.7); }
 
         .neon-border {
-            border: 2px solid #0ff; box-shadow: 0 0 12px rgba(0,255,255,0.4), inset 0 0 10px rgba(0,255,255,0.2);
-            background: rgba(0, 15, 15, 0.85); backdrop-filter: blur(4px);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            background: rgba(11, 17, 34, 0.78);
+            backdrop-filter: blur(14px);
+            border-radius: 16px;
         }
         
         .neon-border-pink {
-            border: 2px solid #f0f; box-shadow: 0 0 12px rgba(255,0,255,0.4), inset 0 0 10px rgba(255,0,255,0.2);
-            background: rgba(15, 0, 15, 0.85); backdrop-filter: blur(4px);
+            border: 1px solid rgba(236, 72, 153, 0.4);
+            box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+            background: rgba(24, 10, 32, 0.78);
+            backdrop-filter: blur(14px);
+            border-radius: 16px;
         }
 
         .neon-btn {
-            background: transparent; border: 2px solid #0ff; color: #0ff;
-            text-transform: uppercase; cursor: pointer; transition: 0.2s;
-            box-shadow: 0 0 5px #0ff;
+            background: rgba(30, 41, 59, 0.65);
+            border: 1px solid rgba(56, 189, 248, 0.45);
+            color: #e0f2fe;
+            border-radius: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            cursor: pointer;
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s, box-shadow 0.2s;
         }
-        .neon-btn:active, .neon-btn.active { background: #0ff; color: #000; box-shadow: 0 0 20px #0ff; }
+        .neon-btn:hover { background: rgba(56, 189, 248, 0.16); border-color: #38bdf8; }
+        .neon-btn:active { transform: scale(0.95); }
+        .neon-btn.active {
+            background: linear-gradient(135deg, #06b6d4 0%, #3b82f6 100%);
+            color: #ffffff;
+            border-color: transparent;
+            box-shadow: 0 6px 20px -4px rgba(6, 182, 212, 0.65);
+        }
 
-        .neon-btn-pink { border-color: #f0f; color: #f0f; box-shadow: 0 0 5px #f0f; }
-        .neon-btn-pink:active { background: #f0f; color: #000; box-shadow: 0 0 20px #f0f; }
+        .neon-btn-pink {
+            background: linear-gradient(135deg, #ec4899 0%, #8b5cf6 100%);
+            border: none;
+            color: #ffffff;
+            border-radius: 14px;
+            font-weight: 800;
+            text-transform: uppercase;
+            cursor: pointer;
+            box-shadow: 0 10px 25px -6px rgba(236, 72, 153, 0.6);
+            transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.2s;
+        }
+        .neon-btn-pink:hover { filter: brightness(1.1); }
+        .neon-btn-pink:active { transform: scale(0.95); }
 
         #loading-screen, #main-menu, #game-ui, #game-over { position: absolute; inset: 0; z-index: 10; display: flex; flex-direction: column; }
         #canvas-container { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; }
@@ -51,7 +83,7 @@
         .hidden { display: none !important; }
 
         .vfx-text {
-            position: absolute; font-size: 1.5rem; pointer-events: none; z-index: 50;
+            position: absolute; font-family: 'Russo One', sans-serif; font-size: 1.6rem; pointer-events: none; z-index: 50;
             animation: floatUp 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
         @keyframes floatUp {
@@ -71,9 +103,9 @@
         .speech-bubble {
             transition: top 0.1s, left 0.1s;
             animation: pop-bubble 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-            box-shadow: 4px 4px 0px rgba(0, 255, 255, 0.6);
+            box-shadow: 0 8px 20px rgba(0, 255, 255, 0.25);
         }
-        .speech-bubble.pink-shadow { box-shadow: 4px 4px 0px rgba(255, 0, 255, 0.6); }
+        .speech-bubble.pink-shadow { box-shadow: 0 8px 20px rgba(236, 72, 153, 0.35); }
         @keyframes pop-bubble {
             0% { transform: translate(-50%, -100%) scale(0); opacity: 0; }
             100% { transform: translate(-50%, -100%) scale(1); opacity: 1; }
@@ -90,78 +122,85 @@
     <div class="scanlines"></div>
 
     <!-- 1. ЭКРАН ЗАГРУЗКИ -->
-    <div id="loading-screen" class="justify-center items-center bg-black">
-        <h1 class="text-2xl sm:text-4xl glitch-text mb-8 text-center leading-loose">СИНДИКАТ<br>ЧМЗ</h1>
-        <div class="w-64 border-2 border-cyan-400 p-1">
-            <div id="loading-bar" class="h-4 bg-cyan-400 w-0 transition-all duration-100"></div>
+    <div id="loading-screen" class="justify-center items-center bg-[#050814]">
+        <h1 class="font-display text-3xl sm:text-5xl glitch-text mb-6 text-center leading-tight">CYBER PONG<br><span class="text-cyan-400 text-lg sm:text-2xl">ЧМЗ АРЕНА</span></h1>
+        <div class="w-64 h-2.5 bg-slate-800 rounded-full overflow-hidden border border-cyan-400/40 p-0.5">
+            <div id="loading-bar" class="h-full rounded-full bg-gradient-to-r from-cyan-400 via-blue-500 to-fuchsia-500 w-0 transition-all duration-150"></div>
         </div>
-        <p id="loading-text" class="mt-4 text-xs text-cyan-400 animate-pulse">Инициализация графического движка v4.0...</p>
+        <p id="loading-text" class="mt-4 text-xs text-cyan-300 font-semibold animate-pulse">Запуск 3D-арены WTT...</p>
     </div>
 
     <!-- 2. ГЛАВНОЕ МЕНЮ -->
-    <div id="main-menu" class="hidden justify-center items-center bg-black/80 p-4">
-        <h1 class="text-3xl sm:text-5xl glitch-text mb-2 text-center">CYBER PONG</h1>
-        <h2 class="text-xs sm:text-sm text-pink-500 mb-6 text-center">WTT PROTOCOL v4.0 (RTX ON)</h2>
+    <div id="main-menu" class="hidden justify-center items-center bg-slate-950/75 backdrop-blur-md p-4">
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-500/10 border border-cyan-400/30 text-[10px] font-bold text-cyan-300 uppercase tracking-widest mb-3">
+          <span>WTT PROTOCOL v5.0</span> • <span class="text-fuchsia-400">DYNAMIC AI</span>
+        </div>
+        <h1 class="font-display text-4xl sm:text-5xl glitch-text mb-1 text-center">CYBER PONG</h1>
+        <p class="text-xs text-slate-400 mb-5 text-center">Сложность растёт с каждым ударом и очком</p>
         
-        <div class="w-full max-w-sm neon-border p-6 flex flex-col gap-4">
-            <h3 class="text-center text-sm text-yellow-400">ВЫБЕРИТЕ УРОВЕНЬ ДОСТУПА:</h3>
+        <div class="w-full max-w-sm neon-border p-5 flex flex-col gap-3">
+            <div class="flex items-center justify-between text-xs text-slate-300 border-b border-white/10 pb-2">
+              <span class="font-bold text-amber-400">СТАРТОВЫЙ УРОВЕНЬ</span>
+              <span id="menu-wins-badge" class="text-[11px] text-cyan-300 font-bold">Побед: 0</span>
+            </div>
             
-            <button class="diff-btn neon-btn py-3 text-xs sm:text-sm" data-diff="0">НОВИЧОК (Легко)</button>
-            <button class="diff-btn neon-btn py-3 text-xs sm:text-sm active bg-cyan-400 text-black" data-diff="1">ЛЮБИТЕЛЬ (Норма)</button>
-            <button class="diff-btn neon-btn py-3 text-xs sm:text-sm" data-diff="2">МАСТЕР (Хардкор)</button>
+            <button class="diff-btn neon-btn py-2.5 text-xs" data-diff="0">НОВИЧОК • Плавный разгон</button>
+            <button class="diff-btn neon-btn py-2.5 text-xs active" data-diff="1">ЛЮБИТЕЛЬ • Динамика (Норма)</button>
+            <button class="diff-btn neon-btn py-2.5 text-xs" data-diff="2">МАСТЕР • Турбо ЧМЗ</button>
             
-            <button id="start-btn" class="neon-btn-pink py-4 text-sm mt-2">ПОДКЛЮЧИТЬСЯ</button>
+            <button id="start-btn" class="neon-btn-pink py-3.5 text-sm mt-2 tracking-wider">НАЧАТЬ МАТЧ</button>
         </div>
         
-        <div class="mt-8 text-center flex flex-col gap-2">
-            <p class="text-[8px] sm:text-[10px] text-gray-400 glitch-text" style="text-shadow: 1px 0 #0ff;">РАЗРАБОТАНО В ПОДПОЛЬНОМ ЦЕХЕ ЧМЗ</p>
-            <p class="text-[8px] sm:text-[10px] text-gray-500">СБОРКА АППАРАТА И КИБЕР-ИМПЛАНТОВ ОТ ПРОФСОЮЗА</p>
+        <div class="mt-5 max-w-sm w-full px-4 py-3 rounded-xl bg-white/5 border border-white/10 text-center">
+            <div class="text-[10px] font-bold text-amber-400 uppercase tracking-wider mb-1">Цитата ЧМЗ</div>
+            <p id="menu-quote-text" class="text-xs text-slate-200 italic leading-relaxed">«На ЧМЗ даже роботы берут перерыв, когда летит кручёный топ-спин».</p>
         </div>
     </div>
 
     <!-- 3. ИГРОВОЙ UI -->
     <div id="game-ui" class="hidden pointer-events-none p-2 sm:p-4 justify-between">
         <div class="flex justify-between items-start w-full gap-2">
-            <div class="neon-border p-1.5 sm:p-3 flex flex-col items-center flex-1 max-w-[130px]">
-                <span class="text-[8px] sm:text-[10px] text-cyan-400 mb-2 text-center leading-tight break-words w-full">ПОЛЬЗОВАТЕЛЬ</span>
-                <span id="score-player" class="text-2xl sm:text-4xl text-white glitch-text">0</span>
+            <div class="neon-border p-2 sm:p-3 flex flex-col items-center flex-1 max-w-[115px]">
+                <span class="text-[10px] font-bold text-cyan-400 mb-1 text-center leading-tight">ВЫ</span>
+                <span id="score-player" class="font-display text-2xl sm:text-4xl text-white glitch-text">0</span>
             </div>
             
-            <div class="neon-border p-2 flex-1 text-center flex flex-col justify-center min-h-[40px] sm:min-h-[60px]">
-                <span id="system-msg" class="text-[8px] sm:text-[10px] text-yellow-400 leading-relaxed">ОЖИДАНИЕ...</span>
+            <div class="neon-border p-2 flex-1 text-center flex flex-col justify-center items-center gap-1 min-h-[54px]">
+                <span id="system-msg" class="text-[10px] sm:text-xs font-bold text-amber-300 leading-tight">ОЖИДАНИЕ...</span>
+                <span id="tempo-badge" class="text-[9px] font-extrabold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">ТЕМП: x1.0</span>
             </div>
 
-            <div class="neon-border-pink p-1.5 sm:p-3 flex flex-col items-center flex-1 max-w-[130px]">
-                <span id="bot-name" class="text-[8px] sm:text-[10px] text-pink-500 mb-2 text-center leading-tight break-words w-full">БОТ-Н3ЙРО</span>
-                <span id="score-ai" class="text-2xl sm:text-4xl text-white glitch-text">0</span>
+            <div class="neon-border-pink p-2 sm:p-3 flex flex-col items-center flex-1 max-w-[115px]">
+                <span id="bot-name" class="text-[9px] sm:text-[10px] font-bold text-pink-400 mb-1 text-center leading-tight break-words w-full">БОТ-Н3ЙРО</span>
+                <span id="score-ai" class="font-display text-2xl sm:text-4xl text-white glitch-text">0</span>
             </div>
         </div>
 
         <!-- Единый нижний блок для кнопок и сообщений, чтобы они не перекрывались -->
-        <div class="absolute bottom-6 left-2 right-2 flex justify-between items-end pointer-events-auto z-40 gap-1 sm:gap-2">
-            <button id="menu-exit-btn" class="neon-btn-pink px-2 py-3 text-[9px] sm:text-xs leading-none h-fit whitespace-nowrap">В МЕНЮ</button>
+        <div class="absolute bottom-5 left-2 right-2 flex justify-between items-end pointer-events-auto z-40 gap-2">
+            <button id="menu-exit-btn" class="neon-btn-pink px-3 py-2.5 text-[11px] leading-none h-fit whitespace-nowrap">В МЕНЮ</button>
             
             <div class="flex-1 flex justify-center pb-1 pointer-events-none">
-                <span id="serve-msg" class="text-[9px] sm:text-[11px] text-cyan-400 bg-black/90 p-1.5 sm:p-2 border border-cyan-400 animate-pulse hidden shadow-[0_0_10px_#0ff] whitespace-nowrap text-center">ТАПНИ ДЛЯ ПОДБРОСА</span>
+                <span id="serve-msg" class="text-[10px] sm:text-xs font-bold text-cyan-300 bg-slate-950/90 px-3 py-1.5 rounded-full border border-cyan-400/60 animate-pulse hidden shadow-[0_0_14px_rgba(34,211,238,0.4)] whitespace-nowrap text-center">ТАПНИ ДЛЯ ПОДБРОСА</span>
             </div>
 
-            <div class="flex flex-col items-end gap-1.5 neon-border p-1.5 sm:p-2 rounded bg-black/80 w-[130px] sm:w-[170px]">
-                <div class="flex items-center gap-1 w-full justify-between">
-                    <span class="text-[7px] sm:text-[9px] text-cyan-400">ГРОМК:</span>
-                    <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.15" class="w-12 sm:w-20 accent-cyan-400">
+            <div class="flex flex-col items-end gap-1.5 neon-border p-2 w-[140px] sm:w-[175px]">
+                <div class="flex items-center gap-1.5 w-full justify-between">
+                    <span class="text-[9px] font-bold text-cyan-300">ЗВУК:</span>
+                    <input id="volume-slider" type="range" min="0" max="1" step="0.05" value="0.15" class="w-16 sm:w-20 accent-cyan-400">
                 </div>
-                <button id="music-btn" class="neon-btn px-1 py-1.5 text-[7px] sm:text-[9px] w-full whitespace-normal break-words leading-tight min-h-[32px]">МАРТЕНОВСКАЯ ПЕЧЬ (SYNTH)</button>
+                <button id="music-btn" class="neon-btn px-2 py-1.5 text-[9px] w-full whitespace-normal break-words leading-tight">МАРТЕНОВСКАЯ ПЕЧЬ</button>
             </div>
         </div>
     </div>
 
     <!-- 4. ЭКРАН КОНЦА МАТЧА -->
-    <div id="game-over" class="hidden justify-center items-center bg-black/90 backdrop-blur-md z-50 p-4">
-        <div class="neon-border p-8 flex flex-col items-center text-center w-full max-w-md">
-            <h2 id="result-title" class="text-3xl sm:text-4xl glitch-text mb-4">СИСТЕМА ВЗЛОМАНА</h2>
-            <p id="result-desc" class="text-xs sm:text-sm text-yellow-400 mb-8 leading-loose">Матч завершен.</p>
-            <button id="restart-btn" class="neon-btn py-4 px-8 text-sm w-full pointer-events-auto">ПЕРЕЗАГРУЗИТЬ СЕССИЮ</button>
-            <button id="menu-btn" class="neon-btn-pink py-4 px-8 text-sm w-full mt-4 pointer-events-auto">В ГЛАВНОЕ МЕНЮ</button>
+    <div id="game-over" class="hidden justify-center items-center bg-slate-950/85 backdrop-blur-lg z-50 p-4">
+        <div class="neon-border p-7 flex flex-col items-center text-center w-full max-w-md">
+            <h2 id="result-title" class="font-display text-3xl sm:text-4xl glitch-text mb-3">СИСТЕМА ВЗЛОМАНА</h2>
+            <p id="result-desc" class="text-xs sm:text-sm text-amber-300 mb-6 leading-relaxed">Матч завершен.</p>
+            <button id="restart-btn" class="neon-btn py-3.5 px-8 text-sm w-full pointer-events-auto">ИГРАТЬ ЕЩЁ</button>
+            <button id="menu-btn" class="neon-btn-pink py-3.5 px-8 text-sm w-full mt-3 pointer-events-auto">В ГЛАВНОЕ МЕНЮ</button>
         </div>
     </div>
 
@@ -191,33 +230,44 @@
             isSmashReady: false,
             spin: 0, // Подкрутка (Эффект Магнуса)
             playerSwing: 0, // Анимация взмаха
-            aiSwing: 0
+            aiSwing: 0,
+            rallyHits: 0
         };
 
+        const CHMZ_QUOTES = [
+            "«На ЧМЗ даже сталь плавится медленнее, чем летит твой топ-спин!»",
+            "«От ДК «Восток» до «ТТ Топа» все знают: кто с шипами — тот с сюрпризом!»",
+            "«Челябинские теннисисты настолько суровы, что крутят мяч взглядом».",
+            "«После смены в цеху рука не дрожит — подача летит строго по ГОСТу ЧМЗ».",
+            "«Ветер в Парке Тищенко — лучшая тренировка для приёма сложной подкрутки!»",
+            "«Настоящий мастер ЧМЗ отличает край стола от ребра по звуку на слух».",
+            "«Если мяч улетел под лавку — это не аут, это тактическая пауза!»"
+        ];
+
         const SPECTATOR_PHRASES = [
-            "Эй, ЧМЗ! Подкрутку слабее делай, у меня аж пивасик прокис!",
-            "Да у меня в гараже на двери от шкафа отскок ровнее был!",
-            "Слыш, а после смены в мартеновском цеху по пивку в ларек?",
-            "Мячик китайский, стол косой, судья на мыло!",
-            "Ракетку держишь как лопату на субботнике!",
-            "Давай топ-спин в левый угол, чего ты тупишь!",
-            "Опять на заводе премию зажали, вот и играете вяло!",
-            "ЧМЗ сила! Доменный цех на трибунах орет за тебя!",
-            "Справа подрежь, слева ударь! Чему вас в секции учили?",
-            "Эй, киборг, у нас на ЧМЗ на заводе и покруче роботы ломались!",
-            "Судья куплен профсоюзом!",
-            "Ты не ракеткой маши, ты ногами работай!",
-            "Я в 80-х на области мастера спорта взял, а ты мажешь!"
+            "Эй, ЧМЗ! Подкрутку слабее делай, у меня аж чай в термосе закрутился!",
+            "Да у меня в гараже на ЧМЗ от двери шкафа отскок ровнее был!",
+            "Слышь, после партии в ДК «Восток» заглянем — там лесенка горит!",
+            "Мячик-то 3 звезды, а мажешь как по первому разряду!",
+            "Ракетку держишь как лопату на субботнике у ЧЭМКа!",
+            "Давай топ-спин в левый угол, чего ты ждёшь — зелёного свистка?!",
+            "ЧМЗ сила! Доменный цех на трибунах болеет за тебя!",
+            "Справа подрежь, слева влупи! Чему вас в «ТТ Топе» учили?",
+            "У нас в «Олимпе» на турнире и не такие камбэки вытаскивали!",
+            "Ты не ракеткой маши — ты ногами работай, как на пробежке в Парке Тищенко!",
+            "Я ещё в 80-х на ЧМЗ первую ракетку цеха держал, а ты в сетку бьёшь!",
+            "Осторожно, бот сейчас включит режим «Заводской турбо»!",
+            "Судья, проверь ему накладки — там точно супер-клей с проходной!"
         ];
 
         const BOT_TAUNTS = {
-            serve: ["Принимай подачу, плавильный аппарат!", "Ща как вмажу по ГОСТу!", "Моя подача крепче уральской стали!", "Держи топ-спин от начальника цеха!"],
-            rally: ["Слабый удар, как премия в декабре!", "Ты ракетку держишь или лом?!", "Киборги ЧМЗ не сдаются!", "Твой процессор перегрелся?", "У нас баба Зина в столовой сильнее бьет!"],
-            win_point: ["Ха! Деталь в браке, очко мне!", "Система охлаждения тебя не спасла!", "Скрутил тебя как арматуру!", "Победа за Синдикатом!"],
-            lose_point: ["Мои шарниры заржавели...", "Судья, он читерит с имплантами!", "Заводской брак в процессоре...", "Пинг скакнул, отвечаю!"]
+            serve: ["Принимай подачу, плавильный аппарат!", "Ща вмажу строго по ГОСТу ЧМЗ!", "Моя подача крепче уральской стали!", "Держи топ-спин от начальника цеха!"],
+            rally: ["Слабый накат, как премия в январе!", "Ты ракетку держишь или монтажку?!", "Киборги ЧМЗ не сдаются!", "Темп растёт! Не отставай, органика!", "У нас баба Зина в буфете сильнее бьёт!"],
+            win_point: ["Ха! Деталь в браке, очко мне!", "Скрутил тебя как арматуру на стане!", "Победа за Синдикатом ЧМЗ!", "Не успел за скоростью? Это только разминка!"],
+            lose_point: ["Мои шарниры перегрелись...", "Судья, он читерит с имплантами!", "Пинг на ЧМЗ скакнул, отвечаю!", "Ладно, включаю следующую передачу!"]
         };
 
-        const BOT_NAMES = ["НЕЙРО-ПЕТРОВИЧ", "КИБЕР-МИХАЛЫЧ", "РОБО-САНТЕХНИК", "СИНДИКАТ-МАСТЕР", "ЧМЗ-ТЕРМИНАТОР", "ЖЕЛЕЗНЫЙ ДИРЕКТОР"];
+        const BOT_NAMES = ["НЕЙРО-ПЕТРОВИЧ", "КИБЕР-МИХАЛЫЧ", "ЧМЗ-ТЕРМИНАТОР", "ТТ-ТОП ПРО", "ЖЕЛЕЗНЫЙ ДИРЕКТОР", "БОТ-СТАЛЕВАР"];
 
         const DIFF_LEVELS = [
             { id: 0, name: "НОВИЧОК", aiSpeed: 4, aiMiss: 0.35, ballTime: 0.8 },
@@ -470,14 +520,25 @@
 camera.position.set(0, 4.2, 5.2);
 camera.lookAt(0, 0, 0);
 
-        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerPreference: 'high-performance' });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.toneMapping = THREE.ACESFilmicToneMapping;
+        renderer.toneMappingExposure = 1.25;
         
         // Включаем реалистичные тени
         renderer.shadowMap.enabled = true;
         renderer.shadowMap.type = THREE.PCFSoftShadowMap;
         container.appendChild(renderer.domElement);
+
+        // Боковые неоновые прожекторы арены
+        const arenaLightLeft = new THREE.PointLight(0x00ffff, 2.2, 12);
+        arenaLightLeft.position.set(-4.5, 2.2, 0);
+        scene.add(arenaLightLeft);
+
+        const arenaLightRight = new THREE.PointLight(0xff00ff, 2.2, 12);
+        arenaLightRight.position.set(4.5, 2.2, 0);
+        scene.add(arenaLightRight);
 
         // Индустриальная лампа (Прожектор)
         const lampRig = new THREE.Group();
@@ -530,13 +591,21 @@ camera.lookAt(0, 0, 0);
         const tableGroup = new THREE.Group();
         tableGroupRef = tableGroup;
 
-        // Поверхность стола
+        // Поверхность стола (современный WTT-мат синий с лёгким отблеском)
         const tableGeo = new THREE.BoxGeometry(TABLE_W, 0.08, TABLE_L);
-        const tableMat = new THREE.MeshStandardMaterial({ color: 0x1a202c, roughness: 0.4, metalness: 0.3 });
+        const tableMat = new THREE.MeshStandardMaterial({ color: 0x0f1c38, roughness: 0.28, metalness: 0.45 });
         const tableTop = new THREE.Mesh(tableGeo, tableMat);
         tableTop.position.y = TABLE_H - 0.04;
         tableTop.receiveShadow = true;
         tableGroup.add(tableTop);
+
+        // Неоновые бортики арены по краям
+        const barrierMat = new THREE.MeshStandardMaterial({ color: 0x0b1020, emissive: 0x3b82f6, emissiveIntensity: 0.35, roughness: 0.5 });
+        const barrierL = new THREE.Mesh(new THREE.BoxGeometry(0.06, 0.45, TABLE_L + 2.4), barrierMat);
+        barrierL.position.set(-TABLE_W - 0.6, -1.75, 0);
+        const barrierR = barrierL.clone();
+        barrierR.position.x = TABLE_W + 0.6;
+        tableGroup.add(barrierL, barrierR);
 
         // Светящиеся линии разметки (Emissive)
         const lineMat = new THREE.MeshStandardMaterial({ color: 0x00ffff, emissive: 0x00ffff, emissiveIntensity: 0.8 });
@@ -848,6 +917,35 @@ camera.lookAt(0, 0, 0);
         window.addEventListener('pointerdown', (e) => { updatePointer(e.clientX, e.clientY); handleTap(); });
         window.addEventListener('touchmove', (e) => { e.preventDefault(); updatePointer(e.touches[0].clientX, e.touches[0].clientY); }, {passive:false});
 
+        function getDynamicParams() {
+            const totalPts = state.pScore + state.aScore;
+            const scoreFactor = Math.min(0.24, totalPts * 0.012);
+            const rallyFactor = Math.min(0.24, (state.rallyHits || 0) * 0.025);
+            const mult = 1 + scoreFactor + rallyFactor;
+            const dynBallTime = Math.max(0.28, currentDiff.ballTime / mult);
+            const dynAiSpeed = currentDiff.aiSpeed * (1 + scoreFactor * 1.4);
+            const dynAiMiss = Math.max(0.02, currentDiff.aiMiss * (1 - scoreFactor * 1.5));
+            return { mult, dynBallTime, dynAiSpeed, dynAiMiss };
+        }
+
+        function updateTempoUI() {
+            const tb = document.getElementById('tempo-badge');
+            if (!tb) return;
+            const p = getDynamicParams();
+            const label = p.mult >= 1.35 ? 'ЧМЗ ХАРДКОР' : (p.mult >= 1.2 ? 'ТУРБО' : (p.mult >= 1.08 ? 'УСКОРЕНИЕ' : 'РАЗОГРЕВ'));
+            tb.textContent = label + ' • x' + p.mult.toFixed(2);
+        }
+
+        function refreshMenuQuote() {
+            const qEl = document.getElementById('menu-quote-text');
+            if (qEl && CHMZ_QUOTES.length) {
+                qEl.textContent = CHMZ_QUOTES[Math.floor(Math.random() * CHMZ_QUOTES.length)];
+            }
+            const wb = document.getElementById('menu-wins-badge');
+            if (wb) wb.textContent = 'Побед: ' + (localStorage.getItem('cp_wins') || '0');
+        }
+        refreshMenuQuote();
+
         function startGame() {
             elMenu.classList.add('hidden'); elGameOver.classList.add('hidden');
             elGameUI.classList.remove('hidden'); elGameUI.style.display = 'flex';
@@ -857,9 +955,9 @@ camera.lookAt(0, 0, 0);
 
             const randomName = BOT_NAMES[Math.floor(Math.random() * BOT_NAMES.length)];
             document.getElementById('bot-name').textContent = randomName;
-            state.pScore = 0; state.aScore = 0;
+            state.pScore = 0; state.aScore = 0; state.rallyHits = 0;
             state.matchServer = 'player'; state.server = 'player';
-            updateScoreUI(); resetBall();
+            updateScoreUI(); updateTempoUI(); resetBall();
             
             if(musicEngine.trackIdx < 1) { musicEngine.play(); }
         }
@@ -873,7 +971,8 @@ camera.lookAt(0, 0, 0);
             state.status = 'serve_wait';
             state.vel.set(0,0,0);
             state.bounces = 0; state.lastHitSide = null; state.isServeHit = false;
-            state.isSmashReady = false; state.isSmash = false; state.spin = 0;
+            state.isSmashReady = false; state.isSmash = false; state.spin = 0; state.rallyHits = 0;
+            updateTempoUI();
             
             trailMat.color.setHex(0xffff00); ballMat.color.setHex(0xffff00);
             ballMat.emissive.setHex(0x444400);
@@ -920,9 +1019,14 @@ camera.lookAt(0, 0, 0);
                 setTimeout(() => {
                     elGameUI.style.display = 'none'; elGameOver.classList.remove('hidden'); elGameOver.style.display = 'flex';
                     let isWin = winner === 'player';
-                    document.getElementById('result-title').textContent = isWin ? "СИСТЕМА ВЗЛОМАНА" : "ОТКАЗ В ДОСТУПЕ";
-                    document.getElementById('result-title').style.color = isWin ? '#0ff' : '#f0f';
-                    document.getElementById('result-desc').textContent = isWin ? "Победа над ИИ." : "Тренируй нейронные связи, органика.";
+                    if (isWin) {
+                        const prevW = parseInt(localStorage.getItem('cp_wins') || '0', 10) || 0;
+                        localStorage.setItem('cp_wins', String(prevW + 1));
+                    }
+                    document.getElementById('result-title').textContent = isWin ? "ПОБЕДА!" : "ПОРАЖЕНИЕ";
+                    document.getElementById('result-title').style.color = isWin ? '#22d3ee' : '#ec4899';
+                    document.getElementById('result-desc').textContent = CHMZ_QUOTES[Math.floor(Math.random() * CHMZ_QUOTES.length)];
+                    refreshMenuQuote();
                 }, 1500);
             } else {
                 state.server = getNextServer();
@@ -936,15 +1040,17 @@ camera.lookAt(0, 0, 0);
             state.lastHitSide = isPlayer ? 'player' : 'ai';
             state.isServeHit = isServe;
             state.isSmash = false;
+            if (!isServe) {
+                state.rallyHits = (state.rallyHits || 0) + 1;
+                updateTempoUI();
+            }
+            const dyn = getDynamicParams();
             
-            // Задаем редкую случайную погрешность для ИИ (в зависимости от уровня сложности)
+            // Динамическая погрешность ИИ (по мере игры бот ошибается всё реже)
             if (isPlayer) {
-                // Используем aiMiss как вероятность ошибки (например, 0.15 = 15% шанс промазать)
-                if (Math.random() < currentDiff.aiMiss) {
-                    // Если выпала ошибка, задаем смещение больше хитбокса (0.35), чтобы бот точно промахнулся
+                if (Math.random() < dyn.dynAiMiss) {
                     state.aiErrorOffset = (Math.random() > 0.5 ? 1 : -1) * (0.45 + Math.random() * 0.2); 
                 } else {
-                    // В остальных случаях бот играет идеально точно
                     state.aiErrorOffset = 0;
                 }
             } else {
@@ -982,7 +1088,7 @@ camera.lookAt(0, 0, 0);
                 ballMat.color.setHex(isPlayer ? 0x00ffff : 0xff00ff);
                 ballMat.emissive.setHex(isPlayer ? 0x004444 : 0x440044);
             } else {
-                let time = currentDiff.ballTime;
+                let time = dyn.dynBallTime;
                 let targetZ = sign * (TABLE_L / 4 + Math.random() * (TABLE_L/4));
                 let targetX = (Math.random() - 0.5) * (TABLE_W * 0.85);
                 let targetY = TABLE_H; 
@@ -1087,11 +1193,12 @@ camera.lookAt(0, 0, 0);
                 state.aiTargetY = THREE.MathUtils.lerp(state.aiTargetY, TABLE_H + 0.3, 2 * dt);
             }
             
-            currentOpponent.group.position.x = THREE.MathUtils.lerp(currentOpponent.group.position.x, state.aiTargetX * 0.5, currentDiff.aiSpeed * dt);
+            const dynLoop = getDynamicParams();
+            currentOpponent.group.position.x = THREE.MathUtils.lerp(currentOpponent.group.position.x, state.aiTargetX * 0.5, dynLoop.dynAiSpeed * dt);
             currentOpponent.group.rotation.y = THREE.MathUtils.lerp(currentOpponent.group.rotation.y, (state.aiTargetX * 0.1), 10 * dt);
 
-            paddleAi.position.x = THREE.MathUtils.lerp(paddleAi.position.x, state.aiTargetX, currentDiff.aiSpeed * dt);
-            paddleAi.position.y = THREE.MathUtils.lerp(paddleAi.position.y, state.aiTargetY, currentDiff.aiSpeed * dt);
+            paddleAi.position.x = THREE.MathUtils.lerp(paddleAi.position.x, state.aiTargetX, dynLoop.dynAiSpeed * dt);
+            paddleAi.position.y = THREE.MathUtils.lerp(paddleAi.position.y, state.aiTargetY, dynLoop.dynAiSpeed * dt);
             
             paddleAiPivot.rotation.y = state.aiTargetX > 0 ? 0.2 : -0.2;
             let targetAX = (state.status === 'playing' && state.vel.z < 0) ? 0.3 : 0;
