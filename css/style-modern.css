@@ -178,3 +178,91 @@ body, button, input, select, textarea {
 .counter { background: rgba(124, 58, 237, 0.14); color: var(--accent-violet-text); }
 .counter.has-players { background: rgba(16, 185, 129, 0.15); color: #059669; }
 :root:not([data-theme="light"]) .counter.has-players { color: var(--accent-green); }
+
+/* ===== 12. Этап 2: Кастомные SVG-иконки и обновлённые карточки локаций ===== */
+.tt-icon {
+  display: inline-block;
+  width: 1.15em;
+  height: 1.15em;
+  vertical-align: -0.18em;
+  flex-shrink: 0;
+  color: currentColor;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), color 0.2s ease;
+}
+
+.btn, .tab-btn, .social-pill-left, .btn-match-quick, .btn-theme-toggle, .btn-app-qr-large, .btn-qr-icon-only, .btn-sound-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+}
+
+.btn-sound-toggle {
+  background: transparent;
+  border: 1px solid var(--card-border);
+  color: var(--text);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  padding: 0;
+  font-size: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.bottom-nav .nav-item .nav-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 2px;
+}
+
+.bottom-nav .nav-item .tt-icon {
+  width: 21px;
+  height: 21px;
+  vertical-align: 0;
+}
+
+.bottom-nav .nav-item.active .tt-icon {
+  transform: translateY(-1px) scale(1.08);
+  filter: drop-shadow(0 0 8px currentColor);
+}
+
+.location-card-logo {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 12px !important;
+  object-fit: cover;
+  border: 1px solid rgba(167, 139, 250, 0.35) !important;
+  box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.loc-title-icon {
+  width: 17px;
+  height: 17px;
+  color: var(--accent-violet-text);
+}
+:root[data-theme="light"] .loc-title-icon {
+  color: var(--accent-violet-2);
+}
+
+.olympic-round-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--accent-amber);
+  margin: 14px 0 8px 0;
+}
+
+.olympic-bo5-badge {
+  font-size: 10px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: var(--accent-amber);
+  font-weight: 700;
+}

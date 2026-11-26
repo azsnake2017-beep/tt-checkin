@@ -109,12 +109,16 @@ window.toggleAppSound = function() {
   if (!window.TTAudio) return;
   var isEnabled = window.TTAudio.toggleSound();
   var btn = document.getElementById('main-sound-toggle');
-  if (btn) btn.innerText = isEnabled ? '🔊' : '🔇';
+  if (btn) {
+    var iconId = isEnabled ? 'icon-sound-on' : 'icon-sound-off';
+    btn.innerHTML = typeof ttIcon === 'function' ? ttIcon(iconId) : (isEnabled ? '🔊' : '🔇');
+  }
 };
 
 document.addEventListener('DOMContentLoaded', function() {
   var btn = document.getElementById('main-sound-toggle');
   if (btn && window.TTAudio) {
-    btn.innerText = window.TTAudio.soundEnabled ? '🔊' : '🔇';
+    var iconId = window.TTAudio.soundEnabled ? 'icon-sound-on' : 'icon-sound-off';
+    btn.innerHTML = typeof ttIcon === 'function' ? ttIcon(iconId) : (window.TTAudio.soundEnabled ? '🔊' : '🔇');
   }
 });

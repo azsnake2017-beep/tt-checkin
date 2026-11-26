@@ -146,9 +146,14 @@ function toggleTheme() {
   localStorage.setItem('tt_theme', newTheme);
   updateThemeIcon(newTheme);
 }
+window.ttIcon = function(id, cls) {
+  var c = cls ? (' ' + cls) : '';
+  return '<svg class="tt-icon' + c + '" aria-hidden="true"><use href="#' + id + '"></use></svg>';
+};
+
 function updateThemeIcon(theme) {
   var btn = document.getElementById('btn-theme');
-  if (btn) btn.innerText = theme === 'dark' ? '☀️' : '🌙';
+  if (btn) btn.innerHTML = ttIcon(theme === 'dark' ? 'icon-theme-sun' : 'icon-theme-moon');
   var metaTheme = document.getElementById('meta-theme-color');
   if (metaTheme) metaTheme.setAttribute('content', theme === 'dark' ? '#0b1120' : '#f1f5f9');
 }
@@ -205,11 +210,11 @@ var ALL_LOCATIONS = ['park', 'vostok', 'tttop', 'olimp', 'chemk'];
 var HALL_LOCATIONS = ['vostok', 'tttop', 'olimp', 'chemk']; // Крытые площадки с анонсами встреч
 
 var LOCATIONS_CONFIG = {
-  park:   { name: "Парк им. Тищенко", desc: "Столы на свежем воздухе", type: "park", logo: "loc_park.webp" },
-  vostok: { name: "ДК «Восток»", desc: "ул. Сталеваров, 5а", type: "hall", logo: "loc_vostok.webp" },
-  tttop:  { name: "Клуб «ТТ Топ»", desc: "пр. Победы, 348 ст. 1 (2 этаж)", type: "hall", logo: "loc_tttop.webp" },
-  olimp:  { name: "СОК МУ «Олимп»", desc: "с. Долгодеревенское, ул. 1 Мая, 120А/1", type: "hall", logo: "loc_olimp.webp" },
-  chemk:  { name: "ДС «ЧЭМК»", desc: "ул. Российская, 36", type: "hall", logo: "loc_chemk.webp" }
+  park:   { name: "Парк им. Тищенко", desc: "Столы на свежем воздухе", type: "park", logo: "assets/locations/loc_park.jpg" },
+  vostok: { name: "ДК «Восток»", desc: "ул. Сталеваров, 5а", type: "hall", logo: "assets/locations/loc_vostok.jpg" },
+  tttop:  { name: "Клуб «ТТ Топ»", desc: "пр. Победы, 348 ст. 1 (2 этаж)", type: "hall", logo: "assets/locations/loc_tttop.jpg" },
+  olimp:  { name: "СОК МУ «Олимп»", desc: "с. Долгодеревенское, ул. 1 Мая, 120А/1", type: "hall", logo: "assets/locations/loc_olimp.jpg" },
+  chemk:  { name: "ДС «ЧЭМК»", desc: "ул. Российская, 36", type: "hall", logo: "assets/locations/loc_chemk.jpg" }
 };
 
 var LOCATION_NAMES = {

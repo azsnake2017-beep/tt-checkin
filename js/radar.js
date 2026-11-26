@@ -32,7 +32,7 @@ function loadParkWeather() {
     return 'СЗ';
   };
 
-  var url = 'https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto&_t=' + Date.now();
+  var url = 'https://api.open-meteo.com/v1/forecast?latitude=55.25&longitude=61.40&current=temperature_2m,weather_code,wind_speed_10m,wind_direction_10m&daily=temperature_2m_max,temperature_2m_min,weather_code&wind_speed_unit=ms&timezone=auto';
 
   var fetchPromise = fetch(url, { cache: 'no-store' }).then(function(res) { return res.json(); });
   
@@ -432,16 +432,17 @@ function renderAll() {
       var btnBox = document.getElementById('btn-container-' + loc);
       
       if(btnBox) {
+        var ico = typeof ttIcon === 'function' ? ttIcon : function(id){ return ''; };
         if (!myUid) {
-          btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">🔐 Войти в клуб</button>';
+          btnBox.innerHTML = '<button class="btn btn-join" style="background: var(--card-border);" onclick="customAlert(\'Сначала авторизуйтесь!\')">' + ico('icon-lock') + ' Войти в клуб</button>';
         } else if (activePlayerObj) { 
             if(typeof currentUserActiveLoc !== 'undefined') currentUserActiveLoc = loc; 
             if(typeof currentUserActivePlayer !== 'undefined') currentUserActivePlayer = activePlayerObj; 
-            btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px;">✅ Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">👋 Покинуть стол</button>'; 
+            btnBox.innerHTML = '<div style="font-size: 11px; color: #059669; text-align: center; margin-bottom: 2px; display:flex; align-items:center; justify-content:center; gap:4px;">' + ico('icon-check') + ' Вы у этого стола</div><button class="btn btn-leave" onclick="leave(\'' + loc + '\')">' + ico('icon-exit') + ' Покинуть стол</button>'; 
         } else if (isUserOpened) { 
-            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
+            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">' + ico('icon-loc-tttop') + ' Я уже пришел</button><button class="btn btn-leave" style="padding: 8px; font-size: 13px;" onclick="cancelPlan(\'' + loc + '\')">Отменить визит</button>'; 
         } else { 
-            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">🏓 Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">⏳ Буду позже...</button>'; 
+            btnBox.innerHTML = '<button class="btn btn-join" onclick="handleCheckInClick(\'' + loc + '\')">' + ico('icon-loc-tttop') + ' Я уже у стола</button><button class="btn btn-plan" onclick="handlePlanClick(\'' + loc + '\')">' + ico('icon-clock') + ' Буду позже...</button>'; 
         }
       }
     } catch(e) {}

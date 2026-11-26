@@ -545,7 +545,7 @@ function rejectMatch(matchId) {
 
 // ГЛОБАЛЬНАЯ ЛЕНТА ПОСЛЕДНИХ МАТЧЕЙ (С коронами 👑 и цветами)
 function listenRecentMatches() {
-  db.collection('matches_history').onSnapshot(function(snap) {
+  db.collection('matches_history').orderBy('timestamp', 'desc').limit(30).onSnapshot(function(snap) {
     try {
       var container = document.getElementById('recent-matches-container');
       if (!container) return;

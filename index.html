@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="theme-color" content="#0b1120" id="meta-theme-color">
   
   <meta name="mobile-web-app-capable" content="yes">
@@ -18,13 +18,12 @@
 
   <!-- Ускорение сетевых запросов -->
   <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js" defer></script>
   <link rel="preconnect" href="https://firestore.googleapis.com" crossorigin>
   <link rel="dns-prefetch" href="https://telegram.org">
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/style-modern.css?v=1">
+  <link rel="stylesheet" href="css/style-modern.css?v=2">
 
   <style>
   /* Жестко глушим прелоадер, если страница просто обновляется */
@@ -40,10 +39,46 @@
     document.documentElement.classList.add('fast-reload');
   }
 </script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <link href="https://fonts.googleapis.com/css2?family=Bangers&family=Russo+One&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body data-theme="dark">
+<svg xmlns="http://www.w3.org/2000/svg" style="display: none;" aria-hidden="true">
+  <symbol id="icon-nav-profile" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M5 20a7 7 0 0 1 14 0"/></symbol>
+  <symbol id="icon-nav-radar" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9" opacity="0.35"/><circle cx="12" cy="12" r="5" opacity="0.65"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><path d="M12 12l5.5-5.5"/></symbol>
+  <symbol id="icon-nav-ratings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+  <symbol id="icon-nav-tournaments" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 17.5 3 6V3h3l11.5 11.5"/><path d="M13 19l6-6"/><path d="M16 16l4 4"/><path d="M19 21l2-2"/><path d="M14.5 6.5 18 3h3v3l-3.5 3.5"/><path d="M5 14l4 4"/><path d="M7 17l-3 3"/></symbol>
+  <symbol id="icon-nav-quests" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="icon-nav-arcade" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="12" rx="4"/><path d="M6 12h4"/><path d="M8 10v4"/><circle cx="15" cy="11" r="1" fill="currentColor"/><circle cx="18" cy="13" r="1" fill="currentColor"/></symbol>
+  <symbol id="icon-nav-news" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2"/><path d="M10 6h8"/><path d="M10 10h8"/><path d="M10 14h4"/></symbol>
+  <symbol id="icon-loc-park" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22v-7"/><path d="M17 15a5 5 0 0 0-10 0Z"/><path d="M15.5 10.5a3.5 3.5 0 0 0-7 0Z"/><path d="M14 6.5a2 2 0 0 0-4 0Z"/></symbol>
+  <symbol id="icon-loc-vostok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V9l7-5 7 5v12"/><path d="M9 21v-6h6v6"/><circle cx="12" cy="10" r="1.5"/></symbol>
+  <symbol id="icon-loc-tttop" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 13.5a5.5 5.5 0 1 1-7.8-7.8 5.5 5.5 0 0 1 7.8 7.8Z"/><path d="m14.5 13.5 5 5a1.4 1.4 0 0 1-2 2l-5-5"/><circle cx="18.5" cy="5.5" r="2"/></symbol>
+  <symbol id="icon-loc-olimp" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="14" r="6"/><path d="M15.477 12.89 17 22l-5-3-5 3 1.523-9.11"/><path d="M9 4h6l-1 4h-4L9 4Z"/></symbol>
+  <symbol id="icon-loc-chemk" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="icon-theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></symbol>
+  <symbol id="icon-theme-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></symbol>
+  <symbol id="icon-sound-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><path d="M15.54 8.46a5 5 0 0 1 0 7.07"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14"/></symbol>
+  <symbol id="icon-sound-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/><line x1="22" y1="9" x2="16" y2="15"/><line x1="16" y1="9" x2="22" y2="15"/></symbol>
+  <symbol id="icon-qr" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="5" height="5" x="3" y="3" rx="1"/><rect width="5" height="5" x="16" y="3" rx="1"/><rect width="5" height="5" x="3" y="16" rx="1"/><path d="M21 16h-3a2 2 0 0 0-2 2v3"/><path d="M21 21v.01"/><path d="M12 7v3a2 2 0 0 1-2 2H7"/><path d="M3 12h.01"/><path d="M12 3h.01"/><path d="M12 16v.01"/><path d="M16 12h1"/><path d="M21 12v.01"/><path d="M12 21v-1"/></symbol>
+  <symbol id="icon-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></symbol>
+  <symbol id="icon-user-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></symbol>
+  <symbol id="icon-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></symbol>
+  <symbol id="icon-crown" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m2 4 3 12h14l3-12-6 7-4-7-4 7-6-7zm3 16h14"/></symbol>
+  <symbol id="icon-flame" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></symbol>
+  <symbol id="icon-share" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></symbol>
+  <symbol id="icon-download" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></symbol>
+  <symbol id="icon-send" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4Z"/><path d="M22 2 11 13"/></symbol>
+  <symbol id="icon-message" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/></symbol>
+  <symbol id="icon-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></symbol>
+  <symbol id="icon-lightbulb" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></symbol>
+  <symbol id="icon-folder" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></symbol>
+  <symbol id="icon-settings" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="icon-users" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></symbol>
+  <symbol id="icon-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></symbol>
+  <symbol id="icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
+  <symbol id="icon-dice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3"/><circle cx="8.5" cy="8.5" r="1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1" fill="currentColor"/></symbol>
+  <symbol id="icon-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+</svg>
 <!-- ЭКРАН ЗАГРУЗКИ -->
 <style>
   .app-preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color, #0b1120); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: opacity 0.4s ease, visibility 0.4s; }
@@ -156,44 +191,41 @@
         </div>
       </div>
       <div class="header-actions">
-        <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему">☀️</button>
-        <!-- Кнопка переключения звука на главной -->
-<button id="main-sound-toggle" onclick="toggleAppSound()" style="background: none; border: none; font-size: 22px; cursor: pointer; padding: 8px;">
-  🔊
-</button>
-        <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения">
+        <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему" aria-label="Сменить тему"><svg class="tt-icon"><use href="#icon-theme-sun"></use></svg></button>
+        <button id="main-sound-toggle" class="btn-sound-toggle" onclick="toggleAppSound()" title="Звук" aria-label="Переключить звук"><svg class="tt-icon"><use href="#icon-sound-on"></use></svg></button>
+        <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения" aria-label="QR-код приложения">
           <img src="App.webp" alt="App QR" class="icon-img-large" width="22" height="22" onerror="this.style.display='none';" />
-          <span style="display: none; font-size: 18px;">📱</span>
+          <span style="display: none;"><svg class="tt-icon"><use href="#icon-qr"></use></svg></span>
         </button>
       </div>
     </div>
     
     <div class="social-links-minimal">
       <div class="social-pill">
-        <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg"><span>✈️</span> Telegram</a>
-        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram"><img src="TG.webp" alt="TG" class="icon-img-mini" onerror="this.style.display='none';" /><span style="display: none;">📷</span></button>
+        <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg"><svg class="tt-icon"><use href="#icon-send"></use></svg> Telegram</a>
+        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram" aria-label="QR-код Telegram"><img src="TG.webp" alt="TG" class="icon-img-mini" onerror="this.style.display='none';" /><span style="display: none;"><svg class="tt-icon"><use href="#icon-qr"></use></svg></span></button>
       </div>
       <div class="social-pill">
-        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max"><span>💬</span> МАКС</a>
-        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС"><img src="Max.webp" alt="Max" class="icon-img-mini" onerror="this.style.display='none';" /><span style="display: none;">📷</span></button>
+        <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max"><svg class="tt-icon"><use href="#icon-message"></use></svg> МАКС</a>
+        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС" aria-label="QR-код МАКС"><img src="Max.webp" alt="Max" class="icon-img-mini" onerror="this.style.display='none';" /><span style="display: none;"><svg class="tt-icon"><use href="#icon-qr"></use></svg></span></button>
       </div>
     </div>
   </div>
 <!-- БАННЕР АКТИВНОГО БУСТА (Скрыт по умолчанию) -->
   <div id="global-boost-banner" style="display: none; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #fff; text-align: center; padding: 8px 12px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4); margin-bottom: 10px;">
-    🔥 Включен буст рейтинга: <span id="global-boost-value" style="font-size: 14px; font-weight: 900;">x2</span>! Очки за победу умножены!
+    <svg class="tt-icon"><use href="#icon-flame"></use></svg> Включен буст рейтинга: <span id="global-boost-value" style="font-size: 14px; font-weight: 900;">x2</span>! Очки за победу умножены!
   </div>
   
   <div class="auth-overlay-card" id="mandatory-auth-screen">
-    <h2>🔐 Требуется авторизация</h2>
+    <h2 style="display:flex; align-items:center; justify-content:center; gap:8px;"><svg class="tt-icon" style="color: var(--accent-amber);"><use href="#icon-lock"></use></svg> Требуется авторизация</h2>
     <p>Для доступа к столам, клубному рейтингу и турнирам подтвердите свой профиль игрока:</p>
     <div class="auth-methods-box">
       <div id="telegram-login-container" style="min-height: 44px; display: flex; align-items: center; justify-content: center; flex-direction: column; width: 100%;"></div>
-      <button class="btn-auth-provider" onclick="loginWithGoogle()" style="margin-top: 4px;">
-        <span>🌐</span> Войти через Google
+      <button class="btn-auth-provider" onclick="loginWithGoogle()" style="margin-top: 4px; display:inline-flex; align-items:center; justify-content:center; gap:8px;">
+        <svg class="tt-icon" style="color: #2563eb;"><use href="#icon-globe"></use></svg> Войти через Google
       </button>
       <div class="auth-vpn-note">
-        💡 <b>Подсказка:</b> если кнопка Telegram выше не загружается в браузере — включите VPN только на момент авторизации, либо войдите через Google (VPN не требуется).
+        <svg class="tt-icon" style="color: var(--accent-amber);"><use href="#icon-lightbulb"></use></svg> <b>Подсказка:</b> если кнопка Telegram выше не загружается в браузере — включите VPN только на момент авторизации, либо войдите через Google (VPN не требуется).
       </div>
     </div>
   </div>
@@ -214,8 +246,8 @@
     <div class="profile-card">
       <div class="profile-top-row" style="align-items: center; gap: 14px;">
         <!-- Фотокарточка игрока -->
-        <div id="main-profile-avatar-box" style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; border: 2px solid var(--accent-sky); background: #000; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
-          👤
+        <div id="main-profile-avatar-box" style="width: 76px; height: 76px; border-radius: 14px; overflow: hidden; border: 2px solid var(--accent-sky); background: #000; flex-shrink: 0; box-shadow: 0 4px 12px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center; color: var(--text-muted);">
+          <svg class="tt-icon" style="width: 32px; height: 32px;"><use href="#icon-nav-profile"></use></svg>
         </div>
         
         <div style="flex: 1; display: flex; flex-direction: column; justify-content: center; min-width: 0;">
@@ -240,7 +272,7 @@
       </div>
     </div>
 <button id="btn-invite-glow" class="btn btn-join" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
-  <span>➕</span> Добавить участника в клуб
+  <svg class="tt-icon"><use href="#icon-user-plus"></use></svg> Добавить участника в клуб
 </button>    
     <div class="profile-logo-container">
       <img src="logo.webp" alt="Логотип Челябинск" class="profile-large-logo" onerror="this.style.display='none'">
@@ -253,10 +285,10 @@
     <!-- Локация 1: Парк им. Тищенко -->
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="loc_tttop.webp" alt="Парк" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/locations/loc_park.jpg" alt="Парк им. Тищенко" class="location-card-logo" onerror="this.style.display='none'">
           <div>
-            <div class="card-title">🌳 Парк им. Тищенко</div>
+            <div class="card-title"><svg class="tt-icon loc-title-icon"><use href="#icon-loc-park"></use></svg> Парк им. Тищенко</div>
             <div class="card-desc">Столы на свежем воздухе</div>
           </div>
         </div>
@@ -274,8 +306,8 @@
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-park"><span class="empty-note">Никто не планировал</span></div>
             <div class="action-group" id="btn-container-park">
-              <button class="btn btn-join" onclick="handleCheckInClick('park')">🏓 Я уже у стола</button>
-              <button class="btn btn-plan" onclick="handlePlanClick('park')">⏳ Буду позже...</button>
+              <button class="btn btn-join" onclick="handleCheckInClick('park')"><svg class="tt-icon"><use href="#icon-loc-tttop"></use></svg> Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('park')"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Буду позже...</button>
             </div>
           </div>
         </div>
@@ -285,10 +317,10 @@
     <!-- Локация 2: ДК «Восток» -->
     <div class="card" id="card-vostok">
       <div class="card-top" onclick="toggleCard('vostok')">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="loc_chemk.webp" alt="Восток" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/locations/loc_vostok.jpg" alt="ДК Восток" class="location-card-logo" onerror="this.style.display='none'">
           <div>
-            <div class="card-title">🏛 ДК «Восток»</div>
+            <div class="card-title"><svg class="tt-icon loc-title-icon"><use href="#icon-loc-vostok"></use></svg> ДК «Восток»</div>
             <div class="card-desc">ул. Сталеваров, 5а</div>
           </div>
         </div>
@@ -301,14 +333,14 @@
       <div class="card-collapse-wrapper">
         <div class="card-body-collapse">
           <div class="card-body-inner">
-            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">✏️ Изменить анонс встречи</button>
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-vostok" onclick="openAnnouncementModal('vostok')">Изменить анонс встречи</button>
             <div class="section-label">Сейчас играют:</div>
             <div class="player-list" id="list-vostok"><span class="empty-note">У столов пока свободно</span></div>
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-vostok"><span class="empty-note">Никто не планировал</span></div>
             <div class="action-group" id="btn-container-vostok">
-              <button class="btn btn-join" onclick="handleCheckInClick('vostok')">🏓 Я уже у стола</button>
-              <button class="btn btn-plan" onclick="handlePlanClick('vostok')">⏳ Буду позже...</button>
+              <button class="btn btn-join" onclick="handleCheckInClick('vostok')"><svg class="tt-icon"><use href="#icon-loc-tttop"></use></svg> Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('vostok')"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Буду позже...</button>
             </div>
           </div>
         </div>
@@ -318,10 +350,10 @@
     <!-- Локация 3: Клуб «ТТ Топ» -->
     <div class="card" id="card-tttop">
       <div class="card-top" onclick="toggleCard('tttop')">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="loc_tttop.webp" alt="ТТ Топ" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/locations/loc_tttop.jpg" alt="Клуб ТТ Топ" class="location-card-logo" onerror="this.style.display='none'">
           <div>
-            <div class="card-title">🏓 Клуб «ТТ Топ»</div>
+            <div class="card-title"><svg class="tt-icon loc-title-icon"><use href="#icon-loc-tttop"></use></svg> Клуб «ТТ Топ»</div>
             <div class="card-desc">пр. Победы, 348 ст. 1 (2 этаж)</div>
           </div>
         </div>
@@ -333,14 +365,14 @@
       <div class="card-collapse-wrapper">
         <div class="card-body-collapse">
           <div class="card-body-inner">
-            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-tttop" onclick="openAnnouncementModal('tttop')">✏️ Изменить анонс встречи</button>
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-tttop" onclick="openAnnouncementModal('tttop')">Изменить анонс встречи</button>
             <div class="section-label">Сейчас играют:</div>
             <div class="player-list" id="list-tttop"><span class="empty-note">У столов пока свободно</span></div>
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-tttop"><span class="empty-note">Никто не планировал</span></div>
             <div class="action-group" id="btn-container-tttop">
-              <button class="btn btn-join" onclick="handleCheckInClick('tttop')">🏓 Я уже у стола</button>
-              <button class="btn btn-plan" onclick="handlePlanClick('tttop')">⏳ Буду позже...</button>
+              <button class="btn btn-join" onclick="handleCheckInClick('tttop')"><svg class="tt-icon"><use href="#icon-loc-tttop"></use></svg> Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('tttop')"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Буду позже...</button>
             </div>
           </div>
         </div>
@@ -350,10 +382,10 @@
     <!-- Локация 4: СОК МУ «Олимп» -->
     <div class="card" id="card-olimp">
       <div class="card-top" onclick="toggleCard('olimp')">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="loc_olimp.webp" alt="Олимп" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/locations/loc_olimp.jpg" alt="СОК МУ Олимп" class="location-card-logo" onerror="this.style.display='none'">
           <div>
-            <div class="card-title">🏅 СОК МУ «Олимп»</div>
+            <div class="card-title"><svg class="tt-icon loc-title-icon"><use href="#icon-loc-olimp"></use></svg> СОК МУ «Олимп»</div>
             <div class="card-desc">с. Долгодеревенское, ул. 1 Мая, 120А/1</div>
           </div>
         </div>
@@ -365,14 +397,14 @@
       <div class="card-collapse-wrapper">
         <div class="card-body-collapse">
           <div class="card-body-inner">
-            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-olimp" onclick="openAnnouncementModal('olimp')">✏️ Изменить анонс встречи</button>
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-olimp" onclick="openAnnouncementModal('olimp')">Изменить анонс встречи</button>
             <div class="section-label">Сейчас играют:</div>
             <div class="player-list" id="list-olimp"><span class="empty-note">У столов пока свободно</span></div>
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-olimp"><span class="empty-note">Никто не планировал</span></div>
             <div class="action-group" id="btn-container-olimp">
-              <button class="btn btn-join" onclick="handleCheckInClick('olimp')">🏓 Я уже у стола</button>
-              <button class="btn btn-plan" onclick="handlePlanClick('olimp')">⏳ Буду позже...</button>
+              <button class="btn btn-join" onclick="handleCheckInClick('olimp')"><svg class="tt-icon"><use href="#icon-loc-tttop"></use></svg> Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('olimp')"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Буду позже...</button>
             </div>
           </div>
         </div>
@@ -382,10 +414,10 @@
     <!-- Локация 5: ДС «ЧЭМК» -->
     <div class="card" id="card-chemk">
       <div class="card-top" onclick="toggleCard('chemk')">
-        <div style="display: flex; align-items: center; gap: 10px;">
-          <img src="loc_chemk.webp" alt="ЧЭМК" class="location-card-logo" onerror="this.style.display='none'" style="width: 40px; height: 40px; border-radius: 50%; object-fit: cover; border: 2px solid var(--accent-sky); flex-shrink: 0;">
+        <div style="display: flex; align-items: center; gap: 12px;">
+          <img src="assets/locations/loc_chemk.jpg" alt="ДС ЧЭМК" class="location-card-logo" onerror="this.style.display='none'">
           <div>
-            <div class="card-title">⚡ ДС «ЧЭМК»</div>
+            <div class="card-title"><svg class="tt-icon loc-title-icon"><use href="#icon-loc-chemk"></use></svg> ДС «ЧЭМК»</div>
             <div class="card-desc">ул. Российская, 36</div>
           </div>
         </div>
@@ -397,14 +429,14 @@
       <div class="card-collapse-wrapper">
         <div class="card-body-collapse">
           <div class="card-body-inner">
-            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-chemk" onclick="openAnnouncementModal('chemk')">✏️ Изменить анонс встречи</button>
+            <button class="btn-admin-edit-announcement" id="btn-edit-announcement-chemk" onclick="openAnnouncementModal('chemk')">Изменить анонс встречи</button>
             <div class="section-label">Сейчас играют:</div>
             <div class="player-list" id="list-chemk"><span class="empty-note">У столов пока свободно</span></div>
             <div class="section-label">Собираются прийти:</div>
             <div class="player-list" id="plan-list-chemk"><span class="empty-note">Никто не планировал</span></div>
             <div class="action-group" id="btn-container-chemk">
-              <button class="btn btn-join" onclick="handleCheckInClick('chemk')">🏓 Я уже у стола</button>
-              <button class="btn btn-plan" onclick="handlePlanClick('chemk')">⏳ Буду позже...</button>
+              <button class="btn btn-join" onclick="handleCheckInClick('chemk')"><svg class="tt-icon"><use href="#icon-loc-tttop"></use></svg> Я уже у стола</button>
+              <button class="btn btn-plan" onclick="handlePlanClick('chemk')"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Буду позже...</button>
             </div>
           </div>
         </div>
@@ -416,14 +448,14 @@
   <!-- ЭКРАН 3: РЕЙТИНГИ И ИСТОРИЯ МАТЧЕЙ -->
   <div id="view-ratings" class="main-view">
    <button id="btn-match-glow" class="btn-match-quick" onclick="handleMatchClick()" style="position: relative;">
-      <span>⚔️</span><span>Записать результат матча</span>
+      <svg class="tt-icon"><use href="#icon-nav-tournaments"></use></svg><span>Записать результат матча</span>
       <!-- БЕЙДЖ БУСТА НА КНОПКЕ -->
-      <div id="match-btn-boost-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 8px; border: 2px solid var(--bg-color, #0f172a); box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);">🔥 x2</div>
+      <div id="match-btn-boost-badge" style="display: none; position: absolute; top: -6px; right: -6px; background: #ef4444; color: white; font-size: 11px; font-weight: 800; padding: 2px 6px; border-radius: 8px; border: 2px solid var(--bg-color, #0f172a); box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);"><svg class="tt-icon"><use href="#icon-flame"></use></svg> x2</div>
     </button>
     <div id="pending-matches-container"></div>
     <div class="card" id="card-recent-matches">
   <div class="card-top" onclick="this.parentElement.classList.toggle('expanded')">
-    <div class="card-title" style="width: 100%; justify-content: center;">🕒 Последние матчи</div>
+    <div class="card-title" style="width: 100%; justify-content: center;"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Последние матчи</div>
   </div>
   <div class="card-collapse-wrapper">
     <div class="card-body-collapse">
@@ -433,17 +465,17 @@
 </div>
 
     <div class="tabs-container">
-      <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')">🏆 Рейтинг Эло</button>
-      <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')">⏱ Топ по часам</button>
+      <button class="tab-btn active" id="tab-btn-rating" onclick="switchTab('rating')"><svg class="tt-icon"><use href="#icon-nav-ratings"></use></svg> Рейтинг Эло</button>
+      <button class="tab-btn" id="tab-btn-time" onclick="switchTab('time')"><svg class="tt-icon"><use href="#icon-clock"></use></svg> Топ по часам</button>
     </div>
 
     <div class="rating-card" id="view-rating-content">
-      <div class="card-block-title" style="color: var(--accent-purple);"><span>⚔️</span><span>Клубный рейтинг игроков</span></div>
+      <div class="card-block-title" style="color: var(--accent-purple);"><svg class="tt-icon"><use href="#icon-nav-tournaments"></use></svg><span>Клубный рейтинг игроков</span></div>
       <div id="rating-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Загрузка рейтинга...</span></div>
     </div>
 
     <div class="leaderboard-card" id="view-time-content" style="display: none;">
-      <div class="card-block-title" style="color: var(--accent-gold);"><span>🥇</span><span>Зал славы (Тренировки)</span></div>
+      <div class="card-block-title" style="color: var(--accent-gold);"><svg class="tt-icon"><use href="#icon-crown"></use></svg><span>Зал славы (Тренировки)</span></div>
       <div id="leaderboard-list" class="scrollable-list"><span class="empty-note" style="padding: 4px 0;">Статистика собирается...</span></div>
     </div>
   </div>
@@ -452,12 +484,12 @@
   <div id="view-tournaments" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
       <div style="display: flex; justify-content: center; align-items: center; gap: 10px; margin-bottom: 4px;">
-  <h2 style="font-size: 18px; color: var(--accent-amber); margin: 0;">🏆 Активные турниры</h2>
+  <h2 style="font-size: 18px; color: var(--accent-amber); margin: 0; display:flex; align-items:center; gap:8px;"><svg class="tt-icon"><use href="#icon-nav-ratings"></use></svg> Активные турниры</h2>
         <button id="btn-add-tournament" class="badge-admin-btn" style="display:none; padding: 6px 12px; font-size: 12px; margin: 0;" onclick="openTournamentModal()">+ Добавить</button>
       </div>
       <div id="tournaments-list-active" style="display: flex; flex-direction: column; gap: 12px;"></div>
       
-      <h2 style="font-size: 16px; color: var(--text-muted); margin-top: 24px; text-align: center;">📂 Архив турниров</h2>
+      <h2 style="font-size: 16px; color: var(--text-muted); margin-top: 24px; text-align: center; display:flex; align-items:center; justify-content:center; gap:8px;"><svg class="tt-icon"><use href="#icon-folder"></use></svg> Архив турниров</h2>
       <div id="tournaments-list-archive" style="display: flex; flex-direction: column; gap: 12px;"></div>
     </div>
   </div>
@@ -466,7 +498,7 @@
   <div id="view-news" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
      <div style="display: flex; justify-content: center; align-items: center; margin-bottom: 12px;">
-  <h2 style="font-size: 18px; color: #3b82f6; margin: 0;">📰 Мир настольного тенниса</h2>
+  <h2 style="font-size: 18px; color: #3b82f6; margin: 0; display:flex; align-items:center; gap:8px;"><svg class="tt-icon"><use href="#icon-nav-news"></use></svg> Мир настольного тенниса</h2>
       </div>
       <div id="news-container" style="display: flex; flex-direction: column; gap: 10px;">
         <span class="empty-note">Сбор свежих новостей...</span>
@@ -477,8 +509,8 @@
   <div id="view-quests" class="main-view">
     <div class="card" style="background: transparent; border: none; padding-top: 12px; box-shadow: none;">
      <div style="display: flex; justify-content: center; align-items: center; gap: 8px; margin-bottom: 12px;">
-  <h2 style="font-size: 18px; color: var(--accent-red); margin: 0;">🎯 Еженедельные задания</h2>
-        <button class="btn-info" onclick="customAlert('Испытания на неделю, выполняйте их в матчах и получайте бонусное Эло и уникальные статусы в профиль!')">?</button>
+  <h2 style="font-size: 18px; color: var(--accent-red); margin: 0; display:flex; align-items:center; gap:8px;"><svg class="tt-icon"><use href="#icon-nav-quests"></use></svg> Еженедельные задания</h2>
+        <button class="btn-info" onclick="customAlert('Испытания на неделю, выполняйте их в матчах и получайте бонусное Эло и уникальные статусы в профиль!')" aria-label="Справка по заданиям">?</button>
       </div>
       <div id="quest-board-content">
         <span class="empty-note">Загрузка заданий...</span>
@@ -499,13 +531,13 @@
 
 <!-- BOTTOM NAVIGATION -->
 <div class="bottom-nav">
-  <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')"><span class="nav-icon">👤</span><span>Профиль</span></a>
-  <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')"><span class="nav-icon">📍</span><span>Радар</span></a>
-  <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')"><span class="nav-icon">🏆</span><span>Рейтинг</span></a>
-  <a class="nav-item" id="nav-tournaments" onclick="switchNavTab('tournaments')"><span class="nav-icon">⚔️</span><span>Турниры</span></a>
-  <a class="nav-item" id="nav-quests" onclick="switchNavTab('quests')"><span class="nav-icon">🎯</span><span>Задания</span></a>
-  <a class="nav-item" id="nav-arcade" onclick="switchNavTab('arcade')"><span class="nav-icon">🕹️</span><span>Аркада</span></a>
-  <a class="nav-item" id="nav-news" onclick="switchNavTab('news')"><span class="nav-icon">📰</span><span>Новости</span></a>
+  <a class="nav-item active" id="nav-profile" onclick="switchNavTab('profile')" aria-label="Профиль"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-profile"></use></svg></span><span>Профиль</span></a>
+  <a class="nav-item" id="nav-radar" onclick="switchNavTab('radar')" aria-label="Радар"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-radar"></use></svg></span><span>Радар</span></a>
+  <a class="nav-item" id="nav-ratings" onclick="switchNavTab('ratings')" aria-label="Рейтинг"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-ratings"></use></svg></span><span>Рейтинг</span></a>
+  <a class="nav-item" id="nav-tournaments" onclick="switchNavTab('tournaments')" aria-label="Турниры"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-tournaments"></use></svg></span><span>Турниры</span></a>
+  <a class="nav-item" id="nav-quests" onclick="switchNavTab('quests')" aria-label="Задания"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-quests"></use></svg></span><span>Задания</span></a>
+  <a class="nav-item" id="nav-arcade" onclick="switchNavTab('arcade')" aria-label="Аркада"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-arcade"></use></svg></span><span>Аркада</span></a>
+  <a class="nav-item" id="nav-news" onclick="switchNavTab('news')" aria-label="Новости"><span class="nav-icon"><svg class="tt-icon"><use href="#icon-nav-news"></use></svg></span><span>Новости</span></a>
 </div>
 
 <!-- МОДАЛЬНЫЕ ОКНА -->
@@ -851,8 +883,8 @@
     <button class="btn btn-join" style="background: var(--accent-amber); color: #0b1120; font-weight: 700;" onclick="closeBadgeInfoModal()">Понятно</button>
   </div>
 </div>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
 <script>
 // Регистрация Service Worker для офлайн-кэширования

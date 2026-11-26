@@ -1413,11 +1413,138 @@ function buildTournamentSummaryHtml(tourData) {
   '</div>';
 }
 
+function getOlympicPoolStageAndTitle(placeFrom, poolLen, roundNum) {
+  if (placeFrom === 1 && poolLen === 2) {
+    return { stage: 'final', title: 'ФИНАЛ (за 1-е место)', bo: 5 };
+  }
+  if (placeFrom === 3 && poolLen === 2) {
+    return { stage: 'final', title: 'Матч за 3-е место', bo: 5 };
+  }
+  if (placeFrom === 1 && poolLen <= 4) {
+    return { stage: 'semi', title: '1/2 Финала (за 1–4 места)', bo: 5 };
+  }
+  if (poolLen === 2) {
+    return { stage: 'olympic_place', title: 'Матч за ' + placeFrom + '-е место', bo: 3 };
+  }
+  var placeTo = placeFrom + poolLen - 1;
+  if (placeFrom === 1) {
+    var frac = poolLen <= 8 ? '1/4 Финала' : (poolLen <= 16 ? '1/8 Финала' : '1/16 Финала');
+    return { stage: 'olympic_main', title: frac + ' (за 1–' + placeTo + ' места)', bo: 3 };
+  }
+  return { stage: 'olympic_cons', title: 'Сетка за ' + placeFrom + '–' + placeTo + ' места', bo: 3 };
+}
+
+function generateMatchesForOlympicPools(pools, roundNum, startOrderNum) {
+  var matches = [];
+  var nextPools = [];
+  var autoPlaced = [];
+  var orderCounter = startOrderNum || 1;
+
+  for (var pIdx = 0; pIdx < pools.length; pIdx++) {
+    var pool = pools[pIdx];
+    var players = pool.players || [];
+    if (players.length === 0) continue;
+
+    if (players.length === 1) {
+      autoPlaced.push({ place: pool.placeFrom, uid: players[0].uid, name: players[0].name });
+      continue;
+    }
+
+    var bracketSize = 2;
+    while (bracketSize < players.length && bracketSize < 32) { bracketSize *= 2; }
+    var seedOrder = buildOlympicSeedOrder(bracketSize);
+    var meta = getOlympicPoolStageAndTitle(pool.placeFrom, players.length, roundNum);
+    var byes = [];
+    var poolMatchesCount = 0;
+
+    for (var s = 0; s < seedOrder.length; s += 2) {
+      var p1 = players[seedOrder[s]] || null;
+      var p2 = players[seedOrder[s + 1]] || null;
+      var slotIdx = (s / 2) + 1;
+
+      if (p1 && p2) {
+        poolMatchesCount++;
+        var mId;
+        if (meta.stage === 'final' && pool.placeFrom === 1) mId = 'first';
+        else if (meta.stage === 'final' && pool.placeFrom === 3) mId = 'third';
+        else if (meta.stage === 'semi') mId = 'semi' + slotIdx;
+        else mId = 'oly_r' + roundNum + '_p' + pool.placeFrom + '_' + slotIdx;
+
+        matches.push({
+          id: mId,
+          orderNum: orderCounter++,
+          stage: meta.stage,
+          olympicRound: roundNum,
+          poolFrom: pool.placeFrom,
+          poolSize: players.length,
+          slot: slotIdx,
+          p1Uid: p1.uid, p1Name: p1.name,
+          p2Uid: p2.uid, p2Name: p2.name,
+          score1: null, score2: null, eloDelta: null,
+          title: meta.title + (players.length > 2 ? (' — Пара ' + slotIdx) : '')
+        });
+      } else if (p1 || p2) {
+        var adv = p1 || p2;
+        byes.push({ uid: adv.uid, name: adv.name, slot: slotIdx });
+      }
+    }
+
+    nextPools.push({
+      placeFrom: pool.placeFrom,
+      placeTo: pool.placeFrom + players.length - 1,
+      playersCount: players.length,
+      stage: meta.stage,
+      title: meta.title,
+      bo: meta.bo,
+      byes: byes,
+      matchesCount: poolMatchesCount
+    });
+  }
+
+  return { matches: matches, pools: nextPools, autoPlaced: autoPlaced };
+}
+
+function buildOlympicSeedOrder(size) {
+  var order = [0, 1];
+  while (order.length < size) {
+    var next = [];
+    var sum = order.length * 2 - 1;
+    for (var i = 0; i < order.length; i++) {
+      next.push(order[i]);
+      next.push(sum - order[i]);
+    }
+    order = next;
+  }
+  return order;
+}
+
 function startTournament(id, type) {
   if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
   ref.get().then(function(doc) {
     if (!doc.exists) return; var data = doc.data(); var parts = data.participants || [];
     if (parts.length < 4) { if(typeof customAlert === 'function') customAlert('Для турнира нужно минимум 4 участника!'); return; }
+
+    if (type === 'olympic') {
+      var seeded = parts.slice().sort(function(a, b) {
+        return (parseInt(b.elo, 10) || 1000) - (parseInt(a.elo, 10) || 1000);
+      }).map(function(p) { return { uid: p.uid, name: p.name }; });
+
+      var gen = generateMatchesForOlympicPools([{ placeFrom: 1, players: seeded }], 1, 1);
+      var allFinalOnly = gen.pools.every(function(pl) { return pl.stage === 'final'; });
+      var nextStatus = allFinalOnly ? 'finals' : 'olympic';
+
+      ref.update({
+        format: 'olympic',
+        status: nextStatus,
+        olympicRound: 1,
+        olympicPools: gen.pools,
+        olympicStandings: gen.autoPlaced,
+        groups: { A: [], B: [] },
+        matches: gen.matches
+      });
+      return;
+    }
+
     var grpA = [], grpB = [];
     if (type === 'smart') {
       var sorted = parts.slice().sort(function(a,b) { return (parseInt(b.elo, 10) || 1000) - (parseInt(a.elo, 10) || 1000); });
@@ -1548,67 +1675,200 @@ function generateFinals(id) {
   }).catch(function(e) {});
 }
 
-function completeTournament(id) {
-  if (!isSuperAdmin()) return; var ref = db.collection('tournaments').doc(id);
+function advanceOlympicRound(id) {
+  if (!isSuperAdmin()) return;
+  var ref = db.collection('tournaments').doc(id);
   ref.get().then(function(doc) {
-    if (!doc.exists) return; var data = doc.data();
+    if (!doc.exists) return;
+    var data = doc.data();
+    var curRound = data.olympicRound || 1;
+    var matches = data.matches || [];
+    var curMatches = matches.filter(function(m) { return (m.olympicRound || 1) === curRound; });
+
+    for (var i = 0; i < curMatches.length; i++) {
+      if (curMatches[i].score1 === null) {
+        if (typeof customAlert === 'function') customAlert('Сначала завершите все матчи текущего раунда!');
+        return;
+      }
+    }
+
+    var pools = data.olympicPools || [];
+    var standings = (data.olympicStandings || []).slice();
+    var nextRoundPools = [];
+
+    for (var pIdx = 0; pIdx < pools.length; pIdx++) {
+      var pool = pools[pIdx];
+      var pMatches = curMatches.filter(function(m) { return m.poolFrom === pool.placeFrom; });
+      pMatches.sort(function(a, b) { return (a.slot || 0) - (b.slot || 0); });
+
+      if (pool.playersCount === 2 && pMatches.length === 1) {
+        var fm = pMatches[0];
+        var w = fm.score1 > fm.score2 ? { uid: fm.p1Uid, name: fm.p1Name } : { uid: fm.p2Uid, name: fm.p2Name };
+        var l = fm.score1 > fm.score2 ? { uid: fm.p2Uid, name: fm.p2Name } : { uid: fm.p1Uid, name: fm.p1Name };
+        standings.push({ place: pool.placeFrom, uid: w.uid, name: w.name });
+        standings.push({ place: pool.placeFrom + 1, uid: l.uid, name: l.name });
+        continue;
+      }
+
+      var winners = [];
+      var losers = [];
+      var byes = pool.byes || [];
+      for (var b = 0; b < byes.length; b++) {
+        winners.push({ uid: byes[b].uid, name: byes[b].name });
+      }
+      for (var mIdx = 0; mIdx < pMatches.length; mIdx++) {
+        var cm = pMatches[mIdx];
+        if (cm.score1 > cm.score2) {
+          winners.push({ uid: cm.p1Uid, name: cm.p1Name });
+          losers.push({ uid: cm.p2Uid, name: cm.p2Name });
+        } else {
+          winners.push({ uid: cm.p2Uid, name: cm.p2Name });
+          losers.push({ uid: cm.p1Uid, name: cm.p1Name });
+        }
+      }
+
+      if (winners.length > 0) {
+        nextRoundPools.push({ placeFrom: pool.placeFrom, players: winners });
+      }
+      if (losers.length > 0) {
+        nextRoundPools.push({ placeFrom: pool.placeFrom + winners.length, players: losers });
+      }
+    }
+
+    var nextRound = curRound + 1;
+    var gen = generateMatchesForOlympicPools(nextRoundPools, nextRound, matches.length + 1);
+    for (var ap = 0; ap < gen.autoPlaced.length; ap++) {
+      standings.push(gen.autoPlaced[ap]);
+    }
+
+    standings.sort(function(a, b) { return a.place - b.place; });
+    var allNewMatches = matches.concat(gen.matches);
+
+    ref.update({
+      status: 'olympic',
+      olympicRound: nextRound,
+      olympicPools: gen.pools,
+      olympicStandings: standings,
+      matches: allNewMatches
+    });
+  }).catch(function(e) {});
+}
+
+function completeTournament(id) {
+  if (!isSuperAdmin()) return;
+  var ref = db.collection('tournaments').doc(id);
+  ref.get().then(function(doc) {
+    if (!doc.exists) return;
+    var data = doc.data();
+    if (data.status === 'completed') {
+      if (typeof customAlert === 'function') customAlert("Турнир уже завершён, награды уже начислены.");
+      return;
+    }
+
     var firstM = null, thirdM = null;
     var mArr = data.matches || [];
-    for(var i=0; i<mArr.length; i++) { if (mArr[i].id === 'first') firstM = mArr[i]; if (mArr[i].id === 'third') thirdM = mArr[i]; }
-    if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) { if(typeof customAlert === 'function') customAlert("Завершите финалы!"); return; }
+    for (var i = 0; i < mArr.length; i++) {
+      if (mArr[i].id === 'first') firstM = mArr[i];
+      if (mArr[i].id === 'third') thirdM = mArr[i];
+    }
+    if (!firstM || !thirdM || firstM.score1 === null || thirdM.score1 === null) {
+      if (typeof customAlert === 'function') customAlert("Завершите финалы!");
+      return;
+    }
 
     var gld = firstM.score1 > firstM.score2 ? {uid: firstM.p1Uid, name: firstM.p1Name} : {uid: firstM.p2Uid, name: firstM.p2Name};
     var slv = firstM.score1 > firstM.score2 ? {uid: firstM.p2Uid, name: firstM.p2Name} : {uid: firstM.p1Uid, name: firstM.p1Name};
     var brn = thirdM.score1 > thirdM.score2 ? {uid: thirdM.p1Uid, name: thirdM.p1Name} : {uid: thirdM.p2Uid, name: thirdM.p2Name};
 
-    var parts = data.participants || []; 
+    // Для олимпийской системы дозаписываем места финального раунда в olympicStandings
+    var finalStandings = (data.olympicStandings || []).slice();
+    if (data.format === 'olympic') {
+      var curRound = data.olympicRound || 1;
+      var pools = data.olympicPools || [];
+      var curMatches = mArr.filter(function(m) { return (m.olympicRound || 1) === curRound; });
+      for (var plIdx = 0; plIdx < pools.length; plIdx++) {
+        var pl = pools[plIdx];
+        if (pl.playersCount === 2) {
+          var pm = curMatches.find(function(m) { return m.poolFrom === pl.placeFrom; });
+          if (pm && pm.score1 !== null) {
+            var pw = pm.score1 > pm.score2 ? { uid: pm.p1Uid, name: pm.p1Name } : { uid: pm.p2Uid, name: pm.p2Name };
+            var pLose = pm.score1 > pm.score2 ? { uid: pm.p2Uid, name: pm.p2Name } : { uid: pm.p1Uid, name: pm.p1Name };
+            finalStandings.push({ place: pl.placeFrom, uid: pw.uid, name: pw.name });
+            finalStandings.push({ place: pl.placeFrom + 1, uid: pLose.uid, name: pLose.name });
+          }
+        }
+      }
+      finalStandings.sort(function(a, b) { return a.place - b.place; });
+    }
+
+    // Собираем уникальный список UID всех участников + призёров
+    var uniqueUids = [];
+    var seenUid = {};
+    var parts = data.participants || [];
+    for (var j = 0; j < parts.length; j++) {
+      if (parts[j] && parts[j].uid && !seenUid[parts[j].uid]) {
+        seenUid[parts[j].uid] = true;
+        uniqueUids.push(parts[j].uid);
+      }
+    }
+    [gld.uid, slv.uid, brn.uid].forEach(function(pUid) {
+      if (pUid && !seenUid[pUid]) {
+        seenUid[pUid] = true;
+        uniqueUids.push(pUid);
+      }
+    });
+
     var batch = db.batch();
     var promises = [];
-    
-    for (var j = 0; j < parts.length; j++) {
-      var p = parts[j];
-      var uRef = db.collection('users').doc(p.uid);
-      promises.push(uRef.get().then((function(puid) {
-          return function(uDoc) {
-              if (uDoc.exists) {
-                  var uData = uDoc.data(); 
-                  var m = uData.medals || {gold:0, silver:0, bronze:0};
-                  
-                  // Жесткая конвертация в числа, чтобы избежать сбоев
-                  m.gold = parseInt(m.gold, 10) || 0;
-                  m.silver = parseInt(m.silver, 10) || 0;
-                  m.bronze = parseInt(m.bronze, 10) || 0;
 
-                  if (puid === gld.uid) m.gold += 1; 
-                  if (puid === slv.uid) m.silver += 1; 
-                  if (puid === brn.uid) m.bronze += 1;
-                  
-                  var updateObj = { tournamentsPlayed: (parseInt(uData.tournamentsPlayed, 10) || 0) + 1, medals: m };
-                  
-                  // АБСОЛЮТНО УНИВЕРСАЛЬНАЯ ВЫДАЧА ТИТУЛА
-                  if (puid === gld.uid && data.title) {
-                      // Плашка будет равна названию турнира + кубок (например, "Новогодний кубок 🏆")
-                      updateObj.customTag = data.title.trim() + ' 🏆';
-                  }
-                  
-                  batch.update(uRef, updateObj);
-              }
+    for (var uIdx = 0; uIdx < uniqueUids.length; uIdx++) {
+      var targetUid = uniqueUids[uIdx];
+      var uRef = db.collection('users').doc(targetUid);
+      promises.push(uRef.get().then((function(puid, refDoc) {
+        return function(uDoc) {
+          if (!uDoc.exists) return;
+          var uData = uDoc.data();
+          var m = uData.medals || {gold:0, silver:0, bronze:0};
+
+          m.gold = parseInt(m.gold, 10) || 0;
+          m.silver = parseInt(m.silver, 10) || 0;
+          m.bronze = parseInt(m.bronze, 10) || 0;
+
+          if (puid === gld.uid) m.gold += 1;
+          if (puid === slv.uid) m.silver += 1;
+          if (puid === brn.uid) m.bronze += 1;
+
+          var updateObj = {
+            tournamentsPlayed: (parseInt(uData.tournamentsPlayed, 10) || 0) + 1,
+            medals: m
           };
-      })(p.uid)));
+
+          if (puid === gld.uid && data.title) {
+            updateObj.customTag = data.title.trim() + ' 🏆';
+          }
+
+          batch.update(refDoc, updateObj);
+        };
+      })(targetUid, uRef)));
     }
-    
+
     Promise.all(promises).then(function() {
-        batch.update(ref, { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } });
-        batch.commit().then(function() {
-          if (typeof triggerConfetti === 'function') triggerConfetti();
-            
-            if(typeof sendTelegramAlert === 'function') {
-                sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
-            }
-        });
+      var tourUpdate = { status: 'completed', results: { gold: gld, silver: slv, bronze: brn } };
+      if (data.format === 'olympic') {
+        tourUpdate.olympicStandings = finalStandings;
+      }
+      batch.update(ref, tourUpdate);
+      return batch.commit();
+    }).then(function() {
+      if (typeof triggerConfetti === 'function') triggerConfetti();
+      if (typeof sendTelegramAlert === 'function') {
+        sendTelegramAlert("🏆 <b>Турнир «" + cleanHtml(data.title) + "» завершен!</b>\n\n🥇 <b>1 место:</b> " + cleanHtml(gld.name) + "\n🥈 <b>2 место:</b> " + cleanHtml(slv.name) + "\n🥉 <b>3 место:</b> " + cleanHtml(brn.name) + "\n\nСпасибо всем участникам! Заходите в приложение, чтобы посмотреть сетку и обновленные профили.");
+      }
+    }).catch(function(err) {
+      if (typeof customAlert === 'function') customAlert("Ошибка при начислении наград: " + (err && err.message ? err.message : err));
     });
   }).catch(function(e) {
-      if(typeof customAlert === 'function') customAlert("Ошибка при завершении: " + e.message);
+    if (typeof customAlert === 'function') customAlert("Ошибка при завершении: " + (e && e.message ? e.message : e));
   });
 }
 
@@ -1620,17 +1880,8 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name, stage) {
   
   var picker = document.getElementById('tour-match-score-picker');
   if (picker) {
-      // Отборочные (Группы) И 1/4 финала играются быстро — до 2 побед!
-      if (stage === 'group' || stage === 'quarter') {
-          picker.style.gridTemplateColumns = 'repeat(2, 1fr)';
-          picker.innerHTML = 
-              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 0)">2 : 0</button>' +
-              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 1)">2 : 1</button>' +
-              '<button class="score-btn tour-score-btn" onclick="selectTourScore(1, 2)">1 : 2</button>' +
-              '<button class="score-btn tour-score-btn" onclick="selectTourScore(0, 2)">0 : 2</button>';
-          selectTourScore(2, 0);
-      } else {
-          // 1/2 финала, матч за 3-е место и Финал — до 3 побед!
+      // Полуфиналы (1/2) и Финалы (1-е и 3-е места) играются до 3 побед (из 5 партий)!
+      if (stage === 'semi' || stage === 'final') {
           picker.style.gridTemplateColumns = 'repeat(3, 1fr)';
           picker.innerHTML = 
               '<button class="score-btn tour-score-btn" onclick="selectTourScore(3, 0)">3 : 0</button>' +
@@ -1640,6 +1891,15 @@ function openTourMatchModal(tourId, matchId, p1Name, p2Name, stage) {
               '<button class="score-btn tour-score-btn" onclick="selectTourScore(1, 3)">1 : 3</button>' +
               '<button class="score-btn tour-score-btn" onclick="selectTourScore(0, 3)">0 : 3</button>';
           selectTourScore(3, 0);
+      } else {
+          // Группы, 1/4 и все утешительные круги олимпийки — до 2 побед (из 3 партий)!
+          picker.style.gridTemplateColumns = 'repeat(2, 1fr)';
+          picker.innerHTML = 
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 0)">2 : 0</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(2, 1)">2 : 1</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(1, 2)">1 : 2</button>' +
+              '<button class="score-btn tour-score-btn" onclick="selectTourScore(0, 2)">0 : 2</button>';
+          selectTourScore(2, 0);
       }
   }
   
@@ -1903,15 +2163,24 @@ function listenTournaments() {
                 detailsHtml += '<div style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 16px;">';
                 detailsHtml += '<div style="font-size: 14px; font-weight: 800; color: var(--accent-amber); margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">📊 Групповой этап:</div>';
                 detailsHtml += renderGroupTable(groupA, 'A') + renderGroupTable(groupB, 'B');
-                
-                var allMatches = d.matches || [];
+                detailsHtml += '</div>';
+            }
+            var allMatches = d.matches || [];
+            if (allMatches.length > 0) {
+                detailsHtml += '<div style="margin-top: 12px; border-top: 1px dashed rgba(255,255,255,0.1); padding-top: 16px;">';
                 if (allMatches.length > 0) {
-                    var playoffsMatches = allMatches.filter(function(m){ return m.stage === 'quarter' || m.stage === 'semi' || m.stage === 'final'; });
+                    var playoffsMatches = allMatches.filter(function(m){ return m.stage !== 'group'; });
                     if (playoffsMatches.length > 0) {
                         playoffsMatches.sort(function(a, b) {
-                            var rankA = a.stage === 'quarter' ? 0 : (a.stage === 'semi' ? 1 : (a.id === 'first' ? 3 : 2));
-                            var rankB = b.stage === 'quarter' ? 0 : (b.stage === 'semi' ? 1 : (b.id === 'first' ? 3 : 2));
-                            return rankA - rankB;
+                            var rank = function(m) {
+                              if (m.stage === 'olympic_r32') return 0;
+                              if (m.stage === 'olympic_r16') return 1;
+                              if (m.stage === 'quarter' || m.stage === 'olympic_q') return 2;
+                              if (m.stage === 'semi') return 3;
+                              if (m.id === 'third') return 4;
+                              return 5;
+                            };
+                            return rank(a) - rank(b);
                         });
 
                         detailsHtml += '<div style="font-size: 14px; font-weight: 800; color: var(--accent-sky); margin: 24px 0 12px 0; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">⚔️ Сетка Плей-Офф:</div>';
@@ -1980,7 +2249,46 @@ function listenTournaments() {
             var pList = pListItems.length > 0 ? pListItems.join(', ') : 'Пока никто не записался';
             content = '<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (' + parts.length + '):</b> ' + pList + '</div>';
             if (myUid) { buttonsHtml += isPart ? '<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament(\''+escapeJS(id)+'\')">Отказаться</button>' : '<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament(\''+escapeJS(id)+'\', \''+escapeJS(cleanHtml(d.title))+'\')">🏆 Участвовать</button>'; }
-            if (isAdmin) { buttonsHtml += '</div><button class="btn-plan" style="width: 100%; margin-top: 8px; border-color: #ec4899; color: #ec4899; padding: 8px;" onclick="openTourPlayersModal(\''+escapeJS(id)+'\')">👥 Управление составом</button><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная сетка</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button>'; }
+            if (isAdmin) { buttonsHtml += '</div><button class="btn-plan" style="width: 100%; margin-top: 8px; border-color: #ec4899; color: #ec4899; padding: 8px;" onclick="openTourPlayersModal(\''+escapeJS(id)+'\')">👥 Управление составом</button><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная сетка</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button></div><button class="btn-join" style="width: 100%; margin-top: 8px; padding: 9px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b1120; font-weight: 800;" onclick="startTournament(\''+escapeJS(id)+'\', \'olympic\')">🏆 Олимпийка (розыгрыш всех мест)</button><div style="display:none;">'; }
+          } 
+          else if (d.status === 'olympic') {
+            var curRound = d.olympicRound || 1;
+            var pools = d.olympicPools || [];
+            var curMatches = d.matches ? d.matches.filter(function(m) { return (m.olympicRound || 1) === curRound; }) : [];
+            var isAllMatchesDone = curMatches.every(function(m) { return m.score1 !== null; });
+
+            content += '<div class="olympic-round-header"><span>🏆 Олимпийка — Раунд ' + curRound + '</span><span class="olympic-bo5-badge">1/2 И ФИНАЛЫ: ДО 3 ПОБЕД • ОСТАЛЬНЫЕ: ДО 2</span></div>';
+
+            for (var plIdx = 0; plIdx < pools.length; plIdx++) {
+              var pl = pools[plIdx];
+              var plMatches = curMatches.filter(function(m) { return m.poolFrom === pl.placeFrom; });
+              var boBadge = pl.bo === 5 ? 'ДО 3 ПОБЕД' : 'ДО 2 ПОБЕД';
+              content += '<div style="font-size: 12px; font-weight: 800; color: ' + (pl.placeFrom === 1 ? 'var(--accent-gold)' : 'var(--accent-sky)') + '; margin: 10px 0 4px 0; display: flex; justify-content: space-between;"><span>' + cleanHtml(pl.title) + '</span><span style="font-size: 10px; opacity: 0.8;">' + boBadge + '</span></div>';
+              if (plMatches.length > 0) {
+                content += renderMatchList(plMatches, id, false, queueMap);
+              }
+              if (pl.byes && pl.byes.length > 0) {
+                var byeNames = pl.byes.map(function(b) { return cleanHtml(b.name); }).join(', ');
+                content += '<div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; padding: 6px 10px; background: var(--row-bg); border-radius: 8px; border: 1px dashed var(--card-border);">Автопроход (BYE): <b>' + byeNames + '</b></div>';
+              }
+            }
+
+            if (d.olympicStandings && d.olympicStandings.length > 0) {
+              var stRows = d.olympicStandings.slice().sort(function(a, b) { return a.place - b.place; }).map(function(s) {
+                return '<div style="display:flex; justify-content:space-between; font-size:12px; padding:3px 0; border-bottom:1px solid rgba(255,255,255,0.04);"><span><b>' + s.place + ' место</b></span><span>' + cleanHtml(s.name) + '</span></div>';
+              }).join('');
+              content += '<div style="margin-top:10px; background:var(--row-bg); padding:10px; border-radius:10px; border:1px solid var(--card-border);"><div style="font-size:11px; font-weight:800; color:var(--accent-green); margin-bottom:4px; text-transform:uppercase;">Распределённые места:</div>' + stRows + '</div>';
+            }
+
+            content += buildTournamentSummaryHtml(d);
+            var hasMoreToPlay = pools.some(function(pl) { return pl.playersCount > 2; });
+            if (isAdmin && isAllMatchesDone && curMatches.length > 0) {
+              if (hasMoreToPlay) {
+                adminActionHtml = '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="advanceOlympicRound(\''+escapeJS(id)+'\')">Сформировать следующий раунд</button>' + adminActionHtml;
+              } else {
+                adminActionHtml = '<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament(\''+escapeJS(id)+'\')">Завершить турнир</button>' + adminActionHtml;
+              }
+            }
           } 
           else if (d.status === 'active') {
             var groupA = d.groups && d.groups.A ? d.groups.A : []; var groupB = d.groups && d.groups.B ? d.groups.B : [];
@@ -2810,8 +3118,12 @@ window.switchTab = function(tab) {
 window.initTheme = function() {
   var savedTheme = localStorage.getItem('tt_theme') || 'dark';
   document.documentElement.setAttribute('data-theme', savedTheme);
-  var btn = document.getElementById('btn-theme');
-  if (btn) btn.innerText = savedTheme === 'light' ? '☀️' : '🌙';
+  if (typeof updateThemeIcon === 'function') {
+    updateThemeIcon(savedTheme);
+  } else {
+    var btn = document.getElementById('btn-theme');
+    if (btn) btn.innerText = savedTheme === 'light' ? '🌙' : '☀️';
+  }
 };
 
 window.toggleTheme = function() {
@@ -2820,8 +3132,12 @@ window.toggleTheme = function() {
   var newTheme = current === 'light' ? 'dark' : 'light';
   root.setAttribute('data-theme', newTheme);
   localStorage.setItem('tt_theme', newTheme);
-  var btn = document.getElementById('btn-theme');
-  if (btn) btn.innerText = newTheme === 'light' ? '☀️' : '🌙';
+  if (typeof updateThemeIcon === 'function') {
+    updateThemeIcon(newTheme);
+  } else {
+    var btn = document.getElementById('btn-theme');
+    if (btn) btn.innerText = newTheme === 'light' ? '🌙' : '☀️';
+  }
 };
 
 window.toggleCard = function(loc) { 
