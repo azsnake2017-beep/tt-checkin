@@ -596,9 +596,14 @@ body {
   flex: 1;
   min-width: 0;
 }
-.leader-left > div {
+.leader-left > .leader-info-col {
   min-width: 0;
   flex: 1;
+}
+.mini-avatar {
+  width: 38px !important;
+  height: 38px !important;
+  flex: 0 0 38px !important;
 }
 .platform-badge, .temporary-badge, .badge-admin {
   display: inline-flex !important;
@@ -731,4 +736,84 @@ body {
 }
 .analytics-stat-row b {
   color: var(--text);
+}
+
+/* ===== 16. Этап 6: Чистые списки игроков и единый стиль всех страниц ===== */
+.leader-row-clickable {
+  cursor: pointer;
+  padding: 10px 12px !important;
+  border-radius: 14px !important;
+  background: var(--row-bg) !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.2s ease, background 0.2s ease !important;
+}
+:root[data-theme="light"] .leader-row-clickable {
+  border-color: rgba(15, 23, 42, 0.08) !important;
+}
+.leader-row-clickable:hover {
+  border-color: rgba(167, 139, 250, 0.35) !important;
+}
+.leader-row-clickable:active {
+  transform: scale(0.985) !important;
+}
+
+.leader-info-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+  flex: 1;
+}
+.leader-name-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+.leader-name-text {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100% !important;
+}
+.leader-right-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  flex-shrink: 0;
+}
+.leader-score-line {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+.leader-sub-stat {
+  font-size: 10px;
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Компактный логотип внизу Профиля, чтобы экран не растягивался */
+.profile-large-logo {
+  max-height: 110px !important;
+  opacity: 0.85;
+}
+
+/* Единый спокойный стиль карточек заданий (без устаревшей пульсации) */
+.quest-choice-card {
+  background: var(--row-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  border-radius: 14px !important;
+  animation: none !important;
+  box-shadow: none !important;
+}
+:root[data-theme="light"] .quest-choice-card {
+  background: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05) !important;
 }
