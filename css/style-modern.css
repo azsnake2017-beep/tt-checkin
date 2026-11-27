@@ -588,6 +588,7 @@ html {
   max-width: 100vw !important;
   overflow-x: clip !important;
   overflow-y: auto !important;
+  scrollbar-gutter: stable;
 }
 body {
   width: 100% !important;
@@ -610,6 +611,10 @@ body {
   max-width: 100% !important;
   min-width: 0 !important;
   box-sizing: border-box !important;
+}
+.main-view, .main-view .card {
+  transform: none;
+  will-change: auto !important;
 }
 .main-view > .card, .profile-card, .rating-card, .leaderboard-card, .challenges-box {
   overflow: hidden;

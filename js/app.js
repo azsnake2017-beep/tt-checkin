@@ -2955,7 +2955,8 @@ document.addEventListener('touchmove', function(e) {
         swipeState.targetView.style.position = 'absolute';
         swipeState.targetView.style.top = (swipeState.activeView.offsetTop + scrollYOffset) + 'px';
         swipeState.targetView.style.left = '0px';
-        swipeState.targetView.style.width = '100%';
+        swipeState.targetView.style.width = swipeState.width + 'px';
+        swipeState.targetView.style.boxSizing = 'border-box';
         swipeState.targetView.style.opacity = '0.5';
 
         var startOffset = swipeState.direction * (swipeState.width + swipeState.gap);
@@ -3012,8 +3013,8 @@ document.addEventListener('touchend', function(e) {
 
       setTimeout(function() {
         requestAnimationFrame(function() {
-          cleanupSwipe();
           if (typeof switchNavTab === 'function') switchNavTab(targetId);
+          cleanupSwipe();
         });
       }, 240);
 
@@ -3041,10 +3042,11 @@ function cleanupSwipe() {
         views[i].style.opacity = '';
         views[i].style.position = '';
         views[i].style.width = '';
+        views[i].style.boxSizing = '';
         views[i].style.zIndex = '';
         views[i].style.top = '';
         views[i].style.left = '';
-        views[i].style.display = ''; 
+        views[i].style.display = '';
     }
     if (document.documentElement.scrollLeft) document.documentElement.scrollLeft = 0;
     if (document.body.scrollLeft) document.body.scrollLeft = 0;
