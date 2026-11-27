@@ -477,30 +477,66 @@ window.openChallengeModal = function() {
     if (typeof customAlert === 'function') customAlert('Сначала авторизуйтесь в клубе!');
     return;
   }
+  var dateEl = document.getElementById('challenge-date-input');
+  if (dateEl && !dateEl.value) {
+    var now = new Date();
+    var yyyy = now.getFullYear();
+    var mm = ('0' + (now.getMonth() + 1)).slice(-2);
+    var dd = ('0' + now.getDate()).slice(-2);
+    dateEl.value = yyyy + '-' + mm + '-' + dd;
+    dateEl.min = yyyy + '-' + mm + '-' + dd;
+  }
   if (typeof openModalSmoothly === 'function') openModalSmoothly('challenge-modal');
 };
+
+function formatChallengeDay(dateStr) {
+  if (!dateStr) return 'Сегодня';
+  var parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  var target = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
+  var today = new Date(); today.setHours(0, 0, 0, 0);
+  var diffDays = Math.round((target.getTime() - today.getTime()) / 86400000);
+  var shortDate = parts[2] + '.' + parts[1];
+  if (diffDays === 0) return 'Сегодня (' + shortDate + ')';
+  if (diffDays === 1) return 'Завтра (' + shortDate + ')';
+  return shortDate;
+}
 
 window.submitOpenChallenge = function() {
   var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
   if (!uid) return;
   var loc = document.getElementById('challenge-loc-select').value;
-  var timeStr = (document.getElementById('challenge-time-input').value || '').trim() || 'Сегодня вечером';
+  var dateVal = document.getElementById('challenge-date-input').value;
+  var timeVal = (document.getElementById('challenge-time-input').value || '').trim() || '19:00';
+  var dayLabel = formatChallengeDay(dateVal);
+  var timeStr = dayLabel + ', ' + timeVal;
   var noteStr = (document.getElementById('challenge-note-input').value || '').trim();
   var name = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.name) ? currentUserProfile.name : 'Игрок';
   var elo = (typeof currentUserProfile !== 'undefined' && currentUserProfile && currentUserProfile.elo) ? currentUserProfile.elo : 1000;
+
+  var expiresAt = Date.now() + (48 * 3600 * 1000);
+  if (dateVal) {
+    var dp = dateVal.split('-');
+    if (dp.length === 3) {
+      var endOfDay = new Date(parseInt(dp[0], 10), parseInt(dp[1], 10) - 1, parseInt(dp[2], 10), 23, 59, 59).getTime();
+      expiresAt = Math.max(expiresAt, endOfDay);
+    }
+  }
 
   db.collection('open_challenges').add({
     uid: uid,
     name: name,
     elo: elo,
     loc: loc,
+    dateVal: dateVal || '',
+    timeVal: timeVal,
     timeStr: timeStr,
     note: noteStr,
     acceptedBy: null,
+    expiresAt: expiresAt,
     createdAt: Date.now()
   }).then(function() {
     if (typeof closeModalSmoothly === 'function') closeModalSmoothly('challenge-modal');
-    document.getElementById('challenge-time-input').value = '';
     document.getElementById('challenge-note-input').value = '';
     if (typeof vibrate === 'function') vibrate('medium');
 
@@ -509,8 +545,8 @@ window.submitOpenChallenge = function() {
       var msg = "⚔️ <b>Ищу соперника!</b>\n\n" +
         "🏓 Игрок: <b>" + cleanHtml(name) + "</b> (Эло: <b>" + elo + "</b>)\n" +
         "📍 Площадка: <b>" + cleanHtml(locTitle) + "</b>\n" +
-        "🕒 Время: <b>" + cleanHtml(timeStr) + "</b>" +
-        (noteStr ? ("\n💬 Пожелания: <i>" + cleanHtml(noteStr) + "</i>") : "") +
+        "🕒 Когда: <b>" + cleanHtml(timeStr) + "</b>" +
+        (noteStr ? ("\n💬 Описание: <i>" + cleanHtml(noteStr) + "</i>") : "") +
         "\n\nОткройте вкладку «Радар» в приложении, чтобы принять вызов!";
       sendTelegramAlert(msg);
     }
@@ -543,13 +579,16 @@ window.deleteOpenChallenge = function(id) {
 window.listenOpenChallenges = function() {
   var box = document.getElementById('open-challenges-list');
   if (!box || typeof db === 'undefined') return;
-  db.collection('open_challenges').orderBy('createdAt', 'desc').limit(10).onSnapshot(function(snap) {
+  db.collection('open_challenges').orderBy('createdAt', 'desc').limit(15).onSnapshot(function(snap) {
     var uid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-    var cutoff = Date.now() - (12 * 3600 * 1000);
+    var nowTs = Date.now();
+    var fallbackCutoff = nowTs - (48 * 3600 * 1000);
     var html = '';
     snap.forEach(function(doc) {
       var d = doc.data();
-      if (!d || (d.createdAt && d.createdAt < cutoff)) return;
+      if (!d) return;
+      var isExpired = d.expiresAt ? (nowTs > d.expiresAt) : (d.createdAt && d.createdAt < fallbackCutoff);
+      if (isExpired) return;
       var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[d.loc]) ? LOCATIONS[d.loc].name : d.loc;
       var actHtml = '';
       if (d.acceptedBy) {

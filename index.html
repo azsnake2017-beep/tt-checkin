@@ -890,7 +890,7 @@
   <script defer src="js/sounds.js?v=12"></script>
   <script defer src="js/config.js?v=10"></script>
   <script defer src="js/matches.js?v=4"></script>
-  <script defer src="js/radar.js?v=11"></script>
+  <script defer src="js/radar.js?v=12"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
   <script defer src="js/app.js?v=116"></script>
@@ -921,6 +921,7 @@
 <div class="modal-overlay" id="challenge-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 17px; color: var(--accent-violet-text);">Найти соперника</h3>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Локация:</div>
     <select id="challenge-loc-select" class="input-select">
       <option value="park">Парк им. Тищенко</option>
       <option value="vostok">ДК «Восток»</option>
@@ -928,8 +929,18 @@
       <option value="olimp">СОК МУ «Олимп»</option>
       <option value="chemk">ДС «ЧЭМК»</option>
     </select>
-    <input type="text" id="challenge-time-input" class="input-name" placeholder="Когда (напр.: Сегодня, 19:00)" maxlength="40" />
-    <input type="text" id="challenge-note-input" class="input-name" placeholder="Пожелания (напр.: Эло 1100–1300)" maxlength="50" />
+    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; width: 100%;">
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <span style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">День:</span>
+        <input type="date" id="challenge-date-input" class="input-name" style="margin: 0;" />
+      </div>
+      <div style="display: flex; flex-direction: column; gap: 4px;">
+        <span style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Время:</span>
+        <input type="time" id="challenge-time-input" class="input-name" value="19:00" style="margin: 0;" />
+      </div>
+    </div>
+    <div style="text-align: left; font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase;">Описание:</div>
+    <input type="text" id="challenge-note-input" class="input-name" placeholder="Пожелания (напр.: Эло 1100–1300)" maxlength="60" />
     <button class="btn btn-join" onclick="submitOpenChallenge()">Опубликовать заявку</button>
     <button class="btn-cancel-modal" onclick="closeModalSmoothly('challenge-modal')">Отмена</button>
   </div>
