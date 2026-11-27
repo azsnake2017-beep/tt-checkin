@@ -1009,10 +1009,10 @@ body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Компактный логотип внизу Профиля, чтобы экран не растягивался */
+/* Логотип внизу Профиля */
 .profile-large-logo {
-  max-height: 110px !important;
-  opacity: 0.85;
+  max-height: 240px !important;
+  opacity: 0.95;
 }
 
 /* Единый спокойный стиль карточек заданий (без устаревшей пульсации) */

@@ -23,7 +23,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/style-modern.css?v=8">
+  <link rel="stylesheet" href="css/style-modern.css?v=9">
 
   <style>
   /* Жестко глушим прелоадер, если страница просто обновляется */
@@ -305,6 +305,9 @@
 <button id="btn-invite-glow" class="btn btn-join" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;" onclick="showRefQrModal()">
   <svg class="tt-icon"><use href="#icon-user-plus"></use></svg> Добавить участника в клуб
 </button>
+    <div class="profile-logo-container">
+      <img src="logo.webp" alt="Логотип Челябинск" class="profile-large-logo" onerror="this.style.display='none'">
+    </div>
   </div>
 
   <!-- ЭКРАН 2: РАДАР (ГОРОДСКОЕ СООБЩЕСТВО ЧЕЛЯБИНСК) -->
