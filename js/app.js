@@ -2536,7 +2536,6 @@ function listenLeaderboard() {
                         '<div class="mini-avatar">' + (item.avatarSvg || '👤') + '</div>' +
                         '<div>' +
                           '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 4px;"><b>' + cleanHtml(item.name) + '</b> ' + adminBadgeHTML + ' ' + customBadge + ' ' + customTagBadge + '</div>' +
-                          '<div class="player-status-tag" style="color: var(--accent-sky);">⏱ Время за столом: ' + hoursFormatted + ' ч (' + totalMins + ' мин)</div>' +
                         '</div>' +
                       '</div>' +
                       '<div style="display: flex; align-items: center; gap: 8px;">' +
@@ -2874,36 +2873,7 @@ document.addEventListener('touchend', function(evt) {
   currentYDiff = 0;
 });
 
-window.closeModalSmoothly = function(modalId) {
-  // Добавляем звук прямо сюда, без всяких "петлей"
-  if (window.TTAudio && typeof window.TTAudio.playSwoosh === 'function') {
-    window.TTAudio.playSwoosh();
-  }
-
-  var overlay = document.getElementById(modalId);
-  if (!overlay) return;
-  var box = overlay.querySelector('.modal-box');
-
-  if (box) {
-    box.style.animation = 'none';
-    box.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-    box.style.transform = 'translateY(100%)';
-  }
-  
-  overlay.style.transition = 'opacity 0.3s ease';
-  overlay.style.opacity = '0';
-
-  setTimeout(function() {
-    overlay.style.display = 'none';
-    overlay.style.opacity = '';
-    overlay.style.transition = '';
-    if (box) {
-      box.style.transform = '';
-      box.style.transition = '';
-      box.style.animation = '';
-    }
-  }, 300);
-};
+// Дубль closeModalSmoothly удалён (единая версия ниже)
 
 /* ==========================================
    ФИНАЛЬНАЯ КАРУСЕЛЬ (С ПОЛНОЙ ЗАЩИТОЙ СКРОЛЛА)
@@ -2939,9 +2909,10 @@ document.addEventListener('touchstart', function(e) {
 }, {passive: true});
 
 document.addEventListener('touchmove', function(e) {
-  // ВАЖНО: Если мы на вкладке аркады, полностью блокируем свайп-переход наружу
+  // ВАЖНО: Если мы на вкладке аркады или свайпаем дерево турнира — не переключаем вкладки
   var activeV = document.querySelector('.main-view.active');
   if (activeV && activeV.id === 'view-arcade') return;
+  if (e.target && e.target.closest && e.target.closest('.bracket-scroll')) return;
   if (swipeState.isAnimating || !swipeState.activeView) return;
 
   var dx = e.touches[0].clientX - swipeState.startX;
@@ -3416,6 +3387,7 @@ window.openModalSmoothly = function(modalId) {
 
   var overlay = document.getElementById(modalId);
   if (!overlay) return;
+  if (overlay._closeTimer) { clearTimeout(overlay._closeTimer); overlay._closeTimer = null; }
   var box = overlay.querySelector('.modal-box');
 
   overlay.style.transition = 'none';
@@ -3423,18 +3395,19 @@ window.openModalSmoothly = function(modalId) {
   overlay.style.display = 'flex';
   
   if (box) {
+    box.style.animation = 'none';
     box.style.transition = 'none';
-    box.style.transform = 'translateY(100%)';
+    box.style.transform = 'translate3d(0, 48px, 0)';
   }
 
   requestAnimationFrame(function() {
     requestAnimationFrame(function() {
-      overlay.style.transition = 'opacity 0.35s ease-out';
+      overlay.style.transition = 'opacity 0.24s ease-out';
       overlay.style.opacity = '1';
       
       if (box) {
-        box.style.transition = 'transform 0.45s cubic-bezier(0.22, 1, 0.36, 1)';
-        box.style.transform = 'translateY(0)';
+        box.style.transition = 'transform 0.28s cubic-bezier(0.22, 1, 0.36, 1)';
+        box.style.transform = 'translate3d(0, 0, 0)';
       }
     });
   });
@@ -3448,18 +3421,20 @@ window.closeModalSmoothly = function(modalId) {
 
   var overlay = document.getElementById(modalId);
   if (!overlay) return;
+  if (overlay._closeTimer) { clearTimeout(overlay._closeTimer); overlay._closeTimer = null; }
   var box = overlay.querySelector('.modal-box');
 
   if (box) {
     box.style.animation = 'none';
-    box.style.transition = 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)';
-    box.style.transform = 'translateY(100%)';
+    box.style.transition = 'transform 0.22s cubic-bezier(0.32, 0.72, 0, 1)';
+    box.style.transform = 'translate3d(0, 64px, 0)';
   }
   
-  overlay.style.transition = 'opacity 0.3s ease';
+  overlay.style.transition = 'opacity 0.22s ease';
   overlay.style.opacity = '0';
 
-  setTimeout(function() {
+  overlay._closeTimer = setTimeout(function() {
+    overlay._closeTimer = null;
     overlay.style.display = 'none';
     overlay.style.opacity = '';
     overlay.style.transition = '';
@@ -3468,7 +3443,7 @@ window.closeModalSmoothly = function(modalId) {
       box.style.transition = '';
       box.style.animation = '';
     }
-  }, 300);
+  }, 220);
 };
 
 // 1. ИСПРАВЛЕНИЕ АЛЕРТОВ (ТЕПЕРЬ ТЕГИ <br> И <b> РАБОТАЮТ КОРРЕКТНО)
@@ -4098,9 +4073,37 @@ window.renderProfileAnalytics = function(containerId, u, matches, uid, mins) {
   var el = document.getElementById(containerId);
   if (!el || !u) return;
   var elo = u.elo !== undefined ? u.elo : 1000;
-  el.innerHTML = '<div class="analytics-bento">' +
-    '<div class="analytics-card"><div class="analytics-title">Форма (Эло)</div>' + buildEloSparklineSvg(matches, elo, uid) + '</div>' +
-    '<div class="analytics-card"><div class="analytics-title">Профиль игры</div>' + buildRadarChartSvg(u, mins) + '</div>' +
+  var totalM = parseInt(u.matches, 10) || 0;
+  var wins = parseInt(u.wins, 10) || 0;
+  var losses = parseInt(u.losses, 10) || 0;
+  var wr = totalM > 0 ? Math.round((wins / totalM) * 100) : 0;
+  var streak = parseInt(u.winStreak, 10) || 0;
+  var tours = parseInt(u.tournamentsPlayed, 10) || 0;
+  var hoursStr = ((mins || 0) / 60).toFixed(1);
+  var lastDelta = parseInt(u.lastEloDelta, 10) || 0;
+  var deltaStr = lastDelta > 0 ? ('+' + lastDelta) : (lastDelta < 0 ? String(lastDelta) : '0');
+
+  el.innerHTML =
+    '<div class="analytics-unified-card" onclick="this.classList.toggle(\'expanded\'); if(typeof vibrate===\'function\') vibrate(\'light\');">' +
+      '<div class="analytics-unified-head">' +
+        '<span class="analytics-unified-title">Аналитика формы и стиля</span>' +
+        '<span class="analytics-unified-toggle">Подробнее <span class="analytics-chevron">▾</span></span>' +
+      '</div>' +
+      '<div class="analytics-charts-row">' +
+        '<div class="analytics-mini-box"><div class="analytics-title">Форма (Эло)</div>' + buildEloSparklineSvg(matches, elo, uid) + '</div>' +
+        '<div class="analytics-mini-box"><div class="analytics-title">Профиль игры</div>' + buildRadarChartSvg(u, mins) + '</div>' +
+      '</div>' +
+      '<div class="analytics-details-collapse">' +
+        '<div class="analytics-details-inner">' +
+          '<div class="analytics-details-content">' +
+            '<div class="analytics-stat-row"><span>Текущий Эло (последний сдвиг):</span><b>' + elo + ' (' + deltaStr + ')</b></div>' +
+            '<div class="analytics-stat-row"><span>Винрейт (победы / поражения):</span><b>' + wr + '% (' + wins + 'В – ' + losses + 'П)</b></div>' +
+            '<div class="analytics-stat-row"><span>Активность за столом:</span><b>' + hoursStr + ' ч (' + totalM + ' игр)</b></div>' +
+            '<div class="analytics-stat-row"><span>Текущая серия побед:</span><b>' + streak + ' подряд</b></div>' +
+            '<div class="analytics-stat-row"><span>Участие в турнирах:</span><b>' + tours + '</b></div>' +
+          '</div>' +
+        '</div>' +
+      '</div>' +
     '</div>';
 };
 
