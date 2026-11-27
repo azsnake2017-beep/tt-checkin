@@ -88,104 +88,123 @@
   <symbol id="icon-rank-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
   <symbol id="icon-rank-master" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
 </svg>
-<!-- ЭКРАН ЗАГРУЗКИ -->
+<!-- ЭКРАН ЗАГРУЗКИ В СТИЛЕ GTA VI -->
 <style>
-  .app-preloader { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg-color, #0b1120); z-index: 999999; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: clamp(72px, 18vh, 140px) 20px 24px; box-sizing: border-box; transition: opacity 0.4s ease, visibility 0.4s; }
+  .app-preloader {
+    position: fixed; inset: 0; width: 100%; height: 100%;
+    background: #07040f; z-index: 999999;
+    display: flex; flex-direction: column; justify-content: space-between; align-items: center;
+    padding: max(18px, env(safe-area-inset-top)) 18px max(24px, env(safe-area-inset-bottom));
+    box-sizing: border-box; overflow: hidden;
+    transition: opacity 0.5s ease, visibility 0.5s;
+  }
   .app-preloader.hidden { opacity: 0; visibility: hidden; }
-  
-  /* Логотип с переливающейся подсветкой без скачков размера */
-  .preloader-logo { 
-    width: 140px; 
-    height: 140px; 
-    margin-bottom: 24px; 
-    border-radius: 50%; 
-    object-fit: contain;
-    flex-shrink: 0;
-    animation: ambilightGlow 4s infinite alternate ease-in-out; 
+
+  .gta-slides { position: absolute; inset: 0; z-index: 0; overflow: hidden; background: #0b0616; }
+  .gta-slide {
+    position: absolute; inset: -6%; width: 112%; height: 112%;
+    background-size: cover; background-position: center 25%;
+    opacity: 0;
+    filter: contrast(108%) saturate(122%) sepia(14%) hue-rotate(-8deg);
+    transition: opacity 0.9s ease-in-out;
+    will-change: transform, opacity;
   }
-  
-  @keyframes ambilightGlow {
-    0%   { filter: drop-shadow(0 0 20px rgba(239, 68, 68, 0.7)); }
-    33%  { filter: drop-shadow(0 0 25px rgba(168, 85, 247, 0.7)); }
-    66%  { filter: drop-shadow(0 0 20px rgba(59, 130, 246, 0.7)); }
-    100% { filter: drop-shadow(0 0 25px rgba(16, 185, 129, 0.7)); }
+  .gta-slide.active { opacity: 1; }
+  .gta-slide[data-anim="1"].playing { animation: gtaCam1 7.5s ease-out forwards; }
+  .gta-slide[data-anim="2"].playing { animation: gtaCam2 7.5s ease-out forwards; }
+  .gta-slide[data-anim="3"].playing { animation: gtaCam3 7.5s ease-out forwards; }
+  .gta-slide[data-anim="4"].playing { animation: gtaCam4 7.5s ease-out forwards; }
+  @keyframes gtaCam1 { 0% { transform: scale(1.00) translate3d(0%, 0%, 0); } 100% { transform: scale(1.10) translate3d(-2.2%, -1.2%, 0); } }
+  @keyframes gtaCam2 { 0% { transform: scale(1.08) translate3d(-2%, 0%, 0); } 100% { transform: scale(1.00) translate3d(2%, -1.5%, 0); } }
+  @keyframes gtaCam3 { 0% { transform: scale(1.02) translate3d(1.5%, 1%, 0); } 100% { transform: scale(1.11) translate3d(-1.5%, -1%, 0); } }
+  @keyframes gtaCam4 { 0% { transform: scale(1.09) translate3d(1.5%, -1%, 0); } 100% { transform: scale(1.00) translate3d(-1.5%, 1%, 0); } }
+
+  .gta-color-grade {
+    position: absolute; inset: 0; z-index: 2; pointer-events: none;
+    background:
+      radial-gradient(circle at 85% 15%, rgba(236, 72, 153, 0.18), transparent 50%),
+      radial-gradient(circle at 15% 75%, rgba(56, 189, 248, 0.14), transparent 55%),
+      linear-gradient(to bottom, rgba(8, 4, 18, 0.44) 0%, rgba(8, 4, 18, 0.06) 26%, rgba(8, 4, 18, 0.14) 58%, rgba(8, 4, 18, 0.90) 86%, rgba(8, 4, 18, 0.97) 100%);
   }
-  
+
+  .gta-top { position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: flex-start; width: 100%; }
+  .preloader-logo {
+    width: 160px; height: 160px; border-radius: 50%; object-fit: contain; flex-shrink: 0; border: none;
+    opacity: 0.94;
+    filter: contrast(108%) saturate(122%) sepia(14%) hue-rotate(-8deg) drop-shadow(0 8px 18px rgba(0, 0, 0, 0.7));
+  }
+
+  .gta-bottom {
+    position: relative; z-index: 3; width: 100%; max-width: 340px;
+    display: flex; flex-direction: column; align-items: center; gap: 10px; text-align: center;
+  }
+
   /* Тонкая футуристичная полоска с неоновым свечением */
-  .preloader-bar-bg { 
-    width: 240px; 
-    height: 4px; 
-    background: rgba(255, 255, 255, 0.08); 
-    border-radius: 4px; 
-    overflow: hidden; 
-    position: relative; 
+  .preloader-bar-bg { width: 260px; height: 4px; background: rgba(255, 255, 255, 0.12); border-radius: 4px; overflow: hidden; position: relative; }
+  .preloader-bar-fill {
+    width: 0%; height: 100%;
+    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%);
+    position: relative; overflow: hidden;
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.85), 0 0 4px rgba(59, 130, 246, 0.85);
   }
-  
-  .preloader-bar-fill { 
-    width: 0%; 
-    height: 100%; 
-    background: linear-gradient(90deg, #3b82f6 0%, #8b5cf6 100%); 
-    position: relative; 
-    overflow: hidden;
-    box-shadow: 0 0 12px rgba(139, 92, 246, 0.8), 0 0 4px rgba(59, 130, 246, 0.8); /* Неоновый эффект */
-  }
-  
   .preloader-bar-fill::after {
     content: ''; position: absolute; top: 0; left: -100%; width: 100%; height: 100%;
-    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.5) 50%, rgba(255,255,255,0) 100%);
+    background: linear-gradient(90deg, rgba(255,255,255,0) 0%, rgba(255,255,255,0.55) 50%, rgba(255,255,255,0) 100%);
     animation: loadingGlow 1.5s infinite linear;
   }
   @keyframes loadingGlow { 0% { left: -100%; } 100% { left: 100%; } }
-  
-  .preloader-text { margin-top: 14px; min-height: 36px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 13px; color: var(--text-muted, #94a3b8); font-weight: 500; letter-spacing: 0.5px; animation: textPulse 2s infinite ease-in-out; }
-  @keyframes textPulse { 0%, 100% { opacity: 0.5; } 50% { opacity: 0.9; } }
-  
-  /* Мягкий встроенный текст стиха */
-  .preloader-joke { 
-    margin-top: 28px; 
-    font-size: 13.5px; 
-    color: #94a3b8; 
-    font-style: italic; 
-    text-align: center; 
-    line-height: 1.6; 
-    width: 100%;
-    max-width: 300px;
-    padding: 0 16px;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8); 
-    letter-spacing: 0.2px;
-    min-height: 100px; /* Фиксируем высоту, чтобы элементы ниже не дергались */
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    gap: 4px;
-  }
 
-  /* Каскадное появление каждой строчки стиха */
-  .joke-line {
-    opacity: 0;
-    transform: translateY(6px);
-    animation: fadeInSlide 0.6s ease forwards;
-  }
+  .preloader-text { margin-top: 2px; min-height: 24px; display: flex; align-items: center; justify-content: center; text-align: center; font-size: 12.5px; color: #cbd5e1; font-weight: 600; letter-spacing: 0.3px; text-shadow: 0 1px 4px #000; }
 
-  @keyframes fadeInSlide {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
+  .preloader-joke {
+    font-size: 13.5px; color: #e2e8f0; font-style: italic; text-align: center; line-height: 1.5;
+    width: 100%; max-width: 320px; text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95); letter-spacing: 0.2px;
+    min-height: 74px; display: flex; flex-direction: column; justify-content: center; gap: 3px;
   }
+  .joke-line { opacity: 0; transform: translateY(6px); animation: fadeInSlide 0.6s ease forwards; }
+  @keyframes fadeInSlide { to { opacity: 1; transform: translateY(0); } }
 </style>
 
 <div id="app-preloader" class="app-preloader">
-  <img src="logo.webp" alt="Челябинск" width="140" height="140" class="preloader-logo" onerror="this.style.display='none'">
-  <div class="preloader-bar-bg"><div id="preloader-bar" class="preloader-bar-fill"></div></div>
-  <div id="preloader-text" class="preloader-text">Загрузка интерфейса и стилей...</div>
-  <!-- Контейнер для шутки -->
-  <div id="preloader-joke" class="preloader-joke"></div>
+  <div id="gta-preloader-slides" class="gta-slides"></div>
+  <div class="gta-color-grade"></div>
+  <div class="gta-top">
+    <img src="logo.webp" alt="Челябинск" width="160" height="160" class="preloader-logo" onerror="this.style.display='none'">
+  </div>
+  <div class="gta-bottom">
+    <div id="preloader-joke" class="preloader-joke"></div>
+    <div class="preloader-bar-bg"><div id="preloader-bar" class="preloader-bar-fill"></div></div>
+    <div id="preloader-text" class="preloader-text">Загрузка интерфейса и стилей...</div>
+  </div>
 </div>
 <script>
   if (!sessionStorage.getItem('tt_app_loaded')) {
     var _b = document.getElementById('preloader-bar');
     if (_b) { _b.style.transition = 'width 2.5s ease-out'; setTimeout(function(){ _b.style.width = '28%'; }, 30); }
+    var _pool = [
+      'assets/gta-loading/slide1.jpg',
+      'assets/gta-loading/slide2.jpg',
+      'assets/gta-loading/slide3.jpg',
+      'assets/gta-loading/slide4.jpg',
+      'assets/gta-loading/slide5.jpg'
+    ];
+    for (var _i = _pool.length - 1; _i > 0; _i--) {
+      var _j = Math.floor(Math.random() * (_i + 1));
+      var _t = _pool[_i]; _pool[_i] = _pool[_j]; _pool[_j] = _t;
+    }
+    window.__TT_PRELOADER_SLIDES = _pool;
+    var _box = document.getElementById('gta-preloader-slides');
+    if (_box) {
+      _pool.forEach(function(src, idx) {
+        var imgPre = new Image();
+        imgPre.src = src;
+        var el = document.createElement('div');
+        el.className = 'gta-slide' + (idx === 0 ? ' active playing' : '');
+        el.setAttribute('data-anim', String((idx % 4) + 1));
+        el.style.backgroundImage = "url('" + src + "')";
+        _box.appendChild(el);
+      });
+    }
   }
 </script>
 <div id="main-top-header" class="header-container">
@@ -926,7 +945,7 @@
   <script defer src="js/street.js?v=4"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=132"></script>
+  <script defer src="js/app.js?v=133"></script>
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="js/tour-roster.js?v=1"></script>
   <script defer src="js/score-confirm.js?v=1"></script>

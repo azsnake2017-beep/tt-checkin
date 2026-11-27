@@ -2632,7 +2632,25 @@ document.addEventListener('DOMContentLoaded', function() {
     // Этапы идут строго по порядку, ранние вызовы setAppProgress не перебивают текст на "Готово!"
     window.setAppProgress = function() {};
 
+    var gtaSlides = document.querySelectorAll('#gta-preloader-slides .gta-slide');
+    var gtaSlideIdx = 0;
+    var gtaSlideTimer = null;
+    if (gtaSlides.length > 1) {
+      gtaSlideTimer = setInterval(function() {
+        gtaSlideIdx = (gtaSlideIdx + 1) % gtaSlides.length;
+        for (var si = 0; si < gtaSlides.length; si++) {
+          gtaSlides[si].classList.remove('active');
+          if (si === gtaSlideIdx) {
+            gtaSlides[si].classList.remove('playing');
+            void gtaSlides[si].offsetWidth;
+            gtaSlides[si].classList.add('active', 'playing');
+          }
+        }
+      }, 2000);
+    }
+
     setTimeout(function() {
+      if (gtaSlideTimer) clearInterval(gtaSlideTimer);
       if (typeof vibrate === 'function') vibrate('medium');
       var loader = document.getElementById('app-preloader');
       if (loader) {
@@ -2641,9 +2659,11 @@ document.addEventListener('DOMContentLoaded', function() {
         setTimeout(function() {
           loader.classList.add('hidden');
           loader.style.display = 'none';
+          var slidesBox = document.getElementById('gta-preloader-slides');
+          if (slidesBox) slidesBox.innerHTML = '';
         }, 600);
       }
-    }, 8000); // 8 секунд на чтение шутки
+    }, 8000); // Ровно 8 секунд показа экрана загрузки
   } else {
     if (jokeEl) jokeEl.style.display = 'none';
     if (bar) bar.style.width = '100%';
