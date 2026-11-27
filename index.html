@@ -23,7 +23,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/style-modern.css?v=16">
+  <link rel="stylesheet" href="css/style-modern.css?v=17">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
   <style>
@@ -495,14 +495,15 @@
     <div id="radar-street-content" style="display: none; flex-direction: column; gap: 12px;">
       <div class="card" style="gap: 10px;">
         <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <span style="font-size: 14px; font-weight: 800;">Уличные столы (2ГИС)</span>
-            <span id="street-spots-count" class="counter" style="font-size: 11px;">21 шт.</span>
+          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
+            <select id="street-district-select" class="input-select street-district-select" onchange="setStreetDistrictFilter(this.value)" aria-label="Выбор района">
+              <option value="Все">Все районы</option>
+            </select>
+            <span id="street-spots-count" class="counter" style="font-size: 11px; flex-shrink: 0;">0</span>
           </div>
-          <button id="btn-add-street-spot" class="badge-admin-btn" style="display: none; padding: 5px 10px; font-size: 11px;" onclick="openStreetSpotModal()">+ Стол</button>
+          <button id="btn-add-street-spot" class="badge-admin-btn" style="display: none; padding: 6px 10px; font-size: 11px; flex-shrink: 0;" onclick="openStreetSpotModal()">+ Добавить</button>
         </div>
-        <div id="street-map"></div>
-        <div id="street-district-filters" class="street-district-filters"></div>
+        <div id="street-map" class="gta-radar-map"></div>
       </div>
       <div id="street-spots-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
@@ -922,7 +923,7 @@
   <script defer src="js/config.js?v=10"></script>
   <script defer src="js/matches.js?v=4"></script>
   <script defer src="js/radar.js?v=13"></script>
-  <script defer src="js/street.js?v=1"></script>
+  <script defer src="js/street.js?v=2"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
   <script defer src="js/app.js?v=132"></script>
