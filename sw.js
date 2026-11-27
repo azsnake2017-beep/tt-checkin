@@ -1,5 +1,5 @@
 // sw.js — Service Worker для клуба настольного тенниса Челябинск
-var CACHE_NAME = 'tt-chmz-v5';
+var CACHE_NAME = 'tt-chmz-v6';
 
 var STATIC_FILES = [
   './',

@@ -79,6 +79,13 @@
   <symbol id="icon-exit" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></symbol>
   <symbol id="icon-dice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="3"/><circle cx="8.5" cy="8.5" r="1" fill="currentColor"/><circle cx="15.5" cy="8.5" r="1" fill="currentColor"/><circle cx="12" cy="12" r="1" fill="currentColor"/><circle cx="8.5" cy="15.5" r="1" fill="currentColor"/><circle cx="15.5" cy="15.5" r="1" fill="currentColor"/></symbol>
   <symbol id="icon-megaphone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 11 18-5v12L3 14v-3z"/><path d="M11.6 16.8a3 3 0 1 1-5.8-1.6"/></symbol>
+  <symbol id="icon-medal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7.21 15 2.66 7.14a2 2 0 0 1 .13-2.2L4.4 2.8A2 2 0 0 1 6 2h12a2 2 0 0 1 1.6.8l1.6 2.14a2 2 0 0 1 .14 2.2L16.79 15"/><path d="M11 12 5.12 2.2"/><path d="m13 12 5.88-9.8"/><circle cx="12" cy="17" r="5"/></symbol>
+  <symbol id="icon-rank-novice" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 20h10"/><path d="M10 20c5.5-2.5.8-6.4 3-10"/><path d="M9.5 9.4c1.1.8 1.8 2.2 2.3 3.7-2 .4-3.5.4-4.8-.3-1.2-.6-2.3-1.9-3-4.2 2.8-.5 4.4 0 5.5.8z"/><path d="M14.1 6a7 7 0 0 0-1.1 4c1.9-.1 3.3-.6 4.3-1.4 1-1 1.6-2.3 1.7-4.6-2.7.1-4 1-4.9 2z"/></symbol>
+  <symbol id="icon-rank-student" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></symbol>
+  <symbol id="icon-rank-amateur" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 13.5a5.5 5.5 0 1 1-7.8-7.8 5.5 5.5 0 0 1 7.8 7.8Z"/><path d="m14.5 13.5 5 5a1.4 1.4 0 0 1-2 2l-5-5"/><circle cx="18.5" cy="5.5" r="2"/></symbol>
+  <symbol id="icon-rank-base" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></symbol>
+  <symbol id="icon-rank-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></symbol>
+  <symbol id="icon-rank-master" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></symbol>
 </svg>
 <!-- ЭКРАН ЗАГРУЗКИ -->
 <style>
@@ -201,8 +208,7 @@
         <button class="btn-theme-toggle" onclick="toggleTheme()" id="btn-theme" title="Сменить тему" aria-label="Сменить тему"><svg class="tt-icon"><use href="#icon-theme-sun"></use></svg></button>
         <button id="main-sound-toggle" class="btn-sound-toggle" onclick="toggleAppSound()" title="Звук" aria-label="Переключить звук"><svg class="tt-icon"><use href="#icon-sound-on"></use></svg></button>
         <button class="btn-app-qr-large" onclick="openQrModal('app')" title="QR-код приложения" aria-label="QR-код приложения">
-          <img src="App.webp" alt="App QR" class="icon-img-large" width="22" height="22" onerror="this.style.display='none';" />
-          <span style="display: none;"><svg class="tt-icon"><use href="#icon-qr"></use></svg></span>
+          <svg class="tt-icon"><use href="#icon-qr"></use></svg>
         </button>
       </div>
     </div>
@@ -210,11 +216,11 @@
     <div class="social-links-minimal">
       <div class="social-pill">
         <a href="https://t.me/ttchmz" target="_blank" class="social-pill-left pill-tg"><svg class="tt-icon"><use href="#icon-send"></use></svg> Telegram</a>
-        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram" aria-label="QR-код Telegram"><img src="TG.webp" alt="TG" class="icon-img-mini" onerror="this.style.display='none';" /><span style="display: none;"><svg class="tt-icon"><use href="#icon-qr"></use></svg></span></button>
+        <button class="btn-qr-icon-only" onclick="openQrModal('tg')" title="QR-код Telegram" aria-label="QR-код Telegram"><svg class="tt-icon"><use href="#icon-qr"></use></svg></button>
       </div>
       <div class="social-pill">
         <a href="https://max.ru/join/2OpbO_PiUa9Q0AeQBpOXu4IoeA7IcxfCqi3Dldpan-E" target="_blank" class="social-pill-left pill-max"><svg class="tt-icon"><use href="#icon-message"></use></svg> МАКС</a>
-        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС" aria-label="QR-код МАКС"><img src="Max.webp" alt="Max" class="icon-img-mini" onerror="this.style.display='none';" /><span style="display: none;"><svg class="tt-icon"><use href="#icon-qr"></use></svg></span></button>
+        <button class="btn-qr-icon-only" onclick="openQrModal('max')" title="QR-код МАКС" aria-label="QR-код МАКС"><svg class="tt-icon"><use href="#icon-qr"></use></svg></button>
       </div>
     </div>
   </div>
@@ -881,13 +887,13 @@
   <script defer src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 
   <!-- 3. Ваши локальные модули -->
-  <script defer src="js/sounds.js?v=11"></script>
-  <script defer src="js/config.js?v=8"></script>
-  <script defer src="js/matches.js?v=3"></script>
-  <script defer src="js/radar.js?v=9"></script>
+  <script defer src="js/sounds.js?v=12"></script>
+  <script defer src="js/config.js?v=10"></script>
+  <script defer src="js/matches.js?v=4"></script>
+  <script defer src="js/radar.js?v=11"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=115"></script>
+  <script defer src="js/app.js?v=116"></script>
   <script defer src="js/tour-roster.js?v=1"></script>
   <script defer src="js/score-confirm.js?v=1"></script>
    <!-- Генератор конфетти -->

@@ -775,10 +775,111 @@ body {
   font-size: 14px;
   font-weight: 700;
   color: var(--text);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  white-space: normal !important;
+  word-break: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  line-height: 1.25;
   max-width: 100% !important;
+}
+
+.player-status-tag {
+  display: inline-flex !important;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px;
+  font-size: 11px !important;
+  line-height: 1.3;
+}
+.rank-status-inline {
+  display: inline-flex;
+  align-items: center;
+}
+.rank-svg-icon {
+  width: 13px !important;
+  height: 13px !important;
+  vertical-align: 0 !important;
+}
+
+/* ===== 17. Этап 7: Единая форма, анимация и отступы всех кнопок и полей ===== */
+.btn,
+.btn-join,
+.btn-plan,
+.btn-leave,
+.btn-edit,
+.btn-logout,
+.btn-match-quick,
+.btn-auth-provider,
+.social-pill-left,
+.btn-theme-toggle,
+.btn-sound-toggle,
+.btn-app-qr-large,
+.btn-qr-icon-only,
+.badge-admin-btn,
+.tabs-container,
+.tab-btn,
+.score-btn,
+.btn-info {
+  border-radius: 12px !important;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease !important;
+}
+
+.btn:active,
+.btn-join:active,
+.btn-plan:active,
+.btn-leave:active,
+.btn-edit:active,
+.btn-logout:active,
+.btn-match-quick:active,
+.btn-auth-provider:active,
+.social-pill-left:active,
+.btn-theme-toggle:active,
+.btn-sound-toggle:active,
+.btn-app-qr-large:active,
+.btn-qr-icon-only:active,
+.badge-admin-btn:active,
+.tab-btn:active,
+.score-btn:active,
+.btn-info:active {
+  transform: scale(0.95) !important;
+}
+
+.btn-theme-toggle,
+.btn-sound-toggle,
+.btn-app-qr-large {
+  width: 38px !important;
+  height: 38px !important;
+  border: 1px solid var(--card-border) !important;
+  background: var(--row-bg) !important;
+  color: var(--text) !important;
+}
+.btn-qr-icon-only {
+  width: 34px !important;
+  height: 34px !important;
+  border: 1px solid var(--card-border) !important;
+  background: var(--row-bg) !important;
+  color: var(--accent-violet-text) !important;
+}
+
+/* Единые отступы между кнопками и полями */
+.action-group,
+.profile-actions-row,
+.social-links-minimal,
+.header-actions,
+.modal-box,
+.auth-methods-box {
+  gap: 10px !important;
+}
+.tabs-container {
+  padding: 4px !important;
+  gap: 6px !important;
+}
+.input-name,
+.input-select,
+.input-time,
+.textarea-announcement {
+  border-radius: 12px !important;
+  margin-bottom: 0 !important;
 }
 .leader-right-col {
   display: flex;

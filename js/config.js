@@ -98,16 +98,40 @@ function getCustomBadge(uid) {
   return badges.join(' ');
 }
 
-function getPlayerStatus(elo) {
+function getPlayerStatusInfo(elo) {
   var e = parseInt(elo, 10) || 1000;
-  if (e <= 1000) return "Новичок 🟢"; if (e <= 1200) return "Ученик 📘"; if (e <= 1400) return "Любитель 👟";
-  if (e <= 1600) return "Игрок основы 🏃‍♂️"; if (e <= 1800) return "Третий разряд 🥉"; if (e <= 2000) return "Второй разряд 🥈";
-  if (e <= 2200) return "Первый разряд 🥇"; if (e <= 2400) return "КМС 🏅"; if (e <= 2600) return "Мастер спорта 🏆";
-  if (e <= 2800) return "Элитный игрок ⭐"; if (e <= 3000) return "Мастер атаки 🔥"; if (e <= 3200) return "Гроссмейстер ♟️";
-  if (e <= 3400) return "Чемпион клуба 👑"; if (e <= 3600) return "Гранд-мастер 🎖️"; if (e <= 3800) return "Снайпер 🎯";
-  if (e <= 4000) return "Легенда клуба 🏛️"; if (e <= 4200) return "Премьер-лига 📈"; if (e <= 4400) return "Гранд-чемпион 🔥🏆";
-  if (e <= 4600) return "Властелин стола 👑🏓"; if (e <= 4800) return "Феномен 🌠"; return "Легенда спорта 🌟🏆";
+  if (e <= 1000) return { label: "Новичок", icon: "icon-rank-novice", color: "#10b981" };
+  if (e <= 1200) return { label: "Ученик", icon: "icon-rank-student", color: "#38bdf8" };
+  if (e <= 1400) return { label: "Любитель", icon: "icon-rank-amateur", color: "#818cf8" };
+  if (e <= 1600) return { label: "Игрок основы", icon: "icon-rank-base", color: "#22d3ee" };
+  if (e <= 1800) return { label: "Третий разряд", icon: "icon-rank-shield", color: "#d97706" };
+  if (e <= 2000) return { label: "Второй разряд", icon: "icon-rank-shield", color: "#cbd5e1" };
+  if (e <= 2200) return { label: "Первый разряд", icon: "icon-rank-shield", color: "#fbbf24" };
+  if (e <= 2400) return { label: "КМС", icon: "icon-rank-master", color: "#a855f7" };
+  if (e <= 2600) return { label: "Мастер спорта", icon: "icon-nav-ratings", color: "#fbbf24" };
+  if (e <= 2800) return { label: "Элитный игрок", icon: "icon-rank-master", color: "#f59e0b" };
+  if (e <= 3000) return { label: "Мастер атаки", icon: "icon-flame", color: "#f43f5e" };
+  if (e <= 3200) return { label: "Гроссмейстер", icon: "icon-rank-master", color: "#ec4899" };
+  if (e <= 3400) return { label: "Чемпион клуба", icon: "icon-crown", color: "#fbbf24" };
+  if (e <= 3600) return { label: "Гранд-мастер", icon: "icon-rank-master", color: "#38bdf8" };
+  if (e <= 3800) return { label: "Снайпер", icon: "icon-nav-quests", color: "#f43f5e" };
+  if (e <= 4000) return { label: "Легенда клуба", icon: "icon-loc-vostok", color: "#a78bfa" };
+  if (e <= 4200) return { label: "Премьер-лига", icon: "icon-rank-base", color: "#10b981" };
+  if (e <= 4400) return { label: "Гранд-чемпион", icon: "icon-crown", color: "#f59e0b" };
+  if (e <= 4600) return { label: "Властелин стола", icon: "icon-crown", color: "#ec4899" };
+  if (e <= 4800) return { label: "Феномен", icon: "icon-flame", color: "#22d3ee" };
+  return { label: "Легенда спорта", icon: "icon-crown", color: "#fbbf24" };
 }
+
+function getPlayerStatus(elo) {
+  return getPlayerStatusInfo(elo).label;
+}
+
+window.getPlayerStatusHtml = function(elo) {
+  var info = getPlayerStatusInfo(elo);
+  var ico = typeof ttIcon === 'function' ? ttIcon(info.icon, 'rank-svg-icon') : '';
+  return '<span class="rank-status-inline" style="color:' + info.color + ';">' + ico + '</span><span>' + info.label + '</span>';
+};
 
 var confirmActionCallback = null;
 function openConfirmModal(msg, action) {
