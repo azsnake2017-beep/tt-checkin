@@ -29,53 +29,65 @@
         var ctx = renderer._ctx;
         var p = this._point;
         var z = this._map ? this._map.getZoom() : 12;
-        var r = z >= 15 ? 13 : (z >= 13 ? 11 : 9);
+        var r = z >= 15 ? 14 : (z >= 13 ? 11.5 : 9);
         var st = this.options.tableState || 'free';
-        var bg = st === 'busy' ? '#10b981' : (st === 'plan' ? '#f59e0b' : '#2563eb');
+        var bg = st === 'busy' ? '#10b981' : (st === 'plan' ? '#f59e0b' : '#0f172a');
+        var ring = st === 'busy' ? '#ffffff' : (st === 'plan' ? '#ffffff' : '#10b981');
+        var iconColor = st === 'busy' ? '#ffffff' : (st === 'plan' ? '#ffffff' : '#34d399');
 
         ctx.save();
         // Мягкая тень под кружком
         ctx.beginPath();
-        ctx.arc(p.x, p.y + 1, r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.35)';
+        ctx.arc(p.x, p.y + 1.5, r, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
         ctx.fill();
 
-        // Ровный цветной кружок с чёткой белой каймой
+        // Ровный круглый бейдж в стиле иконок приложения
         ctx.beginPath();
         ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
         ctx.fillStyle = bg;
         ctx.fill();
         ctx.lineWidth = z >= 13 ? 2 : 1.5;
-        ctx.strokeStyle = '#ffffff';
+        ctx.strokeStyle = ring;
         ctx.stroke();
 
-        // Чёткий ровный значок теннисного стола внутри кружка
-        var tw = Math.round(r * 1.16);
+        // Иконка теннисного стола со скруглённой столешницей, сеткой и мячом
+        var tw = Math.round(r * 1.18);
         if (tw % 2 !== 0) tw += 1;
         var th = Math.round(tw * 0.62);
         if (th % 2 !== 0) th += 1;
         var tx = Math.round(p.x - tw / 2);
         var ty = Math.round(p.y - th / 2);
+        var rad = 2;
 
-        ctx.fillStyle = 'rgba(255, 255, 255, 0.25)';
-        ctx.fillRect(tx, ty, tw, th);
-        ctx.lineWidth = 1.2;
-        ctx.strokeStyle = '#ffffff';
-        ctx.strokeRect(tx, ty, tw, th);
-
-        // Продольная линия и центральная сетка
-        var cx = Math.round(p.x) + 0.5;
-        var cy = Math.round(p.y) + 0.5;
         ctx.beginPath();
-        ctx.moveTo(tx + 1, cy);
-        ctx.lineTo(tx + tw - 1, cy);
+        if (ctx.roundRect) {
+          ctx.roundRect(tx, ty, tw, th, rad);
+        } else {
+          ctx.rect(tx, ty, tw, th);
+        }
+        ctx.fillStyle = st === 'free' ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.22)';
+        ctx.fill();
+        ctx.lineWidth = 1.4;
+        ctx.strokeStyle = iconColor;
         ctx.stroke();
 
+        // Сетка по центру (со стойками)
+        var cx = Math.round(p.x) + 0.5;
         ctx.beginPath();
         ctx.lineWidth = 1.6;
+        ctx.strokeStyle = '#ffffff';
         ctx.moveTo(cx, ty - 2);
         ctx.lineTo(cx, ty + th + 2);
         ctx.stroke();
+
+        // Мячик на правой половине стола
+        if (z >= 13) {
+          ctx.beginPath();
+          ctx.arc(tx + tw * 0.74, p.y - 0.5, 1.6, 0, Math.PI * 2);
+          ctx.fillStyle = '#ffffff';
+          ctx.fill();
+        }
         ctx.restore();
       }
     });
@@ -209,10 +221,10 @@
       var popupHtml =
         '<div style="min-width:170px; font-family:Inter,sans-serif;">' +
           '<div style="font-weight:800; font-size:13px; margin-bottom:4px; color:#f8fafc;">' + cleanHtml(spot.name) + '</div>' +
-          '<div style="font-size:11px; color:#22d3ee; margin-bottom:8px;">Сейчас: <b style="color:#10b981;">' + count + '</b></div>' +
+          '<div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Сейчас: <b style="color:#10b981;">' + count + '</b></div>' +
           '<div style="display:flex; gap:6px;">' +
-            '<button onclick="focusStreetCard(\'' + escapeJS(spot.id) + '\')" style="flex:1; padding:6px 8px; border:none; border-radius:6px; background:linear-gradient(135deg,#ec4899,#22d3ee); color:#0b1120; font-weight:800; font-size:11px; cursor:pointer;">Выбрать</button>' +
-            (spot.gisUrl ? '<a href="' + cleanHtml(spot.gisUrl) + '" target="_blank" rel="noopener" style="padding:6px 8px; border-radius:6px; background:#1e293b; color:#f8fafc; border:1px solid #334155; font-weight:700; font-size:11px; text-decoration:none;">Маршрут</a>' : '') +
+            '<button onclick="focusStreetCard(\'' + escapeJS(spot.id) + '\')" style="flex:1; padding:6px 8px; border:none; border-radius:8px; background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; font-weight:700; font-size:11px; cursor:pointer;">Выбрать</button>' +
+            (spot.gisUrl ? '<a href="' + cleanHtml(spot.gisUrl) + '" target="_blank" rel="noopener" style="padding:6px 8px; border-radius:8px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.35); font-weight:700; font-size:11px; text-decoration:none;">Маршрут</a>' : '') +
           '</div>' +
         '</div>';
 
