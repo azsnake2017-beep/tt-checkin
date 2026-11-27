@@ -2891,7 +2891,7 @@ var swipeState = {
   targetView: null,
   direction: 0,
   width: 0,
-  gap: 20,
+  gap: 36,
   tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests']
 };
 
@@ -2941,12 +2941,16 @@ document.addEventListener('touchmove', function(e) {
 
       if (swipeState.targetView) {
         swipeState.width = swipeState.activeView.offsetWidth;
+        var scrollYOffset = window.scrollY || window.pageYOffset || 0;
 
+        swipeState.targetView.style.transition = 'none';
+        swipeState.activeView.style.transition = 'none';
         swipeState.targetView.style.display = 'flex';
         swipeState.targetView.style.position = 'absolute';
-        swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
+        swipeState.targetView.style.top = (swipeState.activeView.offsetTop + scrollYOffset) + 'px';
         swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
         swipeState.targetView.style.width = swipeState.width + 'px';
+        swipeState.targetView.style.opacity = '0.5';
 
         var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
         swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
@@ -2961,8 +2965,11 @@ document.addEventListener('touchmove', function(e) {
   if (swipeState.isDragging && swipeState.targetView) {
     if (e.cancelable) e.preventDefault();
     var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
+    var progress = Math.min(1, Math.abs(dx) / Math.max(1, swipeState.width));
     swipeState.activeView.style.transform = 'translate3d(' + dx + 'px, 0, 0)';
+    swipeState.activeView.style.opacity = String(1 - progress * 0.65);
     swipeState.targetView.style.transform = 'translate3d(' + (startOffset + dx) + 'px, 0, 0)';
+    swipeState.targetView.style.opacity = String(0.5 + progress * 0.5);
   }
 }, {passive: false});
 
@@ -2978,8 +2985,8 @@ document.addEventListener('touchend', function(e) {
 
   if (swipeState.targetView) {
     swipeState.isAnimating = true; 
-    swipeState.activeView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
-    swipeState.targetView.style.transition = 'transform 0.25s cubic-bezier(0.32, 0.72, 0, 1)';
+    swipeState.activeView.style.transition = 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease';
+    swipeState.targetView.style.transition = 'transform 0.24s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.24s ease';
 
     var isValidSwipe = (swipeState.direction === 1 && dx < -threshold) || (swipeState.direction === -1 && dx > threshold);
 
@@ -2990,21 +2997,27 @@ document.addEventListener('touchend', function(e) {
       var finalX = swipeState.direction === 1 ? -(swipeState.width + swipeState.gap) : (swipeState.width + swipeState.gap);
 
       swipeState.activeView.style.transform = 'translate3d(' + finalX + 'px, 0, 0)';
+      swipeState.activeView.style.opacity = '0';
       swipeState.targetView.style.transform = 'translate3d(0px, 0, 0)';
+      swipeState.targetView.style.opacity = '1';
 
       var targetId = swipeState.targetView.id.replace('view-', '');
 
       setTimeout(function() {
-        if (typeof switchNavTab === 'function') switchNavTab(targetId);
-        cleanupSwipe();
-      }, 250);
+        requestAnimationFrame(function() {
+          cleanupSwipe();
+          if (typeof switchNavTab === 'function') switchNavTab(targetId);
+        });
+      }, 240);
 
     } else {
       var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
       swipeState.activeView.style.transform = 'translate3d(0px, 0, 0)';
+      swipeState.activeView.style.opacity = '1';
       swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
+      swipeState.targetView.style.opacity = '0';
 
-      setTimeout(cleanupSwipe, 250);
+      setTimeout(cleanupSwipe, 240);
     }
   } else {
     document.body.classList.remove('disable-animations');
@@ -3016,8 +3029,9 @@ document.addEventListener('touchend', function(e) {
 function cleanupSwipe() {
     var views = document.querySelectorAll('.main-view');
     for (var i = 0; i < views.length; i++) {
+        views[i].style.transition = 'none';
         views[i].style.transform = '';
-        views[i].style.transition = '';
+        views[i].style.opacity = '';
         views[i].style.position = '';
         views[i].style.width = '';
         views[i].style.zIndex = '';
