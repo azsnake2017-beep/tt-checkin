@@ -530,8 +530,17 @@
       </div>
       <div id="tournaments-list-active" style="display: flex; flex-direction: column; gap: 12px;"></div>
       
-      <h2 style="font-size: 16px; color: var(--text-muted); margin-top: 24px; text-align: center; display:flex; align-items:center; justify-content:center; gap:8px;"><svg class="tt-icon"><use href="#icon-folder"></use></svg> Архив турниров</h2>
-      <div id="tournaments-list-archive" style="display: flex; flex-direction: column; gap: 12px;"></div>
+      <div class="card" id="card-tournaments-archive" style="margin-top: 16px;">
+        <div class="card-title" onclick="var c = document.getElementById('card-tournaments-archive'); if(c) c.classList.toggle('expanded'); if(typeof vibrate === 'function') vibrate('light');" style="justify-content: center; gap: 8px; cursor: pointer;">
+          <svg class="tt-icon" style="color: var(--accent-amber);"><use href="#icon-folder"></use></svg>
+          <span>Архив турниров</span>
+        </div>
+        <div class="card-collapse-wrapper">
+          <div class="card-body-collapse">
+            <div class="card-body-inner" id="tournaments-list-archive" style="display: flex; flex-direction: column; gap: 12px;"></div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 
