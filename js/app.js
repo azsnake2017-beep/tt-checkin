@@ -287,52 +287,28 @@ function updateProfileDisplay() {
   if (authScreen) authScreen.style.display = 'none';
 
   var lastDelta = parseInt(currentUserProfile.lastEloDelta, 10) || 0;
-  var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">(+' + lastDelta + ') 📈</span>' : '<span class="elo-delta elo-down">(' + lastDelta + ') 📉</span>') : '';
+  var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">+' + lastDelta + '</span>' : '<span class="elo-delta elo-down">' + lastDelta + '</span>') : '';
 
-  document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 12px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Клубный рейтинг</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button></div>';
+  document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 10px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Эло</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" title="Полная карточка игрока" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button></div>';
   
-  var rttfText = currentUserProfile.rttf ? ' • РТТФ: ' + currentUserProfile.rttf : '';
-  var streakText = (currentUserProfile.winStreak !== undefined && currentUserProfile.winStreak >= 3) ? '<span class="streak-fire" title="Серия побед">🔥' + currentUserProfile.winStreak + ' побед подряд</span>' : '';
   var wins = parseInt(currentUserProfile.wins, 10) || 0;
   var losses = parseInt(currentUserProfile.losses, 10) || 0;
   var matches = parseInt(currentUserProfile.matches, 10) || 0;
   var winrate = matches > 0 ? Math.round((wins / matches) * 100) : 0;
   var minsTotal = currentUserProfile.totalMinutes || 0;
-  var pStatus = typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок';
+  var pStatusHtml = typeof getPlayerStatusHtml === 'function' ? getPlayerStatusHtml(elo) : (typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок');
 
-  var questBadgeHtml = (currentUserProfile.activeBadge && currentUserProfile.activeBadge.expires > Date.now()) 
-  ? '<span class="temporary-badge" style="color: ' + currentUserProfile.activeBadge.color + '; border-color: ' + currentUserProfile.activeBadge.color + '; cursor: pointer;" onclick="showBadgeInfo(\'' + currentUserProfile.activeBadge.text + '\')">' + currentUserProfile.activeBadge.text + '</span>' 
-  : '';
+  document.getElementById('user-name-container').innerHTML = '<span class="user-name-text"><b>' + cleanHtml(currentUserProfile.name) + '</b></span>';
 
-  document.getElementById('user-name-container').innerHTML = '<span class="user-name-text">Вы: <b>' + cleanHtml(currentUserProfile.name) + '</b></span> ' + adminTag + ' ' + customBadge + questBadgeHtml;
-
-  var qCompleted = parseInt(currentUserProfile.questsCompleted, 10) || 0;
-  var questStatsHtml = qCompleted > 0 ? '<div style="font-size: 11px; color: var(--accent-purple); font-weight: 700; margin-top: 4px;">🎯 Выполнено квестов: ' + qCompleted + '</div>' : '';
-
-  // ВАЖНО: Добавлена плашка Последней игры без зависаний
-  document.getElementById('user-stats-container').innerHTML = '<div style="display: flex; flex-direction: column; gap: 4px;"><span class="player-status-tag">' + pStatus + rttfText + '</span><span class="player-status-tag" style="color: #0284c7;">⏱ За столом: ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span><span id="main-profile-last-match" class="player-status-tag" style="color: var(--accent-sky);">🗓 Последняя игра: загрузка...</span>' + questStatsHtml + '</div><div style="display: flex; flex-direction: column; gap: 4px; text-align: right;"><div><span class="player-status-tag" style="display: inline;">' + wins + 'В - ' + losses + 'П</span>' + streakText + '</div><span class="player-status-tag">(' + winrate + '%)</span></div>';
+  document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">' + pStatusHtml + '</span><span class="player-status-tag" style="font-variant-numeric: tabular-nums;">' + wins + 'В – ' + losses + 'П (' + winrate + '%) • ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span>';
   
   if (typeof renderQuestBoard === 'function') renderQuestBoard();
 
   var mContainer = document.getElementById('user-medals-container');
-  if (mContainer) {
-    var m = currentUserProfile.medals || {gold:0, silver:0, bronze:0};
-    if (m.gold > 0 || m.silver > 0 || m.bronze > 0 || (currentUserProfile.tournamentsPlayed > 0)) {
-      mContainer.innerHTML = '<div class="medal-item">🏆 ' + (currentUserProfile.tournamentsPlayed || 0) + '</div><div class="medal-item">🥇 ' + (m.gold || 0) + '</div><div class="medal-item">🥈 ' + (m.silver || 0) + '</div><div class="medal-item">🥉 ' + (m.bronze || 0) + '</div>';
-      mContainer.style.display = 'flex';
-    } else { mContainer.style.display = 'none'; }
-  }
+  if (mContainer) mContainer.style.display = 'none';
 
   var invContainer = document.getElementById('user-inventory-container');
-  if (invContainer) {
-    if (currentUserProfile.blade || currentUserProfile.rubberL || currentUserProfile.rubberR) {
-      var invHtml = '<div style="font-size: 11px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px dashed var(--card-border); padding-bottom: 4px; margin-bottom: 2px;">Ракетка:</div>';
-      if (currentUserProfile.blade && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🏓', 'Основание:', currentUserProfile.blade, 'Основание для ракетки настольного тенниса');
-      if (currentUserProfile.rubberL && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('🔴', 'Накладка L:', currentUserProfile.rubberL, 'Накладка для ракетки настольного тенниса');
-      if (currentUserProfile.rubberR && typeof getInventoryRowHtml === 'function') invHtml += getInventoryRowHtml('⚫', 'Накладка R:', currentUserProfile.rubberR, 'Накладка для ракетки настольного тенниса');
-      invContainer.innerHTML = invHtml; invContainer.className = 'inventory-box'; invContainer.style.display = 'flex';
-    } else { invContainer.style.display = 'none'; }
-  }
+  if (invContainer) invContainer.style.display = 'none';
 
   var bEdit = document.getElementById('btn-edit-profile'); if (bEdit) bEdit.style.display = 'block';
   var bShare = document.getElementById('btn-share-card'); if (bShare) bShare.style.display = 'inline-flex';
