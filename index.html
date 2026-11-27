@@ -23,7 +23,8 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/style-modern.css?v=15">
+  <link rel="stylesheet" href="css/style-modern.css?v=16">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
   <style>
   /* Жестко глушим прелоадер, если страница просто обновляется */
@@ -322,7 +323,13 @@
       </div>
       <div id="open-challenges-list"><span class="empty-note" style="padding: 2px 0;">Пока нет открытых вызовов</span></div>
     </div>
-    
+
+    <div class="tabs-container radar-subtabs" style="margin-bottom: 0;">
+      <button class="tab-btn active" id="radar-tab-btn-clubs" onclick="switchRadarMode('clubs')">Зал (Клуб)</button>
+      <button class="tab-btn" id="radar-tab-btn-street" onclick="switchRadarMode('street')">Улица</button>
+    </div>
+
+    <div id="radar-clubs-content" style="display: flex; flex-direction: column; gap: 12px;">
     <!-- Локация 1: Парк им. Тищенко -->
     <div class="card" id="card-park">
       <div class="card-top" onclick="toggleCard('park')">
@@ -482,6 +489,22 @@
           </div>
         </div>
       </div>
+    </div>
+    </div>
+
+    <div id="radar-street-content" style="display: none; flex-direction: column; gap: 12px;">
+      <div class="card" style="gap: 10px;">
+        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 14px; font-weight: 800;">Уличные столы (2ГИС)</span>
+            <span id="street-spots-count" class="counter" style="font-size: 11px;">21 шт.</span>
+          </div>
+          <button id="btn-add-street-spot" class="badge-admin-btn" style="display: none; padding: 5px 10px; font-size: 11px;" onclick="openStreetSpotModal()">+ Стол</button>
+        </div>
+        <div id="street-map"></div>
+        <div id="street-district-filters" class="street-district-filters"></div>
+      </div>
+      <div id="street-spots-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
     </div>
 
   </div>
@@ -898,10 +921,12 @@
   <script defer src="js/sounds.js?v=12"></script>
   <script defer src="js/config.js?v=10"></script>
   <script defer src="js/matches.js?v=4"></script>
-  <script defer src="js/radar.js?v=12"></script>
+  <script defer src="js/radar.js?v=13"></script>
+  <script defer src="js/street.js?v=1"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=131"></script>
+  <script defer src="js/app.js?v=132"></script>
+  <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="js/tour-roster.js?v=1"></script>
   <script defer src="js/score-confirm.js?v=1"></script>
    <!-- Генератор конфетти -->
@@ -926,6 +951,22 @@
 </div>
 
 <!-- МОДАЛЬНОЕ ОКНО: ЗАЯВКА «ИЩУ СОПЕРНИКА» -->
+<div class="modal-overlay" id="street-spot-modal">
+  <div class="modal-box" style="border-color: #10b981;">
+    <h3 style="font-size: 16px; color: #10b981;">Добавить уличный стол</h3>
+    <input type="text" id="street-spot-name" class="input-text" placeholder="Название или ориентир (напр. Двор ул. Братьев Кашириных, 102)" style="text-align:left; font-size:14px;">
+    <input type="text" id="street-spot-district" class="input-text" placeholder="Район (Калининский, Центральный...)" style="text-align:left; font-size:14px;">
+    <input type="text" id="street-spot-desc" class="input-text" placeholder="Комментарий (напр. Бетонный стол, есть сетка)" style="text-align:left; font-size:14px;">
+    <input type="text" id="street-spot-gis" class="input-text" placeholder="Ссылка 2ГИС (координаты подтянутся сами)" style="text-align:left; font-size:13px;">
+    <div style="display: flex; gap: 8px;">
+      <input type="text" id="street-spot-lat" class="input-text" placeholder="Широта (55.18...)" style="flex:1; text-align:left; font-size:13px;">
+      <input type="text" id="street-spot-lng" class="input-text" placeholder="Долгота (61.43...)" style="flex:1; text-align:left; font-size:13px;">
+    </div>
+    <button class="btn btn-join" style="background: linear-gradient(135deg, #10b981, #059669);" onclick="saveStreetSpot()">Сохранить на карту</button>
+    <button class="btn-cancel-modal" onclick="closeModalSmoothly('street-spot-modal')">Отмена</button>
+  </div>
+</div>
+
 <div class="modal-overlay" id="challenge-modal">
   <div class="modal-box" style="border-color: var(--accent-purple);">
     <h3 style="font-size: 17px; color: var(--accent-violet-text);">Найти соперника</h3>

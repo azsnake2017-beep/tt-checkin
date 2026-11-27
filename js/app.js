@@ -39,6 +39,8 @@ function updateAdminControls() {
   var isAdmin = isSuperAdmin();
   var btnAddTour = document.getElementById('btn-add-tournament'); 
   if (btnAddTour) btnAddTour.style.display = isAdmin ? 'block' : 'none';
+  var btnAddStreet = document.getElementById('btn-add-street-spot');
+  if (btnAddStreet) btnAddStreet.style.display = isAdmin ? 'inline-flex' : 'none';
   
   ['vostok', 'tttop', 'olimp', 'chemk'].forEach(function(loc) {
     var btnEditAnn = document.getElementById('btn-edit-announcement-' + loc);
@@ -2956,7 +2958,7 @@ document.addEventListener('touchmove', function(e) {
   // ВАЖНО: Если мы на вкладке аркады или свайпаем дерево турнира — не переключаем вкладки
   var activeV = document.querySelector('.main-view.active');
   if (activeV && activeV.id === 'view-arcade') return;
-  if (e.target && e.target.closest && e.target.closest('.bracket-scroll')) return;
+  if (e.target && e.target.closest && e.target.closest('.bracket-scroll, #street-map, .street-district-filters')) return;
   if (swipeState.isAnimating || !swipeState.activeView) return;
 
   var dx = e.touches[0].clientX - swipeState.startX;

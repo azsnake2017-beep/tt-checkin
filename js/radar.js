@@ -276,7 +276,7 @@ function applyPlan(ts) {
       });
   }).then(function() {
       if (typeof canSendTgAlert === 'function' && canSendTgAlert('status_plan_' + loc + '_' + uid)) {
-          var lName = (typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[loc]) ? LOCATION_NAMES[loc] : loc;
+          var lName = (typeof getRadarLocTitle === 'function') ? getRadarLocTitle(loc) : ((typeof LOCATION_NAMES !== 'undefined' && LOCATION_NAMES[loc]) ? LOCATION_NAMES[loc] : loc);
           if(typeof sendTelegramAlert === 'function') sendTelegramAlert("⏳ игрок <b>" + cleanHtml(currentUserProfile.name || 'Игрок') + "</b> планирует быть у стола " + lName + " <b>" + (typeof formatUntil==='function' ? formatUntil(ts) : '') + "</b>!\n\nКто готов составить пару?");
       }
   }).catch(function(e) {});
@@ -541,10 +541,12 @@ window.submitOpenChallenge = function() {
     if (typeof vibrate === 'function') vibrate('medium');
 
     if (typeof sendTelegramAlert === 'function') {
-      var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[loc]) ? LOCATIONS[loc].name : loc;
+      var locTitle = (typeof getRadarLocTitle === 'function') ? getRadarLocTitle(loc) : ((typeof LOCATIONS !== 'undefined' && LOCATIONS[loc]) ? LOCATIONS[loc].name : loc);
+      var spotInfo = (typeof getStreetSpotById === 'function') ? getStreetSpotById(loc) : null;
       var msg = "⚔️ <b>Ищу соперника!</b>\n\n" +
         "🏓 Игрок: <b>" + cleanHtml(name) + "</b> (Эло: <b>" + elo + "</b>)\n" +
         "📍 Площадка: <b>" + cleanHtml(locTitle) + "</b>\n" +
+        (spotInfo && spotInfo.gisUrl ? ("🗺 2ГИС: " + spotInfo.gisUrl + "\n") : "") +
         "🕒 Когда: <b>" + cleanHtml(timeStr) + "</b>" +
         (noteStr ? ("\n💬 Описание: <i>" + cleanHtml(noteStr) + "</i>") : "") +
         "\n\nОткройте вкладку «Радар» в приложении, чтобы принять вызов!";
@@ -565,7 +567,7 @@ window.acceptOpenChallenge = function(id) {
     }).then(function() {
       if (typeof vibrate === 'function') vibrate('medium');
       if (chData && typeof sendTelegramAlert === 'function') {
-        var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[chData.loc]) ? LOCATIONS[chData.loc].name : (chData.loc || '');
+        var locTitle = (typeof getRadarLocTitle === 'function') ? getRadarLocTitle(chData.loc) : ((typeof LOCATIONS !== 'undefined' && LOCATIONS[chData.loc]) ? LOCATIONS[chData.loc].name : (chData.loc || ''));
         sendTelegramAlert("🤝 <b>Вызов принят!</b>\n\n<b>" + cleanHtml(name) + "</b> сыграет с <b>" + cleanHtml(chData.name || 'Игроком') + "</b>\n📍 " + cleanHtml(locTitle) + " • " + cleanHtml(chData.timeStr || ''));
       }
     });
@@ -589,7 +591,7 @@ window.listenOpenChallenges = function() {
       if (!d) return;
       var isExpired = d.expiresAt ? (nowTs > d.expiresAt) : (d.createdAt && d.createdAt < fallbackCutoff);
       if (isExpired) return;
-      var locTitle = (typeof LOCATIONS !== 'undefined' && LOCATIONS[d.loc]) ? LOCATIONS[d.loc].name : d.loc;
+      var locTitle = (typeof getRadarLocTitle === 'function') ? getRadarLocTitle(d.loc) : ((typeof LOCATIONS !== 'undefined' && LOCATIONS[d.loc]) ? LOCATIONS[d.loc].name : d.loc);
       var actHtml = '';
       if (d.acceptedBy) {
         actHtml = '<span style="font-size:11px; color:var(--accent-green); font-weight:700;">Принял: ' + cleanHtml(d.acceptedBy.name) + '</span>';
