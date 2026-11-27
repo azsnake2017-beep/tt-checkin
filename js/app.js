@@ -2628,9 +2628,8 @@ document.addEventListener('DOMContentLoaded', function() {
       }, st.ms);
     });
 
-    window.setAppProgress = function(percent, text) {
-      if (text && txt) txt.innerText = text;
-    };
+    // Этапы идут строго по порядку, ранние вызовы setAppProgress не перебивают текст на "Готово!"
+    window.setAppProgress = function() {};
 
     setTimeout(function() {
       if (typeof vibrate === 'function') vibrate('medium');
