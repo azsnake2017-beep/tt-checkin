@@ -2609,7 +2609,8 @@ document.addEventListener('DOMContentLoaded', function() {
         linesHtml += '<div class="joke-line" style="animation-delay: ' + (i * 0.3) + 's;">' + rawLines[i] + '</div>';
       }
       jokeEl.innerHTML = linesHtml;
-      jokeEl.style.display = 'flex';
+      jokeEl.style.display = 'none';
+      jokeEl.style.opacity = '0';
     }
     if (bar) {
       bar.style.transition = 'width 10s linear';
@@ -2639,7 +2640,10 @@ document.addEventListener('DOMContentLoaded', function() {
       var jEl = document.getElementById('preloader-joke');
       if (lvkOverlay) lvkOverlay.classList.add('hidden');
       if (gtaTop) gtaTop.classList.remove('is-hidden');
-      if (jEl) jEl.style.opacity = '1';
+      if (jEl) {
+        jEl.style.display = 'flex';
+        requestAnimationFrame(function() { jEl.style.opacity = '1'; });
+      }
       var gtaSlides = document.querySelectorAll('#gta-preloader-slides .gta-slide');
       if (gtaSlides.length > 1) {
         gtaSlides[0].style.transition = 'opacity 0.9s ease-in-out';

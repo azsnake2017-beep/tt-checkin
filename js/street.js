@@ -29,65 +29,37 @@
         var ctx = renderer._ctx;
         var p = this._point;
         var z = this._map ? this._map.getZoom() : 12;
-        var r = z >= 15 ? 14 : (z >= 13 ? 11.5 : 9);
+        var r = z >= 15 ? 8.5 : (z >= 13 ? 7 : 5.5);
+        var h = r * 2.3;
         var st = this.options.tableState || 'free';
-        var bg = st === 'busy' ? '#10b981' : (st === 'plan' ? '#f59e0b' : '#0f172a');
-        var ring = st === 'busy' ? '#ffffff' : (st === 'plan' ? '#ffffff' : '#10b981');
-        var iconColor = st === 'busy' ? '#ffffff' : (st === 'plan' ? '#ffffff' : '#34d399');
+        var fill = st === 'busy' ? '#22c55e' : (st === 'plan' ? '#f59e0b' : '#10b981');
+        var cy = p.y - h * 0.62;
 
         ctx.save();
-        // Мягкая тень под кружком
+        // Тень на земле в точке геолокации
         ctx.beginPath();
-        ctx.arc(p.x, p.y + 1.5, r, 0, Math.PI * 2);
-        ctx.fillStyle = 'rgba(0, 0, 0, 0.38)';
+        ctx.ellipse(p.x, p.y + 0.5, r * 0.65, r * 0.25, 0, 0, Math.PI * 2);
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.32)';
         ctx.fill();
 
-        // Ровный круглый бейдж в стиле иконок приложения
+        // Аккуратная капля-пин геолокации
         ctx.beginPath();
-        ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
-        ctx.fillStyle = bg;
+        ctx.arc(p.x, cy, r, Math.PI * 0.82, Math.PI * 0.18, false);
+        ctx.quadraticCurveTo(p.x + r * 0.6, cy + r * 1.15, p.x, p.y);
+        ctx.quadraticCurveTo(p.x - r * 0.6, cy + r * 1.15, p.x - r * Math.cos(Math.PI * 0.18), cy + r * Math.sin(Math.PI * 0.18));
+        ctx.closePath();
+
+        ctx.fillStyle = fill;
         ctx.fill();
-        ctx.lineWidth = z >= 13 ? 2 : 1.5;
-        ctx.strokeStyle = ring;
-        ctx.stroke();
-
-        // Иконка теннисного стола со скруглённой столешницей, сеткой и мячом
-        var tw = Math.round(r * 1.18);
-        if (tw % 2 !== 0) tw += 1;
-        var th = Math.round(tw * 0.62);
-        if (th % 2 !== 0) th += 1;
-        var tx = Math.round(p.x - tw / 2);
-        var ty = Math.round(p.y - th / 2);
-        var rad = 2;
-
-        ctx.beginPath();
-        if (ctx.roundRect) {
-          ctx.roundRect(tx, ty, tw, th, rad);
-        } else {
-          ctx.rect(tx, ty, tw, th);
-        }
-        ctx.fillStyle = st === 'free' ? 'rgba(16, 185, 129, 0.22)' : 'rgba(255, 255, 255, 0.22)';
-        ctx.fill();
-        ctx.lineWidth = 1.4;
-        ctx.strokeStyle = iconColor;
-        ctx.stroke();
-
-        // Сетка по центру (со стойками)
-        var cx = Math.round(p.x) + 0.5;
-        ctx.beginPath();
-        ctx.lineWidth = 1.6;
+        ctx.lineWidth = z >= 13 ? 1.8 : 1.4;
         ctx.strokeStyle = '#ffffff';
-        ctx.moveTo(cx, ty - 2);
-        ctx.lineTo(cx, ty + th + 2);
         ctx.stroke();
 
-        // Мячик на правой половине стола
-        if (z >= 13) {
-          ctx.beginPath();
-          ctx.arc(tx + tw * 0.74, p.y - 0.5, 1.6, 0, Math.PI * 2);
-          ctx.fillStyle = '#ffffff';
-          ctx.fill();
-        }
+        // Белая точка в центре пина
+        ctx.beginPath();
+        ctx.arc(p.x, cy, r * 0.36, 0, Math.PI * 2);
+        ctx.fillStyle = '#ffffff';
+        ctx.fill();
         ctx.restore();
       }
     });
