@@ -280,7 +280,6 @@
 
       <div class="profile-actions-row">
         <button class="btn-edit" id="btn-edit-profile" onclick="handleEditProfileClick()" style="display:none;">Редактировать</button>
-        <button class="btn-edit" id="btn-share-card" onclick="openShareCardModal()" style="display:none; background: linear-gradient(135deg, rgba(124,58,237,0.22), rgba(79,70,229,0.22)); border: 1px solid rgba(167,139,250,0.4); color: var(--accent-violet-text);"><svg class="tt-icon"><use href="#icon-share"></use></svg> Карточка</button>
         <button class="btn-logout" id="btn-logout" onclick="logoutProfile()" style="display:none;">Выйти</button>
       </div>
     </div>
@@ -656,6 +655,7 @@
         <div style="text-align: left; font-size: 13px; font-weight: 700; color: var(--text-muted); margin-top: 4px;">История матчей:</div>
         <div id="info-modal-history" style="display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px;"><span class="empty-note">Пусто</span></div>
         
+        <button class="btn btn-join" id="btn-modal-share-card" style="display: none;" onclick="openShareCardModal()"><svg class="tt-icon"><use href="#icon-share"></use></svg> Поделиться карточкой (PNG)</button>
         <button class="btn btn-leave" onclick="closeUserInfoModal()">Закрыть</button>
     </div>
   </div>
@@ -890,7 +890,7 @@
   <script defer src="js/radar.js?v=12"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=121"></script>
+  <script defer src="js/app.js?v=122"></script>
   <script defer src="js/tour-roster.js?v=1"></script>
   <script defer src="js/score-confirm.js?v=1"></script>
    <!-- Генератор конфетти -->

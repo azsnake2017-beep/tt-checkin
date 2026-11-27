@@ -289,7 +289,16 @@ function updateProfileDisplay() {
   var lastDelta = parseInt(currentUserProfile.lastEloDelta, 10) || 0;
   var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">+' + lastDelta + '</span>' : '<span class="elo-delta elo-down">' + lastDelta + '</span>') : '';
 
-  document.getElementById('user-score-container').innerHTML = '<div style="display: flex; align-items: center; gap: 10px;"><div style="display: flex; flex-direction: column; align-items: flex-end;"><span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Эло</span><div><span class="rating-score" style="font-size: 18px; line-height: 1;">' + elo + '</span>' + deltaHtml + '</div></div><button class="btn-info" title="Полная карточка игрока" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button></div>';
+  document.getElementById('user-score-container').innerHTML =
+    '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">' +
+      '<div style="display: flex; align-items: center; gap: 6px;">' +
+        '<span style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Эло</span>' +
+        '<button class="btn-info" style="width: 20px !important; height: 20px !important; min-height: 20px !important; font-size: 11px !important; border-radius: 6px !important; padding: 0 !important;" title="Полная карточка игрока" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button>' +
+      '</div>' +
+      '<div style="display: flex; align-items: baseline; gap: 4px;">' +
+        '<span class="rating-score" style="font-size: 28px; line-height: 1; font-weight: 800;">' + elo + '</span>' + deltaHtml +
+      '</div>' +
+    '</div>';
   
   var wins = parseInt(currentUserProfile.wins, 10) || 0;
   var losses = parseInt(currentUserProfile.losses, 10) || 0;
@@ -298,9 +307,15 @@ function updateProfileDisplay() {
   var minsTotal = currentUserProfile.totalMinutes || 0;
   var pStatusHtml = typeof getPlayerStatusHtml === 'function' ? getPlayerStatusHtml(elo) : (typeof getPlayerStatus === 'function' ? getPlayerStatus(elo) : 'Игрок');
 
-  document.getElementById('user-name-container').innerHTML = '<span class="user-name-text"><b>' + cleanHtml(currentUserProfile.name) + '</b></span>';
+  document.getElementById('user-name-container').innerHTML =
+    '<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">' +
+      '<span class="user-name-text" style="font-size: 16px; font-weight: 800; line-height: 1.25; white-space: normal;">' + cleanHtml(currentUserProfile.name) + '</span>' +
+      '<span class="player-status-tag">' + pStatusHtml + '</span>' +
+    '</div>';
 
-  document.getElementById('user-stats-container').innerHTML = '<span class="player-status-tag">' + pStatusHtml + '</span><span class="player-status-tag" style="font-variant-numeric: tabular-nums;">' + wins + 'В – ' + losses + 'П (' + winrate + '%) • ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span>';
+  document.getElementById('user-stats-container').innerHTML =
+    '<span class="player-status-tag" style="font-variant-numeric: tabular-nums;">' + wins + 'В – ' + losses + 'П (' + winrate + '%)</span>' +
+    '<span class="player-status-tag" style="font-variant-numeric: tabular-nums;">За столом: ' + (typeof formatMinutes === 'function' ? formatMinutes(minsTotal) : minsTotal+' мин') + '</span>';
   
   if (typeof renderQuestBoard === 'function') renderQuestBoard();
 
@@ -698,6 +713,9 @@ function showUserInfoModal(uid) {
   var mInv = document.getElementById('info-modal-inventory');
   if(mInv) mInv.style.display = 'none';
   
+  var mShareBtn = document.getElementById('btn-modal-share-card');
+  if (mShareBtn) mShareBtn.style.display = 'none';
+
   openModalSmoothly('user-info-modal');
   
   var userPromise = db.collection('users').doc(uid).get({ source: 'server' }).catch(function() {
@@ -713,6 +731,8 @@ function showUserInfoModal(uid) {
 
     var u = d.data() || {};
     var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+    var mShareBtn2 = document.getElementById('btn-modal-share-card');
+    if (mShareBtn2) mShareBtn2.style.display = (uid === myUid) ? 'inline-flex' : 'none';
     if (uid === myUid && typeof currentUserProfile !== 'undefined') {
       if (!u.blade && currentUserProfile.blade) u.blade = currentUserProfile.blade;
       if (!u.rubberL && currentUserProfile.rubberL) u.rubberL = currentUserProfile.rubberL;
