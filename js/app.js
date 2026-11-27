@@ -290,14 +290,9 @@ function updateProfileDisplay() {
   var deltaHtml = lastDelta ? (lastDelta > 0 ? '<span class="elo-delta elo-up">+' + lastDelta + '</span>' : '<span class="elo-delta elo-down">' + lastDelta + '</span>') : '';
 
   document.getElementById('user-score-container').innerHTML =
-    '<div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">' +
-      '<div style="display: flex; align-items: center; gap: 6px;">' +
-        '<span style="font-size: 10px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Эло</span>' +
-        '<button class="btn-info" style="width: 20px !important; height: 20px !important; min-height: 20px !important; font-size: 11px !important; border-radius: 6px !important; padding: 0 !important;" title="Полная карточка игрока" onclick="showUserInfoModal(\'' + escapeJS(currentUserProfile.uid) + '\')">i</button>' +
-      '</div>' +
-      '<div style="display: flex; align-items: baseline; gap: 4px;">' +
-        '<span class="rating-score" style="font-size: 28px; line-height: 1; font-weight: 800;">' + elo + '</span>' + deltaHtml +
-      '</div>' +
+    '<div class="profile-elo-inline" style="display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; margin-top: 2px;">' +
+      '<span style="font-size: 11px; color: var(--text-muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em;">Рейтинг Эло</span>' +
+      '<span class="rating-score" style="font-size: 26px; line-height: 1; font-weight: 800;">' + elo + '</span>' + deltaHtml +
     '</div>';
   
   var wins = parseInt(currentUserProfile.wins, 10) || 0;
@@ -3192,6 +3187,13 @@ window.toggleTheme = function() {
   } else {
     var btn = document.getElementById('btn-theme');
     if (btn) btn.innerText = newTheme === 'light' ? '🌙' : '☀️';
+  }
+};
+
+window.handleProfileCardClick = function(e) {
+  if (e && e.target && e.target.closest && e.target.closest('button, a')) return;
+  if (currentUserProfile && currentUserProfile.uid && typeof showUserInfoModal === 'function') {
+    showUserInfoModal(currentUserProfile.uid);
   }
 };
 

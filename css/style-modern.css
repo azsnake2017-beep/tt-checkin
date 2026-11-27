@@ -1088,6 +1088,9 @@ body {
 }
 
 /* Логотип внизу Профиля (динамический размер, чтобы не уходил под нижнюю панель) */
+#view-profile .profile-card {
+  cursor: pointer;
+}
 #view-profile .profile-logo-container {
   flex: 1 1 auto;
   min-height: 76px;
