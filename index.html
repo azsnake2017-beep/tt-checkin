@@ -129,7 +129,7 @@
   }
 
   .gta-top { position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: flex-start; width: 100%; transition: opacity 0.6s ease; }
-  .gta-top.is-hidden { opacity: 0; }
+  .gta-top.is-hidden { display: none !important; opacity: 0 !important; visibility: hidden !important; }
 
   .lvk-overlay {
     position: absolute; inset: 0; z-index: 4;
@@ -228,7 +228,16 @@
       _idx = (_idx + 1 + Math.floor(Math.random() * (_pool.length - 1))) % _pool.length;
     }
     localStorage.setItem('tt_last_gta_slide', String(_idx));
-    var _chosen = ['assets/gta-loading/lvk-bg2.jpg', _pool[_idx]];
+    var _lvkPool = [
+      'assets/gta-loading/lvk-1.jpg',
+      'assets/gta-loading/lvk-2.jpg',
+      'assets/gta-loading/lvk-3.jpg',
+      'assets/gta-loading/lvk-4.jpg',
+      'assets/gta-loading/lvk-5.jpg'
+    ];
+    var _lvkIdx = (parseInt(localStorage.getItem('tt_last_lvk_slide') || '-1', 10) + 1) % _lvkPool.length;
+    localStorage.setItem('tt_last_lvk_slide', String(_lvkIdx));
+    var _chosen = [_lvkPool[_lvkIdx], _pool[_idx]];
     var _box = document.getElementById('gta-preloader-slides');
     if (_box) {
       _chosen.forEach(function(src, idx) {
@@ -982,7 +991,7 @@
   <script defer src="js/street.js?v=4"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=134"></script>
+  <script defer src="js/app.js?v=135"></script>
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="js/tour-roster.js?v=1"></script>
   <script defer src="js/score-confirm.js?v=1"></script>
