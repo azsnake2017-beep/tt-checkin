@@ -2103,6 +2103,7 @@ function listenTournaments() {
       snap.forEach(function(doc) {
         try {
           var d = doc.data() || {}, id = doc.id, likes = d.likes || [], dislikes = d.dislikes || [], parts = d.participants || [];
+          var ico = typeof ttIcon === 'function' ? ttIcon : function(){ return ''; };
           var isLiked = myUid && likes.indexOf(myUid) !== -1;
           var isDisliked = myUid && dislikes.indexOf(myUid) !== -1;
           var isPart = false; for(var i=0; i<parts.length; i++) { if (parts[i].uid === myUid) isPart = true; }
@@ -2124,7 +2125,6 @@ function listenTournaments() {
             var tPartsCount = d.participants ? d.participants.length : 0;
             var tMatchesCount = d.matches ? d.matches.filter(function(m){ return m.score1 !== null; }).length : 0;
             
-            var ico = typeof ttIcon === 'function' ? ttIcon : function(){ return ''; };
             var infoHtml = '<div style="background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%); border: 2px solid var(--accent-amber); border-radius: 16px; padding: 20px 16px; text-align: center; margin-top: 16px; margin-bottom: 16px; box-shadow: 0 8px 25px rgba(251, 191, 36, 0.15); position: relative;">' +
                 '<div style="position: absolute; top: 10px; right: 10px; display: flex; gap: 4px;">' +
                     '<button onclick="downloadTournamentPoster(\'' + escapeJS(id) + '\', \'' + escapeJS(d.title) + '\')" class="btn-info" style="font-size: 11px; padding: 6px 10px; background: rgba(0,0,0,0.5); border: 1px solid var(--card-border); border-radius: 8px; display:inline-flex; align-items:center; gap:4px;">' + ico('icon-download') + ' PNG</button>' +
@@ -2347,6 +2347,7 @@ function listenTournaments() {
           var dDesc = d.desc ? '<div style="font-size: 13px; margin-top: 4px; white-space: pre-wrap;">' + cleanHtml(d.desc) + '</div>' : '';
           activeHtml += '<div class="card" style="border-color: var(--accent-amber);"><div style="display: flex; justify-content: space-between; align-items: flex-start;"><div style="font-size: 16px; font-weight: 700; color: var(--accent-amber);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted);">' + (d.dateStr || '') + '</div></div>' + dDesc + content + '<div style="display: flex; gap: 8px; margin-top: 12px;"><button class="score-btn ' + (isLiked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'like\')">👍 ' + likes.length + '</button><button class="score-btn ' + (isDisliked ? 'active' : '') + '" style="width: 50px; padding: 6px; font-size: 12px;" onclick="toggleTourReaction(\''+escapeJS(id)+'\', \'dislike\')">👎 ' + dislikes.length + '</button>' + buttonsHtml + '</div>' + adminActionHtml + '</div>';
         } catch (err) {
+          console.error('Ошибка рендера турнира:', doc.id, err);
           if (isAdmin) {
             activeHtml += '<div class="card" style="border-color: #ef4444; border-width: 2px;"><div style="color: #ef4444; font-weight: bold; font-size: 14px;">⚠️ Сбой в данных турнира</div><div style="font-size: 11px; color: var(--text-muted);">Этот турнир поврежден. Остальная система работает нормально. Нажмите кнопку ниже, чтобы принудительно удалить сбойный турнир из базы.</div><button class="btn-leave" style="color: #ef4444; border-color: #ef4444; margin-top: 8px;" onclick="deleteTournament(\''+escapeJS(doc.id)+'\')">🗑 Принудительно удалить</button></div>';
           }
