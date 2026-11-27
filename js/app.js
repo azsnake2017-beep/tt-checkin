@@ -2632,12 +2632,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Этапы идут строго по порядку, ранние вызовы setAppProgress не перебивают текст на "Готово!"
     window.setAppProgress = function() {};
 
-    // Первые 5 секунд — «Люди в курсе», затем 5 секунд — 1 случайный челябинский слайд GTA VI
+    // Первые 5 секунд — «Люди в курсе» (без шутки про теннис), затем 5 секунд — наш слайд GTA VI + шутка
     setTimeout(function() {
       var lvkOverlay = document.getElementById('lvk-overlay');
       var gtaTop = document.getElementById('gta-top');
+      var jEl = document.getElementById('preloader-joke');
       if (lvkOverlay) lvkOverlay.classList.add('hidden');
       if (gtaTop) gtaTop.classList.remove('is-hidden');
+      if (jEl) jEl.style.opacity = '1';
       var gtaSlides = document.querySelectorAll('#gta-preloader-slides .gta-slide');
       if (gtaSlides.length > 1) {
         gtaSlides[0].style.transition = 'opacity 0.9s ease-in-out';
