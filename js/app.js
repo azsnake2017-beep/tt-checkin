@@ -2612,16 +2612,16 @@ document.addEventListener('DOMContentLoaded', function() {
       jokeEl.style.display = 'flex';
     }
     if (bar) {
-      bar.style.transition = 'width 8s linear';
+      bar.style.transition = 'width 10s linear';
       setTimeout(function() { bar.style.width = '100%'; }, 50);
     }
 
     var bootStages = [
-      { ms: 1400, text: 'Загрузка радара площадок и погоды...' },
-      { ms: 3000, text: 'Синхронизация рейтинга Эло и турниров...' },
-      { ms: 4800, text: 'Загрузка новостей и заданий недели...' },
-      { ms: 6400, text: 'Подготовка 3D-арены и кэша...' },
-      { ms: 7500, text: 'Готово! Добро пожаловать в клуб!' }
+      { ms: 1600, text: 'Загрузка радара площадок и погоды...' },
+      { ms: 3600, text: 'Синхронизация рейтинга Эло и турниров...' },
+      { ms: 5600, text: 'Загрузка новостей и заданий недели...' },
+      { ms: 7600, text: 'Подготовка 3D-арены и кэша...' },
+      { ms: 9400, text: 'Готово! Добро пожаловать в клуб!' }
     ];
     bootStages.forEach(function(st) {
       setTimeout(function() {
@@ -2632,25 +2632,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Этапы идут строго по порядку, ранние вызовы setAppProgress не перебивают текст на "Готово!"
     window.setAppProgress = function() {};
 
-    var gtaSlides = document.querySelectorAll('#gta-preloader-slides .gta-slide');
-    var gtaSlideIdx = 0;
-    var gtaSlideTimer = null;
-    if (gtaSlides.length > 1) {
-      gtaSlideTimer = setInterval(function() {
-        gtaSlideIdx = (gtaSlideIdx + 1) % gtaSlides.length;
-        for (var si = 0; si < gtaSlides.length; si++) {
-          gtaSlides[si].classList.remove('active');
-          if (si === gtaSlideIdx) {
-            gtaSlides[si].classList.remove('playing');
-            void gtaSlides[si].offsetWidth;
-            gtaSlides[si].classList.add('active', 'playing');
-          }
-        }
-      }, 2000);
-    }
+    // Первые 5 секунд — «Люди в курсе», затем 5 секунд — 1 случайный челябинский слайд GTA VI
+    setTimeout(function() {
+      var lvkOverlay = document.getElementById('lvk-overlay');
+      var gtaTop = document.getElementById('gta-top');
+      if (lvkOverlay) lvkOverlay.classList.add('hidden');
+      if (gtaTop) gtaTop.classList.remove('is-hidden');
+      var gtaSlides = document.querySelectorAll('#gta-preloader-slides .gta-slide');
+      if (gtaSlides.length > 1) {
+        gtaSlides[0].style.transition = 'opacity 0.9s ease-in-out';
+        gtaSlides[0].classList.remove('active');
+        gtaSlides[1].classList.remove('playing');
+        void gtaSlides[1].offsetWidth;
+        gtaSlides[1].classList.add('active', 'playing');
+      }
+    }, 5000);
 
     setTimeout(function() {
-      if (gtaSlideTimer) clearInterval(gtaSlideTimer);
       if (typeof vibrate === 'function') vibrate('medium');
       var loader = document.getElementById('app-preloader');
       if (loader) {
@@ -2663,7 +2661,7 @@ document.addEventListener('DOMContentLoaded', function() {
           if (slidesBox) slidesBox.innerHTML = '';
         }, 600);
       }
-    }, 8000); // Ровно 8 секунд показа экрана загрузки
+    }, 10000); // 5 сек ЛВК + 5 сек GTA VI слайд = 10 секунд
   } else {
     if (jokeEl) jokeEl.style.display = 'none';
     if (bar) bar.style.width = '100%';

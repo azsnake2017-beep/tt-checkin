@@ -110,6 +110,7 @@
     will-change: transform, opacity;
   }
   .gta-slide.active { opacity: 1; }
+  .gta-slide.lvk-gta-style { filter: contrast(122%) saturate(165%) sepia(20%) hue-rotate(-14deg) brightness(96%); }
   .gta-slide[data-anim="1"].playing { animation: gtaCam1 7.5s ease-out forwards; }
   .gta-slide[data-anim="2"].playing { animation: gtaCam2 7.5s ease-out forwards; }
   .gta-slide[data-anim="3"].playing { animation: gtaCam3 7.5s ease-out forwards; }
@@ -127,7 +128,27 @@
       linear-gradient(to bottom, rgba(8, 4, 18, 0.44) 0%, rgba(8, 4, 18, 0.06) 26%, rgba(8, 4, 18, 0.14) 58%, rgba(8, 4, 18, 0.90) 86%, rgba(8, 4, 18, 0.97) 100%);
   }
 
-  .gta-top { position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: flex-start; width: 100%; }
+  .gta-top { position: relative; z-index: 1; display: flex; justify-content: flex-end; align-items: flex-start; width: 100%; transition: opacity 0.6s ease; }
+  .gta-top.is-hidden { opacity: 0; }
+
+  .lvk-overlay {
+    position: absolute; inset: 0; z-index: 4;
+    display: flex; flex-direction: column; justify-content: flex-start; align-items: center;
+    padding: 28px 20px 160px;
+    background: linear-gradient(to bottom, rgba(10, 6, 18, 0.30) 0%, rgba(10, 6, 18, 0.12) 45%, rgba(10, 6, 18, 0.84) 86%, rgba(10, 6, 18, 0.96) 100%);
+    opacity: 1; transition: opacity 0.7s ease;
+  }
+  .lvk-overlay.hidden { opacity: 0; pointer-events: none; }
+  .lvk-badge { font-size: 10px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: #fca5a5; background: rgba(220, 38, 38, 0.22); border: 1px solid rgba(248, 113, 113, 0.4); padding: 5px 12px; border-radius: 999px; margin-bottom: 16px; backdrop-filter: blur(8px); }
+  .lvk-logo-wrap { width: 124px; height: 124px; border-radius: 26px; overflow: hidden; background: #ffffff; box-shadow: 0 14px 36px rgba(0, 0, 0, 0.65), 0 0 24px rgba(220, 38, 38, 0.35); border: 2px solid rgba(255, 255, 255, 0.85); margin-bottom: 14px; flex-shrink: 0; }
+  .lvk-logo-wrap img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .lvk-title { font-family: 'Russo One', sans-serif; font-size: 21px; letter-spacing: 0.03em; color: #ffffff; text-align: center; text-shadow: 0 3px 12px rgba(0, 0, 0, 0.9); margin-bottom: 6px; }
+  .lvk-sub { font-size: 13px; line-height: 1.45; color: #e2e8f0; text-align: center; max-width: 280px; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); margin-bottom: 16px; }
+  .lvk-links { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; width: 100%; max-width: 320px; }
+  .lvk-btn { display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 9px 13px; border-radius: 12px; font-size: 12px; font-weight: 700; color: #ffffff; text-decoration: none; backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.2); box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45); }
+  .lvk-btn-ig { background: linear-gradient(135deg, rgba(225, 48, 108, 0.85), rgba(131, 58, 180, 0.85)); }
+  .lvk-btn-tg { background: rgba(14, 165, 233, 0.82); }
+  .lvk-btn-vk { background: rgba(37, 99, 235, 0.85); }
   .preloader-logo {
     width: 160px; height: 160px; border-radius: 50%; object-fit: contain; flex-shrink: 0; border: none;
     opacity: 0.94;
@@ -168,19 +189,32 @@
 <div id="app-preloader" class="app-preloader">
   <div id="gta-preloader-slides" class="gta-slides"></div>
   <div class="gta-color-grade"></div>
-  <div class="gta-top">
+  <div id="lvk-overlay" class="lvk-overlay">
+    <div class="lvk-badge">Партнёр клуба</div>
+    <div class="lvk-logo-wrap">
+      <img src="assets/gta-loading/lvk-logo.jpg" alt="Люди в курсе">
+    </div>
+    <div class="lvk-title">Люди в курсе | Челябинск</div>
+    <div class="lvk-sub">Главные события, локации и активный движ нашего города</div>
+    <div class="lvk-links">
+      <a class="lvk-btn lvk-btn-ig" href="https://www.instagram.com/vkurseludi/" target="_blank" rel="noopener">Instagram</a>
+      <a class="lvk-btn lvk-btn-tg" href="https://t.me/ludivk" target="_blank" rel="noopener">Telegram</a>
+      <a class="lvk-btn lvk-btn-vk" href="https://vk.com/vkurseludi" target="_blank" rel="noopener">ВКонтакте</a>
+    </div>
+  </div>
+  <div id="gta-top" class="gta-top is-hidden">
     <img src="logo.webp" alt="Челябинск" width="160" height="160" class="preloader-logo" onerror="this.style.display='none'">
   </div>
-  <div class="gta-bottom">
+  <div class="gta-bottom" style="z-index: 5;">
     <div id="preloader-joke" class="preloader-joke"></div>
     <div class="preloader-bar-bg"><div id="preloader-bar" class="preloader-bar-fill"></div></div>
-    <div id="preloader-text" class="preloader-text">Загрузка интерфейса и стилей...</div>
+    <div class="preloader-text" id="preloader-text">Загрузка интерфейса и стилей...</div>
   </div>
 </div>
 <script>
   if (!sessionStorage.getItem('tt_app_loaded')) {
     var _b = document.getElementById('preloader-bar');
-    if (_b) { _b.style.transition = 'width 2.5s ease-out'; setTimeout(function(){ _b.style.width = '28%'; }, 30); }
+    if (_b) { _b.style.transition = 'width 2.5s ease-out'; setTimeout(function(){ _b.style.width = '24%'; }, 30); }
     var _pool = [
       'assets/gta-loading/slide1.jpg',
       'assets/gta-loading/slide2.jpg',
@@ -188,18 +222,21 @@
       'assets/gta-loading/slide4.jpg',
       'assets/gta-loading/slide5.jpg'
     ];
-    for (var _i = _pool.length - 1; _i > 0; _i--) {
-      var _j = Math.floor(Math.random() * (_i + 1));
-      var _t = _pool[_i]; _pool[_i] = _pool[_j]; _pool[_j] = _t;
+    var _lastIdx = parseInt(localStorage.getItem('tt_last_gta_slide') || '-1', 10);
+    var _idx = Math.floor(Math.random() * _pool.length);
+    if (_pool.length > 1 && _idx === _lastIdx) {
+      _idx = (_idx + 1 + Math.floor(Math.random() * (_pool.length - 1))) % _pool.length;
     }
-    window.__TT_PRELOADER_SLIDES = _pool;
+    localStorage.setItem('tt_last_gta_slide', String(_idx));
+    var _chosen = ['assets/gta-loading/lvk-bg2.jpg', _pool[_idx]];
     var _box = document.getElementById('gta-preloader-slides');
     if (_box) {
-      _pool.forEach(function(src, idx) {
+      _chosen.forEach(function(src, idx) {
         var imgPre = new Image();
         imgPre.src = src;
         var el = document.createElement('div');
-        el.className = 'gta-slide' + (idx === 0 ? ' active playing' : '');
+        el.className = 'gta-slide' + (idx === 0 ? ' active playing lvk-gta-style' : '');
+        if (idx === 0) el.style.transition = 'none';
         el.setAttribute('data-anim', String((idx % 4) + 1));
         el.style.backgroundImage = "url('" + src + "')";
         _box.appendChild(el);
@@ -945,7 +982,7 @@
   <script defer src="js/street.js?v=4"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
-  <script defer src="js/app.js?v=133"></script>
+  <script defer src="js/app.js?v=134"></script>
   <script defer src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
   <script defer src="js/tour-roster.js?v=1"></script>
   <script defer src="js/score-confirm.js?v=1"></script>
