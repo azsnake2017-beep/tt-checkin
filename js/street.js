@@ -7,12 +7,51 @@
   var customStreetSpots = [];
   var streetPresenceMap = {};
   var activeDistrict = 'Все';
+  var searchQuery = '';
+  var activeQuickFilter = 'all';
+  var selectedSpotId = null;
   var streetMap = null;
   var streetDistrictsLayer = null;
   var streetMarkersLayer = null;
   var streetMarkersById = {};
   var currentRadarMode = 'clubs';
   var TableMarkerClass = null;
+  var FAVORITES_KEY = 'tt_street_favorites_v1';
+
+  function getFavoriteIds() {
+    try {
+      var raw = localStorage.getItem(FAVORITES_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) {
+      return [];
+    }
+  }
+
+  function saveFavoriteIds(ids) {
+    try {
+      localStorage.setItem(FAVORITES_KEY, JSON.stringify(ids));
+    } catch (e) {}
+  }
+
+  function isFavoriteSpot(spotId) {
+    return getFavoriteIds().indexOf(spotId) !== -1;
+  }
+
+  window.toggleStreetFavorite = function(spotId, ev) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    if (!spotId) return;
+    var ids = getFavoriteIds();
+    var idx = ids.indexOf(spotId);
+    if (idx === -1) ids.push(spotId);
+    else ids.splice(idx, 1);
+    saveFavoriteIds(ids);
+    if (typeof vibrate === 'function') vibrate('light');
+    renderStreetSection();
+    if (streetMap && streetMarkersById[spotId] && streetMarkersById[spotId].isPopupOpen && streetMarkersById[spotId].isPopupOpen()) {
+      streetMarkersById[spotId].openPopup();
+    }
+  };
 
   function ensureTableMarkerClass() {
     if (TableMarkerClass || typeof L === 'undefined') return TableMarkerClass;
@@ -190,65 +229,356 @@
         fill: false
       });
 
+      var isFav = isFavoriteSpot(spot.id);
+      var favBtnStyle = isFav
+        ? 'padding:6px 8px; border-radius:8px; background:#f59e0b; color:#ffffff; border:1px solid #f59e0b; font-weight:700; font-size:11px; cursor:pointer;'
+        : 'padding:6px 8px; border-radius:8px; background:rgba(245,158,11,0.12); color:#f59e0b; border:1px solid rgba(245,158,11,0.4); font-weight:700; font-size:11px; cursor:pointer;';
+
       var popupHtml =
-        '<div style="min-width:185px; font-family:Inter,sans-serif;">' +
+        '<div style="min-width:195px; font-family:Inter,sans-serif;">' +
           '<div style="font-weight:800; font-size:13px; margin-bottom:3px; color:#34d399;">🏓 Теннисный стол</div>' +
           '<div style="font-size:12px; font-weight:600; line-height:1.3; margin-bottom:5px; color:#f8fafc;"><span style="color:#94a3b8;">Адрес:</span> ' + cleanHtml(spot.name) + '</div>' +
           '<div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Сейчас: <b style="color:#10b981;">' + count + '</b></div>' +
-          '<div style="display:flex; gap:6px;">' +
-            '<button onclick="focusStreetCard(\'' + escapeJS(spot.id) + '\')" style="flex:1; padding:6px 8px; border:none; border-radius:8px; background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; font-weight:700; font-size:11px; cursor:pointer;">Выбрать</button>' +
+          '<div style="display:flex; gap:6px; align-items:center;">' +
+            '<button onclick="selectStreetSpot(\'' + escapeJS(spot.id) + '\', false); focusStreetCard(\'' + escapeJS(spot.id) + '\')" style="flex:1; padding:6px 8px; border:none; border-radius:8px; background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; font-weight:700; font-size:11px; cursor:pointer;">Выбрать</button>' +
             (spot.gisUrl ? '<a href="' + cleanHtml(spot.gisUrl) + '" target="_blank" rel="noopener" style="padding:6px 8px; border-radius:8px; background:rgba(16,185,129,0.12); color:#10b981; border:1px solid rgba(16,185,129,0.35); font-weight:700; font-size:11px; text-decoration:none;">Маршрут</a>' : '') +
+            '<button onclick="toggleStreetFavorite(\'' + escapeJS(spot.id) + '\', event)" title="В избранное" style="' + favBtnStyle + '">' + (isFav ? '★' : '☆') + '</button>' +
           '</div>' +
         '</div>';
 
       marker.bindPopup(popupHtml);
+      marker.on('click', function() {
+        selectStreetSpot(spot.id, false);
+      });
       marker.addTo(streetMarkersLayer);
       streetMarkersById[spot.id] = marker;
     });
   }
 
-  window.focusStreetMapSpot = function(spotId) {
-    var spot = window.getStreetSpotById(spotId);
-    if (!spot) return;
-    initStreetMap();
-    if (streetMap && spot.lat && spot.lng) {
-      streetMap.setView([spot.lat, spot.lng], 16, { animate: true });
-      var m = streetMarkersById[spotId];
-      if (m) m.openPopup();
-      var mapEl = document.getElementById('street-map');
-      if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  function fitMapToVisibleMarkers() {
+    if (!streetMap || !streetMarkersLayer) return;
+    var latlngs = [];
+    streetMarkersLayer.eachLayer(function(l) {
+      if (l.getLatLng) latlngs.push(l.getLatLng());
+    });
+    if (latlngs.length > 1) {
+      streetMap.fitBounds(L.latLngBounds(latlngs), { padding: [20, 20], maxZoom: 15 });
+    } else if (latlngs.length === 1) {
+      streetMap.setView(latlngs[0], 15);
     }
-  };
+  }
 
-  window.focusStreetCard = function(spotId) {
-    var card = document.getElementById('street-card-' + spotId);
-    if (!card) return;
-    card.classList.add('expanded');
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  };
-
-  window.setStreetDistrictFilter = function(district) {
-    activeDistrict = district || 'Все';
-    if (typeof vibrate === 'function') vibrate('light');
-    renderStreetSection();
-    if (streetMap && streetMarkersLayer) {
-      var latlngs = [];
-      streetMarkersLayer.eachLayer(function(l) {
-        if (l.getLatLng) latlngs.push(l.getLatLng());
-      });
-      if (latlngs.length > 1) {
-        streetMap.fitBounds(L.latLngBounds(latlngs), { padding: [20, 20], maxZoom: 15 });
-      } else if (latlngs.length === 1) {
-        streetMap.setView(latlngs[0], 15);
+  window.selectStreetSpot = function(spotId, panToMap) {
+    if (!spotId) return;
+    selectedSpotId = spotId;
+    renderSelectedSpotCard();
+    renderFavoritesBar();
+    var spot = window.getStreetSpotById(spotId);
+    if (panToMap && spot && spot.lat && spot.lng) {
+      initStreetMap();
+      if (streetMap) {
+        streetMap.setView([spot.lat, spot.lng], 16, { animate: true });
+        var m = streetMarkersById[spotId];
+        if (m) m.openPopup();
       }
     }
   };
+
+  window.clearSelectedStreetSpot = function() {
+    selectedSpotId = null;
+    renderSelectedSpotCard();
+    renderFavoritesBar();
+  };
+
+  window.focusStreetMapSpot = function(spotId) {
+    selectStreetSpot(spotId, true);
+    var mapEl = document.getElementById('street-map');
+    if (mapEl) mapEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  window.focusStreetCard = function(spotId) {
+    selectStreetSpot(spotId, false);
+    var card = document.getElementById('street-selected-spot');
+    if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
+  window.toggleStreetDistrictDropdown = function(ev) {
+    if (ev && ev.stopPropagation) ev.stopPropagation();
+    var dd = document.getElementById('street-district-dropdown');
+    var menu = document.getElementById('street-district-menu');
+    var btn = document.getElementById('street-district-btn');
+    if (!dd || !menu) return;
+    var isOpen = dd.classList.contains('open');
+    closeAddressSuggestions();
+    if (isOpen) {
+      dd.classList.remove('open');
+      menu.style.display = 'none';
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    } else {
+      dd.classList.add('open');
+      menu.style.display = 'block';
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    }
+  };
+
+  function closeStreetDistrictDropdown() {
+    var dd = document.getElementById('street-district-dropdown');
+    var menu = document.getElementById('street-district-menu');
+    var btn = document.getElementById('street-district-btn');
+    if (dd) dd.classList.remove('open');
+    if (menu) menu.style.display = 'none';
+    if (btn) btn.setAttribute('aria-expanded', 'false');
+  }
+
+  function closeAddressSuggestions() {
+    var sugEl = document.getElementById('street-address-suggestions');
+    if (sugEl) sugEl.style.display = 'none';
+  }
+
+  window.setStreetDistrictFilter = function(district) {
+    activeDistrict = district || 'Все';
+    closeStreetDistrictDropdown();
+    if (typeof vibrate === 'function') vibrate('light');
+    renderStreetSection();
+    fitMapToVisibleMarkers();
+  };
+
+  window.setStreetQuickFilter = function(mode) {
+    activeQuickFilter = mode || 'all';
+    if (typeof vibrate === 'function') vibrate('light');
+    renderStreetSection();
+    fitMapToVisibleMarkers();
+  };
+
+  function highlightMatch(text, query) {
+    var safe = cleanHtml(text || '');
+    if (!query) return safe;
+    var lower = text.toLowerCase();
+    var qLower = query.toLowerCase();
+    var idx = lower.indexOf(qLower);
+    if (idx === -1) return safe;
+    return cleanHtml(text.slice(0, idx)) + '<mark>' + cleanHtml(text.slice(idx, idx + query.length)) + '</mark>' + cleanHtml(text.slice(idx + query.length));
+  }
+
+  function renderAddressSuggestions() {
+    var sugEl = document.getElementById('street-address-suggestions');
+    if (!sugEl) return;
+    var q = (searchQuery || '').trim().toLowerCase();
+    if (!q) {
+      sugEl.style.display = 'none';
+      sugEl.innerHTML = '';
+      return;
+    }
+
+    var allSpots = getMergedSpots();
+    var pool = activeDistrict === 'Все' ? allSpots : allSpots.filter(function(s) { return s.district === activeDistrict; });
+    var matches = [];
+    pool.forEach(function(s) {
+      var nameLower = (s.name || '').toLowerCase();
+      var keyLower = streetSortKey(s.name);
+      var idx = nameLower.indexOf(q);
+      if (idx !== -1 || keyLower.indexOf(q) !== -1) {
+        var score = keyLower.indexOf(q) === 0 ? 0 : (idx === 0 ? 1 : 2);
+        matches.push({ spot: s, score: score });
+      }
+    });
+
+    matches.sort(function(a, b) {
+      if (a.score !== b.score) return a.score - b.score;
+      return streetSortKey(a.spot.name).localeCompare(streetSortKey(b.spot.name), 'ru', { numeric: true });
+    });
+
+    var top = matches.slice(0, 8);
+    if (top.length === 0) {
+      sugEl.innerHTML = '<div class="street-suggestion-item" style="cursor:default; color:var(--text-muted);">Адреса не найдены</div>';
+      sugEl.style.display = 'block';
+      return;
+    }
+
+    sugEl.innerHTML = top.map(function(item) {
+      var s = item.spot;
+      return (
+        '<button type="button" class="street-suggestion-item" onclick="pickStreetSuggestion(\'' + escapeJS(s.id) + '\')">' +
+          '<span class="street-suggestion-name">' + highlightMatch(s.name, searchQuery.trim()) + '</span>' +
+          '<span class="street-suggestion-dist">' + cleanHtml(s.district || '') + '</span>' +
+        '</button>'
+      );
+    }).join('');
+    sugEl.style.display = 'block';
+  }
+
+  window.onStreetSearchInput = function(val) {
+    searchQuery = val || '';
+    var clearBtn = document.getElementById('street-search-clear');
+    if (clearBtn) clearBtn.style.display = searchQuery.trim() ? 'flex' : 'none';
+    renderAddressSuggestions();
+    renderStreetSection();
+  };
+
+  window.onStreetSearchFocus = function() {
+    closeStreetDistrictDropdown();
+    if ((searchQuery || '').trim()) renderAddressSuggestions();
+  };
+
+  window.clearStreetSearch = function() {
+    searchQuery = '';
+    var inputEl = document.getElementById('street-address-search');
+    if (inputEl) inputEl.value = '';
+    var clearBtn = document.getElementById('street-search-clear');
+    if (clearBtn) clearBtn.style.display = 'none';
+    closeAddressSuggestions();
+    renderStreetSection();
+    fitMapToVisibleMarkers();
+  };
+
+  window.pickStreetSuggestion = function(spotId) {
+    var spot = window.getStreetSpotById(spotId);
+    if (!spot) return;
+    searchQuery = spot.name;
+    var inputEl = document.getElementById('street-address-search');
+    if (inputEl) inputEl.value = spot.name;
+    var clearBtn = document.getElementById('street-search-clear');
+    if (clearBtn) clearBtn.style.display = 'flex';
+    closeAddressSuggestions();
+    renderStreetSection();
+    selectStreetSpot(spot.id, true);
+  };
+
+  document.addEventListener('click', function(ev) {
+    var dd = document.getElementById('street-district-dropdown');
+    if (dd && !dd.contains(ev.target)) closeStreetDistrictDropdown();
+    var sw = document.querySelector('.street-search-wrap');
+    if (sw && !sw.contains(ev.target)) closeAddressSuggestions();
+  });
 
   window.toggleStreetCard = function(spotId) {
     var card = document.getElementById('street-card-' + spotId);
     if (card) card.classList.toggle('expanded');
     if (typeof vibrate === 'function') vibrate('light');
   };
+
+  function renderFavoritesBar() {
+    var barEl = document.getElementById('street-favorites-bar');
+    if (!barEl) return;
+    var favIds = getFavoriteIds();
+    var allSpots = getMergedSpots();
+    var favSpots = [];
+    favIds.forEach(function(fid) {
+      var found = allSpots.find(function(s) { return s.id === fid; });
+      if (found) favSpots.push(found);
+    });
+
+    if (favSpots.length === 0) {
+      barEl.style.display = 'none';
+      barEl.innerHTML = '';
+      return;
+    }
+
+    var chipsHtml = favSpots.map(function(spot) {
+      var st = streetPresenceMap[spot.id] || { players: [], plans: [] };
+      var cnt = (st.players || []).length;
+      var activeCls = selectedSpotId === spot.id ? ' active' : '';
+      return (
+        '<button type="button" class="street-fav-chip' + activeCls + '" onclick="focusStreetMapSpot(\'' + escapeJS(spot.id) + '\')">' +
+          '<span>★ ' + cleanHtml(spot.name) + '</span>' +
+          (cnt > 0 ? '<span class="street-fav-chip-cnt">' + cnt + '</span>' : '') +
+        '</button>'
+      );
+    }).join('');
+
+    barEl.innerHTML =
+      '<div class="street-favorites-title">★ Ваши избранные адреса</div>' +
+      '<div class="street-favorites-chips">' + chipsHtml + '</div>';
+    barEl.style.display = 'flex';
+  }
+
+  function renderSelectedSpotCard() {
+    var container = document.getElementById('street-selected-spot');
+    if (!container) return;
+    if (!selectedSpotId) {
+      container.innerHTML =
+        '<div class="street-empty-hint">' +
+          '📍 Нажмите на любую метку на карте или выберите улицу в поиске выше — здесь откроется карточка стола, где можно отметиться и сохранить адрес в избранное.' +
+        '</div>';
+      return;
+    }
+
+    var spot = window.getStreetSpotById(selectedSpotId);
+    if (!spot) {
+      selectedSpotId = null;
+      renderSelectedSpotCard();
+      return;
+    }
+
+    var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
+    var st = streetPresenceMap[spot.id] || { players: [], plans: [] };
+    var players = st.players || [];
+    var plans = st.plans || [];
+    var count = players.length;
+
+    var amIHere = false;
+    var playersHtml = '';
+    if (count === 0) {
+      playersHtml = '<span class="empty-note">Пока свободно</span>';
+    } else {
+      players.forEach(function(p) {
+        var pUid = p.uid || '';
+        if (myUid && pUid === myUid) amIHere = true;
+        var tStr = typeof formatDuration === 'function' ? formatDuration(p.time) : '';
+        playersHtml += '<div class="player-row"><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(pUid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span><span style="font-size:11px; color:var(--text-muted);">' + tStr + '</span></div>';
+      });
+    }
+
+    var amIPlanning = false;
+    var plansHtml = '';
+    if (plans.length === 0) {
+      plansHtml = '<span class="empty-note">Никто не планировал</span>';
+    } else {
+      plans.forEach(function(pl) {
+        var plUid = pl.uid || '';
+        if (myUid && plUid === myUid) amIPlanning = true;
+        var untilStr = typeof formatUntil === 'function' ? formatUntil(pl.planTime) : '';
+        plansHtml += '<div class="player-row"><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(plUid) + '\')">' + cleanHtml(pl.name || 'Игрок') + '</span><span style="font-size:11px; color:var(--accent-amber);">' + untilStr + '</span></div>';
+      });
+    }
+
+    var joinBtn = amIHere
+      ? '<button class="btn btn-leave" onclick="streetLeave(\'' + escapeJS(spot.id) + '\')">Освободить</button>'
+      : '<button class="btn btn-join" onclick="streetCheckIn(\'' + escapeJS(spot.id) + '\')">Я уже здесь</button>';
+
+    var planBtn = amIPlanning
+      ? '<button class="btn btn-leave" onclick="cancelPlan(\'' + escapeJS(spot.id) + '\')">Отменить план</button>'
+      : '<button class="btn btn-plan" onclick="handlePlanClick(\'' + escapeJS(spot.id) + '\')">Буду позже...</button>';
+
+    var badgeCls = count > 0 ? 'counter active' : 'counter';
+    var suf = typeof getPlayersCountSuffix === 'function' ? getPlayersCountSuffix(count) : 'игроков';
+    var isFav = isFavoriteSpot(spot.id);
+
+    container.innerHTML =
+      '<div class="card street-spot-card street-selected-card expanded" id="street-card-' + cleanHtml(spot.id) + '">' +
+        '<div class="street-selected-head">' +
+          '<div style="min-width:0; flex:1;">' +
+            '<div class="street-selected-kicker">🏓 Теннисный стол · ' + cleanHtml(spot.district || 'Челябинск') + '</div>' +
+            '<div class="card-title" style="font-size:15px;">' + cleanHtml(spot.name) + '</div>' +
+          '</div>' +
+          '<div class="street-selected-actions-top">' +
+            '<span class="' + badgeCls + '">' + count + ' ' + suf + '</span>' +
+            '<button type="button" class="street-fav-toggle-btn' + (isFav ? ' is-fav' : '') + '" onclick="toggleStreetFavorite(\'' + escapeJS(spot.id) + '\', event)">' + (isFav ? '★ В избранном' : '☆ В избранное') + '</button>' +
+            '<button type="button" class="street-close-selected-btn" onclick="clearSelectedStreetSpot()" aria-label="Закрыть карточку">✕</button>' +
+          '</div>' +
+        '</div>' +
+        '<div class="street-quick-links">' +
+          '<button class="btn-plan street-mini-btn" onclick="focusStreetMapSpot(\'' + escapeJS(spot.id) + '\')">На карте</button>' +
+          (spot.gisUrl ? '<a class="btn-plan street-mini-btn" href="' + cleanHtml(spot.gisUrl) + '" target="_blank" rel="noopener">Маршрут 2ГИС</a>' : '') +
+          '<button class="btn-plan street-mini-btn" onclick="inviteToStreetSpot(\'' + escapeJS(spot.id) + '\')">Позвать играть</button>' +
+        '</div>' +
+        '<div class="section-label">Сейчас играют:</div>' +
+        '<div class="player-list">' + playersHtml + '</div>' +
+        '<div class="section-label">Собираются прийти:</div>' +
+        '<div class="player-list">' + plansHtml + '</div>' +
+        '<div class="action-group">' + joinBtn + planBtn + '</div>' +
+      '</div>';
+  }
 
   function renderStreetSection() {
     var allSpots = getMergedSpots();
@@ -258,111 +588,72 @@
     });
     districts.sort(function(a, b) { return a.localeCompare(b, 'ru'); });
 
-    var selectEl = document.getElementById('street-district-select');
-    if (selectEl) {
-      var optsHtml = '<option value="Все">Все районы (' + allSpots.length + ')</option>';
+    var labelEl = document.getElementById('street-district-label');
+    var menuEl = document.getElementById('street-district-menu');
+    if (labelEl) {
+      var activeCnt = activeDistrict === 'Все'
+        ? allSpots.length
+        : allSpots.filter(function(s) { return s.district === activeDistrict; }).length;
+      labelEl.innerText = (activeDistrict === 'Все' ? 'Все районы' : activeDistrict) + ' (' + activeCnt + ')';
+    }
+    if (menuEl) {
+      var menuHtml =
+        '<button type="button" class="street-dropdown-option' + (activeDistrict === 'Все' ? ' active' : '') + '" onclick="setStreetDistrictFilter(\'Все\')">' +
+          '<span>Все районы</span><span class="street-dropdown-opt-cnt">' + allSpots.length + '</span>' +
+        '</button>';
       districts.forEach(function(d) {
         var cnt = allSpots.filter(function(s) { return s.district === d; }).length;
-        optsHtml += '<option value="' + cleanHtml(d) + '">' + cleanHtml(d) + ' (' + cnt + ')</option>';
+        menuHtml +=
+          '<button type="button" class="street-dropdown-option' + (activeDistrict === d ? ' active' : '') + '" onclick="setStreetDistrictFilter(\'' + escapeJS(d) + '\')">' +
+            '<span>' + cleanHtml(d) + '</span><span class="street-dropdown-opt-cnt">' + cnt + '</span>' +
+          '</button>';
       });
-      selectEl.innerHTML = optsHtml;
-      selectEl.value = activeDistrict;
+      menuEl.innerHTML = menuHtml;
     }
+
+    var favIds = getFavoriteIds();
+    var activePlayersSpotsCount = 0;
+    allSpots.forEach(function(s) {
+      var st = streetPresenceMap[s.id];
+      if (st && st.players && st.players.length > 0) activePlayersSpotsCount++;
+    });
+    var favCntEl = document.getElementById('street-fav-count');
+    if (favCntEl) favCntEl.innerText = favIds.filter(function(id) { return !!window.getStreetSpotById(id); }).length;
+    var actCntEl = document.getElementById('street-active-count');
+    if (actCntEl) actCntEl.innerText = activePlayersSpotsCount;
+
+    ['all', 'favorites', 'active'].forEach(function(m) {
+      var tab = document.getElementById('street-qtab-' + m);
+      if (tab) tab.classList.toggle('active', activeQuickFilter === m);
+    });
 
     var filtered = activeDistrict === 'Все'
       ? allSpots.slice()
       : allSpots.filter(function(s) { return s.district === activeDistrict; });
 
-    filtered.sort(function(a, b) {
-      var ka = streetSortKey(a.name);
-      var kb = streetSortKey(b.name);
-      return ka.localeCompare(kb, 'ru', { numeric: true });
-    });
+    if (activeQuickFilter === 'favorites') {
+      filtered = filtered.filter(function(s) { return favIds.indexOf(s.id) !== -1; });
+    } else if (activeQuickFilter === 'active') {
+      filtered = filtered.filter(function(s) {
+        var st = streetPresenceMap[s.id];
+        return st && st.players && st.players.length > 0;
+      });
+    }
+
+    var q = (searchQuery || '').trim().toLowerCase();
+    if (q) {
+      filtered = filtered.filter(function(s) {
+        return (s.name || '').toLowerCase().indexOf(q) !== -1;
+      });
+    }
 
     renderStreetMapMarkers(filtered);
 
     var countEl = document.getElementById('street-spots-count');
     if (countEl) countEl.innerText = filtered.length;
 
-    var listEl = document.getElementById('street-spots-list');
-    if (!listEl) return;
-
-    var myUid = typeof getVerifiedUserId === 'function' ? getVerifiedUserId() : null;
-    var html = '';
-
-    filtered.forEach(function(spot) {
-      var prevCard = document.getElementById('street-card-' + spot.id);
-      var wasExpanded = prevCard && prevCard.classList.contains('expanded');
-      var st = streetPresenceMap[spot.id] || { players: [], plans: [] };
-      var players = st.players || [];
-      var plans = st.plans || [];
-      var count = players.length;
-
-      var amIHere = false;
-      var playersHtml = '';
-      if (count === 0) {
-        playersHtml = '<span class="empty-note">Пока свободно</span>';
-      } else {
-        players.forEach(function(p) {
-          var pUid = p.uid || '';
-          if (myUid && pUid === myUid) amIHere = true;
-          var tStr = typeof formatDuration === 'function' ? formatDuration(p.time) : '';
-          playersHtml += '<div class="player-row"><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(pUid) + '\')">' + cleanHtml(p.name || 'Игрок') + '</span><span style="font-size:11px; color:var(--text-muted);">' + tStr + '</span></div>';
-        });
-      }
-
-      var amIPlanning = false;
-      var plansHtml = '';
-      if (plans.length === 0) {
-        plansHtml = '<span class="empty-note">Никто не планировал</span>';
-      } else {
-        plans.forEach(function(pl) {
-          var plUid = pl.uid || '';
-          if (myUid && plUid === myUid) amIPlanning = true;
-          var untilStr = typeof formatUntil === 'function' ? formatUntil(pl.planTime) : '';
-          plansHtml += '<div class="player-row"><span class="clickable-name" onclick="showUserInfoModal(\'' + escapeJS(plUid) + '\')">' + cleanHtml(pl.name || 'Игрок') + '</span><span style="font-size:11px; color:var(--accent-amber);">' + untilStr + '</span></div>';
-        });
-      }
-
-      var joinBtn = amIHere
-        ? '<button class="btn btn-leave" onclick="streetLeave(\'' + escapeJS(spot.id) + '\')">Освободить</button>'
-        : '<button class="btn btn-join" onclick="streetCheckIn(\'' + escapeJS(spot.id) + '\')">Я уже здесь</button>';
-
-      var planBtn = amIPlanning
-        ? '<button class="btn btn-leave" onclick="cancelPlan(\'' + escapeJS(spot.id) + '\')">Отменить план</button>'
-        : '<button class="btn btn-plan" onclick="handlePlanClick(\'' + escapeJS(spot.id) + '\')">Буду позже...</button>';
-
-      var badgeCls = count > 0 ? 'counter active' : 'counter';
-      var suf = typeof getPlayersCountSuffix === 'function' ? getPlayersCountSuffix(count) : 'игроков';
-
-      html +=
-        '<div class="card street-spot-card' + (wasExpanded ? ' expanded' : '') + '" id="street-card-' + cleanHtml(spot.id) + '">' +
-          '<div class="card-top" onclick="toggleStreetCard(\'' + escapeJS(spot.id) + '\')">' +
-            '<div style="min-width:0; flex:1;">' +
-              '<div class="card-title" style="font-size:14px;">' + cleanHtml(spot.name) + '</div>' +
-            '</div>' +
-            '<span class="' + badgeCls + '">' + count + ' ' + suf + '</span>' +
-          '</div>' +
-          '<div class="street-quick-links">' +
-            '<button class="btn-plan street-mini-btn" onclick="focusStreetMapSpot(\'' + escapeJS(spot.id) + '\')">На карте</button>' +
-            (spot.gisUrl ? '<a class="btn-plan street-mini-btn" href="' + cleanHtml(spot.gisUrl) + '" target="_blank" rel="noopener">Маршрут</a>' : '') +
-            '<button class="btn-plan street-mini-btn" onclick="inviteToStreetSpot(\'' + escapeJS(spot.id) + '\')">Позвать играть</button>' +
-          '</div>' +
-          '<div class="card-collapse-wrapper">' +
-            '<div class="card-body-collapse">' +
-              '<div class="card-body-inner">' +
-                '<div class="section-label">Сейчас играют:</div>' +
-                '<div class="player-list">' + playersHtml + '</div>' +
-                '<div class="section-label">Собираются прийти:</div>' +
-                '<div class="player-list">' + plansHtml + '</div>' +
-                '<div class="action-group">' + joinBtn + planBtn + '</div>' +
-              '</div>' +
-            '</div>' +
-          '</div>' +
-        '</div>';
-    });
-
-    listEl.innerHTML = html || '<span class="empty-note">В этом районе пока нет адресов</span>';
+    renderFavoritesBar();
+    renderSelectedSpotCard();
   }
 
   window.streetCheckIn = function(spotId) {

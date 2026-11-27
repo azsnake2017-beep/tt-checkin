@@ -1131,20 +1131,248 @@ body {
   border-color: rgba(16, 185, 129, 0.5) !important;
   color: #10b981 !important;
 }
-.street-district-select {
-  width: 100%;
-  min-width: 0;
-  padding: 8px 12px !important;
-  font-size: 13px !important;
-  font-weight: 700 !important;
-  border-radius: 12px !important;
-  border: 1px solid rgba(16, 185, 129, 0.35) !important;
-  background: var(--row-bg) !important;
-  color: var(--text) !important;
+.street-panel-card {
+  overflow: visible !important;
+  position: relative;
 }
+
+/* Поиск по улице или адресу с автоподхватом */
+.street-search-wrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  z-index: 70;
+}
+.street-search-icon {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #10b981;
+  pointer-events: none;
+}
+.street-search-input {
+  width: 100%;
+  padding: 10px 36px 10px 36px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: var(--row-bg);
+  color: var(--text);
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.street-search-input::placeholder {
+  color: var(--text-muted);
+  font-weight: 500;
+}
+.street-search-input:focus {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+}
+.street-search-clear {
+  position: absolute;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(16, 185, 129, 0.14);
+  color: #10b981;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.street-suggestions {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 250px;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: var(--card-bg, #1a2438);
+  border: 1.5px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  padding: 4px;
+  z-index: 80;
+}
+:root[data-theme="light"] .street-suggestions,
+:root[data-theme="light"] .street-dropdown-menu {
+  background: #ffffff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.14);
+}
+.street-suggestion-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  text-align: left;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 600;
+  transition: background 0.15s;
+}
+.street-suggestion-item:hover,
+.street-suggestion-item:active {
+  background: rgba(16, 185, 129, 0.14);
+}
+.street-suggestion-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.street-suggestion-name mark {
+  background: rgba(16, 185, 129, 0.24);
+  color: #10b981;
+  border-radius: 4px;
+  padding: 0 2px;
+  font-weight: 800;
+}
+.street-suggestion-dist {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* Кастомный раскрывающийся список районов со стрелочкой вниз */
+.street-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  position: relative;
+  z-index: 60;
+}
+.street-dropdown {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+}
+.street-dropdown-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 12px;
+  font-size: 13px;
+  font-weight: 700;
+  border-radius: 12px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  background: var(--row-bg);
+  color: var(--text);
+  cursor: pointer;
+  text-align: left;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.street-dropdown.open .street-dropdown-btn {
+  border-color: #10b981;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.16);
+}
+.street-dropdown-arrow {
+  width: 16px;
+  height: 16px;
+  color: #10b981;
+  flex-shrink: 0;
+  transition: transform 0.22s ease;
+}
+.street-dropdown.open .street-dropdown-arrow {
+  transform: rotate(180deg);
+}
+.street-dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  max-height: 270px;
+  overflow-y: auto;
+  border-radius: 14px;
+  background: var(--card-bg, #1a2438);
+  border: 1.5px solid rgba(16, 185, 129, 0.45);
+  box-shadow: 0 14px 32px rgba(0, 0, 0, 0.28);
+  padding: 5px;
+  z-index: 65;
+  animation: streetDropDown 0.16s ease-out;
+}
+@keyframes streetDropDown {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.street-dropdown-option {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 11px;
+  border: none;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.street-dropdown-option:hover {
+  background: rgba(16, 185, 129, 0.12);
+}
+.street-dropdown-option.active {
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+  font-weight: 800;
+}
+.street-dropdown-opt-cnt {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+}
+
+/* Быстрые чипсы: Все / Избранное / Играют */
+.street-quick-tabs {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.street-quick-tabs::-webkit-scrollbar { display: none; }
+.street-chip-btn {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  background: var(--row-bg);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.18s;
+}
+.street-chip-btn.active {
+  background: rgba(16, 185, 129, 0.16);
+  border-color: #10b981;
+  color: #10b981;
+}
+
 #street-map.gta-radar-map {
   width: 100%;
-  height: 260px;
+  height: 315px;
   border-radius: 16px;
   overflow: hidden;
   background: #0b1120;
@@ -1209,4 +1437,119 @@ body {
 }
 .street-mini-btn:active {
   transform: scale(0.97);
+}
+
+/* Панель быстрого доступа к избранным адресам */
+.street-favorites-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.street-favorites-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #f59e0b;
+  letter-spacing: 0.3px;
+  padding-left: 2px;
+}
+.street-favorites-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+.street-favorites-chips::-webkit-scrollbar { display: none; }
+.street-fav-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(245, 158, 11, 0.38);
+  background: rgba(245, 158, 11, 0.08);
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.street-fav-chip.active {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.14);
+}
+.street-fav-chip-cnt {
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.18);
+  color: #10b981;
+}
+
+/* Выбранный стол снизу */
+.street-selected-card {
+  border: 1.5px solid rgba(16, 185, 129, 0.45) !important;
+  animation: streetDropDown 0.18s ease-out;
+}
+.street-selected-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+.street-selected-kicker {
+  font-size: 11px;
+  font-weight: 800;
+  color: #10b981;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  margin-bottom: 2px;
+}
+.street-selected-actions-top {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+.street-fav-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  background: rgba(245, 158, 11, 0.08);
+  color: #f59e0b;
+  font-size: 11px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.street-fav-toggle-btn.is-fav {
+  background: #f59e0b;
+  color: #ffffff;
+  border-color: #f59e0b;
+}
+.street-close-selected-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 9px;
+  border: 1px solid var(--card-border);
+  background: var(--row-bg);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+.street-empty-hint {
+  text-align: center;
+  padding: 14px 16px;
+  border-radius: 14px;
+  border: 1px dashed rgba(16, 185, 129, 0.35);
+  background: rgba(16, 185, 129, 0.05);
+  color: var(--text-muted);
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 1.4;
 }

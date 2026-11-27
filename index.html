@@ -23,7 +23,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/style-modern.css?v=20">
+  <link rel="stylesheet" href="css/style-modern.css?v=21">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
   <style>
@@ -558,19 +558,48 @@
     </div>
 
     <div id="radar-street-content" style="display: none; flex-direction: column; gap: 12px;">
-      <div class="card" style="gap: 10px;">
-        <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px;">
-          <div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">
-            <select id="street-district-select" class="input-select street-district-select" onchange="setStreetDistrictFilter(this.value)" aria-label="Выбор района">
-              <option value="Все">Все районы</option>
-            </select>
-            <span id="street-spots-count" class="counter" style="font-size: 11px; flex-shrink: 0;">0</span>
+      <div class="card street-panel-card" style="gap: 10px;">
+        <!-- Поиск по улице или адресу с автоподхватом -->
+        <div class="street-search-wrap">
+          <svg class="street-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"></circle>
+            <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          </svg>
+          <input id="street-address-search" class="street-search-input" type="search" autocomplete="off" placeholder="Поиск по улице или адресу..." oninput="onStreetSearchInput(this.value)" onfocus="onStreetSearchFocus()" aria-label="Поиск по улице или адресу">
+          <button id="street-search-clear" type="button" class="street-search-clear" style="display: none;" onclick="clearStreetSearch()" aria-label="Очистить поиск">✕</button>
+          <div id="street-address-suggestions" class="street-suggestions" style="display: none;"></div>
+        </div>
+
+        <!-- Выбор района (раскрывается вниз) + счётчик + админ -->
+        <div class="street-controls-row">
+          <div id="street-district-dropdown" class="street-dropdown">
+            <button id="street-district-btn" type="button" class="street-dropdown-btn" onclick="toggleStreetDistrictDropdown(event)" aria-expanded="false">
+              <span id="street-district-label">Все районы</span>
+              <svg class="street-dropdown-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9"></polyline>
+              </svg>
+            </button>
+            <div id="street-district-menu" class="street-dropdown-menu" style="display: none;"></div>
           </div>
+          <span id="street-spots-count" class="counter" style="font-size: 11px; flex-shrink: 0;">0</span>
           <button id="btn-add-street-spot" class="badge-admin-btn" style="display: none; padding: 6px 10px; font-size: 11px; flex-shrink: 0;" onclick="openStreetSpotModal()">+ Добавить</button>
         </div>
+
+        <!-- Быстрые фильтры: Все / Избранное / Сейчас играют -->
+        <div class="street-quick-tabs">
+          <button type="button" id="street-qtab-all" class="street-chip-btn active" onclick="setStreetQuickFilter('all')">Все</button>
+          <button type="button" id="street-qtab-favorites" class="street-chip-btn" onclick="setStreetQuickFilter('favorites')">★ Избранное (<span id="street-fav-count">0</span>)</button>
+          <button type="button" id="street-qtab-active" class="street-chip-btn" onclick="setStreetQuickFilter('active')">🟢 Играют (<span id="street-active-count">0</span>)</button>
+        </div>
+
         <div id="street-map" class="gta-radar-map"></div>
       </div>
-      <div id="street-spots-list" style="display: flex; flex-direction: column; gap: 10px;"></div>
+
+      <!-- Быстрый доступ к избранным адресам -->
+      <div id="street-favorites-bar" class="street-favorites-bar" style="display: none;"></div>
+
+      <!-- Карточка выбранного стола (или аккуратная подсказка) -->
+      <div id="street-selected-spot"></div>
     </div>
 
   </div>
@@ -988,7 +1017,7 @@
   <script defer src="js/config.js?v=10"></script>
   <script defer src="js/matches.js?v=4"></script>
   <script defer src="js/radar.js?v=13"></script>
-  <script defer src="js/street.js?v=8"></script>
+  <script defer src="js/street.js?v=9"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
   <script defer src="js/app.js?v=137"></script>
