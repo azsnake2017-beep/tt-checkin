@@ -2805,22 +2805,31 @@ function deleteHistoryMatch(docId, profileUid) {
 // ==========================================
 var sheetYDown = null;
 var activeSheet = null;
+var sheetTouchTarget = null;
+var isSheetDragging = false;
 var currentYDiff = 0;
+
+function hasScrolledModalAncestor(target, box) {
+  var el = target;
+  while (el && el !== document.body) {
+    if (el.scrollTop > 0) return true;
+    if (el === box) break;
+    el = el.parentElement;
+  }
+  return !!(box && box.scrollTop > 0);
+}
 
 document.addEventListener('touchstart', function(evt) {
   if (evt.touches.length > 1) return;
   var box = evt.target.closest('.modal-box');
   if (!box) return;
-  
-  var scrollable = evt.target.closest('div[style*="overflow-y: auto"], .scrollable-list, .player-list, #info-modal-history');
-  if (scrollable && scrollable.scrollTop > 0) return;
+  if (hasScrolledModalAncestor(evt.target, box)) return;
 
   sheetYDown = evt.touches[0].clientY;
   activeSheet = box;
+  sheetTouchTarget = evt.target;
+  isSheetDragging = false;
   currentYDiff = 0;
-  
-  activeSheet.style.animation = 'none'; 
-  activeSheet.style.transition = 'none'; 
 }, {passive: true});
 
 document.addEventListener('touchmove', function(evt) {
@@ -2828,12 +2837,29 @@ document.addEventListener('touchmove', function(evt) {
   var activeV = document.querySelector('.main-view.active');
   if (activeV && activeV.id === 'view-arcade') return;
   if (!sheetYDown || !activeSheet) return;
-  var yUp = evt.touches[0].clientY;
-  currentYDiff = Math.max(0, yUp - sheetYDown); 
 
+  var yUp = evt.touches[0].clientY;
+  var diff = yUp - sheetYDown;
+
+  if (!isSheetDragging) {
+    // Если тянут вверх (скролл вниз по карточке) или контент уже прокручен — отдаём управление скроллу
+    if (diff < 0 || hasScrolledModalAncestor(sheetTouchTarget, activeSheet)) {
+      sheetYDown = null;
+      activeSheet = null;
+      sheetTouchTarget = null;
+      currentYDiff = 0;
+      return;
+    }
+    if (diff < 10) return;
+    isSheetDragging = true;
+    activeSheet.style.animation = 'none';
+    activeSheet.style.transition = 'none';
+  }
+
+  currentYDiff = Math.max(0, diff);
   if (currentYDiff > 0) {
     activeSheet.style.transform = 'translateY(' + currentYDiff + 'px)';
-    if (evt.cancelable) evt.preventDefault(); 
+    if (evt.cancelable) evt.preventDefault();
   }
 }, {passive: false});
 
@@ -2841,6 +2867,14 @@ document.addEventListener('touchend', function(evt) {
   var activeV = document.querySelector('.main-view.active');
   if (activeV && activeV.id === 'view-arcade') return;
   if (!activeSheet) return;
+
+  if (!isSheetDragging) {
+    sheetYDown = null;
+    activeSheet = null;
+    sheetTouchTarget = null;
+    currentYDiff = 0;
+    return;
+  }
   
   var currentBox = activeSheet; 
   var overlay = currentBox.closest('.modal-overlay');
@@ -2879,6 +2913,8 @@ document.addEventListener('touchend', function(evt) {
   
   sheetYDown = null;
   activeSheet = null;
+  sheetTouchTarget = null;
+  isSheetDragging = false;
   currentYDiff = 0;
 });
 
