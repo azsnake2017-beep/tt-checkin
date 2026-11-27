@@ -351,9 +351,6 @@ function updateProfileDisplay() {
               if (mx) { matches.push(mx); }
           });
           window._lastProfileMatches = matches;
-          if (typeof renderProfileAnalytics === 'function') {
-            renderProfileAnalytics('profile-analytics-container', currentUserProfile, matches, currentUserProfile.uid, currentUserProfile.totalMinutes || 0);
-          }
           
           var lastMatchStr = 'Ещё не играл';
           if (matches.length > 0) {
@@ -853,8 +850,6 @@ function showUserInfoModal(uid) {
       '<div id="dynamic-last-match-date" style="display: flex; justify-content: space-between; font-size: 13px; border-top: 1px dashed rgba(255,255,255,0.05); padding-top: 6px; margin-top: 4px;"><span style="color: var(--text-muted);">Последняя игра:</span><span style="font-weight: 600; color: var(--text-muted);">Загрузка...</span></div>' +
       '<div style="display: flex; justify-content: space-between; font-size: 13px; border-bottom: 1px dashed rgba(255,255,255,0.05); padding-bottom: 6px; margin-bottom: 4px;"><span style="color: var(--text-muted);">Время за столом:</span><span style="font-weight: 600; color: var(--accent-gold);">' + (typeof formatMinutes === 'function' ? formatMinutes(mins) : mins+' мин') + '</span></div>' +
       invitesHtml +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Матчей (всего):</span><span style="font-weight: 600;">' + matchesCount + '</span></div>' +
-      '<div style="display: flex; justify-content: space-between; font-size: 13px;"><span style="color: var(--text-muted);">Победы/Поражения:</span><div><span style="font-weight: 600; color: #059669;">' + wins + 'В - ' + losses + 'П (' + winrate + '%)</span>' + streakText + '</div></div>' + 
       invHtml;
 
     // БЛОК УНИКАЛЬНЫХ ТРОФЕЕВ
@@ -4105,6 +4100,9 @@ window.renderProfileAnalytics = function(containerId, u, matches, uid, mins) {
   var lastDelta = parseInt(u.lastEloDelta, 10) || 0;
   var deltaStr = lastDelta > 0 ? ('+' + lastDelta) : (lastDelta < 0 ? String(lastDelta) : '0');
 
+  var recentCount = Math.min(15, (matches || []).length);
+  var trendText = recentCount > 0 ? ('По последним ' + recentCount + ' играм') : 'Нет сыгранных игр';
+
   el.innerHTML =
     '<div class="analytics-unified-card" onclick="this.classList.toggle(\'expanded\'); if(typeof vibrate===\'function\') vibrate(\'light\');">' +
       '<div class="analytics-unified-head">' +
@@ -4118,11 +4116,11 @@ window.renderProfileAnalytics = function(containerId, u, matches, uid, mins) {
       '<div class="analytics-details-collapse">' +
         '<div class="analytics-details-inner">' +
           '<div class="analytics-details-content">' +
-            '<div class="analytics-stat-row"><span>Текущий Эло (последний сдвиг):</span><b>' + elo + ' (' + deltaStr + ')</b></div>' +
-            '<div class="analytics-stat-row"><span>Винрейт (победы / поражения):</span><b>' + wr + '% (' + wins + 'В – ' + losses + 'П)</b></div>' +
-            '<div class="analytics-stat-row"><span>Активность за столом:</span><b>' + hoursStr + ' ч (' + totalM + ' игр)</b></div>' +
-            '<div class="analytics-stat-row"><span>Текущая серия побед:</span><b>' + streak + ' подряд</b></div>' +
-            '<div class="analytics-stat-row"><span>Участие в турнирах:</span><b>' + tours + '</b></div>' +
+            '<div class="analytics-stat-row"><span>Сыграно матчей:</span><b>' + totalM + ' (' + wins + 'В – ' + losses + 'П)</b></div>' +
+            '<div class="analytics-stat-row"><span>Процент побед:</span><b>' + wr + '%</b></div>' +
+            '<div class="analytics-stat-row"><span>Серия побед:</span><b>' + streak + ' подряд</b></div>' +
+            '<div class="analytics-stat-row"><span>График формы:</span><b>' + trendText + '</b></div>' +
+            '<div style="font-size:11px; opacity:0.8; margin-top:2px;">Радар оценивает баланс между винрейтом, часами у стола, серией побед и участием в турнирах.</div>' +
           '</div>' +
         '</div>' +
       '</div>' +
