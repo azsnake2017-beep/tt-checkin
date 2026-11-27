@@ -191,8 +191,9 @@
       });
 
       var popupHtml =
-        '<div style="min-width:170px; font-family:Inter,sans-serif;">' +
-          '<div style="font-weight:800; font-size:13px; margin-bottom:4px; color:#f8fafc;">' + cleanHtml(spot.name) + '</div>' +
+        '<div style="min-width:185px; font-family:Inter,sans-serif;">' +
+          '<div style="font-weight:800; font-size:13px; margin-bottom:3px; color:#34d399;">🏓 Теннисный стол</div>' +
+          '<div style="font-size:12px; font-weight:600; line-height:1.3; margin-bottom:5px; color:#f8fafc;"><span style="color:#94a3b8;">Адрес:</span> ' + cleanHtml(spot.name) + '</div>' +
           '<div style="font-size:11px; color:#94a3b8; margin-bottom:8px;">Сейчас: <b style="color:#10b981;">' + count + '</b></div>' +
           '<div style="display:flex; gap:6px;">' +
             '<button onclick="focusStreetCard(\'' + escapeJS(spot.id) + '\')" style="flex:1; padding:6px 8px; border:none; border-radius:8px; background:linear-gradient(135deg,#10b981,#059669); color:#ffffff; font-weight:700; font-size:11px; cursor:pointer;">Выбрать</button>' +
