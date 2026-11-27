@@ -2946,8 +2946,6 @@ document.addEventListener('touchmove', function(e) {
       swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
 
       if (swipeState.targetView) {
-        var containerEl = swipeState.activeView.parentElement;
-        if (containerEl) containerEl.style.overflowX = 'hidden';
         swipeState.width = swipeState.activeView.offsetWidth;
         var scrollYOffset = window.scrollY || window.pageYOffset || 0;
 
@@ -3048,8 +3046,8 @@ function cleanupSwipe() {
         views[i].style.left = '';
         views[i].style.display = ''; 
     }
-    var containerEl = document.querySelector('.container');
-    if (containerEl) containerEl.style.overflowX = '';
+    if (document.documentElement.scrollLeft) document.documentElement.scrollLeft = 0;
+    if (document.body.scrollLeft) document.body.scrollLeft = 0;
     document.body.classList.remove('disable-animations');
     swipeState.isDragging = false;
     swipeState.isVerticalScroll = false;
