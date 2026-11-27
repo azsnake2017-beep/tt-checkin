@@ -2633,11 +2633,16 @@ document.addEventListener('DOMContentLoaded', function() {
     // Этапы идут строго по порядку, ранние вызовы setAppProgress не перебивают текст на "Готово!"
     window.setAppProgress = function() {};
 
-    // Первые 5 секунд — «Люди в курсе» (без шутки про теннис), затем 5 секунд — наш слайд GTA VI + шутка
+    // Первые 5 секунд — «Люди в курсе» (без шутки про теннис и без полосы загрузки), затем 5 секунд — наш слайд GTA VI + шутка
     setTimeout(function() {
       var lvkOverlay = document.getElementById('lvk-overlay');
       var gtaTop = document.getElementById('gta-top');
       var jEl = document.getElementById('preloader-joke');
+      var bottomBar = document.getElementById('gta-bottom-bar');
+      if (lvkOverlay) lvkOverlay.classList.add('hidden');
+      if (gtaTop) gtaTop.classList.remove('is-hidden');
+      // Показываем полосу загрузки и текст только когда уходим на GTA VI слайд
+      if (bottomBar) bottomBar.style.display = 'flex';
       if (lvkOverlay) lvkOverlay.classList.add('hidden');
       if (gtaTop) gtaTop.classList.remove('is-hidden');
       if (jEl) {
