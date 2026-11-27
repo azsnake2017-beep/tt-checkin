@@ -2600,7 +2600,7 @@ document.addEventListener('DOMContentLoaded', function() {
   var bar = document.getElementById('preloader-bar');
   var txt = document.getElementById('preloader-text');
   
-  if (txt) txt.innerText = 'Загрузка приложения...';
+  if (txt) txt.innerText = 'Инициализация Firebase и профиля...';
 
   // ОТОБРАЖЕНИЕ ПРЕЛОАДЕРА (Оставляем 8 секунд для чтения шуток)
   if (isFirstStart) {
@@ -2618,7 +2618,23 @@ document.addEventListener('DOMContentLoaded', function() {
       bar.style.transition = 'width 8s linear';
       setTimeout(function() { bar.style.width = '100%'; }, 50);
     }
-    window.setAppProgress = function(percent, text) {};
+
+    var bootStages = [
+      { ms: 1400, text: 'Загрузка радара площадок и погоды...' },
+      { ms: 3000, text: 'Синхронизация рейтинга Эло и турниров...' },
+      { ms: 4800, text: 'Загрузка новостей и заданий недели...' },
+      { ms: 6400, text: 'Подготовка 3D-арены и кэша...' },
+      { ms: 7500, text: 'Готово! Добро пожаловать в клуб!' }
+    ];
+    bootStages.forEach(function(st) {
+      setTimeout(function() {
+        if (txt) txt.innerText = st.text;
+      }, st.ms);
+    });
+
+    window.setAppProgress = function(percent, text) {
+      if (text && txt) txt.innerText = text;
+    };
 
     setTimeout(function() {
       if (typeof vibrate === 'function') vibrate('medium');
