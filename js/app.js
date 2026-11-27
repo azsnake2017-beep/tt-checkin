@@ -304,7 +304,10 @@ function updateProfileDisplay() {
 
   document.getElementById('user-name-container').innerHTML =
     '<div style="display: flex; flex-direction: column; gap: 4px; min-width: 0;">' +
-      '<span class="user-name-text" style="font-size: 16px; font-weight: 800; line-height: 1.25; white-space: normal;">' + cleanHtml(currentUserProfile.name) + '</span>' +
+      '<div style="display: flex; align-items: center; flex-wrap: wrap; gap: 6px;">' +
+        '<span class="user-name-text" style="font-size: 16px; font-weight: 800; line-height: 1.25; white-space: normal;">' + cleanHtml(currentUserProfile.name) + '</span>' +
+        adminTag +
+      '</div>' +
       '<span class="player-status-tag">' + pStatusHtml + '</span>' +
     '</div>';
 
