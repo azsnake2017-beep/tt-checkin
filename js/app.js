@@ -2108,7 +2108,7 @@ function listenTournaments() {
           var isLiked = myUid && likes.indexOf(myUid) !== -1;
           var isDisliked = myUid && dislikes.indexOf(myUid) !== -1;
           var isPart = false; for(var i=0; i<parts.length; i++) { if (parts[i].uid === myUid) isPart = true; }
-          var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 4px; font-size: 11px;" onclick="openTournamentModal(\''+escapeJS(id)+'\')">✏️ Изменить</button><button class="btn-leave" style="flex: 1; padding: 4px; font-size: 11px; color: #ef4444; border-color: #ef4444;" onclick="deleteTournament(\''+escapeJS(id)+'\')">🗑 Удалить</button></div>' : '';
+          var adminActionHtml = isAdmin ? '<div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn btn-plan" style="flex: 1; padding: 8px 10px; font-size: 12px;" onclick="openTournamentModal(\''+escapeJS(id)+'\')">Изменить</button><button class="btn btn-leave" style="flex: 1; padding: 8px 10px; font-size: 12px; color: var(--accent-red); border-color: rgba(244,63,94,0.35);" onclick="deleteTournament(\''+escapeJS(id)+'\')">Удалить</button></div>' : '';
 
           if (d.status === 'completed') {
             var res = d.results || {};
@@ -2239,7 +2239,7 @@ function listenTournaments() {
             archiveHtml += '<div class="card" style="border-color: var(--card-border); opacity: 0.9;">' +
                            '<div style="display: flex; justify-content: space-between; align-items: flex-start;">' +
                                 '<div><div style="font-size: 15px; font-weight: 700; color: var(--text-muted);">' + cleanHtml(d.title) + '</div><div style="font-size: 12px; color: var(--text-muted); margin-bottom: 6px;">' + (d.dateStr || '') + '</div></div>' +
-                                '<button class="btn-info" style="font-size: 11px; width: auto; padding: 6px 12px; border-radius: 6px; display:inline-flex; align-items:center; gap:4px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">' + ico('icon-folder') + ' История</button>' +
+                                '<button class="btn btn-plan" style="font-size: 12px; width: auto; padding: 7px 12px; min-height: 34px;" onclick="toggleArchiveTour(\''+escapeJS(id)+'\')">' + ico('icon-folder') + ' История</button>' +
                            '</div>' +
                            '<div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px; margin-top: 8px;">' +
                                 '<div style="color: var(--accent-gold);">🥇 <span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(goldUid)+'\')">' + cleanHtml(goldName) + '</span></div>' +
@@ -2258,8 +2258,8 @@ function listenTournaments() {
             var pListItems = []; for(var j=0; j<parts.length; j++) { pListItems.push('<span class="clickable-name" onclick="showUserInfoModal(\''+escapeJS(parts[j].uid)+'\')">' + cleanHtml(parts[j].name) + '</span>'); }
             var pList = pListItems.length > 0 ? pListItems.join(', ') : 'Пока никто не записался';
             content = '<div style="font-size: 12px; color: var(--text-muted); margin-top: 8px; line-height: 1.6;"><b>Участники (' + parts.length + '):</b> ' + pList + '</div>';
-            if (myUid) { buttonsHtml += isPart ? '<button class="btn-leave" style="flex: 1; padding: 8px;" onclick="leaveTournament(\''+escapeJS(id)+'\')">Отказаться</button>' : '<button class="btn-join" style="flex: 1; padding: 8px; background: var(--accent-amber); color: #0b1120;" onclick="joinTournament(\''+escapeJS(id)+'\', \''+escapeJS(cleanHtml(d.title))+'\')">🏆 Участвовать</button>'; }
-            if (isAdmin) { buttonsHtml += '</div><button class="btn-plan" style="width: 100%; margin-top: 8px; border-color: #ec4899; color: #ec4899; padding: 8px;" onclick="openTourPlayersModal(\''+escapeJS(id)+'\')">👥 Управление составом</button><div style="display: flex; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">🎲 Случайная сетка</button><button class="btn-plan" style="flex: 1; padding: 8px; font-size: 12px; border-color: var(--accent-purple); color: var(--accent-purple);" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">🧠 Умная (по Эло)</button></div><button class="btn-join" style="width: 100%; margin-top: 8px; padding: 9px; font-size: 12px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #0b1120; font-weight: 800;" onclick="startTournament(\''+escapeJS(id)+'\', \'olympic\')">🏆 Олимпийка (розыгрыш всех мест)</button><div style="display:none;">'; }
+            if (myUid) { buttonsHtml += isPart ? '<button class="btn btn-leave" style="flex: 1; padding: 8px 12px; font-size: 12px;" onclick="leaveTournament(\''+escapeJS(id)+'\')">Отказаться</button>' : '<button class="btn btn-join" style="flex: 1; padding: 8px 12px; font-size: 12px;" onclick="joinTournament(\''+escapeJS(id)+'\', \''+escapeJS(cleanHtml(d.title))+'\')">Участвовать</button>'; }
+            if (isAdmin) { buttonsHtml += '</div><div style="display: flex; flex-direction: column; gap: 8px; margin-top: 8px; width: 100%;"><button class="btn btn-plan" style="width: 100%; padding: 8px 12px; font-size: 12px;" onclick="openTourPlayersModal(\''+escapeJS(id)+'\')">' + ico('icon-users') + ' Управление составом</button><div style="display: flex; gap: 8px; width: 100%;"><button class="btn btn-plan" style="flex: 1; padding: 8px 10px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'random\')">' + ico('icon-dice') + ' Случайная</button><button class="btn btn-plan" style="flex: 1; padding: 8px 10px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'smart\')">Умная (по Эло)</button></div><button class="btn btn-join" style="width: 100%; padding: 9px 12px; font-size: 12px;" onclick="startTournament(\''+escapeJS(id)+'\', \'olympic\')">' + ico('icon-nav-ratings') + ' Олимпийка (розыгрыш всех мест)</button></div><div style="display:none;">'; }
           } 
           else if (d.status === 'olympic') {
             var curRound = d.olympicRound || 1;
@@ -2297,9 +2297,9 @@ function listenTournaments() {
             var hasMoreToPlay = pools.some(function(pl) { return pl.playersCount > 2; });
             if (isAdmin && isAllMatchesDone && curMatches.length > 0) {
               if (hasMoreToPlay) {
-                adminActionHtml = '<button class="btn-join" style="background: var(--accent-purple); padding: 8px; margin-top: 12px; width: 100%;" onclick="advanceOlympicRound(\''+escapeJS(id)+'\')">Сформировать следующий раунд</button>' + adminActionHtml;
+                adminActionHtml = '<button class="btn btn-join" style="padding: 9px 12px; margin-top: 10px; width: 100%; font-size: 12px;" onclick="advanceOlympicRound(\''+escapeJS(id)+'\')">Сформировать следующий раунд</button>' + adminActionHtml;
               } else {
-                adminActionHtml = '<button class="btn-join" style="background: var(--accent-green); padding: 8px; margin-top: 12px; width: 100%;" onclick="completeTournament(\''+escapeJS(id)+'\')">Завершить турнир</button>' + adminActionHtml;
+                adminActionHtml = '<button class="btn btn-join" style="padding: 9px 12px; margin-top: 10px; width: 100%; font-size: 12px;" onclick="completeTournament(\''+escapeJS(id)+'\')">Завершить турнир</button>' + adminActionHtml;
               }
             }
           } 

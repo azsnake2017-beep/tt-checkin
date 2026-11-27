@@ -991,6 +991,66 @@ body {
   color: var(--text) !important;
   background: rgba(148, 163, 184, 0.12) !important;
 }
+
+/* ===== 19. Этап 9: Цветовая гармония по вкладкам и единый стиль кнопок Турниров ===== */
+#nav-profile.active .nav-icon { background: rgba(59, 130, 246, 0.16) !important; }
+#nav-radar.active .nav-icon { background: rgba(16, 185, 129, 0.16) !important; }
+#nav-ratings.active .nav-icon { background: rgba(168, 85, 247, 0.16) !important; }
+#nav-tournaments.active .nav-icon { background: rgba(249, 115, 22, 0.16) !important; }
+#nav-quests.active .nav-icon { background: rgba(239, 68, 68, 0.16) !important; }
+
+/* Профиль — синий (#3b82f6) */
+#view-profile .btn-join,
+#btn-invite-glow {
+  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%) !important;
+  border: 1px solid rgba(96, 165, 250, 0.45) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px -10px rgba(59, 130, 246, 0.55) !important;
+}
+
+/* Радар — изумрудный (#10b981) */
+#view-radar .btn-join {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  border: 1px solid rgba(52, 211, 153, 0.45) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px -10px rgba(16, 185, 129, 0.5) !important;
+}
+#view-radar .loc-title-icon,
+#view-radar .challenges-box .tt-icon {
+  color: #10b981 !important;
+}
+
+/* Турниры — оранжево-янтарный (#f97316 / #f59e0b) */
+#view-tournaments .btn-join,
+#view-tournaments .badge-admin-btn {
+  background: linear-gradient(135deg, #f97316 0%, #d97706 100%) !important;
+  border: 1px solid rgba(251, 146, 60, 0.5) !important;
+  color: #ffffff !important;
+  box-shadow: 0 10px 24px -10px rgba(249, 115, 22, 0.5) !important;
+}
+#view-tournaments .btn-plan {
+  background: var(--row-bg) !important;
+  border: 1px solid var(--card-border) !important;
+  color: var(--text) !important;
+}
+#view-tournaments .score-btn {
+  border-radius: 12px !important;
+  background: var(--row-bg);
+  border: 1px solid var(--card-border);
+  color: var(--text-muted);
+}
+#view-tournaments .score-btn.active {
+  background: rgba(249, 115, 22, 0.16) !important;
+  border-color: #f97316 !important;
+  color: #fb923c !important;
+}
+
+/* Задания — кораллово-красный (#ef4444) */
+#view-quests .btn-info {
+  background: rgba(239, 68, 68, 0.14) !important;
+  border: 1px solid rgba(239, 68, 68, 0.4) !important;
+  color: #f87171 !important;
+}
 .leader-right-col {
   display: flex;
   flex-direction: column;
