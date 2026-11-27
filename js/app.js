@@ -2947,14 +2947,13 @@ document.addEventListener('touchmove', function(e) {
 
       if (swipeState.targetView) {
         swipeState.width = swipeState.activeView.offsetWidth;
-        var scrollYOffset = window.scrollY || window.pageYOffset || 0;
 
         swipeState.targetView.style.transition = 'none';
         swipeState.activeView.style.transition = 'none';
         swipeState.targetView.style.display = 'flex';
         swipeState.targetView.style.position = 'absolute';
-        swipeState.targetView.style.top = (swipeState.activeView.offsetTop + scrollYOffset) + 'px';
-        swipeState.targetView.style.left = '0px';
+        swipeState.targetView.style.top = swipeState.activeView.offsetTop + 'px';
+        swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
         swipeState.targetView.style.width = swipeState.width + 'px';
         swipeState.targetView.style.boxSizing = 'border-box';
         swipeState.targetView.style.opacity = '0.5';

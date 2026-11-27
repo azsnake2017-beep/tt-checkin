@@ -587,7 +587,7 @@ html {
   width: 100% !important;
   max-width: 100vw !important;
   overflow-x: clip !important;
-  overflow-y: auto !important;
+  overflow-y: visible !important;
   scrollbar-gutter: stable;
 }
 body {
@@ -597,14 +597,18 @@ body {
   overflow-y: visible !important;
   padding: 12px !important;
 }
-.container {
+#main-top-header, .header-container, .container {
+  position: relative !important;
   width: 100% !important;
   max-width: 440px !important;
   min-width: 0 !important;
   margin: 0 auto !important;
+  display: flex !important;
+  flex-direction: column !important;
   gap: 12px !important;
   overflow-x: clip !important;
   padding-bottom: calc(88px + env(safe-area-inset-bottom)) !important;
+  box-sizing: border-box !important;
 }
 .main-view, .card, .profile-card, .rating-card, .leaderboard-card, .club-header, .challenges-box, .auth-overlay-card {
   width: 100% !important;
