@@ -411,45 +411,56 @@ body, button, input, select, textarea {
   text-align: left;
 }
 
-/* Визуальное дерево олимпийской сетки */
+/* Визуальное дерево олимпийской сетки — компактно на 100% ширины телефона */
 .bracket-scroll {
-  overflow-x: auto;
-  padding: 10px 4px;
-  margin-top: 8px;
-  scrollbar-width: thin;
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+  padding: 6px 0;
+  margin-top: 6px;
 }
 .bracket-tree {
   display: flex;
-  gap: 18px;
-  align-items: stretch;
-  min-width: max-content;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
 }
 .bracket-round-col {
-  display: flex;
-  flex-direction: column;
-  justify-content: space-around;
-  gap: 10px;
-  min-width: 165px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  background: rgba(15, 23, 42, 0.28);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 8px;
+}
+:root[data-theme="light"] .bracket-round-col {
+  background: rgba(241, 245, 249, 0.75);
+  border-color: rgba(15, 23, 42, 0.08);
 }
 .bracket-round-label {
+  grid-column: 1 / -1;
   font-size: 10px;
   font-weight: 800;
   color: var(--accent-amber);
   text-transform: uppercase;
   text-align: center;
   letter-spacing: 0.06em;
-  margin-bottom: 4px;
+  margin-bottom: 2px;
 }
 .bracket-match-node {
   background: var(--row-bg);
   border: 1px solid var(--card-border);
   border-radius: 10px;
-  padding: 6px 8px;
+  padding: 7px 8px;
   font-size: 11px;
   display: flex;
   flex-direction: column;
   gap: 4px;
-  position: relative;
+  min-width: 0;
 }
 .bracket-match-node.is-final {
   border-color: var(--accent-gold);
@@ -459,13 +470,15 @@ body, button, input, select, textarea {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  min-width: 0;
 }
 .bracket-player-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  max-width: 120px;
+  flex: 1;
+  min-width: 0;
 }
 .bracket-player-row.winner {
   color: var(--accent-green);
@@ -474,9 +487,36 @@ body, button, input, select, textarea {
 .bracket-score-pill {
   font-weight: 800;
   font-variant-numeric: tabular-nums;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: rgba(148, 163, 184, 0.12);
+  padding: 1px 6px;
+  border-radius: 6px;
+  background: rgba(148, 163, 184, 0.14);
+  flex-shrink: 0;
+}
+
+/* Жёсткий фикс ширины и отступов на вкладке Турниры */
+#view-tournaments > .card {
+  padding: 0 !important;
+  border: none !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+#view-tournaments .card {
+  width: 100% !important;
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+#view-tournaments table,
+.tour-group-table {
+  width: 100% !important;
+  max-width: 100% !important;
+  table-layout: fixed;
+  font-size: 11px !important;
+}
+#view-tournaments th,
+#view-tournaments td {
+  padding: 5px 4px !important;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Заявки «Ищу соперника» */
