@@ -2891,7 +2891,7 @@ var swipeState = {
   targetView: null,
   direction: 0,
   width: 0,
-  gap: 36,
+  gap: 24,
   tabs: ['profile', 'radar', 'ratings', 'tournaments', 'quests']
 };
 
@@ -2940,6 +2940,8 @@ document.addEventListener('touchmove', function(e) {
       swipeState.targetView = document.getElementById('view-' + swipeState.tabs[targetIndex]);
 
       if (swipeState.targetView) {
+        var containerEl = swipeState.activeView.parentElement;
+        if (containerEl) containerEl.style.overflowX = 'hidden';
         swipeState.width = swipeState.activeView.offsetWidth;
         var scrollYOffset = window.scrollY || window.pageYOffset || 0;
 
@@ -2948,11 +2950,11 @@ document.addEventListener('touchmove', function(e) {
         swipeState.targetView.style.display = 'flex';
         swipeState.targetView.style.position = 'absolute';
         swipeState.targetView.style.top = (swipeState.activeView.offsetTop + scrollYOffset) + 'px';
-        swipeState.targetView.style.left = swipeState.activeView.offsetLeft + 'px';
-        swipeState.targetView.style.width = swipeState.width + 'px';
+        swipeState.targetView.style.left = '0px';
+        swipeState.targetView.style.width = '100%';
         swipeState.targetView.style.opacity = '0.5';
 
-        var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
+        var startOffset = swipeState.direction * (swipeState.width + swipeState.gap);
         swipeState.targetView.style.transform = 'translate3d(' + startOffset + 'px, 0, 0)';
 
         swipeState.activeView.style.zIndex = '5';
@@ -2961,14 +2963,15 @@ document.addEventListener('touchmove', function(e) {
     }
   }
 
-  // Если свайп вбок прошел проверку — двигаем карточки
+  // Если свайп вбок прошел проверку — двигаем карточки симметрично
   if (swipeState.isDragging && swipeState.targetView) {
     if (e.cancelable) e.preventDefault();
-    var startOffset = swipeState.direction === 1 ? (swipeState.width + swipeState.gap) : -(swipeState.width + swipeState.gap);
-    var progress = Math.min(1, Math.abs(dx) / Math.max(1, swipeState.width));
-    swipeState.activeView.style.transform = 'translate3d(' + dx + 'px, 0, 0)';
-    swipeState.activeView.style.opacity = String(1 - progress * 0.65);
-    swipeState.targetView.style.transform = 'translate3d(' + (startOffset + dx) + 'px, 0, 0)';
+    var clampedDx = swipeState.direction === 1 ? Math.min(0, dx) : Math.max(0, dx);
+    var startOffset = swipeState.direction * (swipeState.width + swipeState.gap);
+    var progress = Math.min(1, Math.abs(clampedDx) / Math.max(1, swipeState.width));
+    swipeState.activeView.style.transform = 'translate3d(' + clampedDx + 'px, 0, 0)';
+    swipeState.activeView.style.opacity = String(1 - progress * 0.6);
+    swipeState.targetView.style.transform = 'translate3d(' + (startOffset + clampedDx) + 'px, 0, 0)';
     swipeState.targetView.style.opacity = String(0.5 + progress * 0.5);
   }
 }, {passive: false});
@@ -3039,6 +3042,8 @@ function cleanupSwipe() {
         views[i].style.left = '';
         views[i].style.display = ''; 
     }
+    var containerEl = document.querySelector('.container');
+    if (containerEl) containerEl.style.overflowX = '';
     document.body.classList.remove('disable-animations');
     swipeState.isDragging = false;
     swipeState.isVerticalScroll = false;
