@@ -220,7 +220,10 @@
       'assets/gta-loading/slide2.jpg',
       'assets/gta-loading/slide3.jpg',
       'assets/gta-loading/slide4.jpg',
-      'assets/gta-loading/slide5.jpg'
+      'assets/gta-loading/slide5.jpg',
+      'assets/gta-loading/slide6.jpg',
+      'assets/gta-loading/slide7.jpg',
+      'assets/gta-loading/slide8.jpg'
     ];
     var _lastIdx = parseInt(localStorage.getItem('tt_last_gta_slide') || '-1', 10);
     var _idx = Math.floor(Math.random() * _pool.length);
@@ -233,9 +236,16 @@
       'assets/gta-loading/lvk-2.jpg',
       'assets/gta-loading/lvk-3.jpg',
       'assets/gta-loading/lvk-4.jpg',
-      'assets/gta-loading/lvk-5.jpg'
+      'assets/gta-loading/lvk-5.jpg',
+      'assets/gta-loading/lvk-6.jpg',
+      'assets/gta-loading/lvk-7.jpg',
+      'assets/gta-loading/lvk-8.jpg'
     ];
-    var _lvkIdx = (parseInt(localStorage.getItem('tt_last_lvk_slide') || '-1', 10) + 1) % _lvkPool.length;
+    var _lastLvkIdx = parseInt(localStorage.getItem('tt_last_lvk_slide') || '-1', 10);
+    var _lvkIdx = Math.floor(Math.random() * _lvkPool.length);
+    if (_lvkPool.length > 1 && _lvkIdx === _lastLvkIdx) {
+      _lvkIdx = (_lvkIdx + 1 + Math.floor(Math.random() * (_lvkPool.length - 1))) % _lvkPool.length;
+    }
     localStorage.setItem('tt_last_lvk_slide', String(_lvkIdx));
     var _chosen = [_lvkPool[_lvkIdx], _pool[_idx]];
     var _box = document.getElementById('gta-preloader-slides');
