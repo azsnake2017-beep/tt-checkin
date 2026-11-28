@@ -1553,3 +1553,91 @@ body {
   font-weight: 600;
   line-height: 1.4;
 }
+
+/* ---- Кнопка геолокации «Рядом со мной» ---- */
+.street-geo-btn {
+  border-color: rgba(59, 130, 246, 0.45) !important;
+  background: rgba(59, 130, 246, 0.08) !important;
+  color: #60a5fa !important;
+}
+.street-geo-btn:hover {
+  background: rgba(59, 130, 246, 0.14) !important;
+}
+.street-geo-btn:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+/* ---- Р›РµРіРµРЅРґР° РєР°СЂС‚С‹ Рё РІС‹РґРµР»РµРЅРёРµ Р°РєС‚РёРІРЅС‹С… СЃС‚РѕР»РѕРІ ---- */
+.street-map-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  padding-top: 2px;
+}
+.street-map-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+.legend-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  display: inline-block;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.35);
+}
+.legend-dot.free { background: #10b981; }
+.legend-dot.plan { background: #f59e0b; }
+.legend-dot.busy {
+  background: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.3);
+}
+
+.street-live-marker {
+  background: transparent;
+  border: none;
+}
+.street-live-pin {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 28px;
+}
+.street-live-pulse {
+  position: absolute;
+  width: 44px;
+  height: 28px;
+  border-radius: 999px;
+  background: rgba(239, 68, 68, 0.45);
+  animation: streetLivePulse 1.6s ease-out infinite;
+  pointer-events: none;
+}
+.street-live-badge {
+  position: relative;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ef4444, #f97316);
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 800;
+  border: 2px solid #ffffff;
+  box-shadow: 0 3px 10px rgba(239, 68, 68, 0.55);
+  white-space: nowrap;
+}
+@keyframes streetLivePulse {
+  0% { transform: scale(0.85); opacity: 0.9; }
+  100% { transform: scale(1.65); opacity: 0; }
+}

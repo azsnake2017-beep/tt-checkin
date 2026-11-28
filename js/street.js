@@ -222,12 +222,26 @@
       var plansCount = (st.plans || []).length;
       var tState = count > 0 ? 'busy' : (plansCount > 0 ? 'plan' : 'free');
 
-      var marker = new TMarker([spot.lat, spot.lng], {
-        radius: 13,
-        tableState: tState,
-        stroke: false,
-        fill: false
-      });
+      var marker;
+      if (count > 0) {
+        var liveIcon = L.divIcon({
+          className: 'street-live-marker',
+          html: '<div class="street-live-pin"><span class="street-live-pulse"></span><span class="street-live-badge">🏓 ' + count + '</span></div>',
+          iconSize: [48, 28],
+          iconAnchor: [24, 14]
+        });
+        marker = L.marker([spot.lat, spot.lng], {
+          icon: liveIcon,
+          zIndexOffset: 1000
+        });
+      } else {
+        marker = new TMarker([spot.lat, spot.lng], {
+          radius: 13,
+          tableState: tState,
+          stroke: false,
+          fill: false
+        });
+      }
 
       var isFav = isFavoriteSpot(spot.id);
       var favBtnStyle = isFav
@@ -812,4 +826,93 @@
   document.addEventListener('DOMContentLoaded', function() {
     setTimeout(startStreetListeners, 700);
   });
+
+  /* =====================================================
+   * ГЕОЛОКАЦИЯ — найти ближайший стол
+   * ===================================================*/
+  function haversineDist(lat1, lng1, lat2, lng2) {
+    var R = 6371000;
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLng = (lng2 - lng1) * Math.PI / 180;
+    var a = Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng / 2) * Math.sin(dLng / 2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+
+  var userLocationMarker = null;
+
+  window.findNearestStreetSpot = function() {
+    var btn = document.getElementById('street-qtab-nearby');
+    if (!navigator.geolocation) {
+      var msg = 'Геолокация не поддерживается браузером.';
+      if (typeof customAlert === 'function') customAlert(msg); else alert(msg);
+      return;
+    }
+    if (btn) { btn.textContent = '⏳ Определяю...'; btn.disabled = true; }
+
+    navigator.geolocation.getCurrentPosition(function(pos) {
+      var lat = pos.coords.latitude;
+      var lng = pos.coords.longitude;
+
+      // Убедимся, что карта инициализирована
+      initStreetMap();
+
+      // Маркер «Вы здесь»
+      if (streetMap) {
+        if (userLocationMarker) { userLocationMarker.remove(); }
+        userLocationMarker = L.circleMarker([lat, lng], {
+          radius: 10, color: '#3b82f6', fillColor: '#3b82f6',
+          fillOpacity: 0.9, weight: 3
+        }).addTo(streetMap).bindPopup('<b style="color:#3b82f6;">📍 Вы здесь</b>');
+      }
+
+      // Найти ближайший стол с координатами
+      var spots = getMergedSpots().filter(function(s) { return s.lat && s.lng; });
+      var nearest = null;
+      var minDist = Infinity;
+      spots.forEach(function(s) {
+        var d = haversineDist(lat, lng, s.lat, s.lng);
+        if (d < minDist) { minDist = d; nearest = s; }
+      });
+
+      if (btn) { btn.textContent = '📍 Рядом'; btn.disabled = false; }
+
+      if (!nearest) {
+        var m2 = 'Столы поблизости не найдены.';
+        if (typeof customAlert === 'function') customAlert(m2); else alert(m2);
+        return;
+      }
+
+      var distM = Math.round(minDist);
+      var distStr = distM >= 1000 ? (distM / 1000).toFixed(1) + ' км' : distM + ' м';
+
+      // Лететь на карту: показать и пользователя, и стол
+      if (streetMap) {
+        streetMap.fitBounds([[lat, lng], [nearest.lat, nearest.lng]], { padding: [40, 40], maxZoom: 16 });
+      }
+
+      // Выбрать стол (карточка снизу) и открыть попап на карте
+      selectStreetSpot(nearest.id, false);
+      if (streetMarkersById[nearest.id]) {
+        streetMarkersById[nearest.id].openPopup();
+      }
+
+      // Обновить кикер карточки с дистанцией
+      setTimeout(function() {
+        var kicker = document.querySelector('.street-selected-kicker');
+        if (kicker) kicker.textContent = '🏓 Ближайший стол · ' + distStr + ' от вас';
+        var card = document.getElementById('street-selected-spot');
+        if (card) card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 80);
+
+    }, function(err) {
+      if (btn) { btn.textContent = '📍 Рядом'; btn.disabled = false; }
+      var errMsg = err.code === 1 ? 'Доступ к геолокации запрещён. Разрешите в настройках браузера.' :
+                   err.code === 2 ? 'Местоположение недоступно.' :
+                                    'Истекло время определения местоположения.';
+      if (typeof customAlert === 'function') customAlert(errMsg); else alert(errMsg);
+    }, { timeout: 10000, maximumAge: 60000 });
+  };
+
 })();

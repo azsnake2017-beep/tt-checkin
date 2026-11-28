@@ -23,7 +23,7 @@
 
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
-  <link rel="stylesheet" href="css/style-modern.css?v=21">
+  <link rel="stylesheet" href="css/style-modern.css?v=22">
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
 
   <style>
@@ -590,9 +590,15 @@
           <button type="button" id="street-qtab-all" class="street-chip-btn active" onclick="setStreetQuickFilter('all')">Все</button>
           <button type="button" id="street-qtab-favorites" class="street-chip-btn" onclick="setStreetQuickFilter('favorites')">★ Избранное (<span id="street-fav-count">0</span>)</button>
           <button type="button" id="street-qtab-active" class="street-chip-btn" onclick="setStreetQuickFilter('active')">🟢 Играют (<span id="street-active-count">0</span>)</button>
+          <button type="button" id="street-qtab-nearby" class="street-chip-btn street-geo-btn" onclick="findNearestStreetSpot()">📍 Рядом</button>
         </div>
 
         <div id="street-map" class="gta-radar-map"></div>
+        <div class="street-map-legend">
+          <span><i class="legend-dot free"></i> Свободен</span>
+          <span><i class="legend-dot plan"></i> Планируют</span>
+          <span><i class="legend-dot busy"></i> Уже играют</span>
+        </div>
       </div>
 
       <!-- Быстрый доступ к избранным адресам -->
@@ -1017,7 +1023,7 @@
   <script defer src="js/config.js?v=10"></script>
   <script defer src="js/matches.js?v=4"></script>
   <script defer src="js/radar.js?v=13"></script>
-  <script defer src="js/street.js?v=9"></script>
+  <script defer src="js/street.js?v=10"></script>
   <script defer src="js/quests.js?v=6"></script>
   <script defer src="js/news.js?v=17"></script>
   <script defer src="js/app.js?v=138"></script>
